@@ -32,12 +32,16 @@ namespace Contralto.CPU
         {            
             _uCodeRam = new UInt32[1024];
             LoadMicrocode(_uCodeRoms);
-            //_constantRom = LoadMicrocode(_constantRoms);
         }
 
         public static UInt32[] UCodeROM
         {
             get { return _uCodeRom; }
+        }
+
+        public static UInt32[] UCodeRAM
+        {
+            get { return _uCodeRam; }
         }
 
         private static void LoadMicrocode(RomFile[] romInfo)
@@ -69,9 +73,8 @@ namespace Contralto.CPU
             }
 
             // Invert the requisite bits just to make things easier; the high bits of F1 and F2 and the Load L bit are inverted
-            // normally; we leave those alone.
+            // already; we leave those alone.
             const UInt32 invertedBitMask = 0xfff77bff;
-
             
             for(int i=0;i<_uCodeRom.Length;i++)
             {
@@ -82,24 +85,8 @@ namespace Contralto.CPU
         }
 
         private static int AddressMap(int address)
-        {
-            //
-            // For reasons lost to time, the address bits on the ucode PROMs are flipped
-            // (that is, address bit 9 on the PROM chip is connected to address bit 0 on the Alto's
-            // microcode address lines, and so on).  The address bits are also inverted, so that's fun too.
-            // We need to translate the 10-bit address appropriately by swapping the bits around.
-            //
-           int  mappedAddress = (~address) & 0x3ff;
-            /*
-            int mappedAddress = 0;
-            for(int i=0;i<10;i++)
-            {
-                if ((address & (1 << i)) != 0)
-                {
-                    mappedAddress |= (1 << (9 - i));
-                }
-            } */
-
+        {            
+            int  mappedAddress = (~address) & 0x3ff;
             return mappedAddress;
         }
 
@@ -124,16 +111,10 @@ namespace Contralto.CPU
             new RomFile("u70", 0x400, 8),
             new RomFile("u71", 0x400, 4),
             new RomFile("u72", 0x400, 0)
-        };
-
-        private static RomFile[] _constantRoms =
-        {
-
-        };
+        };        
 
         private static UInt32[] _uCodeRom;
-        private static UInt32[] _uCodeRam;
-        private static UInt16[] _constantRom;
+        private static UInt32[] _uCodeRam;        
 
 
     }
