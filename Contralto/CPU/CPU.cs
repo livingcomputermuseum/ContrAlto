@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Contralto.Memory;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -41,6 +42,9 @@ namespace Contralto.CPU
 
             _currentTask = _nextTask;
             _nextTask = null;
+
+            // test
+            _l = ConstantMemory.ConstantROM[0];
         }
 
         public void ExecuteNext()
@@ -80,7 +84,7 @@ namespace Contralto.CPU
         // Base task class: provides implementation for non-task-specific microcode execution and
         // state.  Task subclasses implement and execute Task-specific behavior and are called into
         // by the base class as necessary.
-        private class Task
+        private abstract class Task
         {        
             public Task(AltoCPU cpu)
             {
@@ -164,7 +168,7 @@ namespace Contralto.CPU
                             break;
 
                         case BusSource.ReadMD:
-                            busData = Memory.MD;
+                            busData = MemoryBus.ReadMD();
                             break;
 
                         case BusSource.ReadMouse:
@@ -215,7 +219,7 @@ namespace Contralto.CPU
                         break;
 
                     case SpecialFunction1.LoadMAR:
-                        Memory.LoadMAR(aluData);    // Start main memory reference
+                        MemoryBus.LoadMAR(aluData);    // Start main memory reference
                         break;
 
                     case SpecialFunction1.Task:
@@ -297,7 +301,7 @@ namespace Contralto.CPU
                         break;
 
                     case SpecialFunction2.StoreMD:
-                        Memory.StoreMD(busData);
+                        MemoryBus.StoreMD(busData);
                         break;
 
                     case SpecialFunction2.Constant:
@@ -307,6 +311,7 @@ namespace Contralto.CPU
                     default:
                         // Let the specific task implementation take a crack at this.
                         ExecuteSpecialFunction2((int)instruction.F1);
+                        break;
                 }
 
                 //

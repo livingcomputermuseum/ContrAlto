@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Contralto.CPU;
+using Contralto.Memory;
 
 namespace Contralto
 {
@@ -16,6 +17,7 @@ namespace Contralto
 
             while(true)
             {
+                MemoryBus.Clock();
                 cpu.ExecuteNext();
             }
 
