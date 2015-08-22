@@ -43,8 +43,6 @@ namespace Contralto.CPU
             _currentTask = _nextTask;
             _nextTask = null;
 
-            // test
-            _l = ConstantMemory.ConstantROM[0];
         }
 
         public void ExecuteNext()
@@ -141,7 +139,20 @@ namespace Contralto.CPU
                 ushort busData = 0;        // from BUS   
                 ushort aluData = 0;        // from ALU
                 bool nextTask = false;
-                ushort nextModifier = 0;   // for branches (OR'd into NEXT field)                
+                ushort nextModifier = 0;   // for branches (OR'd into NEXT field)   
+               
+                //
+                // Wait for memory state machine if a memory operation is requested by this instruction and
+                // the memory isn't ready yet.
+                //
+                if ((instruction.BS == BusSource.ReadMD ||
+                    instruction.F1 == SpecialFunction1.LoadMAR ||
+                    instruction.F2 == SpecialFunction2.StoreMD) 
+                    && !MemoryBus.Ready())
+                {
+                    // Suspend operation for this cycle.
+                    return false;
+                }
 
                 // Select BUS data.
                 if (instruction.F1 != SpecialFunction1.Constant &&
@@ -168,6 +179,7 @@ namespace Contralto.CPU
                             break;
 
                         case BusSource.ReadMD:
+                            // TODO: wait for MD if not ready.
                             busData = MemoryBus.ReadMD();
                             break;
 
@@ -301,7 +313,7 @@ namespace Contralto.CPU
                         break;
 
                     case SpecialFunction2.StoreMD:
-                        MemoryBus.StoreMD(busData);
+                        MemoryBus.LoadMD(busData);
                         break;
 
                     case SpecialFunction2.Constant:
@@ -345,7 +357,7 @@ namespace Contralto.CPU
                     _cpu._l = aluData;
 
                     // Save ALUC0 for use in the next ALUCY special function.
-                    _cpu._aluC0 = ALU.Carry;
+                    _cpu._aluC0 = (ushort)ALU.Carry;
                 }
 
                 // Do shifter

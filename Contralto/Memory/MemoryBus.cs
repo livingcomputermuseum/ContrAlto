@@ -6,6 +6,13 @@ using System.Threading.Tasks;
 
 namespace Contralto.Memory
 {
+    public enum MemoryOperation
+    {
+        LoadAddress,
+        Read,
+        Load
+    }
+
     public static class MemoryBus
     {
         static MemoryBus()
@@ -19,26 +26,56 @@ namespace Contralto.Memory
 
         public static void Clock()
         {
+            _memoryCycle++;
             if (_memoryOperationActive)
-            {
-                _memoryCycle++;
-                
+            {                                
                 switch (_memoryCycle)
                 {
                     case 3:
+                        // Buffered read of single word
                         _memoryData = ReadFromBus(_memoryAddress);
                         break;
 
                     case 4:
-                        _memoryData2 = ReadFromBus(_memoryAddress ^ 1);
+                        // Buffered read of double-word
+                        _memoryData2 = ReadFromBus((ushort)(_memoryAddress ^ 1));
                         break;
 
-                    case 6:
+                    case 5:
+                        // End of memory operation
                         _memoryOperationActive = false;
-                        _doubleWordStore = false;
-                        _memoryCycle = 0;
+                        _doubleWordStore = false;                        
                         break;
                 }
+            }
+        }
+
+        public static bool Ready(MemoryOperation op)
+        {
+            if (_memoryOperationActive)
+            {
+                switch (op)
+                {
+                    case MemoryOperation.LoadAddress:
+                        // Can't start a new Load operation until the current one is finished.
+                        return false;
+
+                    case MemoryOperation.Read:
+                        // Read operations take place on cycles 5 and 6
+                        return _memoryCycle > 4;
+
+                    case MemoryOperation.Load:
+                        // Write operations take place on cycles 3 and 4
+                        return _memoryCycle > 2;
+
+                    default:
+                        throw new InvalidOperationException(String.Format("Unexpected memory operation {0}", op));
+                }
+            }
+            else
+            {
+                // Nothing running right now, we're ready for anything.
+                return true;
             }
         }
 
@@ -46,7 +83,8 @@ namespace Contralto.Memory
         {
             if (_memoryOperationActive)
             {
-                // TODO: stall CPU
+                // This should not happen; CPU should check whether the operation is possible using Ready and stall if not.
+                throw new InvalidOperationException("Invalid LoadMAR request during active memory operation.");
             }
             else
             {
@@ -69,17 +107,17 @@ namespace Contralto.Memory
                         throw new InvalidOperationException("Unexpected microcode behavior -- ReadMD too soon after start of memory cycle.");
                     case 3:
                     case 4:
-                        // TODO: not ready yet; need to tell CPU to wait.
-
+                        // This should not happen; CPU should check whether the operation is possible using Ready and stall if not.
+                        throw new InvalidOperationException("Invalid ReadMR request during cycle 3 or 4 of memory operation.");
                         break;
 
                     case 5:
                         // Single word read
                         return _memoryData;                        
 
-                    case 6:  // TODO: rectify with timing (doubleword read extends cycle to 6)
-                        // Doubleword read:
-                        return _memoryData2;                        
+                    // ***
+                    // NB: Handler for double-word read (cycle 6) is in the "else" clause below; this is kind of a hack.
+                    // ***
 
                     default:
                         // Invalid state.
@@ -88,8 +126,18 @@ namespace Contralto.Memory
             }
             else
             {                                
-                // not running, just return last latched contents
-                return _memoryData;
+                // memory state machine not running, just return last latched contents.
+                // ("Because the Alto II latches memory contents, it is possible to execute _MD anytime after
+                // cycle 5 of a reference and obtain the results of the read operation")
+                // If this is memory cycle 6 we will return the last half of the doubleword to complete a double-word read.
+                if (_memoryCycle == 6)
+                {
+                    return _memoryData2;
+                }
+                else
+                {
+                    return _memoryData;
+                }
             }
         }
 
@@ -103,8 +151,7 @@ namespace Contralto.Memory
                     case 2:
                     case 5:
                         // TODO: good microcode should never do this
-                        throw new InvalidOperationException("Unexpected microcode behavior -- LoadMD too soon after start of memory cycle.");
-                        break;
+                        throw new InvalidOperationException("Unexpected microcode behavior -- LoadMD during incorrect memory cycle.");                        
 
                     case 3:
                         // Start of doubleword write:
@@ -113,11 +160,33 @@ namespace Contralto.Memory
                         break;
 
                     case 4:                        
-                        WriteToBus(_doubleWordStore ? _memoryAddress ^ 1 : _memoryAddress, data);
+                        WriteToBus(_doubleWordStore ? (ushort)(_memoryAddress ^ 1) : _memoryAddress, data);
                         break;
                 }       
 
             }
+        }
+
+        /// <summary>
+        /// Dispatches reads to memory mapped hardware (RAM, I/O)
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
+        private static ushort ReadFromBus(ushort address)
+        {
+            // TODO: actually dispatch to I/O
+            return _mem.Read(address);
+        }
+
+        /// <summary>
+        /// Dispatches writes to memory mapped hardware (RAM, I/O
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        private static void WriteToBus(ushort address, ushort data)
+        {
+            _mem.Load(address, data);
         }
 
 
