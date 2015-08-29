@@ -7,8 +7,6 @@ using System.Threading.Tasks;
 
 namespace Contralto.CPU
 {
-
-
     static class ConstantMemory
     {
         static ConstantMemory()

@@ -44,17 +44,21 @@
     <Compile Include="CPU\ALU.cs" />
     <Compile Include="CPU\ConstantMemory.cs" />
     <Compile Include="CPU\CPU.cs" />
+    <Compile Include="CPU\Disassembler.cs" />
     <Compile Include="CPU\MicroInstruction.cs" />
     <Compile Include="CPU\Shifter.cs" />
     <Compile Include="CPU\UCodeMemory.cs" />
     <Compile Include="Memory\IMemoryMappedDevice.cs" />
     <Compile Include="Memory\Memory.cs" />
     <Compile Include="Memory\MemoryBus.cs" />
+    <Compile Include="OctalHelpers.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Disassembly\altocode24.mu" />
     <None Include="App.config" />
+    <None Include="Disassembly\altoIIcode3.mu" />
     <None Include="ROM\C0">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

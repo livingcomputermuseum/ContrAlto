@@ -14,6 +14,11 @@ namespace Contralto.CPU
     {
         static ALU()
         {
+            Reset();
+        }
+
+        public static void Reset()
+        {
             _carry = 0;
         }
 

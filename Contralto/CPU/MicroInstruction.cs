@@ -66,6 +66,39 @@ namespace Contralto.CPU
         Undefined2 = 15,
     }
 
+    //
+    // Task-specific enumerations follow
+    //
+    enum EmulatorF1
+    {
+        SWMODE = 8,
+        WRTRAM = 9,
+        RDRAM = 10,
+        LoadRMR = 11,
+        Unused = 12,
+        LoadESRB = 13,
+        RSNF = 14,
+        STARTF = 15,
+    }
+
+    enum EmulatorF2
+    {
+        BUSODD = 8,
+        MAGIC = 9,
+        LoadDNS = 10,
+        ACDEST = 11,
+        LoadIR = 12,
+        IDISP = 13,
+        ACSOURCE = 14,
+        Unused = 15,
+    }
+
+    enum EmulatorBusSource
+    {
+        ReadSLocation = 3,  // <-SLOCATION: read from S reg into M
+        LoadSLocation = 4,  // SLOCATION<- store to S reg from M
+    }
+
     public class MicroInstruction
     {
         public MicroInstruction(UInt32 code)

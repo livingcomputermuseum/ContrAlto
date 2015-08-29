@@ -13,7 +13,7 @@ namespace Contralto.CPU
         ShiftLeft,
         ShiftRight,
         RotateLeft,
-        RotateRight
+        RotateRight,          
     }
 
     public static class Shifter
@@ -21,14 +21,28 @@ namespace Contralto.CPU
         static Shifter()
         {
             _op = ShifterOp.Invalid;
+            _count = 0;
+            _magic = false;
         }
 
         public static void SetOperation(ShifterOp op, int count)
         {
             _op = op;
+            _count = count;
         }
 
-        public static ushort DoOperation(ushort input)
+        public static void SetMagic(bool magic)
+        {
+            _magic = magic;
+        }
+
+        /// <summary>
+        /// Does the last specified operation to the specified inputs
+        /// </summary>
+        /// <param name="input">Normal input to be shifted</param>
+        /// <param name="t">CPU t register, for MAGIC shifts only</param>
+        /// <returns></returns>
+        public static ushort DoOperation(ushort input, ushort t)
         {
             ushort output = 0;
             switch(_op)
@@ -77,5 +91,6 @@ namespace Contralto.CPU
 
         private static ShifterOp _op;
         private static int _count;
+        private static bool _magic;
     }
 }
