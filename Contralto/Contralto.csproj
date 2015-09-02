@@ -34,6 +34,8 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -41,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AltoSystem.cs" />
     <Compile Include="CPU\ALU.cs" />
     <Compile Include="CPU\ConstantMemory.cs" />
     <Compile Include="CPU\CPU.cs" />
@@ -48,6 +51,12 @@
     <Compile Include="CPU\MicroInstruction.cs" />
     <Compile Include="CPU\Shifter.cs" />
     <Compile Include="CPU\UCodeMemory.cs" />
+    <Compile Include="Debugger.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Debugger.Designer.cs">
+      <DependentUpon>Debugger.cs</DependentUpon>
+    </Compile>
     <Compile Include="Memory\IMemoryMappedDevice.cs" />
     <Compile Include="Memory\Memory.cs" />
     <Compile Include="Memory\MemoryBus.cs" />
@@ -169,6 +178,11 @@
     <None Include="ROM\U75_2k">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Debugger.resx">
+      <DependentUpon>Debugger.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

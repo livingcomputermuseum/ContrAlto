@@ -10,7 +10,7 @@ namespace Contralto.Memory
     {
         public Memory()
         {
-            _mem = new ushort[0xffff];
+            _mem = new ushort[0x10000];
         }
 
         public ushort Read(int address)

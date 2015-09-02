@@ -9,24 +9,75 @@ namespace Contralto.CPU
 {   
     public enum TaskType
     {
+        Invalid = -1,
         Emulator = 0,
         DiskSector = 4,
-        Ethernet = 5,
-        DiskWord = 9,
+        Ethernet = 7,
+        MemoryRefresh = 8,
+        DisplayWord = 9,
         Cursor = 10,
         DisplayHorizontal = 11,
         DisplayVertical = 12,
-        Refresh = 14,
+        Parity = 13,
+        DiskWord = 14,
     }
 
     public class AltoCPU
     {
-        public AltoCPU()
+        public AltoCPU(AltoSystem system)
         {
+            _system = system;
+
             _tasks[(int)TaskType.Emulator] = new EmulatorTask(this);
 
             Reset();
         }
+
+        public Task[] Tasks
+        {
+            get { return _tasks; }
+        }
+
+        public Task CurrentTask
+        {
+            get { return _currentTask; }
+        }
+
+        public ushort[] R
+        {
+            get { return _r; }
+        }
+
+        public ushort[][] S
+        {
+            get { return _s; }
+        }
+
+        public ushort T
+        {
+            get { return _t; }
+        }
+
+        public ushort L
+        {
+            get { return _l; }
+        }
+
+        public ushort M
+        {
+            get { return _m; }
+        }
+
+        public ushort IR
+        {
+            get { return _ir; }
+        }
+
+        public ushort ALUC0
+        {
+            get { return _aluC0; }
+        }
+
 
         public void Reset()
         {
@@ -126,7 +177,7 @@ namespace Contralto.CPU
         // Base task class: provides implementation for non-task-specific microcode execution and
         // state.  Task subclasses implement and execute Task-specific behavior and are called into
         // by the base class as necessary.
-        private abstract class Task
+        public abstract class Task
         {        
             public Task(AltoCPU cpu)
             {
@@ -144,6 +195,11 @@ namespace Contralto.CPU
             public bool Wakeup
             {
                 get { return _wakeup; }
+            }
+
+            public ushort MPC
+            {
+                get { return _mpc; }
             }
 
             public virtual void Reset()
@@ -183,6 +239,7 @@ namespace Contralto.CPU
                 bool nextTask = false;
                 bool loadR = false;
                 ushort aluData = 0;
+                ushort nextModifier = 0;
                 _loadS = false;
                 _rSelect = 0;
                 _busData = 0;
@@ -193,15 +250,38 @@ namespace Contralto.CPU
                 //
                 // Wait for memory state machine if a memory operation is requested by this instruction and
                 // the memory isn't ready yet.
+                // TODO: this needs to be seriously cleaned up.
                 //
-                if ((instruction.BS == BusSource.ReadMD ||
+                if (instruction.BS == BusSource.ReadMD ||
                     instruction.F1 == SpecialFunction1.LoadMAR ||
-                    instruction.F2 == SpecialFunction2.StoreMD) 
-                    && !MemoryBus.Ready(MemoryOperation.Load))  //TODO: fix
+                    instruction.F2 == SpecialFunction2.StoreMD)
                 {
-                    // Suspend operation for this cycle.
-                    return false;
+
+                    MemoryOperation op;
+
+                    if (instruction.BS == BusSource.ReadMD)
+                    {
+                        op = MemoryOperation.Read;
+                    }
+                    else if(instruction.F1 == SpecialFunction1.LoadMAR)
+                    {
+                        op = MemoryOperation.LoadAddress;
+                    }
+                    else
+                    {
+                        op = MemoryOperation.Store;
+                    }
+
+                    if (!_cpu._system.MemoryBus.Ready(op))
+                    {
+                        // Suspend operation for this cycle.
+                        return false;
+                    }
                 }
+
+                // If we have a modified next field from the last instruction, make sure it gets applied to this one.
+                nextModifier = _nextModifier;
+                _nextModifier = 0;
 
                 _rSelect = instruction.RSELECT;
 
@@ -234,17 +314,31 @@ namespace Contralto.CPU
                             break;
 
                         case BusSource.ReadMD:
-                            _busData = MemoryBus.ReadMD();
+                            _busData = _cpu._system.MemoryBus.ReadMD();
                             break;
 
                         case BusSource.ReadMouse:
-                            throw new NotImplementedException("ReadMouse bus source not implemented.");
-                            _busData = 0;   // TODO: implement
+                            //throw new NotImplementedException("ReadMouse bus source not implemented.");
+                            _busData = 0;   // TODO: implement;
                             break;
 
                         case BusSource.ReadDisp:
-                            throw new NotImplementedException("ReadDisp bus source not implemented.");
-                            _busData = 0;   // TODO: implement;
+                            // "The high-order bits of IR cannot be read directly, but the displacement field of IR (8 low order bits),
+                            // may be read with the <-DISP bus source.  If the X field of the instruction is zero (i.e. it specifies page 0
+                            // addressing) then the DISP field of the instruction is put on BUS[8-15] and BUS[0-7] is zeroed.  If the X
+                            // field of the instruction is nonzero (i.e. it specifies PC-relative or base-register addressing) then the DISP
+                            // field is sign-extended and put on the bus."
+                            // NB: the "X" field of the NOVA instruction is IR[6-7]                            
+                            _busData = (ushort)(_cpu._ir & 0xff);
+
+                            if ((_cpu._ir & 0x300) != 0)
+                            {
+                                // sign extend if necessary
+                                if ((_cpu._ir & 0x80) == 0x80)
+                                {
+                                    _busData |= (0xff00);
+                                }
+                            }
                             break;
 
                         default:
@@ -291,7 +385,7 @@ namespace Contralto.CPU
                         break;
 
                     case SpecialFunction1.LoadMAR:
-                        MemoryBus.LoadMAR(aluData);    // Start main memory reference
+                        _cpu._system.MemoryBus.LoadMAR(aluData);    // Start main memory reference
                         break;
 
                     case SpecialFunction1.Task:
@@ -373,7 +467,7 @@ namespace Contralto.CPU
                         break;
 
                     case SpecialFunction2.StoreMD:
-                        MemoryBus.LoadMD(_busData);
+                        _cpu._system.MemoryBus.LoadMD(_busData);
                         break;
 
                     case SpecialFunction2.Constant:
@@ -382,7 +476,7 @@ namespace Contralto.CPU
 
                     default:
                         // Let the specific task implementation take a crack at this.
-                        ExecuteSpecialFunction2((int)instruction.F1);
+                        ExecuteSpecialFunction2((int)instruction.F2);
                         break;
                 }
 
@@ -434,9 +528,9 @@ namespace Contralto.CPU
                 }
 
                 //
-                // Select next address  -- TODO: this is incorrect!  _nextModifer should be applied to the *NEXT* instruction, not the current one!
+                // Select next address, using the address modifier from the last instruction.
                 //
-                _mpc = (ushort)(instruction.NEXT | _nextModifier);
+                _mpc = (ushort)(instruction.NEXT | nextModifier);
                 return nextTask;
             }            
 
@@ -742,6 +836,9 @@ namespace Contralto.CPU
         private Task[] _tasks = new Task[16];
 
         private long _clocks;
+
+        // The system this CPU belongs to
+        private AltoSystem _system;
 
     }
 }

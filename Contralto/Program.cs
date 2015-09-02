@@ -13,20 +13,13 @@ namespace Contralto
     {
         static void Main(string[] args)
         {
-            AltoCPU cpu = new AltoCPU();
 
-            for(int i=0;i<2048;i++)
-            {
-                MicroInstruction inst = new MicroInstruction(UCodeMemory.UCodeROM[i]);
+            AltoSystem system = new AltoSystem();
 
-                Console.WriteLine("{0}: {1}", OctalHelpers.ToOctal(i), Disassembler.DisassembleInstruction(inst, TaskType.Emulator));
-            }
-
-            while(true)
-            {
-                MemoryBus.Clock();
-                cpu.ExecuteNext();
-            }
+            // for now everything is driven through the debugger            
+            Debugger d = new Debugger(system);
+            d.LoadSourceCode("Disassembly\\altoIIcode3.mu");
+            d.ShowDialog();                       
 
         }
     }

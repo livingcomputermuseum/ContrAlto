@@ -10,21 +10,46 @@ namespace Contralto.Memory
     {
         LoadAddress,
         Read,
-        Load
+        Store
     }
 
-    public static class MemoryBus
+    public class MemoryBus
     {
-        static MemoryBus()
+        public MemoryBus()
         {
             _mem = new Memory();
+            Reset();
+        }
+
+        public void Reset()
+        {
             _memoryCycle = 0;
             _memoryAddress = 0;
             _memoryData = 0;
             _memoryOperationActive = false;
         }
 
-        public static void Clock()
+        public ushort MAR
+        {
+            get { return _memoryAddress; }
+        }
+
+        public ushort MD
+        {
+            get { return _memoryData; }
+        }
+
+        public int Cycle
+        {
+            get { return _memoryCycle; }
+        }
+
+        public bool Active
+        {
+            get { return _memoryOperationActive; }
+        }
+
+        public void Clock()
         {
             _memoryCycle++;
             if (_memoryOperationActive)
@@ -50,7 +75,7 @@ namespace Contralto.Memory
             }
         }
 
-        public static bool Ready(MemoryOperation op)
+        public bool Ready(MemoryOperation op)
         {
             if (_memoryOperationActive)
             {
@@ -64,7 +89,7 @@ namespace Contralto.Memory
                         // Read operations take place on cycles 5 and 6
                         return _memoryCycle > 4;
 
-                    case MemoryOperation.Load:
+                    case MemoryOperation.Store:
                         // Write operations take place on cycles 3 and 4
                         return _memoryCycle > 2;
 
@@ -79,7 +104,7 @@ namespace Contralto.Memory
             }
         }
 
-        public static void LoadMAR(ushort address)
+        public void LoadMAR(ushort address)
         {
             if (_memoryOperationActive)
             {
@@ -95,7 +120,7 @@ namespace Contralto.Memory
             }
         }
 
-        public static ushort ReadMD()
+        public ushort ReadMD()
         {
             if (_memoryOperationActive)
             {
@@ -141,7 +166,7 @@ namespace Contralto.Memory
             }
         }
 
-        public static void LoadMD(ushort data)
+        public void LoadMD(ushort data)
         {
             if (_memoryOperationActive)
             {
@@ -154,12 +179,14 @@ namespace Contralto.Memory
                         throw new InvalidOperationException("Unexpected microcode behavior -- LoadMD during incorrect memory cycle.");                        
 
                     case 3:
+                        _memoryData = data; // Only really necessary to show in debugger
                         // Start of doubleword write:
                         WriteToBus(_memoryAddress, data);
                         _doubleWordStore = true;
                         break;
 
-                    case 4:                        
+                    case 4:
+                        _memoryData = data; // Only really necessary to show in debugger
                         WriteToBus(_doubleWordStore ? (ushort)(_memoryAddress ^ 1) : _memoryAddress, data);
                         break;
                 }       
@@ -172,7 +199,7 @@ namespace Contralto.Memory
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        private static ushort ReadFromBus(ushort address)
+        private ushort ReadFromBus(ushort address)
         {
             // TODO: actually dispatch to I/O
             return _mem.Read(address);
@@ -184,22 +211,22 @@ namespace Contralto.Memory
         /// <param name="address"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        private static void WriteToBus(ushort address, ushort data)
+        private void WriteToBus(ushort address, ushort data)
         {
             _mem.Load(address, data);
         }
 
 
-        private static Memory _mem;
-        private static bool _memoryOperationActive;
-        private static int _memoryCycle;
-        private static ushort _memoryAddress;
+        private Memory _mem;
+        private bool _memoryOperationActive;
+        private int _memoryCycle;
+        private ushort _memoryAddress;
         
         // Buffered read data (on cycles 3 and 4)
-        private static ushort _memoryData;
-        private static ushort _memoryData2;
+        private ushort _memoryData;
+        private ushort _memoryData2;
 
         // Indicates a double-word store (started on cycle 3)
-        private static bool _doubleWordStore;
+        private bool _doubleWordStore;
     }
 }

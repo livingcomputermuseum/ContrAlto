@@ -12,5 +12,11 @@ namespace Contralto
         {
             return Convert.ToString(i, 8);            
         }
+
+        public static string ToOctal(int i, int digits)
+        {
+            string octalString = Convert.ToString(i, 8);
+            return new String('0', digits - octalString.Length) + octalString;
+        }
     }
 }
