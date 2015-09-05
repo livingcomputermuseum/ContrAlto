@@ -69,6 +69,10 @@ namespace Contralto.CPU
     //
     // Task-specific enumerations follow
     //
+
+    //
+    // Emulator
+    //
     enum EmulatorF1
     {
         SWMODE = 8,
@@ -97,6 +101,38 @@ namespace Contralto.CPU
     {
         ReadSLocation = 3,  // <-SLOCATION: read from S reg into M
         LoadSLocation = 4,  // SLOCATION<- store to S reg from M
+    }
+
+
+    //
+    // Disk (both sector and word tasks)
+    //
+    enum DiskF1
+    {
+        STROBE = 9,
+        LoadKSTAT = 10,
+        INCRECNO = 11,
+        CLRSTAT = 12,
+        LoadKCOMM = 13,
+        LoadKADR = 14,
+        LoadKDATA = 15,
+    }
+
+    enum DiskF2
+    {
+        INIT = 8,
+        RWC = 9,
+        RECNO = 10,
+        XFRDAT = 11,
+        SWRNRDY = 12,
+        NFER = 13,
+        STROBON = 14,
+    }
+
+    enum DiskBusSource
+    {
+        ReadKSTAT = 3,
+        ReadKDATA = 4,
     }
 
     public class MicroInstruction

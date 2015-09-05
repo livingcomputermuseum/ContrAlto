@@ -140,11 +140,11 @@ namespace Contralto.CPU
         /// "wakeup" signal triggered
         /// </summary>
         /// <param name="task"></param>
-        public void WakeupTask(int task)
+        public void WakeupTask(TaskType task)
         {            
-            if (_tasks[task] != null)
+            if (_tasks[(int)task] != null)
             {
-                _tasks[task].WakeupTask();
+                _tasks[(int)task].WakeupTask();
             }
         }
 
@@ -153,11 +153,11 @@ namespace Contralto.CPU
         /// "wakeup" signal cleared
         /// </summary>
         /// <param name="task"></param>
-        public void BlockTask(int task)
+        public void BlockTask(TaskType task)
         {
-            if (_tasks[task] != null)
+            if (_tasks[(int)task] != null)
             {
-                _tasks[task].BlockTask();
+                _tasks[(int)task].BlockTask();
             }
         }
 
@@ -183,13 +183,13 @@ namespace Contralto.CPU
             {
                 _wakeup = false;
                 _mpc = 0xffff;  // invalid, for sanity checking
-                _priority = -1; // invalid
+                _taskType = TaskType.Invalid;
                 _cpu = cpu;
             }
 
             public int Priority
             {
-                get { return _priority; }
+                get { return (int)_taskType; }
             }
 
             public bool Wakeup
@@ -207,12 +207,11 @@ namespace Contralto.CPU
                 // From The Alto Hardware Manual (section 2, "Initialization"):
                 // "...each task start[s] at the location which is its task number"
                 // 
-                _mpc = (ushort)_priority;
+                _mpc = (ushort)_taskType;
             }
 
             public virtual void BlockTask()
-            {
-                // Used only by hardware interfaces, where applicable
+            {                
                 _wakeup = false;
             }
 
@@ -370,7 +369,7 @@ namespace Contralto.CPU
                 }
                 
                 // Do ALU operation
-                aluData = ALU.Execute(instruction.ALUF, _busData, _cpu._t);
+                aluData = ALU.Execute(instruction.ALUF, _busData, _cpu._t, _skip);
 
                 // Reset shifter op
                 Shifter.SetOperation(ShifterOp.None, 0);
@@ -393,8 +392,10 @@ namespace Contralto.CPU
                         break;
 
                     case SpecialFunction1.Block:
-                        // "...this function is reserved by convention only; it is *not* done by the microprocessor"
-                        throw new InvalidOperationException("BLOCK should never be invoked by microcode.");
+                        // Technically this is to be invoked by the hardware device associated with a task.
+                        // That logic would be circituous and unless there's a good reason not to that is discovered
+                        // later, I'm just going to directly block the current task here.
+                        _cpu.BlockTask(this._taskType);
                         break;
 
                     case SpecialFunction1.LLSH1:
@@ -505,16 +506,6 @@ namespace Contralto.CPU
                     _cpu._t = loadTFromALU ? aluData : _busData;
                 }
 
-                // Load L (and M) from ALU
-                if (instruction.LoadL)
-                {
-                    _cpu._l = aluData;
-                    _cpu._m = aluData;
-
-                    // Save ALUC0 for use in the next ALUCY special function.
-                    _cpu._aluC0 = (ushort)ALU.Carry;
-                }
-               
                 // Do writeback to selected R register from shifter output
                 if (loadR)
                 {
@@ -527,6 +518,16 @@ namespace Contralto.CPU
                     _cpu._s[_cpu._rb][_rSelect] = _cpu._m;
                 }
 
+                // Load L (and M) from ALU
+                if (instruction.LoadL)
+                {
+                    _cpu._l = aluData;
+                    _cpu._m = aluData;
+
+                    // Save ALUC0 for use in the next ALUCY special function.
+                    _cpu._aluC0 = (ushort)ALU.Carry;
+                }
+                               
                 //
                 // Select next address, using the address modifier from the last instruction.
                 //
@@ -565,8 +566,12 @@ namespace Contralto.CPU
             //
             protected AltoCPU _cpu;
             protected ushort _mpc;
-            protected int _priority;
-            protected bool _wakeup;            
+            protected TaskType _taskType;
+            protected bool _wakeup;
+
+            // Emulator Task-specific data.  This is placed here because it is used by the ALU and it's easier to reference in the
+            // base class even if it does break encapsulation.  See notes in the EmulatorTask class for meaning.        
+            protected int _skip;
         }
 
         /// <summary>
@@ -576,7 +581,7 @@ namespace Contralto.CPU
         {
             public EmulatorTask(AltoCPU cpu) : base(cpu)
             {
-                _priority = 0;
+                _taskType = TaskType.Emulator;
 
                 // The Wakeup signal is always true for the Emulator task.
                 _wakeup = true;
@@ -629,6 +634,10 @@ namespace Contralto.CPU
                         throw new NotImplementedException();
                         break;
 
+                    case EmulatorF1.SWMODE:
+                        // nothing! for now.
+                        break;
+
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled emulator F1 {0}.", ef1));
                 }
@@ -670,7 +679,10 @@ namespace Contralto.CPU
                         // instruction dispatch."
                         // TODO: is this an AND or an OR operation?  (how is the "merge" done?)
                         // Assuming for now this is an OR operation like everything else that modifies NEXT.
-                        _nextModifier = (ushort)(((_busData & 0x8000) >> 6) | ((_busData & 0x0700) >> 2));
+                        _nextModifier = (ushort)(((_busData & 0x8000) >> 12) | ((_busData & 0x0700) >> 8));
+
+                        // "IR<- clears SKIP"
+                        _skip = 0;
                         break;
 
                     case EmulatorF2.IDISP:
@@ -688,7 +700,7 @@ namespace Contralto.CPU
                         //   elseif IR[4-7] = 16B   6
                         //   else                   IR[4-7]
                         // NB: as always, Xerox labels bits in the opposite order from modern convention;
-                        // (bit 0 is bit 15...)
+                        // (bit 0 is the msb...)
                         if ((_cpu._ir & 0x8000) != 0)
                         {
                             _nextModifier = (ushort)(3 - ((_cpu._ir & 0xc0) >> 6));
@@ -801,7 +813,7 @@ namespace Contralto.CPU
                     case EmulatorF2.BUSODD:
                         // "...merges BUS[15] into NEXT[9]."
                         // TODO: is this an AND or an OR?
-                        _nextModifier = (ushort)((_nextModifier & 0xffbf) | ((_busData & 0x1) << 6));
+                        _nextModifier |= (ushort)(_busData & 0x1);
                         break;
 
                     case EmulatorF2.MAGIC:
@@ -812,7 +824,111 @@ namespace Contralto.CPU
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled emulator F2 {0}.", ef2));
                 }
+            }
+
+            // From Section 3, Pg. 31:
+            // "The emulator has two additional bits of state, the SKIP and CARRY flip flops. CARRY is distinct from the
+            // microprocessor’s ALUC0 bit, tested by the ALUCY function.  CARRY is set or cleared as a function of IR and
+            // many other things(see section 3.1) when the DNS<-(do novel shifts, F2= 12B) function is executed.  In
+            // particular, if IR[12] is true, CARRY will not change.  DNS also addresses R from (3-IR[3 - 4]), causes a store
+            // into R unless IR[12] is set, and sets the SKIP flip flop if appropriate(see section 3.1).  The emulator
+            // microcode increments PC by 1 at the beginning of the next emulated instruction if SKIP is set, using
+            // BUS+SKIP(ALUF= 13B).  IR_ clears SKIP."
+            //
+            // NB: _skip is in the encapsulating AltoCPU class to make it easier to reference since the ALU needs to know about it.
+            private int _carry;
+        }
+
+        /// <summary>
+        /// DiskSectorTask provides implementation for disk-specific special functions
+        /// </summary>
+        private class DiskSectorTask : Task
+        {
+            public DiskSectorTask(AltoCPU cpu) : base(cpu)
+            {
+                _taskType = TaskType.DiskSector;                
+                _wakeup = false;
+            }
+
+            protected override ushort GetBusSource(int bs)
+            {
+                DiskBusSource dbs = (DiskBusSource)bs;
+
+                switch (dbs)
+                {
+                    case DiskBusSource.ReadKSTAT:
+                        return _cpu._system.DiskController.KSTAT;                        
+
+                    case DiskBusSource.ReadKDATA:
+                        return _cpu._system.DiskController.KDATA;                        
+
+                    default:
+                        throw new InvalidOperationException(String.Format("Unhandled bus source {0}", bs));
+                }
+            }
+
+            protected override void ExecuteSpecialFunction1(int f1)
+            {
+                DiskF1 df1 = (DiskF1)f1;
+
+                switch(df1)
+                {
+                    case DiskF1.LoadKDATA:
+                        // "The KDATA register is loaded from BUS[0-15]."
+                        _cpu._system.DiskController.KDATA = _busData;
+                        break;
+
+                    case DiskF1.LoadKADR:
+                        // "This causes the KADR register to be loaded from BUS[8-14].
+                        //  in addition, it causes the head address bit to be loaded from KDATA[13]."
+                        //  TODO: do the latter (likely inside the controller)
+                        _cpu._system.DiskController.KADR = (ushort)((_busData & 0xfe) >> 1);
+                        break;
+
+                    case DiskF1.LoadKCOMM:
+                        _cpu._system.DiskController.KCOM = (ushort)((_busData & 0x7c00) >> 10);
+                        break;
+
+                    case DiskF1.CLRSTAT:
+                        _cpu._system.DiskController.ClearStatus();
+                        break;
+
+                    case DiskF1.INCRECNO:                                                
+                        _cpu._system.DiskController.IncrementRecord();
+                        break;
+
+                    case DiskF1.LoadKSTAT:
+                        // "KSTAT[12-15] are loaded from BUS[12-15].  (Actually BUS[13] is ORed onto
+                        // KSTAT[13].)"                        
+
+                        // OR in BUS[12-15] after masking in KSTAT[13] so it is ORed in properly.
+                        _cpu._system.DiskController.KSTAT = (ushort)(((_cpu._system.DiskController.KSTAT & 0xfff4)) | (_busData & 0xf));
+                        break;
+
+                    case DiskF1.STROBE:
+                        _cpu._system.DiskController.Strobe();
+                        break;
+
+                    default:
+                        throw new InvalidOperationException(String.Format("Unhandled disk special function 1 {0}", df1));
+                }
             }            
+
+            protected override void ExecuteSpecialFunction2(int f2)
+            {
+                DiskF2 df2 = (DiskF2)f2;
+
+                switch(df2)
+                {
+                    case DiskF2.INIT:
+                        // "NEXT<-NEXT OR (if WDTASKACT AND WDINIT) then 37B else 0
+                        // TODO: figure out how WDTASKACT and WDINIT work.
+                        throw new NotImplementedException("INIT not implemented.");
+
+                    default:
+                        throw new InvalidOperationException(String.Format("Unhandled disk special function 2 {0}", df2));
+                }
+            }
         }
 
 
@@ -833,7 +949,7 @@ namespace Contralto.CPU
         // Task data
         private Task _nextTask;         // The task to switch two after the next microinstruction
         private Task _currentTask;      // The currently executing task
-        private Task[] _tasks = new Task[16];
+        private Task[] _tasks = new Task[16];        
 
         private long _clocks;
 

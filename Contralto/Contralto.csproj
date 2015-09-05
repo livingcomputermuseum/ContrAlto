@@ -57,6 +57,8 @@
     <Compile Include="Debugger.Designer.cs">
       <DependentUpon>Debugger.cs</DependentUpon>
     </Compile>
+    <Compile Include="IO\DiskController.cs" />
+    <Compile Include="IO\Keyboard.cs" />
     <Compile Include="Memory\IMemoryMappedDevice.cs" />
     <Compile Include="Memory\Memory.cs" />
     <Compile Include="Memory\MemoryBus.cs" />

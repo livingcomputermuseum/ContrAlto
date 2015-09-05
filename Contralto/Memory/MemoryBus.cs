@@ -17,8 +17,32 @@ namespace Contralto.Memory
     {
         public MemoryBus()
         {
-            _mem = new Memory();
+            _bus = new Dictionary<ushort, IMemoryMappedDevice>(65536);            
             Reset();
+        }
+
+        public void AddDevice(IMemoryMappedDevice dev)
+        {
+            //
+            // Add the new device to the hash; this is done by adding
+            // one entry for every address claimed by the device.  Since we have only 64K of address
+            // space, this isn't too awful.
+            //
+            foreach(MemoryRange range in dev.Addresses)
+            {
+                for(ushort addr = range.Start; addr <= range.End; addr++)
+                {
+                    if (_bus.ContainsKey(addr))
+                    {
+                        throw new InvalidOperationException(
+                            String.Format("Memory mapped address collision for dev {0} at address {1}", dev, OctalHelpers.ToOctal(addr)));
+                    }
+                    else
+                    {
+                        _bus.Add(addr, dev);
+                    }
+                }
+            }
         }
 
         public void Reset()
@@ -201,8 +225,16 @@ namespace Contralto.Memory
         /// <returns></returns>
         private ushort ReadFromBus(ushort address)
         {
-            // TODO: actually dispatch to I/O
-            return _mem.Read(address);
+            // Look up address in hash; if populated ask the device
+            // to return a value otherwise throw.
+            if (_bus.ContainsKey(address))
+            {
+                return _bus[address].Read(address);
+            }
+            else
+            {
+                throw new NotImplementedException(String.Format("Read from unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));
+            }
         }
 
         /// <summary>
@@ -213,11 +245,23 @@ namespace Contralto.Memory
         /// <returns></returns>
         private void WriteToBus(ushort address, ushort data)
         {
-            _mem.Load(address, data);
+            // Look up address in hash; if populated ask the device
+            // to store a value otherwise throw.
+            if (_bus.ContainsKey(address))
+            {
+                _bus[address].Load(address, data);
+            }
+            else
+            {
+                throw new NotImplementedException(String.Format("Write to unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));
+            }
         }
 
-
-        private Memory _mem;
+        /// <summary>
+        /// Hashtable used for address-based dispatch to devices on the memory bus.
+        /// </summary>
+        private Dictionary<ushort, IMemoryMappedDevice> _bus;
+        
         private bool _memoryOperationActive;
         private int _memoryCycle;
         private ushort _memoryAddress;

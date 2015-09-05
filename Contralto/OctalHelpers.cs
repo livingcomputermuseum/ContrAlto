@@ -15,7 +15,7 @@ namespace Contralto
 
         public static string ToOctal(int i, int digits)
         {
-            string octalString = Convert.ToString(i, 8);
+            string octalString = Convert.ToString(i, 8);            
             return new String('0', digits - octalString.Length) + octalString;
         }
     }

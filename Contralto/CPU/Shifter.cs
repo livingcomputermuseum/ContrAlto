@@ -16,6 +16,13 @@ namespace Contralto.CPU
         RotateRight,          
     }
 
+    //NOTE: FOR NOVA (NOVEL) SHIFTS (from aug '76 manual):
+    // The emulator has two additional bits of state, the SKIP and CARRY flip flops.CARRY is identical
+    // to the Nova carry bit, and is set or cleared as appropriate when the DNS+- (do Nova shifts)
+    // function is executed.DNS also addresses R from(1R[3 - 4] XOR 3), and sets the SKIP flip flop if 
+    // appropriate.The PC is incremented by 1 at the beginning of the next emulated instruction if
+    // SKIP is set, using ALUF DB.IR4- clears SKIP.
+
     public static class Shifter
     {
         static Shifter()
@@ -31,9 +38,13 @@ namespace Contralto.CPU
             _count = count;
         }
 
+        /// <summary>
+        /// TODO: this is kind of clumsy.
+        /// </summary>
+        /// <param name="magic"></param>
         public static void SetMagic(bool magic)
         {
-            _magic = magic;
+            _magic = magic;            
         }
 
         /// <summary>
@@ -56,10 +67,24 @@ namespace Contralto.CPU
 
                 case ShifterOp.ShiftLeft:
                     output = (ushort)(input << _count);
+
+                    if (_magic)
+                    {
+                        // "MAGIC places the high order bit of T into the low order bit of the
+                        // shifter output on left shifts..."
+                        output |= (ushort)((t & 0x8000) >> 15);
+                    }
                     break;
 
                 case ShifterOp.ShiftRight:
                     output = (ushort)(input >> _count);
+
+                    if (_magic)
+                    {
+                        // "...and places the low order bit of T into the high order bit position 
+                        // of the shifter output on right shifts."
+                        output |= (ushort)((t & 0x1) << 15);
+                    }
                     break;
 
                 case ShifterOp.RotateLeft:

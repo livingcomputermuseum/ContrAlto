@@ -27,7 +27,7 @@ namespace Contralto.CPU
             get { return _carry; }
         }
 
-        public static ushort Execute(AluFunction fn, ushort bus, ushort t)
+        public static ushort Execute(AluFunction fn, ushort bus, ushort t, int skip)
         {
             int r = 0;
             switch (fn)
@@ -89,7 +89,9 @@ namespace Contralto.CPU
                     break;
 
                 case AluFunction.BusPlusSkip:
-                    throw new NotImplementedException("SKIP?");                    
+                    r = bus + skip;
+                    _carry = (r > 0xffff) ? 1 : 0;
+                    break;
 
                 case AluFunction.BusAndNotT:
                     r = bus & (~t);
