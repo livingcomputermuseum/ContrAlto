@@ -73,6 +73,15 @@ namespace Contralto.Memory
             get { return _memoryOperationActive; }
         }
 
+        /// <summary>
+        /// Used for debugging only -- returns the (correctly mapped)
+        /// word at the specified address
+        /// </summary>
+        public ushort DebugReadWord(ushort address)
+        {
+            return ReadFromBus(address);
+        }
+
         public void Clock()
         {
             _memoryCycle++;

@@ -48,8 +48,11 @@
     <Compile Include="CPU\ConstantMemory.cs" />
     <Compile Include="CPU\CPU.cs" />
     <Compile Include="CPU\Disassembler.cs" />
+    <Compile Include="CPU\Tasks\DiskTask.cs" />
+    <Compile Include="CPU\Tasks\EmulatorTask.cs" />
     <Compile Include="CPU\MicroInstruction.cs" />
     <Compile Include="CPU\Shifter.cs" />
+    <Compile Include="CPU\Tasks\Task.cs" />
     <Compile Include="CPU\UCodeMemory.cs" />
     <Compile Include="Debugger.cs">
       <SubType>Form</SubType>

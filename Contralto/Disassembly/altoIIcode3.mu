@@ -659,7 +659,7 @@ EM00517> INXE:	T<-EIOffset, :INXCom;		***X21 addition.
 
 EM00520> INXCom: MAR<-T<-IR<- SAD+T;	*** X21 addition.
 EM00521>	PC<- L, L<- 0+T+1;	*** X21 change.
-EM00522> INXB:	SAD<- L;
+EM00522> INXB:	SAD<- L;     **NB (JDersch 9/14 -- this is actually MD<-PC !)
 EM00523>	SINK<- DISP, BUS,TASK;
 EM00524>	SAD<- L, :Q0;
 

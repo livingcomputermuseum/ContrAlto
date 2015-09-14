@@ -9,6 +9,7 @@ using System.Text;
 using System.Windows.Forms;
 
 using Contralto.CPU;
+using System.Threading;
 
 namespace Contralto
 {
@@ -17,6 +18,7 @@ namespace Contralto
         public Debugger(AltoSystem system)
         {
             _system = system;
+            _breakpointEnabled = new bool[1024];
 
             InitializeComponent();
             InitControls();
@@ -39,6 +41,7 @@ namespace Contralto
                 SourceLine src = new SourceLine(line);
 
                 int i = _sourceViewer.Rows.Add(
+                    false,  // breakpoint
                     GetTextForTask(src.Task),                    
                     src.Address, 
                     src.Text);
@@ -80,7 +83,7 @@ namespace Contralto
                 _taskData.Rows[i].Cells[0].Value = GetTextForTask((TaskType)i);
                 _taskData.Rows[i].Cells[1].Value = GetTextForTaskState(_system.CPU.Tasks[i]);
                 _taskData.Rows[i].Cells[2].Value =
-                    _system.CPU.Tasks[i] != null ? OctalHelpers.ToOctal(_system.CPU.Tasks[i].MPC, 4) : String.Empty;
+                    _system.CPU.Tasks[i] != null ? OctalHelpers.ToOctal(_system.CPU.Tasks[i].MPC, 4) : String.Empty;                
             }
 
             // Other registers            
@@ -93,17 +96,48 @@ namespace Contralto
             _otherRegs.Rows[6].Cells[1].Value = OctalHelpers.ToOctal(_system.MemoryBus.MD, 6);
             _otherRegs.Rows[7].Cells[1].Value = OctalHelpers.ToOctal(_system.MemoryBus.Cycle, 2);
 
-            // Find the right source line
-            foreach(DataGridViewRow row in _sourceViewer.Rows)
+            // Disk info
+            _diskData.Rows[0].Cells[1].Value = _system.DiskController.ClocksUntilNextSector.ToString("0.00");
+            _diskData.Rows[1].Cells[1].Value = _system.DiskController.Cylinder.ToString();
+            _diskData.Rows[2].Cells[1].Value = _system.DiskController.SeekCylinder.ToString();
+            _diskData.Rows[3].Cells[1].Value = _system.DiskController.Head.ToString();
+            _diskData.Rows[4].Cells[1].Value = _system.DiskController.Sector.ToString();
+            _diskData.Rows[5].Cells[1].Value = OctalHelpers.ToOctal(_system.DiskController.KDATA, 6);
+            _diskData.Rows[6].Cells[1].Value = OctalHelpers.ToOctal(_system.DiskController.KADR, 6);
+            _diskData.Rows[7].Cells[1].Value = OctalHelpers.ToOctal(_system.DiskController.KCOM, 6);
+            _diskData.Rows[8].Cells[1].Value = OctalHelpers.ToOctal(_system.DiskController.KSTAT, 6);
+            _diskData.Rows[9].Cells[1].Value = _system.DiskController.RECNO.ToString();
+
+            for (ushort i = 0; i < 1024; i++)
             {
-                if (row.Tag != null &&
-                    (ushort)(row.Tag) == _system.CPU.CurrentTask.MPC)
-                {
-                    _sourceViewer.ClearSelection();
-                    row.Selected = true;
-                    _sourceViewer.CurrentCell = row.Cells[0];                    
+                _memoryData.Rows[i].Cells[1].Value = OctalHelpers.ToOctal(_system.MemoryBus.DebugReadWord(i), 6);
+            }
+
+            // Find the right source line
+            HighlightSourceLine(_system.CPU.CurrentTask.MPC);            
+
+            // Exec state
+            switch(_execState)
+            {
+                case ExecutionState.Stopped:
+                    ExecutionStateLabel.Text = "Stopped";
                     break;
-                }
+
+                case ExecutionState.SingleStep:
+                    ExecutionStateLabel.Text = "Stepping";
+                    break;
+
+                case ExecutionState.AutoStep:
+                    ExecutionStateLabel.Text = "Stepping (auto)";
+                    break;
+
+                case ExecutionState.Running:
+                    ExecutionStateLabel.Text = "Running";
+                    break;
+
+                case ExecutionState.BreakpointStop:
+                    ExecutionStateLabel.Text = "Stopped (bkpt)";
+                    break;
             }
         }
 
@@ -119,11 +153,11 @@ namespace Contralto
                 _taskData.Rows.Add("0", "0", "0");
             }
 
-            /*
-            for (int i=0;i<65536;i++)
+            
+            for (ushort i=0;i<1024;i++)
             {
-                _memoryData.Rows.Add();
-            } */
+                _memoryData.Rows.Add(OctalHelpers.ToOctal(i, 6), OctalHelpers.ToOctal(_system.MemoryBus.DebugReadWord(i), 6));
+            }
 
             _otherRegs.Rows.Add("L", "0");
             _otherRegs.Rows.Add("T", "0");
@@ -133,11 +167,61 @@ namespace Contralto
             _otherRegs.Rows.Add("MAR", "0");
             _otherRegs.Rows.Add("MD", "0");
             _otherRegs.Rows.Add("MCycle", "0");
+
+            _diskData.Rows.Add("Cycles", "0");
+            _diskData.Rows.Add("Cylinder", "0");
+            _diskData.Rows.Add("D.Cylinder", "0");
+            _diskData.Rows.Add("Head", "0");
+            _diskData.Rows.Add("Sector", "0");
+            _diskData.Rows.Add("KDATA", "0");
+            _diskData.Rows.Add("KADR", "0");
+            _diskData.Rows.Add("KCOM", "0");
+            _diskData.Rows.Add("KSTAT", "0");
+            _diskData.Rows.Add("RECNO", "0");
+
         }
 
-        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        /// <summary>
+        /// Handle breakpoint placement on column 0.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SourceViewCellClick(object sender, DataGridViewCellEventArgs e)
         {
+            // Check for breakpoint column click.
+            if (e.ColumnIndex == 0)
+            {
+                // See if this is a source line, if so check/uncheck the box
+                // and set/unset a breakpoint for the line
+                if (_sourceViewer.Rows[e.RowIndex].Tag != null)
+                {
+                    bool value = (bool)_sourceViewer.Rows[e.RowIndex].Cells[0].Value;
+                    _sourceViewer.Rows[e.RowIndex].Cells[0].Value = !value;
 
+                    ModifyBreakpoint((UInt16)_sourceViewer.Rows[e.RowIndex].Tag, !value);
+                }
+
+            }
+        }
+
+        private void HighlightSourceLine(UInt16 address)
+        {
+            foreach (DataGridViewRow row in _sourceViewer.Rows)
+            {
+                if (row.Tag != null &&
+                    (ushort)(row.Tag) == address)
+                {
+                    _sourceViewer.ClearSelection();
+                    row.Selected = true;
+                    _sourceViewer.CurrentCell = row.Cells[0];
+                    break;
+                }
+            }
+        }
+
+        private void ModifyBreakpoint(UInt16 address, bool set)
+        {
+            _breakpointEnabled[address] = set;
         }
 
         private string GetTextForTaskState(AltoCPU.Task task)
@@ -148,8 +232,16 @@ namespace Contralto
             }
             else
             {
-                // TODO: block status
-                return task.Wakeup ? "W" : String.Empty;
+                // Wakeup bit
+                string status = task.Wakeup ? "W" : String.Empty;
+
+                // Run bit
+                if (task == _system.CPU.CurrentTask)
+                {
+                    status += "R";
+                }
+
+                return status;
             }
         }
 
@@ -331,17 +423,177 @@ namespace Contralto
 
         }
 
+        private void JumpToButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                UInt16 address = Convert.ToUInt16(JumpToAddress.Text, 8);
+
+                // find the source address that matches this, if any.
+                HighlightSourceLine(address);
+            }
+            catch
+            {
+                // eh, just do nothing for now
+            }
+        }
+
+        private void OnJumpAddressKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Return ||
+                e.KeyCode == Keys.Enter)
+            {
+                try
+                {
+                    UInt16 address = Convert.ToUInt16(JumpToAddress.Text, 8);
+
+                    // find the source address that matches this, if any.
+                    HighlightSourceLine(address);
+                }
+                catch
+                {
+                    // eh, just do nothing for now
+                }
+            }
+        }
+
         private void OnStepButtonClicked(object sender, EventArgs e)
+        {
+            SetExecutionState(ExecutionState.SingleStep);            
+            ExecuteStep();
+            SetExecutionState(ExecutionState.Stopped);            
+        }
+
+        private void OnAutoStepButtonClicked(object sender, EventArgs e)
+        {
+            //
+            // Continuously step (and update the UI)
+            // until the "Stop" button is pressed or something bad happens.
+            //
+            _execThread = new Thread(new System.Threading.ParameterizedThreadStart(ExecuteProc));
+            _execThread.Start(ExecutionType.Auto);
+            SetExecutionState(ExecutionState.AutoStep);
+        }
+
+        private void RunButton_Click(object sender, EventArgs e)
+        {
+            //
+            // Continuously execute, but do not update UI
+            // until the "Stop" button is pressed or something bad happens.
+            //
+            _execThread = new Thread(new System.Threading.ParameterizedThreadStart(ExecuteProc));
+            _execThread.Start(ExecutionType.Normal);
+            SetExecutionState(ExecutionState.Running);
+        }
+
+        private void OnStopButtonClicked(object sender, EventArgs e)
+        {
+            if (_execThread != null &&
+                _execThread.IsAlive)
+            {
+                // Signal for the exec thread to end
+                _execAbort = true;
+
+                // Wait for the thread to exit.
+                _execThread.Join();
+
+                _execThread = null;
+            }
+
+            SetExecutionState(ExecutionState.Stopped);
+        }
+
+        private void ExecuteStep()
         {
             _system.SingleStep();
             Refresh();
         }
+
+        private void ExecuteProc(object param)
+        {
+            ExecutionType execType = (ExecutionType)param;
+
+            StepDelegate refUI = new StepDelegate(RefreshUI);
+            StepDelegate inv = new StepDelegate(Invalidate);
+            while (true)
+            {                
+                if (execType == ExecutionType.Auto)
+                {
+                    // Execute a single step, then update UI and 
+                    // sleep to give messages time to run.
+                    _system.SingleStep();
+                    
+                    this.BeginInvoke(refUI);
+                    this.BeginInvoke(inv);
+                    System.Threading.Thread.Sleep(10);
+                }
+                else
+                {
+                    // Just execute one step, do not update UI.
+                    _system.SingleStep();
+                }
+
+                if (_execAbort ||
+                    _breakpointEnabled[_system.CPU.CurrentTask.MPC])
+                {
+                    // Stop here as we've hit a breakpoint or have been stopped  Update UI
+                    // to indicate where we stopped.
+                    this.BeginInvoke(refUI);
+                    this.BeginInvoke(inv);
+
+                    if (!_execAbort)
+                    {
+                        SetExecutionState(ExecutionState.BreakpointStop);
+                    }
+
+                    _execAbort = false;                    
+                    break;
+                }
+            }
+        }
+
+        private void SetExecutionState(ExecutionState state)
+        {
+            _execState = state;
+            this.BeginInvoke(new StepDelegate(RefreshUI));
+        }
+
+
+        private enum ExecutionType
+        {
+            None = 0,
+            Step,
+            Auto,
+            Normal,
+        }
+
+        private enum ExecutionState
+        {
+            Stopped = 0,
+            SingleStep,
+            AutoStep,
+            Running,
+            BreakpointStop,
+        }
+
+        private delegate void StepDelegate();
 
         private AltoSystem _system;
 
         // Unicode character for the Arrow used by Alto microcode
         private const char _arrowChar = (char)0x2190;
 
-        
+        // Thread used for execution other than single-step
+        private Thread _execThread;
+        private bool _execAbort;
+        private ExecutionState _execState;
+
+
+
+        // Debugger breakpoints; one entry per address since we only need
+        // to worry about a 10 bit address space, this is fast and uses little memory.
+        private bool[] _breakpointEnabled;
+
+
     }
 }

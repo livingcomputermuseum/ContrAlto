@@ -41,7 +41,12 @@ namespace Contralto.IO
             {
                 _kCom = value;
 
-                //
+                // Read control bits (pg. 47 of hw manual)
+                _xferOff = (_kCom & 0x10) == 0x10;
+                _wdInhib = (_kCom & 0x08) == 0x08;
+                _bClkSource = (_kCom & 0x04) == 0x04;
+                _wffo = (_kCom & 0x02) == 0x02;
+                _sendAdr = (_kCom & 0x01) == 0x01;
             }
         }
 
@@ -54,6 +59,36 @@ namespace Contralto.IO
         public ushort RECNO
         {
             get { return _recMap[_recNo];  }
+        }
+
+        public int Cylinder
+        {
+            get { return _cylinder; }
+        }
+
+        public int SeekCylinder
+        {
+            get { return _destCylinder;  }
+        }
+
+        public int Head
+        {
+            get { return _head; }
+        }
+
+        public int Sector
+        {
+            get { return _sector; }
+        }
+
+        public int Drive
+        {
+            get { return 0;  }
+        }
+
+        public double ClocksUntilNextSector
+        {
+            get { return _sectorClocks - _elapsedSectorTime; }
         }
 
         public void Reset()
@@ -100,7 +135,7 @@ namespace Contralto.IO
                     {
                         _cylinder++;
                     }
-                    else
+                    else if (_cylinder > _destCylinder)
                     {
                         _cylinder--;
                     }
@@ -113,6 +148,33 @@ namespace Contralto.IO
                     }
                 }
             }
+
+            //
+            // Select data word based on elapsed time in this sector, if data transfer is not inhibited.
+            // On a new word, wake up the disk word task if not inhibited
+            // TODO: the exact mechanics of this are still kind of mysterious.
+            // Things to examine the schematics / uCode for:
+            //   - Use of WFFO bit -- is this related to the "sync word" that the docs mention?
+            //   -   how does WFFO work -- I assume the "1 bit" mentioned in the docs indicates the MFM bit
+            //       and indicates the start of the next data word (or is at least used to wait for the next
+            //       data word)
+            //   - How does the delaying work
+            // The microcode word-copying code works basically as:
+            //     On wakeup: 
+            //              - read word, store into memory.
+            //              - block task (remove wakeup)
+            //              - task switch (let something else run)
+            //              - repeat until all words read
+            // that is, the microcode expects to be woken up on a per-word basis, and it only reads in one word
+            // per wakeup.
+            //
+            // pseudocode so far:
+            // if (elapsed word time > word time)
+            // {
+            //     elapsed word time = 0 (modulo remainder)
+            //     _kData = next word
+            //     if (!_wdInhib) DiskSectorTask.Wakeup();
+            // }
         }
 
         public void ClearStatus()
@@ -148,16 +210,16 @@ namespace Contralto.IO
             // sanity check: see if SENDADR bit is set, if not we'll signal an error (since I'm trusting that
             // the official Xerox uCode is doing the right thing, this will help ferret out emulation issues.
             // eventually this can be removed.)
-            if ((_kCom & 0x1) != 1)
+            if (!_sendAdr)
             {
-                throw new InvalidOperationException("STROBE while SENDADR bit of KCOMM not 1.  Unexpected.");
+                throw new InvalidOperationException("STROBE while SENDADR bit of KCOM not 1.  Unexpected.");
             }
             
             _destCylinder = (_kData & 0x0ff8) >> 3;
 
             // set "seek fail" bit based on selected cylinder (if out of bounds) and do not
             // commence a seek if so.
-            if (_destCylinder < 203)
+            if (_destCylinder > 202)
             {
                 _kStat |= 0x0080;
             }
@@ -201,6 +263,13 @@ namespace Contralto.IO
         {
             0, 2, 3, 1
         };
+
+        // KCOM bits
+        private bool _xferOff;
+        private bool _wdInhib;
+        private bool _bClkSource;
+        private bool _wffo;
+        private bool _sendAdr;
 
         // Current disk position
         private int _cylinder;
