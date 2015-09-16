@@ -8,11 +8,15 @@ using Contralto.Memory;
 
 namespace Contralto.IO
 {
-    public class DiskController
+    public class DiskController : IClockable
     {
         public DiskController(AltoSystem system)
         {
             _system = system;
+            Reset();
+
+            // Wakeup the sector task first thing
+            _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
         }        
 
         public ushort KDATA
@@ -31,6 +35,10 @@ namespace Contralto.IO
 
                 // "In addition, it causes the head address bit to be loaded from KDATA[13]."
                 _head = (_kData & 0x4) >> 2;
+
+                // "0 normally, 1 if the command is to terminate immediately after the correct cylinder
+                // position is reached (before any data is transferred)."
+                _dataXfer = (_kAdr & 0x2) != 0x2;
             }
         }
 
@@ -47,6 +55,11 @@ namespace Contralto.IO
                 _bClkSource = (_kCom & 0x04) == 0x04;
                 _wffo = (_kCom & 0x02) == 0x02;
                 _sendAdr = (_kCom & 0x01) == 0x01;
+
+                if (!_wdInhib && !_xferOff)
+                {
+                    Console.WriteLine("enabled at sst {0}", _elapsedSectorStateTime);
+                }
             }
         }
 
@@ -59,6 +72,11 @@ namespace Contralto.IO
         public ushort RECNO
         {
             get { return _recMap[_recNo];  }
+        }
+
+        public bool DataXfer
+        {
+            get { return _dataXfer; }
         }
 
         public int Cylinder
@@ -100,6 +118,9 @@ namespace Contralto.IO
             _sector = 0;
             _head = 0;
             _kStat = 0;
+
+            _wdInhib = true;
+            _xferOff = true;
         }
 
         public void Clock()
@@ -119,7 +140,14 @@ namespace Contralto.IO
 
                 _kStat = (ushort)((_kStat & 0x0fff) | (_sector << 12));
 
+                // Reset internal state machine for sector data
+                _sectorState = SectorState.Leadin;
+                _sectorWordIndex = 0;
+                _elapsedSectorStateTime = 0.0;
+                Console.WriteLine("New sector ({0}), switching to LeadIn state.", _sector);
+
                 _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
+
             }
 
             // If seek is in progress, move closer to the desired cylinder...
@@ -175,6 +203,120 @@ namespace Contralto.IO
             //     _kData = next word
             //     if (!_wdInhib) DiskSectorTask.Wakeup();
             // }
+            _elapsedSectorStateTime++;            
+            switch(_sectorState)
+            {
+                case SectorState.Leadin:
+                    if (_elapsedSectorStateTime > _leadinDuration)
+                    {
+                        _elapsedSectorStateTime -= _leadinDuration;
+                        _sectorState = SectorState.Header;
+                        Console.WriteLine("Switching to Header state.");
+                    }
+                    break;
+
+                case SectorState.Header:
+                    if (_sectorWordIndex > 1)   // two words
+                    {
+                        _elapsedSectorStateTime -= 2.0 * _wordDuration;
+                        _sectorState = SectorState.HeaderGap;
+                        _sectorWordIndex = 0;
+                        Console.WriteLine("Switching to HeaderGap state.");
+                    }
+                    else if (_elapsedSectorStateTime > _wordDuration)
+                    {
+                        _elapsedSectorStateTime -= _wordDuration;
+
+                        // Put next word into KDATA if not inhibited from doing so.
+                        if (!_xferOff)
+                        {                            
+                            _kData = 0xdead;    // placeholder
+                            Console.WriteLine("  Header word {0} is {1}", _sectorWordIndex, OctalHelpers.ToOctal(_kData));                            
+                        }
+                        _sectorWordIndex++;
+
+                        if (!_wdInhib)
+                        {
+                            _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
+                        }
+                    }
+                    break;
+
+                case SectorState.HeaderGap:
+                    if (_elapsedSectorStateTime > _headerGapDuration)
+                    {
+                        _elapsedSectorStateTime -= _headerGapDuration;
+                        _sectorState = SectorState.Label;
+                        Console.WriteLine("Switching to Label state.");
+                    }
+                    break;
+
+                case SectorState.Label:
+                    if (_sectorWordIndex > 7)   // eight words
+                    {
+                        _elapsedSectorStateTime -= 8.0 * _wordDuration;
+                        _sectorState = SectorState.LabelGap;
+                        _sectorWordIndex = 0;
+                        Console.WriteLine("Switching to LabelGap state.");
+                    }
+                    else if(_elapsedSectorStateTime > _wordDuration)
+                    {
+                        _elapsedSectorStateTime -= _wordDuration;
+                        // Put next word into KDATA if not inhibited from doing so.
+                        if (!_xferOff)
+                        {
+                            _kData = 0xbeef;    // placeholder
+                            Console.WriteLine("  Label word {0} is {1}", _sectorWordIndex, OctalHelpers.ToOctal(_kData));                            
+                        }
+                        _sectorWordIndex++;
+
+                        if (!_wdInhib)
+                        {
+                            _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
+                        }
+                    }
+                    break;
+
+                case SectorState.LabelGap:
+                    if (_elapsedSectorStateTime > _labelGapDuration)
+                    {
+                        _elapsedSectorStateTime -= _labelGapDuration;
+                        _sectorState = SectorState.Data;
+                        Console.WriteLine("Switching to Data state.");
+                    }
+                    break;
+
+                case SectorState.Data:
+                    if (_sectorWordIndex > 255)   // 256 words
+                    {
+                        _elapsedSectorStateTime -= 256.0 * _wordDuration;
+                        _sectorState = SectorState.Leadout;
+                        _sectorWordIndex = 0;
+                        Console.WriteLine("Switching to Leadout state.");
+                    }
+                    else if (_elapsedSectorStateTime > _wordDuration)
+                    {
+                        _elapsedSectorStateTime -= _wordDuration;                        
+                        // Put next word into KDATA if not inhibited from doing so.
+                        if (!_xferOff)
+                        {
+                            _kData = 0xda1a;    // placeholder
+                            Console.WriteLine("  Sector word {0} is {1}", _sectorWordIndex, OctalHelpers.ToOctal(_kData));                            
+                        }
+                        _sectorWordIndex++;
+
+                        if (!_wdInhib)
+                        {
+                            _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
+                        }
+                    }
+                    break;
+
+                case SectorState.Leadout:
+                    // Just stay here forever.  We will get reset at the start of the next sector.
+                    break;
+
+            }
         }
 
         public void ClearStatus()
@@ -271,6 +413,9 @@ namespace Contralto.IO
         private bool _wffo;
         private bool _sendAdr;
 
+        // Transfer bit
+        private bool _dataXfer;
+
         // Current disk position
         private int _cylinder;
         private int _destCylinder;
@@ -280,7 +425,29 @@ namespace Contralto.IO
         // Sector timing.  Based on table on pg. 43 of the Alto Hardware Manual
         private double _elapsedSectorTime;     // elapsed time in this sector (in clocks)
         private const double _sectorDuration = (40.0 / 12.0); // time in msec for one sector
-        private readonly double _sectorClocks = _sectorDuration / AltoSystem.ClockInterval;     // number of clock cycles per sector time.
+        private const double _sectorClocks = _sectorDuration / 0.00017;     // number of clock cycles per sector time.
+
+        // Sector data timing and associated state.  Timings based on educated guesses at the moment.
+        private enum SectorState
+        {
+            Leadin = 0,     // gap between sector mark and first Header word
+            Header,         // Header; two words
+            HeaderGap,      // gap between end of Header and first Label word
+            Label,          // Label; 8 words
+            LabelGap,       // gap betweeen the end of Label and first Data word
+            Data,           // Data; 256 words
+            Leadout         // gap between the end of Data and the next sector mark
+        }
+        private SectorState _sectorState;
+        private double _elapsedSectorStateTime;
+        private int _sectorWordIndex;
+
+        private const double _wordDuration = (_sectorClocks / (266.0 + 94.0));       // Based on : 266 words / sector, + 94 "words" for gaps (made up)
+        private const double _leadinDuration = (_wordDuration * 70.0);
+        private const double _headerGapDuration = (_wordDuration * 8.0);
+        private const double _labelGapDuration = (_wordDuration * 8.0);
+        private const double _leadoutDuration = (_wordDuration * 8.0);
+        
 
         // Cylinder seek timing.  Again, see the manual.
         // Timing varies based on how many cylinders are being traveled during a seek; see

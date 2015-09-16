@@ -13,7 +13,7 @@ namespace Contralto.Memory
         Store
     }
 
-    public class MemoryBus
+    public class MemoryBus : IClockable
     {
         public MemoryBus()
         {
@@ -243,11 +243,13 @@ namespace Contralto.Memory
             else
             {
                 throw new NotImplementedException(String.Format("Read from unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));
+                //Console.WriteLine("Read from unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address));
+                return 0;
             }
         }
 
         /// <summary>
-        /// Dispatches writes to memory mapped hardware (RAM, I/O
+        /// Dispatches writes to memory mapped hardware (RAM, I/O)
         /// </summary>
         /// <param name="address"></param>
         /// <param name="data"></param>
@@ -262,7 +264,8 @@ namespace Contralto.Memory
             }
             else
             {
-                throw new NotImplementedException(String.Format("Write to unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));
+                 throw new NotImplementedException(String.Format("Write to unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));
+                //Console.WriteLine("Write to unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address));
             }
         }
 

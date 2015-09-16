@@ -185,7 +185,7 @@ namespace Contralto.CPU
                 else
                 {
                     // See also comments below.
-                    _busData = ConstantMemory.ConstantROM[(instruction.RSELECT << 3) | ((uint)instruction.BS)];
+                    _busData = ControlROM.ConstantROM[(instruction.RSELECT << 3) | ((uint)instruction.BS)];
                 }
 
                 // Constant ROM access:
@@ -202,7 +202,7 @@ namespace Contralto.CPU
                     instruction.F1 == SpecialFunction1.Constant ||
                     instruction.F2 == SpecialFunction2.Constant)
                 {
-                    _busData &= ConstantMemory.ConstantROM[(instruction.RSELECT << 3) | ((uint)instruction.BS)];
+                    _busData &= ControlROM.ConstantROM[(instruction.RSELECT << 3) | ((uint)instruction.BS)];
                 }
 
                 // Do ALU operation

@@ -73,7 +73,7 @@ namespace Contralto.CPU
                 instruction.F2 == SpecialFunction2.Constant)
             {
                 source += String.Format("C({0})",
-                    OctalHelpers.ToOctal(ConstantMemory.ConstantROM[(instruction.RSELECT << 3) | ((uint)instruction.BS)]));
+                    OctalHelpers.ToOctal(ControlROM.ConstantROM[(instruction.RSELECT << 3) | ((uint)instruction.BS)]));
             }
 
             switch (instruction.ALUF)

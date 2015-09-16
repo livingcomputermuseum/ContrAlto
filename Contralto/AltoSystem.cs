@@ -17,7 +17,7 @@ namespace Contralto
     public class AltoSystem
     {
         public AltoSystem()
-        {
+        {            
             _cpu = new AltoCPU(this);
             _memBus = new MemoryBus();
             _mem = new Memory.Memory();
@@ -27,7 +27,13 @@ namespace Contralto
             // Attach memory-mapped devices to the bus
             _memBus.AddDevice(_mem);
             _memBus.AddDevice(_keyboard);
-            
+
+            // Register devices that need clocks
+            _clockableDevices = new List<IClockable>();
+            _clockableDevices.Add(_memBus);
+            _clockableDevices.Add(_diskController);
+            _clockableDevices.Add(_cpu);
+
             Reset();
         }
 
@@ -35,13 +41,16 @@ namespace Contralto
         {
             _cpu.Reset();
             _memBus.Reset();
+            _diskController.Reset();
         }
 
         public void SingleStep()
         {
-            _memBus.Clock();
-            _diskController.Clock();          
-            _cpu.ExecuteNext();            
+            // Run every device that needs attention for a single clock cycle.
+            for (int i = 0; i < _clockableDevices.Count; i++)
+            {
+                _clockableDevices[i].Clock();
+            }
         }
 
         public AltoCPU CPU
@@ -62,6 +71,7 @@ namespace Contralto
         /// <summary>
         /// Time (in msec) for one system clock
         /// </summary>
+        ///
         public static double ClockInterval
         {
             get { return 0.00017; } // appx 170nsec, TODO: more accurate value?
@@ -72,5 +82,7 @@ namespace Contralto
         private Contralto.Memory.Memory _mem;
         private Keyboard _keyboard;
         private DiskController _diskController;
+
+        private List<IClockable> _clockableDevices;
     }
 }

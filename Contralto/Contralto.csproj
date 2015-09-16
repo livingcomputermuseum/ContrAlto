@@ -60,6 +60,7 @@
     <Compile Include="Debugger.Designer.cs">
       <DependentUpon>Debugger.cs</DependentUpon>
     </Compile>
+    <Compile Include="IClockable.cs" />
     <Compile Include="IO\DiskController.cs" />
     <Compile Include="IO\Keyboard.cs" />
     <Compile Include="Memory\IMemoryMappedDevice.cs" />
@@ -74,6 +75,9 @@
     <None Include="App.config" />
     <None Include="Disassembly\altoIIcode3.mu">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="ROM\2kctl.u3">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="ROM\C0">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -188,6 +192,9 @@
     <EmbeddedResource Include="Debugger.resx">
       <DependentUpon>Debugger.cs</DependentUpon>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Notes.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

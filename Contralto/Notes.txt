@@ -1,0 +1,5 @@
+﻿Current issue:
+
+DCB @ 521 is set to 1 by emulator uCode; then clobbered once sector task runs (set to zero) so the disk controller never picks up a control
+block and never does anything.
+

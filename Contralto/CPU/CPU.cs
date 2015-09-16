@@ -22,7 +22,7 @@ namespace Contralto.CPU
         DiskWord = 14,
     }
 
-    public partial class AltoCPU
+    public partial class AltoCPU : IClockable
     {
         public AltoCPU(AltoSystem system)
         {
@@ -115,25 +115,9 @@ namespace Contralto.CPU
 
         }
 
-        public void ExecuteNext()
+        public void Clock()
         {
-            if (_currentTask.ExecuteNext())
-            {
-                // Invoke the task switch, this will take effect after
-                // the NEXT instruction, not this one.
-                TaskSwitch();
-            }
-            else
-            {
-                // If we have a new task, switch to it now.
-                if (_nextTask != null)
-                {
-                    _currentTask = _nextTask;
-                    _nextTask = null;
-                }
-            }
-
-            _clocks++;
+            ExecuteNext();
         }
 
         /// <summary>
@@ -160,6 +144,27 @@ namespace Contralto.CPU
             {
                 _tasks[(int)task].BlockTask();
             }
+        }
+
+        private void ExecuteNext()
+        {
+            if (_currentTask.ExecuteNext())
+            {
+                // Invoke the task switch, this will take effect after
+                // the NEXT instruction, not this one.
+                TaskSwitch();
+            }
+            else
+            {
+                // If we have a new task, switch to it now.
+                if (_nextTask != null)
+                {
+                    _currentTask = _nextTask;
+                    _nextTask = null;
+                }
+            }
+
+            _clocks++;
         }
 
         private void TaskSwitch()

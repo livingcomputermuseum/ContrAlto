@@ -13,6 +13,9 @@ using System.Threading;
 
 namespace Contralto
 {
+    /// <summary>
+    /// A basic & hacky debugger.  To be improved.
+    /// </summary>
     public partial class Debugger : Form
     {
         public Debugger(AltoSystem system)
@@ -481,9 +484,12 @@ namespace Contralto
             // Continuously execute, but do not update UI
             // until the "Stop" button is pressed or something bad happens.
             //
-            _execThread = new Thread(new System.Threading.ParameterizedThreadStart(ExecuteProc));
-            _execThread.Start(ExecutionType.Normal);
-            SetExecutionState(ExecutionState.Running);
+            //if (_execThread == null)
+            {
+                _execThread = new Thread(new System.Threading.ParameterizedThreadStart(ExecuteProc));
+                _execThread.Start(ExecutionType.Normal);
+                SetExecutionState(ExecutionState.Running);
+            }
         }
 
         private void OnStopButtonClicked(object sender, EventArgs e)

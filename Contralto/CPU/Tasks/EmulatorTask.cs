@@ -192,54 +192,14 @@ namespace Contralto.CPU
                         //   if IR[3-7] = 16B       1                       CONVERT
                         //   if IR[3-7] = 37B       17B                     ROMTRAP -- used by Swat, the debugger
                         //   else                   16B                     ROMTRAP
-                        if ((_cpu._ir & 0x8000) != 0)
-                        {
-                            _nextModifier = (ushort)(3 - ((_cpu._ir & 0xc0) >> 6));
-                        }
-                        else if ((_cpu._ir & 0xc000) == 0xc000)
-                        {
-                            _nextModifier = (ushort)((_cpu._ir & 0x400) >> 10);
-                        }
-                        else if ((_cpu._ir & 0x1f00) == 0)
-                        {
-                            _nextModifier = 2;
-                        }
-                        else if ((_cpu._ir & 0x1f00) == 0x0100)
-                        {
-                            _nextModifier = 5;
-                        }
-                        else if ((_cpu._ir & 0x1f00) == 0x0200)
-                        {
-                            _nextModifier = 3;
-                        }
-                        else if ((_cpu._ir & 0x1f00) == 0x0300)
-                        {
-                            _nextModifier = 6;
-                        }
-                        else if ((_cpu._ir & 0x1f00) == 0x0400)
-                        {
-                            _nextModifier = 7;
-                        }
-                        else if ((_cpu._ir & 0x1f00) == 0x0900)
-                        {
-                            _nextModifier = 4;
-                        }
-                        else if ((_cpu._ir & 0x1f00) == 0x0a00)
-                        {
-                            _nextModifier = 4;
-                        }
-                        else if ((_cpu._ir & 0x1f00) == 0x0e00)
-                        {
-                            _nextModifier = 1;
-                        }
-                        else if ((_cpu._ir & 0x1f00) == 0x1f00)
-                        {
-                            _nextModifier = 0xf;
-                        }
-                        else
-                        {
-                            _nextModifier = 0xe;
-                        }
+
+                        //
+                        // NOTE: the above table from the Hardware Manual is incorrect (or at least incomplete / misleading).
+                        // There is considerably more that goes into determining the dispatch, which is controlled by a 256x8
+                        // PROM.  We just use the PROM rather than implementing the above logic (because it works.)
+                        //
+                        _nextModifier = ControlROM.ACSourceROM[(_cpu._ir & 0xff00) >> 8];
+                       
                         break;
 
                     case EmulatorF2.ACDEST:
