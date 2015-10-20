@@ -23,6 +23,18 @@ namespace Contralto.CPU
                 _wakeup = false;
             }
 
+            public override void WakeupTask()
+            {
+                base.WakeupTask();
+            }
+
+            protected override bool ExecuteInstruction(MicroInstruction instruction)
+            {
+                bool task = base.ExecuteInstruction(instruction);                
+
+                return task;
+            }
+
             protected override ushort GetBusSource(int bs)
             {
                 DiskBusSource dbs = (DiskBusSource)bs;
@@ -33,6 +45,7 @@ namespace Contralto.CPU
                         return _cpu._system.DiskController.KSTAT;
 
                     case DiskBusSource.ReadKDATA:
+                        Console.WriteLine("kdata read");
                         return _cpu._system.DiskController.KDATA;
 
                     default:
@@ -40,9 +53,9 @@ namespace Contralto.CPU
                 }
             }
 
-            protected override void ExecuteSpecialFunction1(int f1)
+            protected override void ExecuteSpecialFunction1(MicroInstruction instruction)
             {
-                DiskF1 df1 = (DiskF1)f1;
+                DiskF1 df1 = (DiskF1)instruction.F1;
 
                 switch (df1)
                 {
@@ -87,25 +100,15 @@ namespace Contralto.CPU
                 }
             }
 
-            protected override void ExecuteSpecialFunction2(int f2)
+            protected override void ExecuteSpecialFunction2(MicroInstruction instruction)
             {
-                DiskF2 df2 = (DiskF2)f2;
+                DiskF2 df2 = (DiskF2)instruction.F2;
 
                 switch (df2)
                 {
-                    case DiskF2.INIT:
-                        // "NEXT<-NEXT OR (if WDTASKACT AND WDINIT) then 37B else 0
-                        // TODO: figure out how WDTASKACT and WDINIT work.
-
-                        // From the US Patent (4148098):
-                        // "..two multiplexers...allow the setting of the next field bits NEXT(05)-NEXT(09)
-                        // to 1 after an error condition is detected and as soon as the word task active signal
-                        // WDTASKACT is generated..."
-
-                        // Is this always an error condition?
-                        Console.WriteLine("Warning: assuming 0 for Disk F2 INIT (unimplemented stub)");
-                        break;
-                                          
+                    case DiskF2.INIT:                        
+                        _nextModifier |= GetInitModifier(instruction);                        
+                        break;                                          
 
                     case DiskF2.RWC:
                         // "NEXT<-NEXT OR (IF current record to be written THEN 3 ELSE IF
@@ -114,7 +117,9 @@ namespace Contralto.CPU
                         // by INCREC by the microcode to present the next set of bits.
                         int command = (_cpu._system.DiskController.KADR & 0x00c0) >> 6;
 
-                        switch(command)
+                        _nextModifier |= GetInitModifier(instruction);
+
+                        switch (command)
                         {
                             case 0:
                                 // read, no modification.
@@ -135,8 +140,8 @@ namespace Contralto.CPU
 
                     case DiskF2.XFRDAT:
                         // "NEXT <- NEXT OR (IF current command wants data transfer THEN 1 ELSE 0)
-                        // TODO: need to get unshifted bit 14 of the command register.  Disk controller should
-                        // save this off somewhere.                        
+                        _nextModifier |= GetInitModifier(instruction);
+
                         if (_cpu._system.DiskController.DataXfer)
                         {
                             _nextModifier |= 0x1;
@@ -144,17 +149,20 @@ namespace Contralto.CPU
                         break;
 
                     case DiskF2.RECNO:
+                        _nextModifier |= GetInitModifier(instruction);
                         _nextModifier |= _cpu._system.DiskController.RECNO;
                         break;
 
                     case DiskF2.NFER:
                         // "NEXT <- NEXT OR (IF fatal error in latches THEN 0 ELSE 1)"
                         // We assume success for now...
+                        _nextModifier |= GetInitModifier(instruction);
                         _nextModifier |= 0x1;
                         break;
 
                     case DiskF2.STROBON:
                         // "NEXT <- NEXT OR (IF seek strobe still on THEN 1 ELSE 0)"
+                        _nextModifier |= GetInitModifier(instruction);
                         if ((_cpu._system.DiskController.KSTAT & 0x0040) == 0x0040)
                         {
                             _nextModifier |= 0x1;
@@ -164,13 +172,39 @@ namespace Contralto.CPU
                     case DiskF2.SWRNRDY:
                         // "NEXT <- NEXT OR (IF disk not ready to accept command THEN 1 ELSE 0)
                         // for now, always zero (not sure when this would be 1 yet)
+                        _nextModifier |= GetInitModifier(instruction);
                         break;
 
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled disk special function 2 {0}", df2));
                 }
             }
-        }
 
+            /// <summary>
+            /// The status of the INIT flag
+            /// </summary>
+            /// <returns></returns>
+            private ushort GetInitModifier(MicroInstruction instruction)
+            {
+                //
+                // "NEXT<-NEXT OR (if WDTASKACT AND WDINIT) then 37B else 0."
+                //                
+
+                //
+                // A brief discussion of the INIT signal since it isn't really covered in the Alto Hardware docs in any depth
+                // (and in fact is completely skipped over in the description of RWC, a rather important detail!)
+                // This is where the Alto ref's suggestion to have the uCode *and* the schematic on hand is really quite a
+                // valid recommendation.
+                //
+                // WDINIT is initially set whenever the WDINHIB bit (set via KCOM<-) is cleared (this is the WDALLOW signal).
+                // This signals that the microcode is "INITializing" a data transfer (so to speak).  During this period,
+                // INIT or RWC instructions in the Disk Word task will OR in 37B to the Next field, causing the uCode to jump 
+                // to the requisite initialization paths.  WDINIT is cleared whenever a BLOCK instruction occurs during the Disk Word task,
+                // causing INIT to OR in 0 and RWC to or in 0, 2 or 3 (For read, check, or write respectively.)
+                //                
+
+                return (_taskType == TaskType.DiskWord && _cpu._system.DiskController.WDINIT) ? (ushort)0x1f : (ushort)0x0;                
+            }            
+        }        
     }
 }

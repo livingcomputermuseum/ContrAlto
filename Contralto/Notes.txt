@@ -1,5 +1,53 @@
-﻿Current issue:
+﻿
+9/15/15:
+Current issue:
 
 DCB @ 521 is set to 1 by emulator uCode; then clobbered once sector task runs (set to zero) so the disk controller never picks up a control
 block and never does anything.
+
+9/16:
+"solved" previous issue by issuing a Wake for the KS task on init; this causes the sector task to run first, the Emulator uCode then sets things up correctly.
+Not sure if this is how it's supposed to work.
+
+New issue:  Emulator uCode sets up a DCB starting at 1 that looks like:
+
+DCB:   1		<next DCB, not really used here since it will be overwritten by the sector that gets read in -- ALSO a JMP 1 instruction the EMU task is running continuously!>
+DCB+1: 1		<status: meaningless, just a placeholder and will be overwritten by the KS/KW tasks>
+DCB+2: 44000	<command: read header, label, and data off of drive zero>
+DCB+3: 402		<header address: 402>
+DCB+4: 402		<label address: 402>
+DCB+5: 1		<data address: 1 -- overwrite this very data and the short jump that the CPU is executing at 1 (JMP 1) such that the emulator will start running a real program at 1 when loaded>
+.
+.
+.
+.
+.
+DCB+9: 0
+
+The sector task is noting when sector 0 comes around, and the word task is getting woken up -- at which point it seems to be miscalculating the memory address for disk data (in KNMAR/KNMARW, reg 33).
+This ends up being 177777 (-1) and this causes issues.  KNMAR is shared between the sector and word tasks (it's KNMARW in the word task) and is set up by the sector task -- this setup code is not running,
+leaving R33 at 0; later 1 is subtracted and we hit our problem.
+
+KNMAR is loaded at KS 01153, this appears to be where we're going wrong (other places in the word task repurpose it for a counter, except for KW01746 which just decrements it)
+NO, the above is incorrect.  See below...
+
+KNMARW is loaded at:
+
+KW 01665 (in prep to use as length register for record 0 (header))
+KW 01732 (same, for records 1 and 2)
+KW 01742 in prep for loading something...
+KW 01746 at the beginning of the transfer loop as an address, just decrementing it
+
+At KW1732 we load in the memory block for the record.
+KNMARW is used as a count
+at REC12A, we load L with the memory block address and load it into KWDCTW (R31) -- KWDX loads this into L, and then puts it into KNMARW.
+
+We are never reaching KW1732 -- why?
+
+
+10/19/15:
+
+Current issues are around how the "INIT" mode of RWC works (the mysterious fourth dispatch mode aside from Read/Write or Check).
+
+The logic is 
 

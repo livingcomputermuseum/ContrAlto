@@ -43,7 +43,11 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle16 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle17 = new System.Windows.Forms.DataGridViewCellStyle();
             this.Microcode = new System.Windows.Forms.GroupBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.JumpToAddress = new System.Windows.Forms.TextBox();
             this._sourceViewer = new System.Windows.Forms.DataGridView();
             this.Breakpoint = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.T = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -73,12 +77,16 @@
             this.Data = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.label1 = new System.Windows.Forms.Label();
             this.ExecutionStateLabel = new System.Windows.Forms.Label();
-            this.JumpToAddress = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
             this._diskData = new System.Windows.Forms.DataGridView();
             this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ResetButton = new System.Windows.Forms.Button();
+            this.groupBox6 = new System.Windows.Forms.GroupBox();
+            this._debugTasks = new System.Windows.Forms.DataGridView();
+            this.dataGridViewTextBoxColumn3 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.dataGridViewTextBoxColumn4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.RunToNextTaskButton = new System.Windows.Forms.Button();
             this.Microcode.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._sourceViewer)).BeginInit();
             this.groupBox1.SuspendLayout();
@@ -91,6 +99,8 @@
             ((System.ComponentModel.ISupportInitialize)(this._memoryData)).BeginInit();
             this.groupBox5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._diskData)).BeginInit();
+            this.groupBox6.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this._debugTasks)).BeginInit();
             this.SuspendLayout();
             // 
             // Microcode
@@ -104,6 +114,23 @@
             this.Microcode.TabIndex = 0;
             this.Microcode.TabStop = false;
             this.Microcode.Text = "Microcode Source";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(11, 599);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(47, 13);
+            this.label2.TabIndex = 13;
+            this.label2.Text = "Jump to:";
+            // 
+            // JumpToAddress
+            // 
+            this.JumpToAddress.Location = new System.Drawing.Point(59, 596);
+            this.JumpToAddress.Name = "JumpToAddress";
+            this.JumpToAddress.Size = new System.Drawing.Size(48, 20);
+            this.JumpToAddress.TabIndex = 12;
+            this.JumpToAddress.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnJumpAddressKeyDown);
             // 
             // _sourceViewer
             // 
@@ -294,7 +321,7 @@
             // 
             this.RunButton.Location = new System.Drawing.Point(103, 954);
             this.RunButton.Name = "RunButton";
-            this.RunButton.Size = new System.Drawing.Size(53, 23);
+            this.RunButton.Size = new System.Drawing.Size(41, 23);
             this.RunButton.TabIndex = 5;
             this.RunButton.Text = "Run";
             this.RunButton.UseVisualStyleBackColor = true;
@@ -302,9 +329,9 @@
             // 
             // StopButton
             // 
-            this.StopButton.Location = new System.Drawing.Point(164, 954);
+            this.StopButton.Location = new System.Drawing.Point(207, 954);
             this.StopButton.Name = "StopButton";
-            this.StopButton.Size = new System.Drawing.Size(49, 23);
+            this.StopButton.Size = new System.Drawing.Size(43, 23);
             this.StopButton.TabIndex = 6;
             this.StopButton.Text = "Stop";
             this.StopButton.UseVisualStyleBackColor = true;
@@ -524,27 +551,10 @@
             this.ExecutionStateLabel.TabIndex = 10;
             this.ExecutionStateLabel.Text = "unset";
             // 
-            // JumpToAddress
-            // 
-            this.JumpToAddress.Location = new System.Drawing.Point(59, 596);
-            this.JumpToAddress.Name = "JumpToAddress";
-            this.JumpToAddress.Size = new System.Drawing.Size(48, 20);
-            this.JumpToAddress.TabIndex = 12;
-            this.JumpToAddress.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnJumpAddressKeyDown);
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(11, 599);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(47, 13);
-            this.label2.TabIndex = 13;
-            this.label2.Text = "Jump to:";
-            // 
             // groupBox5
             // 
             this.groupBox5.Controls.Add(this._diskData);
-            this.groupBox5.Location = new System.Drawing.Point(3, 634);
+            this.groupBox5.Location = new System.Drawing.Point(150, 634);
             this.groupBox5.Name = "groupBox5";
             this.groupBox5.Size = new System.Drawing.Size(163, 298);
             this.groupBox5.TabIndex = 11;
@@ -602,11 +612,97 @@
             this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
             this.dataGridViewTextBoxColumn2.ReadOnly = true;
             // 
+            // ResetButton
+            // 
+            this.ResetButton.Location = new System.Drawing.Point(256, 955);
+            this.ResetButton.Name = "ResetButton";
+            this.ResetButton.Size = new System.Drawing.Size(57, 23);
+            this.ResetButton.TabIndex = 12;
+            this.ResetButton.Text = "Reset";
+            this.ResetButton.UseVisualStyleBackColor = true;
+            this.ResetButton.Click += new System.EventHandler(this.ResetButton_Click);
+            // 
+            // groupBox6
+            // 
+            this.groupBox6.Controls.Add(this._debugTasks);
+            this.groupBox6.Location = new System.Drawing.Point(3, 634);
+            this.groupBox6.Name = "groupBox6";
+            this.groupBox6.Size = new System.Drawing.Size(141, 298);
+            this.groupBox6.TabIndex = 12;
+            this.groupBox6.TabStop = false;
+            this.groupBox6.Text = "Debug Tasks";
+            // 
+            // _debugTasks
+            // 
+            this._debugTasks.AllowUserToAddRows = false;
+            this._debugTasks.AllowUserToDeleteRows = false;
+            dataGridViewCellStyle16.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            this._debugTasks.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle16;
+            this._debugTasks.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this._debugTasks.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.dataGridViewTextBoxColumn3,
+            this.dataGridViewTextBoxColumn4});
+            dataGridViewCellStyle17.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle17.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle17.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle17.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle17.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle17.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle17.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this._debugTasks.DefaultCellStyle = dataGridViewCellStyle17;
+            this._debugTasks.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
+            this._debugTasks.Location = new System.Drawing.Point(6, 19);
+            this._debugTasks.MultiSelect = false;
+            this._debugTasks.Name = "_debugTasks";
+            this._debugTasks.ReadOnly = true;
+            this._debugTasks.RowHeadersVisible = false;
+            this._debugTasks.RowTemplate.DefaultCellStyle.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this._debugTasks.RowTemplate.Height = 18;
+            this._debugTasks.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this._debugTasks.ShowCellErrors = false;
+            this._debugTasks.ShowCellToolTips = false;
+            this._debugTasks.ShowEditingIcon = false;
+            this._debugTasks.ShowRowErrors = false;
+            this._debugTasks.Size = new System.Drawing.Size(129, 273);
+            this._debugTasks.TabIndex = 1;
+            // 
+            // dataGridViewTextBoxColumn3
+            // 
+            this.dataGridViewTextBoxColumn3.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
+            this.dataGridViewTextBoxColumn3.HeaderText = "Debug";
+            this.dataGridViewTextBoxColumn3.MinimumWidth = 16;
+            this.dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
+            this.dataGridViewTextBoxColumn3.ReadOnly = true;
+            this.dataGridViewTextBoxColumn3.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridViewTextBoxColumn3.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            this.dataGridViewTextBoxColumn3.Width = 16;
+            // 
+            // dataGridViewTextBoxColumn4
+            // 
+            this.dataGridViewTextBoxColumn4.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.dataGridViewTextBoxColumn4.HeaderText = "Task";
+            this.dataGridViewTextBoxColumn4.MinimumWidth = 16;
+            this.dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
+            this.dataGridViewTextBoxColumn4.ReadOnly = true;
+            // 
+            // RunToNextTaskButton
+            // 
+            this.RunToNextTaskButton.Location = new System.Drawing.Point(150, 954);
+            this.RunToNextTaskButton.Name = "RunToNextTaskButton";
+            this.RunToNextTaskButton.Size = new System.Drawing.Size(51, 23);
+            this.RunToNextTaskButton.TabIndex = 13;
+            this.RunToNextTaskButton.Text = "Run T";
+            this.RunToNextTaskButton.UseVisualStyleBackColor = true;
+            this.RunToNextTaskButton.Click += new System.EventHandler(this.RunToNextTaskButton_Click);
+            // 
             // Debugger
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(753, 997);
+            this.Controls.Add(this.RunToNextTaskButton);
+            this.Controls.Add(this.groupBox6);
+            this.Controls.Add(this.ResetButton);
             this.Controls.Add(this.groupBox5);
             this.Controls.Add(this.ExecutionStateLabel);
             this.Controls.Add(this.label1);
@@ -635,6 +731,8 @@
             ((System.ComponentModel.ISupportInitialize)(this._memoryData)).EndInit();
             this.groupBox5.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this._diskData)).EndInit();
+            this.groupBox6.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this._debugTasks)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -678,5 +776,11 @@
         private System.Windows.Forms.DataGridView _diskData;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
+        private System.Windows.Forms.Button ResetButton;
+        private System.Windows.Forms.GroupBox groupBox6;
+        private System.Windows.Forms.DataGridView _debugTasks;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn dataGridViewTextBoxColumn3;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
+        private System.Windows.Forms.Button RunToNextTaskButton;
     }
 }

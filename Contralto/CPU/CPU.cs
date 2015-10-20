@@ -146,6 +146,15 @@ namespace Contralto.CPU
             }
         }
 
+        /// <summary>
+        /// Used by the debugger to determine if a task switch is taking
+        /// place.
+        /// </summary>
+        public Task NextTask
+        {
+            get { return _nextTask; }
+        }
+
         private void ExecuteNext()
         {
             if (_currentTask.ExecuteNext())

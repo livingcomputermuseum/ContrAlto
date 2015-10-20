@@ -22,6 +22,8 @@ namespace Contralto.CPU
                 _mpc = 0xffff;  // invalid, for sanity checking
                 _taskType = TaskType.Invalid;
                 _cpu = cpu;
+
+                _block = false;
             }
 
             public int Priority
@@ -37,6 +39,15 @@ namespace Contralto.CPU
             public ushort MPC
             {
                 get { return _mpc; }
+            }
+
+            /// <summary>
+            /// Indicates whether the current uInstruction asserts BLOCK.
+            /// Used by hardware for various tasks.
+            /// </summary>
+            public bool BLOCK
+            {
+                get { return _block; }
             }
 
             public virtual void Reset()
@@ -61,6 +72,7 @@ namespace Contralto.CPU
             {
                 // TODO: cache microinstructions (or pre-decode them) to save consing all these up every time.
                 MicroInstruction instruction = new MicroInstruction(UCodeMemory.UCodeROM[_mpc]);
+                _block = instruction.F1 == SpecialFunction1.Block;
                 return ExecuteInstruction(instruction);
             }
 
@@ -122,7 +134,7 @@ namespace Contralto.CPU
                 _rSelect = instruction.RSELECT;
 
                 // Give tasks the chance to modify parameters early on (like RSELECT)
-                ExecuteSpecialFunction2Early((int)instruction.F2);
+                ExecuteSpecialFunction2Early(instruction);
 
                 // Select BUS data.
                 if (instruction.F1 != SpecialFunction1.Constant &&
@@ -253,7 +265,7 @@ namespace Contralto.CPU
 
                     default:
                         // Let the specific task implementation take a crack at this.
-                        ExecuteSpecialFunction1((int)instruction.F1);
+                        ExecuteSpecialFunction1(instruction);
                         break;
                 }
 
@@ -314,7 +326,7 @@ namespace Contralto.CPU
 
                     default:
                         // Let the specific task implementation take a crack at this.
-                        ExecuteSpecialFunction2((int)instruction.F2);
+                        ExecuteSpecialFunction2(instruction);
                         break;
                 }
 
@@ -372,18 +384,18 @@ namespace Contralto.CPU
             }
 
             protected abstract ushort GetBusSource(int bs);
-            protected abstract void ExecuteSpecialFunction1(int f1);
+            protected abstract void ExecuteSpecialFunction1(MicroInstruction instruction);
 
             /// <summary>
             /// Used to allow Task-specific F2s that need to modify RSELECT to do so.
             /// </summary>
             /// <param name="f2"></param>
-            protected virtual void ExecuteSpecialFunction2Early(int f2)
+            protected virtual void ExecuteSpecialFunction2Early(MicroInstruction instruction)
             {
                 // Nothing by default.
             }
 
-            protected abstract void ExecuteSpecialFunction2(int f2);
+            protected abstract void ExecuteSpecialFunction2(MicroInstruction instruction);
 
             //
             // Per uInstruction Task Data:
@@ -404,6 +416,8 @@ namespace Contralto.CPU
             protected ushort _mpc;
             protected TaskType _taskType;
             protected bool _wakeup;
+
+            protected bool _block;
 
             // Emulator Task-specific data.  This is placed here because it is used by the ALU and it's easier to reference in the
             // base class even if it does break encapsulation.  See notes in the EmulatorTask class for meaning.        

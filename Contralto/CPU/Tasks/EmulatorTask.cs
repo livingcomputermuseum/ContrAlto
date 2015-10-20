@@ -51,9 +51,9 @@ namespace Contralto.CPU
                 }
             }
 
-            protected override void ExecuteSpecialFunction1(int f1)
+            protected override void ExecuteSpecialFunction1(MicroInstruction instruction)
             {
-                EmulatorF1 ef1 = (EmulatorF1)f1;
+                EmulatorF1 ef1 = (EmulatorF1)instruction.F1;
                 switch (ef1)
                 {
                     case EmulatorF1.RSNF:
@@ -79,9 +79,9 @@ namespace Contralto.CPU
                 }
             }
 
-            protected override void ExecuteSpecialFunction2Early(int f2)
+            protected override void ExecuteSpecialFunction2Early(MicroInstruction instruction)
             {
-                EmulatorF2 ef2 = (EmulatorF2)f2;
+                EmulatorF2 ef2 = (EmulatorF2)instruction.F2;
                 switch (ef2)
                 {
                     case EmulatorF2.ACSOURCE:
@@ -102,9 +102,9 @@ namespace Contralto.CPU
                 }
             }
 
-            protected override void ExecuteSpecialFunction2(int f2)
+            protected override void ExecuteSpecialFunction2(MicroInstruction instruction)
             {
-                EmulatorF2 ef2 = (EmulatorF2)f2;
+                EmulatorF2 ef2 = (EmulatorF2)instruction.F2;
                 switch (ef2)
                 {
                     case EmulatorF2.LoadIR:

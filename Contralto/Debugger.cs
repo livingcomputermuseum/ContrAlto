@@ -37,7 +37,7 @@ namespace Contralto
 
             StreamReader sr = new StreamReader(path);
 
-            while(!sr.EndOfStream)
+            while (!sr.EndOfStream)
             {
                 string line = sr.ReadLine();
 
@@ -45,12 +45,12 @@ namespace Contralto
 
                 int i = _sourceViewer.Rows.Add(
                     false,  // breakpoint
-                    GetTextForTask(src.Task),                    
-                    src.Address, 
+                    GetTextForTask(src.Task),
+                    src.Address,
                     src.Text);
 
                 // Give the row a color based on the task
-                _sourceViewer.Rows[i].DefaultCellStyle.BackColor = GetColorForTask(src.Task);
+                _sourceViewer.Rows[i].DefaultCellStyle.BackColor = GetColorForTask(src.Task);              
 
                 // Tag the row based on the PROM address (if any) to make it easy to find.
                 if (!String.IsNullOrEmpty(src.Address))
@@ -97,7 +97,7 @@ namespace Contralto
             _otherRegs.Rows[4].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.ALUC0, 1);
             _otherRegs.Rows[5].Cells[1].Value = OctalHelpers.ToOctal(_system.MemoryBus.MAR, 6);
             _otherRegs.Rows[6].Cells[1].Value = OctalHelpers.ToOctal(_system.MemoryBus.MD, 6);
-            _otherRegs.Rows[7].Cells[1].Value = OctalHelpers.ToOctal(_system.MemoryBus.Cycle, 2);
+            _otherRegs.Rows[7].Cells[1].Value = OctalHelpers.ToOctal(_system.MemoryBus.Cycle & 0x3f, 2);
 
             // Disk info
             _diskData.Rows[0].Cells[1].Value = _system.DiskController.ClocksUntilNextSector.ToString("0.00");
@@ -181,6 +181,11 @@ namespace Contralto
             _diskData.Rows.Add("KCOM", "0");
             _diskData.Rows.Add("KSTAT", "0");
             _diskData.Rows.Add("RECNO", "0");
+
+            for (int i=0;i<16;i++)
+            {
+                _debugTasks.Rows.Add(true, GetTextForTask((TaskType)i));
+            }
 
         }
 
@@ -492,6 +497,20 @@ namespace Contralto
             }
         }
 
+        private void RunToNextTaskButton_Click(object sender, EventArgs e)
+        {
+            //
+            // Continuously execute until the next task switch but do not update UI
+            // until the "Stop" button is pressed or something bad happens.
+            //
+            //if (_execThread == null)
+            {
+                _execThread = new Thread(new System.Threading.ParameterizedThreadStart(ExecuteProc));
+                _execThread.Start(ExecutionType.NextTask);
+                SetExecutionState(ExecutionState.Running);
+            }
+        }
+
         private void OnStopButtonClicked(object sender, EventArgs e)
         {
             if (_execThread != null &&
@@ -509,6 +528,11 @@ namespace Contralto
             SetExecutionState(ExecutionState.Stopped);
         }
 
+        private void ResetButton_Click(object sender, EventArgs e)
+        {
+            _system.Reset();
+        }
+
         private void ExecuteStep()
         {
             _system.SingleStep();
@@ -522,25 +546,34 @@ namespace Contralto
             StepDelegate refUI = new StepDelegate(RefreshUI);
             StepDelegate inv = new StepDelegate(Invalidate);
             while (true)
-            {                
-                if (execType == ExecutionType.Auto)
+            {
+                switch (execType)
                 {
-                    // Execute a single step, then update UI and 
-                    // sleep to give messages time to run.
-                    _system.SingleStep();
-                    
-                    this.BeginInvoke(refUI);
-                    this.BeginInvoke(inv);
-                    System.Threading.Thread.Sleep(10);
-                }
-                else
-                {
-                    // Just execute one step, do not update UI.
-                    _system.SingleStep();
+                    case ExecutionType.Auto:
+                        {
+                            // Execute a single step, then update UI and 
+                            // sleep to give messages time to run.
+                            _system.SingleStep();
+
+                            this.BeginInvoke(refUI);
+                            this.BeginInvoke(inv);
+                            System.Threading.Thread.Sleep(10);
+                        }
+                        break;
+
+                    case ExecutionType.Step:
+                    case ExecutionType.Normal:
+                    case ExecutionType.NextTask:
+                        {
+                            // Just execute one step, do not update UI.
+                            _system.SingleStep();
+                        }
+                        break;
                 }
 
                 if (_execAbort ||
-                    _breakpointEnabled[_system.CPU.CurrentTask.MPC])
+                    _breakpointEnabled[_system.CPU.CurrentTask.MPC] ||
+                    (execType == ExecutionType.NextTask && _system.CPU.NextTask != null && _system.CPU.NextTask != _system.CPU.CurrentTask))
                 {
                     // Stop here as we've hit a breakpoint or have been stopped  Update UI
                     // to indicate where we stopped.
@@ -571,6 +604,7 @@ namespace Contralto
             Step,
             Auto,
             Normal,
+            NextTask,
         }
 
         private enum ExecutionState

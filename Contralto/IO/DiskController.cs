@@ -21,7 +21,10 @@ namespace Contralto.IO
 
         public ushort KDATA
         {
-            get { return _kData; }
+            get
+            {                
+                return _kData;
+            }
             set { _kData = value; }
         }
 
@@ -56,17 +59,43 @@ namespace Contralto.IO
                 _wffo = (_kCom & 0x02) == 0x02;
                 _sendAdr = (_kCom & 0x01) == 0x01;
 
-                if (!_wdInhib && !_xferOff)
+                Console.WriteLine(
+                    "sst {0}, xferOff {1}, wdInhib {2}, bClkSource {3}, wffo {4}, sendAdr {5}",
+                    _elapsedSectorStateTime,
+                    _xferOff,
+                    _wdInhib,
+                    _bClkSource,
+                    _wffo,
+                    _sendAdr);
+
+                // Update WDINIT state based on _wdInhib.
+                if (_wdInhib)
                 {
-                    Console.WriteLine("enabled at sst {0}", _elapsedSectorStateTime);
+                    _wdInit = true;
                 }
             }
         }
 
+        /// <summary>
+        /// Used by the DiskTask code to check the WDINIT signal for dispatch.
+        /// </summary>
+        public bool WDINIT
+        {
+            get { return _wdInit; }
+        }
+
         public ushort KSTAT
         {
-            get { return _kStat; }
-            set { _kStat = value; }
+            get
+            {
+                Console.WriteLine("kstat read {0}", _kStat);
+                return _kStat;
+            }
+            set
+            {
+                _kStat = value;
+                Console.WriteLine("kstat write {0}", _kStat);
+            }
         }
 
         public ushort RECNO
@@ -77,6 +106,14 @@ namespace Contralto.IO
         public bool DataXfer
         {
             get { return _dataXfer; }
+        }
+
+        /// <summary>
+        /// This is a hack to see how the microcode expects INIT to work
+        /// </summary>
+        public bool RecordInit
+        {
+            get { return _elapsedSectorStateTime < 10; }
         }
 
         public int Cylinder
@@ -121,6 +158,8 @@ namespace Contralto.IO
 
             _wdInhib = true;
             _xferOff = true;
+
+            _wdInit = false;
         }
 
         public void Clock()
@@ -140,11 +179,15 @@ namespace Contralto.IO
 
                 _kStat = (ushort)((_kStat & 0x0fff) | (_sector << 12));
 
+                // TODO: seclate semantics.  Looks like if the sector task was BLOCKed when a new sector is signaled
+                // then the seclate flag is set.
+
                 // Reset internal state machine for sector data
-                _sectorState = SectorState.Leadin;
+                _sectorState = SectorState.HeaderReadDelay;
                 _sectorWordIndex = 0;
                 _elapsedSectorStateTime = 0.0;
-                Console.WriteLine("New sector ({0}), switching to LeadIn state.", _sector);
+                Console.WriteLine("New sector ({0}), switching to HeaderReadDelay state.", _sector);
+                _kData = 13;
 
                 _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
 
@@ -196,127 +239,177 @@ namespace Contralto.IO
             // that is, the microcode expects to be woken up on a per-word basis, and it only reads in one word
             // per wakeup.
             //
-            // pseudocode so far:
-            // if (elapsed word time > word time)
-            // {
-            //     elapsed word time = 0 (modulo remainder)
-            //     _kData = next word
-            //     if (!_wdInhib) DiskSectorTask.Wakeup();
-            // }
-            _elapsedSectorStateTime++;            
-            switch(_sectorState)
+
+
+            if (!_wdInhib)
             {
-                case SectorState.Leadin:
-                    if (_elapsedSectorStateTime > _leadinDuration)
-                    {
-                        _elapsedSectorStateTime -= _leadinDuration;
-                        _sectorState = SectorState.Header;
-                        Console.WriteLine("Switching to Header state.");
-                    }
-                    break;
+                
+                _elapsedSectorStateTime++;        
 
-                case SectorState.Header:
-                    if (_sectorWordIndex > 1)   // two words
-                    {
-                        _elapsedSectorStateTime -= 2.0 * _wordDuration;
-                        _sectorState = SectorState.HeaderGap;
-                        _sectorWordIndex = 0;
-                        Console.WriteLine("Switching to HeaderGap state.");
-                    }
-                    else if (_elapsedSectorStateTime > _wordDuration)
-                    {
-                        _elapsedSectorStateTime -= _wordDuration;
-
-                        // Put next word into KDATA if not inhibited from doing so.
-                        if (!_xferOff)
-                        {                            
-                            _kData = 0xdead;    // placeholder
-                            Console.WriteLine("  Header word {0} is {1}", _sectorWordIndex, OctalHelpers.ToOctal(_kData));                            
-                        }
-                        _sectorWordIndex++;
-
-                        if (!_wdInhib)
+                switch (_sectorState)
+                {
+                    case SectorState.HeaderReadDelay:                        
+                        if (_sectorWordIndex > 19)
                         {
+                            _sectorState = SectorState.Header;
+                            _sectorWordIndex = 0;
+                            Console.WriteLine("Switching to HeaderPreamble state.");
+                            _kData = 1;
+                        }
+                        else if (_elapsedSectorStateTime > _wordDuration)
+                        {
+                            _elapsedSectorStateTime -= _wordDuration;
+
+                            _sectorWordIndex++;
+
+                            _kData = 0xfefe;    // unused, just for debugging
+
                             _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
+                            Console.WriteLine("delay wakeup");
+
                         }
-                    }
-                    break;
+                        break;
 
-                case SectorState.HeaderGap:
-                    if (_elapsedSectorStateTime > _headerGapDuration)
-                    {
-                        _elapsedSectorStateTime -= _headerGapDuration;
-                        _sectorState = SectorState.Label;
-                        Console.WriteLine("Switching to Label state.");
-                    }
-                    break;
-
-                case SectorState.Label:
-                    if (_sectorWordIndex > 7)   // eight words
-                    {
-                        _elapsedSectorStateTime -= 8.0 * _wordDuration;
-                        _sectorState = SectorState.LabelGap;
-                        _sectorWordIndex = 0;
-                        Console.WriteLine("Switching to LabelGap state.");
-                    }
-                    else if(_elapsedSectorStateTime > _wordDuration)
-                    {
-                        _elapsedSectorStateTime -= _wordDuration;
-                        // Put next word into KDATA if not inhibited from doing so.
-                        if (!_xferOff)
+                    case SectorState.HeaderPreamble:
+                        if (_sectorWordIndex > 32)
                         {
-                            _kData = 0xbeef;    // placeholder
-                            Console.WriteLine("  Label word {0} is {1}", _sectorWordIndex, OctalHelpers.ToOctal(_kData));                            
+                            _sectorState = SectorState.Header;
+                            _sectorWordIndex = 0;
+                            Console.WriteLine("Switching to Header state.");
+                            _kData = 2;
                         }
-                        _sectorWordIndex++;
-
-                        if (!_wdInhib)
+                        else if (_elapsedSectorStateTime > _wordDuration)
                         {
+                            _elapsedSectorStateTime -= _wordDuration;
+
+                            _sectorWordIndex++;
+
+                            _kData = 0xfeff;    // unused, just for debugging
                             _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
+                            Console.WriteLine("preamble wakeup");
                         }
-                    }
-                    break;
+                        break;
 
-                case SectorState.LabelGap:
-                    if (_elapsedSectorStateTime > _labelGapDuration)
-                    {
-                        _elapsedSectorStateTime -= _labelGapDuration;
-                        _sectorState = SectorState.Data;
-                        Console.WriteLine("Switching to Data state.");
-                    }
-                    break;
-
-                case SectorState.Data:
-                    if (_sectorWordIndex > 255)   // 256 words
-                    {
-                        _elapsedSectorStateTime -= 256.0 * _wordDuration;
-                        _sectorState = SectorState.Leadout;
-                        _sectorWordIndex = 0;
-                        Console.WriteLine("Switching to Leadout state.");
-                    }
-                    else if (_elapsedSectorStateTime > _wordDuration)
-                    {
-                        _elapsedSectorStateTime -= _wordDuration;                        
-                        // Put next word into KDATA if not inhibited from doing so.
-                        if (!_xferOff)
+                    case SectorState.Header:
+                        if (_sectorWordIndex > 2)   // two words + sync
                         {
-                            _kData = 0xda1a;    // placeholder
-                            Console.WriteLine("  Sector word {0} is {1}", _sectorWordIndex, OctalHelpers.ToOctal(_kData));                            
+                            //_elapsedSectorStateTime -= 2.0 * _wordDuration;
+                            _sectorState = SectorState.HeaderInterrecord;
+                            _sectorWordIndex = 0;
+                            Console.WriteLine("Switching to HeaderGap state.");
+                            _kData = 3;
                         }
-                        _sectorWordIndex++;
-
-                        if (!_wdInhib)
+                        else if (_elapsedSectorStateTime > _wordDuration)
                         {
-                            _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
+                            _elapsedSectorStateTime -= _wordDuration;
+
+                            // Put next word into KDATA if not inhibited from doing so.                        
+                            if (!_xferOff)
+                            {
+                                _kData = 0xdead;    // placeholder                     
+                                Console.WriteLine("  Header word {0} is {1}", _sectorWordIndex, OctalHelpers.ToOctal(_kData));
+                            }
+                            _sectorWordIndex++;
+
+                            if (!_wdInhib)
+                            {
+                                Console.WriteLine("header wakeup");
+                                _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
+                            }
                         }
-                    }
-                    break;
+                        break;
 
-                case SectorState.Leadout:
-                    // Just stay here forever.  We will get reset at the start of the next sector.
-                    break;
+                    case SectorState.HeaderInterrecord:
+                        if (_elapsedSectorStateTime > _interRecordDelay)
+                        {
+                            _elapsedSectorStateTime -= _interRecordDelay;
+                            _sectorState = SectorState.Label;
+                            Console.WriteLine("Switching to Label state.");
+                            _kData = 4;
+                        }
+                        break;
 
+                    case SectorState.Label:
+                        if (_sectorWordIndex > 8)   // eight words + sync
+                        {
+                            //_elapsedSectorStateTime -= 8.0 * _wordDuration;
+                            _sectorState = SectorState.LabelInterrecord;
+                            _sectorWordIndex = 0;
+                            Console.WriteLine("Switching to LabelGap state.");
+                            _kData = 5;
+                        }
+                        else if (_elapsedSectorStateTime > _wordDuration)
+                        {
+                            _elapsedSectorStateTime -= _wordDuration;
+                            // Put next word into KDATA if not inhibited from doing so.
+                            if (!_xferOff)
+                            {
+                                _kData = 0xbeef;    // placeholder
+                                Console.WriteLine("  Label word {0} is {1}", _sectorWordIndex, OctalHelpers.ToOctal(_kData));
+                            }
+                            _sectorWordIndex++;
+
+                            if (!_wdInhib)
+                            {
+                                _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
+                            }
+                        }
+                        break;
+
+                    case SectorState.LabelInterrecord:
+                        if (_elapsedSectorStateTime > _interRecordDelay)
+                        {
+                            _elapsedSectorStateTime -= _interRecordDelay;
+                            _sectorState = SectorState.Data;
+                            Console.WriteLine("Switching to Data state.");
+                            _kData = 6;
+                        }
+                        break;
+
+                    case SectorState.Data:
+                        if (_sectorWordIndex > 256)   // 256 words + sync
+                        {
+                            //_elapsedSectorStateTime -= 256.0 * _wordDuration;
+                            _sectorState = SectorState.Postamble;
+                            _sectorWordIndex = 0;
+                            Console.WriteLine("Switching to Leadout state.");
+                            _kData = 7;
+                        }
+                        else if (_elapsedSectorStateTime > _wordDuration)
+                        {
+                            _elapsedSectorStateTime -= _wordDuration;
+                            // Put next word into KDATA if not inhibited from doing so.
+                            if (!_xferOff)
+                            {
+                                _kData = 0xda1a;    // placeholder
+                                Console.WriteLine("  Sector word {0} is {1}", _sectorWordIndex, OctalHelpers.ToOctal(_kData));
+                            }
+                            _sectorWordIndex++;
+
+                            if (!_wdInhib)
+                            {
+                                _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
+                            }
+                        }
+                        break;
+
+                    case SectorState.Postamble:
+                        // Just stay here forever.  We will get reset at the start of the next sector.
+                        break;
+
+                }
             }
+
+            //
+            // Update the WDINIT signal; this is based on WDALLOW (!_wdInhib) which sets WDINIT (this is done
+            // in KCOM way above).
+            // WDINIT is reset when BLOCK (a BLOCK F1 is being executed) and WDTSKACT (the disk word task is running) are 1.
+            //
+            if (_system.CPU.CurrentTask.Priority == (int)CPU.TaskType.DiskWord &&
+                _system.CPU.CurrentTask.BLOCK)
+            {
+                _wdInit = false;
+            }            
         }
 
         public void ClearStatus()
@@ -422,6 +515,9 @@ namespace Contralto.IO
         private int _head;
         private int _sector;
 
+        // WDINIT signal
+        private bool _wdInit;
+
         // Sector timing.  Based on table on pg. 43 of the Alto Hardware Manual
         private double _elapsedSectorTime;     // elapsed time in this sector (in clocks)
         private const double _sectorDuration = (40.0 / 12.0); // time in msec for one sector
@@ -430,24 +526,35 @@ namespace Contralto.IO
         // Sector data timing and associated state.  Timings based on educated guesses at the moment.
         private enum SectorState
         {
-            Leadin = 0,     // gap between sector mark and first Header word
-            Header,         // Header; two words
-            HeaderGap,      // gap between end of Header and first Label word
-            Label,          // Label; 8 words
-            LabelGap,       // gap betweeen the end of Label and first Data word
-            Data,           // Data; 256 words
-            Leadout         // gap between the end of Data and the next sector mark
+            HeaderReadDelay = 0,     // gap between sector mark and first Header word
+            HeaderPreamble,
+            Header,           // Header; two words
+            HeaderInterrecord,// gap between end of Header and first Label word
+            Label,            // Label; 8 words
+            LabelInterrecord, // gap betweeen the end of Label and first Data word
+            Data,             // Data; 256 words
+            Postamble         // gap between the end of Data and the next sector mark
         }
         private SectorState _sectorState;
         private double _elapsedSectorStateTime;
         private int _sectorWordIndex;
 
-        private const double _wordDuration = (_sectorClocks / (266.0 + 94.0));       // Based on : 266 words / sector, + 94 "words" for gaps (made up)
-        private const double _leadinDuration = (_wordDuration * 70.0);
-        private const double _headerGapDuration = (_wordDuration * 8.0);
-        private const double _labelGapDuration = (_wordDuration * 8.0);
-        private const double _leadoutDuration = (_wordDuration * 8.0);
-        
+
+        // From altoconsts23.mu:
+        // $MFRRDL		$177757;	DISK HEADER READ DELAY IS 21 WORDS
+        // $MFR0BL		$177744;	DISK HEADER PREAMBLE IS 34 WORDS
+        // $MIRRDL		$177774;	DISK INTERRECORD READ DELAY IS 4 WORDS
+        // $MIR0BL		$177775;	DISK INTERRECORD PREAMBLE IS 3 WORDS
+        // $MRPAL		$177775;	DISK READ POSTAMBLE LENGTH IS 3 WORDS
+        // $MWPAL		$177773;	DISK WRITE POSTAMBLE LENGTH IS 5 WORDS
+        private const double _wordDuration = (_sectorClocks / (266.0 + 21 + 34 + (4 + 3) * 3));       // Based on : 266 words / sector, + X words for delay / preamble
+        private const double _headerReadDelay = (_wordDuration * 21);
+        private const double _headerPreamble = (_wordDuration * 34);
+        private const double _interRecordDelay = (_wordDuration * 4);
+        private const double _interRecordPreamble = (_wordDuration * 3);
+
+
+
 
         // Cylinder seek timing.  Again, see the manual.
         // Timing varies based on how many cylinders are being traveled during a seek; see
