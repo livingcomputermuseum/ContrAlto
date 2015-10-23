@@ -17,6 +17,8 @@ namespace Contralto.IO
 
             // Wakeup the sector task first thing
             _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
+
+           
         }        
 
         public ushort KDATA
@@ -61,12 +63,14 @@ namespace Contralto.IO
 
                 Console.WriteLine(
                     "sst {0}, xferOff {1}, wdInhib {2}, bClkSource {3}, wffo {4}, sendAdr {5}",
-                    _elapsedSectorStateTime,
+                    _sectorWordTime,
                     _xferOff,
                     _wdInhib,
                     _bClkSource,
                     _wffo,
                     _sendAdr);
+
+                _diskBitCounterEnable = _wffo;
 
                 // Update WDINIT state based on _wdInhib.
                 if (_wdInhib)
@@ -87,14 +91,12 @@ namespace Contralto.IO
         public ushort KSTAT
         {
             get
-            {
-                Console.WriteLine("kstat read {0}", _kStat);
+            {                
                 return _kStat;
             }
             set
             {
-                _kStat = value;
-                Console.WriteLine("kstat write {0}", _kStat);
+                _kStat = value;             
             }
         }
 
@@ -113,7 +115,7 @@ namespace Contralto.IO
         /// </summary>
         public bool RecordInit
         {
-            get { return _elapsedSectorStateTime < 10; }
+            get { return _sectorWordTime < 10; }
         }
 
         public int Cylinder
@@ -160,11 +162,15 @@ namespace Contralto.IO
             _xferOff = true;
 
             _wdInit = false;
+
+            _diskBitCounterEnable = false;
+
+            InitSector();
         }
 
         public void Clock()
         {
-            _elapsedSectorTime++;
+            _elapsedSectorTime++;            
 
             // TODO: only signal sector changes if disk is loaded, etc.
             if (_elapsedSectorTime > _sectorClocks)
@@ -183,11 +189,13 @@ namespace Contralto.IO
                 // then the seclate flag is set.
 
                 // Reset internal state machine for sector data
-                _sectorState = SectorState.HeaderReadDelay;
                 _sectorWordIndex = 0;
-                _elapsedSectorStateTime = 0.0;
+                _sectorWordTime = 0.0;
                 Console.WriteLine("New sector ({0}), switching to HeaderReadDelay state.", _sector);
                 _kData = 13;
+
+                // Load new sector in
+                LoadSector();
 
                 _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
 
@@ -200,7 +208,7 @@ namespace Contralto.IO
                 _elapsedSeekTime++;
                 if (_elapsedSeekTime > _seekClocks)
                 {
-                    _elapsedSectorTime -= _seekClocks;
+                    _elapsedSeekTime -= _seekClocks;
 
                     if (_cylinder < _destCylinder)
                     {
@@ -221,184 +229,9 @@ namespace Contralto.IO
             }
 
             //
-            // Select data word based on elapsed time in this sector, if data transfer is not inhibited.
-            // On a new word, wake up the disk word task if not inhibited
-            // TODO: the exact mechanics of this are still kind of mysterious.
-            // Things to examine the schematics / uCode for:
-            //   - Use of WFFO bit -- is this related to the "sync word" that the docs mention?
-            //   -   how does WFFO work -- I assume the "1 bit" mentioned in the docs indicates the MFM bit
-            //       and indicates the start of the next data word (or is at least used to wait for the next
-            //       data word)
-            //   - How does the delaying work
-            // The microcode word-copying code works basically as:
-            //     On wakeup: 
-            //              - read word, store into memory.
-            //              - block task (remove wakeup)
-            //              - task switch (let something else run)
-            //              - repeat until all words read
-            // that is, the microcode expects to be woken up on a per-word basis, and it only reads in one word
-            // per wakeup.
+            // Spin the disk platter and read in words as applicable.
             //
-
-
-            if (!_wdInhib)
-            {
-                
-                _elapsedSectorStateTime++;        
-
-                switch (_sectorState)
-                {
-                    case SectorState.HeaderReadDelay:                        
-                        if (_sectorWordIndex > 19)
-                        {
-                            _sectorState = SectorState.Header;
-                            _sectorWordIndex = 0;
-                            Console.WriteLine("Switching to HeaderPreamble state.");
-                            _kData = 1;
-                        }
-                        else if (_elapsedSectorStateTime > _wordDuration)
-                        {
-                            _elapsedSectorStateTime -= _wordDuration;
-
-                            _sectorWordIndex++;
-
-                            _kData = 0xfefe;    // unused, just for debugging
-
-                            _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
-                            Console.WriteLine("delay wakeup");
-
-                        }
-                        break;
-
-                    case SectorState.HeaderPreamble:
-                        if (_sectorWordIndex > 32)
-                        {
-                            _sectorState = SectorState.Header;
-                            _sectorWordIndex = 0;
-                            Console.WriteLine("Switching to Header state.");
-                            _kData = 2;
-                        }
-                        else if (_elapsedSectorStateTime > _wordDuration)
-                        {
-                            _elapsedSectorStateTime -= _wordDuration;
-
-                            _sectorWordIndex++;
-
-                            _kData = 0xfeff;    // unused, just for debugging
-                            _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
-                            Console.WriteLine("preamble wakeup");
-                        }
-                        break;
-
-                    case SectorState.Header:
-                        if (_sectorWordIndex > 2)   // two words + sync
-                        {
-                            //_elapsedSectorStateTime -= 2.0 * _wordDuration;
-                            _sectorState = SectorState.HeaderInterrecord;
-                            _sectorWordIndex = 0;
-                            Console.WriteLine("Switching to HeaderGap state.");
-                            _kData = 3;
-                        }
-                        else if (_elapsedSectorStateTime > _wordDuration)
-                        {
-                            _elapsedSectorStateTime -= _wordDuration;
-
-                            // Put next word into KDATA if not inhibited from doing so.                        
-                            if (!_xferOff)
-                            {
-                                _kData = 0xdead;    // placeholder                     
-                                Console.WriteLine("  Header word {0} is {1}", _sectorWordIndex, OctalHelpers.ToOctal(_kData));
-                            }
-                            _sectorWordIndex++;
-
-                            if (!_wdInhib)
-                            {
-                                Console.WriteLine("header wakeup");
-                                _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
-                            }
-                        }
-                        break;
-
-                    case SectorState.HeaderInterrecord:
-                        if (_elapsedSectorStateTime > _interRecordDelay)
-                        {
-                            _elapsedSectorStateTime -= _interRecordDelay;
-                            _sectorState = SectorState.Label;
-                            Console.WriteLine("Switching to Label state.");
-                            _kData = 4;
-                        }
-                        break;
-
-                    case SectorState.Label:
-                        if (_sectorWordIndex > 8)   // eight words + sync
-                        {
-                            //_elapsedSectorStateTime -= 8.0 * _wordDuration;
-                            _sectorState = SectorState.LabelInterrecord;
-                            _sectorWordIndex = 0;
-                            Console.WriteLine("Switching to LabelGap state.");
-                            _kData = 5;
-                        }
-                        else if (_elapsedSectorStateTime > _wordDuration)
-                        {
-                            _elapsedSectorStateTime -= _wordDuration;
-                            // Put next word into KDATA if not inhibited from doing so.
-                            if (!_xferOff)
-                            {
-                                _kData = 0xbeef;    // placeholder
-                                Console.WriteLine("  Label word {0} is {1}", _sectorWordIndex, OctalHelpers.ToOctal(_kData));
-                            }
-                            _sectorWordIndex++;
-
-                            if (!_wdInhib)
-                            {
-                                _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
-                            }
-                        }
-                        break;
-
-                    case SectorState.LabelInterrecord:
-                        if (_elapsedSectorStateTime > _interRecordDelay)
-                        {
-                            _elapsedSectorStateTime -= _interRecordDelay;
-                            _sectorState = SectorState.Data;
-                            Console.WriteLine("Switching to Data state.");
-                            _kData = 6;
-                        }
-                        break;
-
-                    case SectorState.Data:
-                        if (_sectorWordIndex > 256)   // 256 words + sync
-                        {
-                            //_elapsedSectorStateTime -= 256.0 * _wordDuration;
-                            _sectorState = SectorState.Postamble;
-                            _sectorWordIndex = 0;
-                            Console.WriteLine("Switching to Leadout state.");
-                            _kData = 7;
-                        }
-                        else if (_elapsedSectorStateTime > _wordDuration)
-                        {
-                            _elapsedSectorStateTime -= _wordDuration;
-                            // Put next word into KDATA if not inhibited from doing so.
-                            if (!_xferOff)
-                            {
-                                _kData = 0xda1a;    // placeholder
-                                Console.WriteLine("  Sector word {0} is {1}", _sectorWordIndex, OctalHelpers.ToOctal(_kData));
-                            }
-                            _sectorWordIndex++;
-
-                            if (!_wdInhib)
-                            {
-                                _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
-                            }
-                        }
-                        break;
-
-                    case SectorState.Postamble:
-                        // Just stay here forever.  We will get reset at the start of the next sector.
-                        break;
-
-                }
-            }
+            SpinDisk();           
 
             //
             // Update the WDINIT signal; this is based on WDALLOW (!_wdInhib) which sets WDINIT (this is done
@@ -488,6 +321,193 @@ namespace Contralto.IO
             return seekTimeMsec / AltoSystem.ClockInterval;
         }
 
+        /// <summary>
+        /// "Rotates" the emulated disk platter one clock's worth.
+        /// </summary>
+        private void SpinDisk()
+        {
+            //
+            // Roughly:  If transfer is enabled:
+            //   Select data word based on elapsed time in this sector.
+            //   On a new word, wake up the disk word task if not inhibited.
+            //
+            // If transfer is not enabled BUT the disk word task is enabled,
+            // we will still wake up the disk word task if the appropriate clock
+            // source is selected.
+            //
+            // We simulate the movement of a sector under the heads by dividing
+            // the sector into word-sized timeslices.  Not all of these slices
+            // will actually contain valid data -- some are empty, used by the microcode
+            // for lead-in or inter-record delays, but the slices are still used to
+            // keep things in line time-wise; the real hardware uses a crystal-controlled clock
+            // to generate these slices during these periods (and the clock comes from the
+            // disk itself when actual data is present).  For our purposes, the two clocks
+            // are one and the same.
+            //            
+
+            // Move the disk forward one clock
+            _sectorWordTime++;
+
+            // If we have reached a new word timeslice, do something appropriate.
+            if (_sectorWordTime > _wordDuration)
+            {
+                // Save the fractional portion of the timeslice for the next slice
+                _sectorWordTime -= _wordDuration;                
+
+                //
+                // Pick out the word that just passed under the head.  This may not be
+                // actual data (it could be the pre-header delay, inter-record gaps or sync words)
+                // and we may not actually end up doing anything with it, but we may
+                // need it to decide whether to do anything at all.
+                //                
+                ushort diskWord = _sectorData[_sectorWordIndex].Data;
+
+                Console.WriteLine("Sector Word {0}:{1}", _sectorWordIndex, OctalHelpers.ToOctal(diskWord));
+
+                bool bWakeup = false;
+                //
+                // If the word task is enabled AND the write ("crystal") clock is enabled
+                // then we will wake up the word task now.
+                // 
+                if (!_wdInhib && !_bClkSource)
+                {
+                    Console.WriteLine("Disk Word task wakeup due to word clock.");
+                    bWakeup = true;                    
+                }                
+
+                //
+                // If the clock is enabled OR the WFFO bit is set (go ahead and run the bit clock)
+                // then we will wake up the word task and read in the data if transfers are not
+                // inhibited.  TODO: this should only happen on reads.
+                //
+                if (_wffo || _diskBitCounterEnable)
+                {
+                    if (!_xferOff)
+                    {
+                        Console.WriteLine("KDATA loaded.");
+                        _kData = diskWord;
+                    }
+
+                    if (!_wdInhib)
+                    {
+                        Console.WriteLine("Disk Word task wakeup due to word read.");
+                        bWakeup = true;
+                    }
+                }
+
+                //
+                // If the WFFO bit is cleared (wait for the sync word to be read) 
+                // then we check the word for a "1" (the sync word) to enable
+                // the clock.  This occurs late in the cycle so that the NEXT word
+                // (not the sync word) is actually read.  TODO: this should only happen on reads.
+                //
+                if (!_wffo && diskWord == 1)
+                {
+                    Console.WriteLine("Sync word hit; starting bit clock for next word");
+                    _diskBitCounterEnable = true;
+                }
+
+                if (bWakeup)
+                {
+                    _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
+                }
+
+                // Last, move to the next word.
+                _sectorWordIndex++;
+            }
+        }
+
+        private void LoadSector()
+        {
+            // Fill in sector with test data; eventually actually load real disk data!                  
+
+            // Header (2 words data, 1 word cksum)
+            for (int i = _headerOffset + 1; i < _headerOffset + 3; i++)
+            {
+                // actual data to be loaded from disk / cksum calculated
+                _sectorData[i] = new DataCell(0xbeef, CellType.Data);
+            }
+
+            _sectorData[_headerOffset + 3].Data = CalculateChecksum(_sectorData, _headerOffset + 1, 2);
+            
+            // Label (8 words data, 1 word cksum)
+            for (int i = _labelOffset + 1; i < _labelOffset + 9; i++)
+            {
+                // actual data to be loaded from disk / cksum calculated
+                _sectorData[i] = new DataCell(0xdead, CellType.Data);
+            }
+
+            _sectorData[_labelOffset + 9].Data = CalculateChecksum(_sectorData, _labelOffset + 1, 8);
+
+            // sector data (256 words data, 1 word cksum)
+            for (int i = _dataOffset + 1; i < _dataOffset + 257; i++)
+            {
+                // actual data to be loaded from disk / cksum calculated
+                _sectorData[i] = new DataCell((ushort)(0x7000 + i), CellType.Data);
+            }
+
+            _sectorData[_dataOffset + 257].Data = CalculateChecksum(_sectorData, _dataOffset + 1, 256);
+
+        }
+
+        private void InitSector()
+        {
+            // Fill in sector with default data (basically, fill in non-data areas).            
+
+
+            //
+            // header delay, 22 words
+            for (int i=0; i < _headerOffset; i++)
+            {                
+                _sectorData[i] = new DataCell(0, CellType.Gap);
+            }
+
+            _sectorData[_headerOffset] = new DataCell(1, CellType.Sync);
+            // inter-reccord delay between header & label (10 words)
+            for (int i = _headerOffset + 4; i < _labelOffset; i++)
+            {
+                _sectorData[i] = new DataCell(0, CellType.Gap);
+            }
+
+            _sectorData[_labelOffset] = new DataCell(1, CellType.Sync);
+            // inter-reccord delay between label & data (10 words)
+            for (int i = _labelOffset + 10; i < _dataOffset; i++)
+            {
+                _sectorData[i] = new DataCell(0, CellType.Gap);
+            }
+
+            _sectorData[_dataOffset] = new DataCell(1, CellType.Sync);
+            // read-postamble
+            for (int i = _dataOffset + 257; i < _sectorWords;i++)
+            {
+                _sectorData[i] = new DataCell(0, CellType.Gap);
+            }            
+        }
+
+        private ushort CalculateChecksum(DataCell[] sectorData, int offset, int length)
+        {
+            //
+            // From the uCode, the Alto's checksum algorithm is:
+            // 1. Load checksum with constant value of 521B (0x151)
+            // 2. For each word in the record, cksum <- word XOR cksum
+            // 3. Profit
+            //
+            ushort checksum = 0x151;
+
+            for(int i = offset; i < length;i++)
+            {
+                // Sanity check that we're checksumming actual data
+                if (sectorData[i].Type != CellType.Data)
+                {
+                    throw new InvalidOperationException("Attempt to checksum non-data area of sector.");
+                }
+
+                checksum = (ushort)(checksum ^ sectorData[i].Data);
+            }
+
+            return checksum;
+        }
+
         private ushort _kData;
         private ushort _kAdr;
         private ushort _kCom;
@@ -515,6 +535,9 @@ namespace Contralto.IO
         private int _head;
         private int _sector;
 
+        // bit clock flag
+        private bool _diskBitCounterEnable;
+
         // WDINIT signal
         private bool _wdInit;
 
@@ -523,37 +546,54 @@ namespace Contralto.IO
         private const double _sectorDuration = (40.0 / 12.0); // time in msec for one sector
         private const double _sectorClocks = _sectorDuration / 0.00017;     // number of clock cycles per sector time.
 
-        // Sector data timing and associated state.  Timings based on educated guesses at the moment.
-        private enum SectorState
-        {
-            HeaderReadDelay = 0,     // gap between sector mark and first Header word
-            HeaderPreamble,
-            Header,           // Header; two words
-            HeaderInterrecord,// gap between end of Header and first Label word
-            Label,            // Label; 8 words
-            LabelInterrecord, // gap betweeen the end of Label and first Data word
-            Data,             // Data; 256 words
-            Postamble         // gap between the end of Data and the next sector mark
-        }
-        private SectorState _sectorState;
-        private double _elapsedSectorStateTime;
+       
         private int _sectorWordIndex;
+        private double _sectorWordTime;
 
 
-        // From altoconsts23.mu:
+        // From altoconsts23.mu:  [all constants in octal, for reference]
         // $MFRRDL		$177757;	DISK HEADER READ DELAY IS 21 WORDS
-        // $MFR0BL		$177744;	DISK HEADER PREAMBLE IS 34 WORDS
+        // $MFR0BL		$177744;	DISK HEADER PREAMBLE IS 34 WORDS                <<-- used for writing
         // $MIRRDL		$177774;	DISK INTERRECORD READ DELAY IS 4 WORDS
-        // $MIR0BL		$177775;	DISK INTERRECORD PREAMBLE IS 3 WORDS
+        // $MIR0BL		$177775;	DISK INTERRECORD PREAMBLE IS 3 WORDS            <<-- writing
         // $MRPAL		$177775;	DISK READ POSTAMBLE LENGTH IS 3 WORDS
-        // $MWPAL		$177773;	DISK WRITE POSTAMBLE LENGTH IS 5 WORDS
-        private const double _wordDuration = (_sectorClocks / (266.0 + 21 + 34 + (4 + 3) * 3));       // Based on : 266 words / sector, + X words for delay / preamble
-        private const double _headerReadDelay = (_wordDuration * 21);
-        private const double _headerPreamble = (_wordDuration * 34);
-        private const double _interRecordDelay = (_wordDuration * 4);
-        private const double _interRecordPreamble = (_wordDuration * 3);
+        // $MWPAL		$177773;	DISK WRITE POSTAMBLE LENGTH IS 5 WORDS          <<-- writing, clearly.
+        private const int _sectorWords = 269 + 22 + 34;                          // Based on : 269 data words (+ cksums) / sector, + X words for delay / preamble / sync
+        private const double _wordDuration = (_sectorClocks / (double)_sectorWords);       
+        private const double _headerReadDelay = 17;        
+        private const double _interRecordDelay = 4;
 
+        // offsets in words for start of data in sector
+        private const int _headerOffset = 22;
+        private const int _labelOffset = _headerOffset + 14;
+        private const int _dataOffset = _labelOffset + 20;
 
+        // The data for the current sector
+        private enum CellType
+        {
+            Data,
+            Gap,
+            Sync,
+        }
+
+        private struct DataCell
+        {
+            public DataCell(ushort data, CellType type)
+            {
+                Data = data;
+                Type = type;
+            }
+
+            public ushort Data;
+            public CellType Type;
+
+            public override string ToString()
+            {
+                return String.Format("{0} {1}", Data, Type);
+            }
+        }
+
+        private DataCell[] _sectorData = new DataCell[_sectorWords];
 
 
         // Cylinder seek timing.  Again, see the manual.

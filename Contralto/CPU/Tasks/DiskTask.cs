@@ -45,8 +45,9 @@ namespace Contralto.CPU
                         return _cpu._system.DiskController.KSTAT;
 
                     case DiskBusSource.ReadKDATA:
-                        Console.WriteLine("kdata read");
-                        return _cpu._system.DiskController.KDATA;
+                        ushort kdata = _cpu._system.DiskController.KDATA;
+                        Console.WriteLine("kdata read {0}", OctalHelpers.ToOctal(kdata));
+                        return kdata;
 
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled bus source {0}", bs));
@@ -87,8 +88,10 @@ namespace Contralto.CPU
                         // "KSTAT[12-15] are loaded from BUS[12-15].  (Actually BUS[13] is ORed onto
                         // KSTAT[13].)"                        
 
-                        // OR in BUS[12-15] after masking in KSTAT[13] so it is ORed in properly.
+                        // OR in BUS[12-15] after masking in KSTAT[13] so it is ORed in properly.                        
                         _cpu._system.DiskController.KSTAT = (ushort)(((_cpu._system.DiskController.KSTAT & 0xfff4)) | (_busData & 0xf));
+
+                        Console.WriteLine("KSTAT loaded with {0}, is now {1}", (_busData & 0xf), _cpu._system.DiskController.KSTAT);
                         break;
 
                     case DiskF1.STROBE:

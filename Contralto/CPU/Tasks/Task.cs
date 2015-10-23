@@ -337,6 +337,11 @@ namespace Contralto.CPU
                 if (loadR)
                 {
                     _cpu._r[_rSelect] = Shifter.DoOperation(_cpu._l, _cpu._t);
+
+                    if(_rSelect == 26)
+                    {
+                        Console.WriteLine("cksum is now {0}", OctalHelpers.ToOctal(_cpu._r[_rSelect]));
+                    }
                 }
 
                 // Do writeback to selected R register from M
