@@ -47,7 +47,8 @@
     <Compile Include="CPU\ALU.cs" />
     <Compile Include="CPU\ConstantMemory.cs" />
     <Compile Include="CPU\CPU.cs" />
-    <Compile Include="CPU\Disassembler.cs" />
+    <Compile Include="CPU\NovaDisassembler.cs" />
+    <Compile Include="CPU\UCodeDisassembler.cs" />
     <Compile Include="CPU\Tasks\DiskTask.cs" />
     <Compile Include="CPU\Tasks\EmulatorTask.cs" />
     <Compile Include="CPU\MicroInstruction.cs" />
@@ -62,6 +63,7 @@
     </Compile>
     <Compile Include="IClockable.cs" />
     <Compile Include="IO\DiskController.cs" />
+    <Compile Include="IO\DiabloPack.cs" />
     <Compile Include="IO\Keyboard.cs" />
     <Compile Include="Memory\IMemoryMappedDevice.cs" />
     <Compile Include="Memory\Memory.cs" />
@@ -75,6 +77,9 @@
     <None Include="App.config" />
     <None Include="Disassembly\altoIIcode3.mu">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Disk\games.dsk">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="ROM\2kctl.u3">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

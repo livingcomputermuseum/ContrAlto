@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Contralto.Memory;
+using System.IO;
 
 namespace Contralto.IO
 {
@@ -15,10 +16,18 @@ namespace Contralto.IO
             _system = system;
             Reset();
 
-            // Wakeup the sector task first thing
-            _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
+            // Load the pack
+            _pack = new DiabloPack(DiabloDiskType.Diablo31);
 
-           
+            // TODO: this does not belong here.
+            FileStream fs = new FileStream("Disk\\games.dsk", FileMode.Open, FileAccess.Read);
+
+            _pack.Load(fs);
+
+            fs.Close();
+
+            // Wakeup the sector task first thing
+            _system.CPU.WakeupTask(CPU.TaskType.DiskSector);                       
         }        
 
         public ushort KDATA
@@ -419,31 +428,37 @@ namespace Contralto.IO
 
         private void LoadSector()
         {
-            // Fill in sector with test data; eventually actually load real disk data!                  
+            //
+            // Pull data off disk and pack it into our faked-up sector.
+            // Note that this data is packed in in REVERSE ORDER because that's
+            // how it gets written out and it's how the Alto expects it to be read back in.
+            //
+            DiabloDiskSector sector = _pack.GetSector(_cylinder, _head, _sector);
+
 
             // Header (2 words data, 1 word cksum)
-            for (int i = _headerOffset + 1; i < _headerOffset + 3; i++)
+            for (int i = _headerOffset + 1, j = 1; i < _headerOffset + 3; i++, j--)
             {
                 // actual data to be loaded from disk / cksum calculated
-                _sectorData[i] = new DataCell(0xbeef, CellType.Data);
+                _sectorData[i] = new DataCell(sector.Header[j], CellType.Data);
             }
 
             _sectorData[_headerOffset + 3].Data = CalculateChecksum(_sectorData, _headerOffset + 1, 2);
             
             // Label (8 words data, 1 word cksum)
-            for (int i = _labelOffset + 1; i < _labelOffset + 9; i++)
+            for (int i = _labelOffset + 1, j = 7; i < _labelOffset + 9; i++, j--)
             {
                 // actual data to be loaded from disk / cksum calculated
-                _sectorData[i] = new DataCell(0xdead, CellType.Data);
+                _sectorData[i] = new DataCell(sector.Label[j], CellType.Data);
             }
 
             _sectorData[_labelOffset + 9].Data = CalculateChecksum(_sectorData, _labelOffset + 1, 8);
 
             // sector data (256 words data, 1 word cksum)
-            for (int i = _dataOffset + 1; i < _dataOffset + 257; i++)
+            for (int i = _dataOffset + 1, j = 255; i < _dataOffset + 257; i++, j--)
             {
                 // actual data to be loaded from disk / cksum calculated
-                _sectorData[i] = new DataCell((ushort)(0x7000 + i), CellType.Data);
+                _sectorData[i] = new DataCell(sector.Data[j], CellType.Data);
             }
 
             _sectorData[_dataOffset + 257].Data = CalculateChecksum(_sectorData, _dataOffset + 1, 256);
@@ -453,7 +468,6 @@ namespace Contralto.IO
         private void InitSector()
         {
             // Fill in sector with default data (basically, fill in non-data areas).            
-
 
             //
             // header delay, 22 words
@@ -602,6 +616,8 @@ namespace Contralto.IO
         private double _elapsedSeekTime;
         private double _seekClocks;
 
+        // The pack loaded into the drive
+        DiabloPack _pack;
 
         private AltoSystem _system;
     }

@@ -127,7 +127,7 @@ namespace Contralto.CPU
                         //   Conditions             ORed onto NEXT          Comment
                         //
                         //   if IR[0] = 1           3-IR[8-9]               complement of SH field of IR
-                        //   elseif IR[1-2] = 0     IR[3-4]                 JMP, JSR, ISZ, DSZ
+                        //   elseif IR[1-2] = 0     IR[3-4]                 JMP, JSR, ISZ, DSZ              ; dispatch selects register
                         //   elseif IR[1-2] = 1     4                       LDA
                         //   elseif IR[1-2] = 2     5                       STA
                         //   elseif IR[4-7] = 0     1                       
@@ -145,11 +145,11 @@ namespace Contralto.CPU
                         {
                             _nextModifier = (ushort)((_cpu._ir & 0x1800) >> 11);
                         }
-                        else if ((_cpu._ir & 0x6000) == 0x4000)
+                        else if ((_cpu._ir & 0x6000) == 0x2000)
                         {
                             _nextModifier = 4;
                         }
-                        else if ((_cpu._ir & 0x6000) == 0x6000)
+                        else if ((_cpu._ir & 0x6000) == 0x4000)
                         {
                             _nextModifier = 5;
                         }

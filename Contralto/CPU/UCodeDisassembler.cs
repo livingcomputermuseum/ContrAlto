@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Contralto.CPU
 {
     // BUG: register assignments should come from L (not 0) 
-    public static class Disassembler
+    public static class UCodeDisassembler
     {       
         
         /// <summary>
