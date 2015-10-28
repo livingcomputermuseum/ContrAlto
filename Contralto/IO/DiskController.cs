@@ -20,12 +20,12 @@ namespace Contralto.IO
             _pack = new DiabloPack(DiabloDiskType.Diablo31);
 
             // TODO: this does not belong here.
-            FileStream fs = new FileStream("Disk\\games.dsk", FileMode.Open, FileAccess.Read);
+            FileStream fs = new FileStream("Disk\\tdisk4.dsk", FileMode.Open, FileAccess.Read);
 
             _pack.Load(fs);
 
             fs.Close();
-
+        
             // Wakeup the sector task first thing
             _system.CPU.WakeupTask(CPU.TaskType.DiskSector);                       
         }        
@@ -69,15 +69,6 @@ namespace Contralto.IO
                 _bClkSource = (_kCom & 0x04) == 0x04;
                 _wffo = (_kCom & 0x02) == 0x02;
                 _sendAdr = (_kCom & 0x01) == 0x01;
-
-                Console.WriteLine(
-                    "sst {0}, xferOff {1}, wdInhib {2}, bClkSource {3}, wffo {4}, sendAdr {5}",
-                    _sectorWordTime,
-                    _xferOff,
-                    _wdInhib,
-                    _bClkSource,
-                    _wffo,
-                    _sendAdr);
 
                 _diskBitCounterEnable = _wffo;
 
@@ -200,7 +191,7 @@ namespace Contralto.IO
                 // Reset internal state machine for sector data
                 _sectorWordIndex = 0;
                 _sectorWordTime = 0.0;
-                Console.WriteLine("New sector ({0}), switching to HeaderReadDelay state.", _sector);
+
                 _kData = 13;
 
                 // Load new sector in
@@ -371,16 +362,13 @@ namespace Contralto.IO
                 //                
                 ushort diskWord = _sectorData[_sectorWordIndex].Data;
 
-                Console.WriteLine("Sector Word {0}:{1}", _sectorWordIndex, OctalHelpers.ToOctal(diskWord));
-
                 bool bWakeup = false;
                 //
                 // If the word task is enabled AND the write ("crystal") clock is enabled
                 // then we will wake up the word task now.
                 // 
                 if (!_wdInhib && !_bClkSource)
-                {
-                    Console.WriteLine("Disk Word task wakeup due to word clock.");
+                {                    
                     bWakeup = true;                    
                 }                
 
@@ -392,14 +380,12 @@ namespace Contralto.IO
                 if (_wffo || _diskBitCounterEnable)
                 {
                     if (!_xferOff)
-                    {
-                        Console.WriteLine("KDATA loaded.");
+                    {                 
                         _kData = diskWord;
                     }
 
                     if (!_wdInhib)
                     {
-                        Console.WriteLine("Disk Word task wakeup due to word read.");
                         bWakeup = true;
                     }
                 }
@@ -411,8 +397,7 @@ namespace Contralto.IO
                 // (not the sync word) is actually read.  TODO: this should only happen on reads.
                 //
                 if (!_wffo && diskWord == 1)
-                {
-                    Console.WriteLine("Sync word hit; starting bit clock for next word");
+                {                    
                     _diskBitCounterEnable = true;
                 }
 

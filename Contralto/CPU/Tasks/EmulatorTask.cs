@@ -198,12 +198,23 @@ namespace Contralto.CPU
                         // There is considerably more that goes into determining the dispatch, which is controlled by a 256x8
                         // PROM.  We just use the PROM rather than implementing the above logic (because it works.)
                         //
-                        _nextModifier = ControlROM.ACSourceROM[(_cpu._ir & 0xff00) >> 8];
-                       
+
+                        if ((_cpu._ir & 0x8000) != 0)
+                        {
+                            // 3-IR[8-9] (shift field of arithmetic instruction)
+                            _nextModifier = (ushort)(3 - ((_cpu._ir & 0xc0) >> 6));
+                        }
+                        else
+                        {
+                            // Use the PROM.
+                            // We OR in 0x80 because the top address line is controlled by the value of ACSOURCE(2), which is always
+                            // 1 here (since ACSOURCE is 14 decimal).
+                            _nextModifier = ControlROM.ACSourceROM[((_cpu._ir & 0x7f00) >> 8) | 0x80];
+                        }                       
                         break;
 
                     case EmulatorF2.ACDEST:
-                        // Handled in early handler
+                        // Handled in early handler, nothing to do here.
                         break;
 
                     case EmulatorF2.BUSODD:
@@ -215,10 +226,15 @@ namespace Contralto.CPU
                     case EmulatorF2.MAGIC:
                         Shifter.SetMagic(true);
                         break;
-
+                        
+                    case EmulatorF2.LoadDNS:
+                        // DNS<- modifies the normal shift operations.
+                        Shifter.SetDNS(true);                    
+                        break; 
 
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled emulator F2 {0}.", ef2));
+                        break;
                 }
             }
 

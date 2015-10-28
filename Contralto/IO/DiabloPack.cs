@@ -105,6 +105,7 @@ namespace Contralto.IO
                         // TODO: should support different formats ("correct" raw, Alto CopyDisk format, etc.)
                         //
                         imageStream.Seek(2, SeekOrigin.Current);
+
                         if (imageStream.Read(header, 0, header.Length) != header.Length)
                         {
                             throw new InvalidOperationException("Short read while reading sector header.");

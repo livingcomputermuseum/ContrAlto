@@ -21,7 +21,8 @@ namespace Contralto
         public Debugger(AltoSystem system)
         {
             _system = system;
-            _breakpointEnabled = new bool[1024];
+            _microcodeBreakpointEnabled = new bool[1024];
+            _novaBreakpointEnabled = new bool[65536];
 
             InitializeComponent();
             InitControls();
@@ -113,11 +114,18 @@ namespace Contralto
 
             for (ushort i = 0; i < 1024; i++)
             {
-                _memoryData.Rows[i].Cells[1].Value = OctalHelpers.ToOctal(_system.MemoryBus.DebugReadWord(i), 6);
+                _memoryData.Rows[i].Cells[2].Value = OctalHelpers.ToOctal(_system.MemoryBus.DebugReadWord(i), 6);
+                _memoryData.Rows[i].Cells[3].Value = Contralto.CPU.Nova.NovaDisassembler.DisassembleInstruction(i, _system.MemoryBus.DebugReadWord(i));
             }
 
-            // Find the right source line
-            HighlightSourceLine(_system.CPU.CurrentTask.MPC);            
+            // Find the right source line.
+            HighlightMicrocodeSourceLine(_system.CPU.CurrentTask.MPC);
+
+            // Highlight the nova memory location corresponding to the emulator PC.
+            // TODO: this should be configurable
+            ushort pc = _system.CPU.R[6];
+
+            HighlightNovaSourceLine(pc);                
 
             // Exec state
             switch(_execState)
@@ -141,6 +149,10 @@ namespace Contralto
                 case ExecutionState.BreakpointStop:
                     ExecutionStateLabel.Text = "Stopped (bkpt)";
                     break;
+
+                case ExecutionState.InternalError:
+                    ExecutionStateLabel.Text = String.Format("Stopped (error {0})", _lastExceptionText);
+                    break;
             }
         }
 
@@ -159,7 +171,11 @@ namespace Contralto
             
             for (ushort i=0;i<1024;i++)
             {
-                _memoryData.Rows.Add(OctalHelpers.ToOctal(i, 6), OctalHelpers.ToOctal(_system.MemoryBus.DebugReadWord(i), 6));
+                _memoryData.Rows.Add(
+                    false,
+                    OctalHelpers.ToOctal(i, 6),
+                    OctalHelpers.ToOctal(_system.MemoryBus.DebugReadWord(i), 6),
+                    Contralto.CPU.Nova.NovaDisassembler.DisassembleInstruction(i, _system.MemoryBus.DebugReadWord(i)));
             }
 
             _otherRegs.Rows.Add("L", "0");
@@ -180,12 +196,7 @@ namespace Contralto
             _diskData.Rows.Add("KADR", "0");
             _diskData.Rows.Add("KCOM", "0");
             _diskData.Rows.Add("KSTAT", "0");
-            _diskData.Rows.Add("RECNO", "0");
-
-            for (int i=0;i<16;i++)
-            {
-                _debugTasks.Rows.Add(true, GetTextForTask((TaskType)i));
-            }
+            _diskData.Rows.Add("RECNO", "0");            
 
         }
 
@@ -206,13 +217,27 @@ namespace Contralto
                     bool value = (bool)_sourceViewer.Rows[e.RowIndex].Cells[0].Value;
                     _sourceViewer.Rows[e.RowIndex].Cells[0].Value = !value;
 
-                    ModifyBreakpoint((UInt16)_sourceViewer.Rows[e.RowIndex].Tag, !value);
+                    ModifyMicrocodeBreakpoint((UInt16)_sourceViewer.Rows[e.RowIndex].Tag, !value);
                 }
 
             }
         }
 
-        private void HighlightSourceLine(UInt16 address)
+        private void MemoryViewCellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Check for breakpoint column click.
+            if (e.ColumnIndex == 0)
+            {
+                // Check/uncheck the box and set/unset a breakpoint for the line                
+                bool value = (bool)_memoryData.Rows[e.RowIndex].Cells[0].Value;
+                _memoryData.Rows[e.RowIndex].Cells[0].Value = !value;
+
+                ModifyNovaBreakpoint((UInt16)e.RowIndex, !value);
+            }
+        }
+
+
+        private void HighlightMicrocodeSourceLine(UInt16 address)
         {
             foreach (DataGridViewRow row in _sourceViewer.Rows)
             {
@@ -227,9 +252,24 @@ namespace Contralto
             }
         }
 
-        private void ModifyBreakpoint(UInt16 address, bool set)
+        private void HighlightNovaSourceLine(UInt16 address)
         {
-            _breakpointEnabled[address] = set;
+            if (address < _memoryData.Rows.Count)
+            {
+                _memoryData.ClearSelection();
+                _memoryData.Rows[address].Selected = true;
+                _memoryData.CurrentCell = _memoryData.Rows[address].Cells[0];            
+            }
+        }
+
+        private void ModifyMicrocodeBreakpoint(UInt16 address, bool set)
+        {
+            _microcodeBreakpointEnabled[address] = set;
+        }
+
+        private void ModifyNovaBreakpoint(UInt16 address, bool set)
+        {
+            _novaBreakpointEnabled[address] = set;
         }
 
         private string GetTextForTaskState(AltoCPU.Task task)
@@ -429,22 +469,7 @@ namespace Contralto
         private void Debugger_Load(object sender, EventArgs e)
         {
 
-        }
-
-        private void JumpToButton_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                UInt16 address = Convert.ToUInt16(JumpToAddress.Text, 8);
-
-                // find the source address that matches this, if any.
-                HighlightSourceLine(address);
-            }
-            catch
-            {
-                // eh, just do nothing for now
-            }
-        }
+        }        
 
         private void OnJumpAddressKeyDown(object sender, KeyEventArgs e)
         {
@@ -456,7 +481,7 @@ namespace Contralto
                     UInt16 address = Convert.ToUInt16(JumpToAddress.Text, 8);
 
                     // find the source address that matches this, if any.
-                    HighlightSourceLine(address);
+                    HighlightMicrocodeSourceLine(address);
                 }
                 catch
                 {
@@ -511,6 +536,23 @@ namespace Contralto
             }
         }
 
+        /// <summary>
+        /// Runs microcode until next Nova instruction is started
+        /// This is done by simply breaking whenever the uPC for the emulator
+        /// task returns to 20(octal) -- this is the restart point for the emulator
+        /// task.        
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void NovaStep_Click(object sender, EventArgs e)
+        {
+            {
+                _execThread = new Thread(new System.Threading.ParameterizedThreadStart(ExecuteProc));
+                _execThread.Start(ExecutionType.NextNovaInstruction);
+                SetExecutionState(ExecutionState.Running);
+            }
+        }
+
         private void OnStopButtonClicked(object sender, EventArgs e)
         {
             if (_execThread != null &&
@@ -547,36 +589,66 @@ namespace Contralto
             StepDelegate inv = new StepDelegate(Invalidate);
             while (true)
             {
-                switch (execType)
+                bool internalError = false;
+
+                try
                 {
-                    case ExecutionType.Auto:
-                        {
-                            // Execute a single step, then update UI and 
-                            // sleep to give messages time to run.
-                            _system.SingleStep();
+                    switch (execType)
+                    {
+                        case ExecutionType.Auto:
+                            {
+                                // Execute a single step, then update UI and 
+                                // sleep to give messages time to run.
+                                _system.SingleStep();
 
-                            this.BeginInvoke(refUI);
-                            this.BeginInvoke(inv);
-                            System.Threading.Thread.Sleep(10);
-                        }
-                        break;
+                                this.BeginInvoke(refUI);
+                                this.BeginInvoke(inv);
+                                System.Threading.Thread.Sleep(10);
+                            }
+                            break;
 
-                    case ExecutionType.Step:
-                    case ExecutionType.Normal:
-                    case ExecutionType.NextTask:
-                        {
-                            // Just execute one step, do not update UI.
-                            _system.SingleStep();
-                        }
-                        break;
+                        case ExecutionType.Step:
+                        case ExecutionType.Normal:
+                        case ExecutionType.NextTask:
+                        case ExecutionType.NextNovaInstruction:
+                            {
+                                // Just execute one step, do not update UI.
+                                _system.SingleStep();
+                            }
+                            break;
+                    }
+                }
+                catch(Exception e)
+                {
+                    internalError = true;
+                    _lastExceptionText = e.Message;
                 }
 
-                if (_execAbort ||
-                    _breakpointEnabled[_system.CPU.CurrentTask.MPC] ||
-                    (execType == ExecutionType.NextTask && _system.CPU.NextTask != null && _system.CPU.NextTask != _system.CPU.CurrentTask))
+                if (internalError)
                 {
-                    // Stop here as we've hit a breakpoint or have been stopped  Update UI
-                    // to indicate where we stopped.
+                    //
+                    // Stop here because of an execution error.
+                    //
+                    this.BeginInvoke(refUI);
+                    this.BeginInvoke(inv);
+
+
+                    SetExecutionState(ExecutionState.InternalError);                    
+
+                    break;
+                }
+
+                if (_execAbort ||                                               // The Stop button was hit
+                    _microcodeBreakpointEnabled[_system.CPU.CurrentTask.MPC] || // A microcode breakpoint was hit
+                    (execType == ExecutionType.NextTask && 
+                        _system.CPU.NextTask != null && 
+                        _system.CPU.NextTask != _system.CPU.CurrentTask) ||     // The next task was switched to                    
+                    (_system.CPU.CurrentTask.MPC == 0x10 &&                     // MPC is 20(octal) meaning a new Nova instruction and...
+                        (_novaBreakpointEnabled[_system.CPU.R[6]] ||            // A breakpoint is set here
+                          execType == ExecutionType.NextNovaInstruction)))      // or we're running only a single Nova instruction. 
+                {
+                    // Stop here as we've hit a breakpoint or have been stopped 
+                    // Update UI to indicate where we stopped.
                     this.BeginInvoke(refUI);
                     this.BeginInvoke(inv);
 
@@ -587,7 +659,7 @@ namespace Contralto
 
                     _execAbort = false;                    
                     break;
-                }
+                }                
             }
         }
 
@@ -605,6 +677,7 @@ namespace Contralto
             Auto,
             Normal,
             NextTask,
+            NextNovaInstruction,
         }
 
         private enum ExecutionState
@@ -614,6 +687,7 @@ namespace Contralto
             AutoStep,
             Running,
             BreakpointStop,
+            InternalError,
         }
 
         private delegate void StepDelegate();
@@ -627,12 +701,15 @@ namespace Contralto
         private Thread _execThread;
         private bool _execAbort;
         private ExecutionState _execState;
+        private string _lastExceptionText;
 
 
-
-        // Debugger breakpoints; one entry per address since we only need
+        // Microcode Debugger breakpoints; one entry per address since we only need
         // to worry about a 10 bit address space, this is fast and uses little memory.
-        private bool[] _breakpointEnabled;
+        private bool[] _microcodeBreakpointEnabled;
+
+        // Nova Debugger breakpoints; same as above
+        private bool[] _novaBreakpointEnabled;
 
 
     }

@@ -47,6 +47,16 @@ namespace Contralto.CPU
             _magic = magic;            
         }
 
+
+        /// <summary>
+        /// TODO: this is still kind of clumsy.
+        /// </summary>
+        /// <param name="dns"></param>
+        public static void SetDNS(bool dns)
+        {
+            _dns = dns;
+        }
+
         /// <summary>
         /// Does the last specified operation to the specified inputs
         /// </summary>
@@ -55,6 +65,12 @@ namespace Contralto.CPU
         /// <returns></returns>
         public static ushort DoOperation(ushort input, ushort t)
         {
+            // Sanity check: MAGIC and DNS cannot be set at the same time.
+            if (_magic && _dns)
+            {
+                throw new InvalidOperationException("Both MAGIC and DNS bits are set.");
+            }
+
             ushort output = 0;
             switch(_op)
             {
@@ -74,6 +90,10 @@ namespace Contralto.CPU
                         // shifter output on left shifts..."
                         output |= (ushort)((t & 0x8000) >> 15);
                     }
+                    else if (_dns)
+                    {
+                        throw new NotImplementedException("DNS LSH 1");
+                    }
                     break;
 
                 case ShifterOp.ShiftRight:
@@ -85,6 +105,10 @@ namespace Contralto.CPU
                         // of the shifter output on right shifts."
                         output |= (ushort)((t & 0x1) << 15);
                     }
+                    else if (_dns)
+                    {
+                        throw new NotImplementedException("DNS RSH 1");
+                    }
                     break;
 
                 case ShifterOp.RotateLeft:
@@ -94,6 +118,11 @@ namespace Contralto.CPU
                     {
                         int c = (output & 0x8000) >> 15;
                         output = (ushort)((output << 1) | c);
+                    }
+
+                    if (_dns)
+                    {                     
+                        throw new NotImplementedException("DNS LCY");                        
                     }
                     break;
 
@@ -117,5 +146,6 @@ namespace Contralto.CPU
         private static ShifterOp _op;
         private static int _count;
         private static bool _magic;
+        private static bool _dns;
     }
 }

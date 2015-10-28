@@ -134,8 +134,8 @@ namespace Contralto.CPU
                 }
             }
 
-            // And invert.
-            return (~mappedData) & 0xff;
+            // And invert lines 1-7
+            return ((~mappedData) & 0x7f) | (mappedData & 0x80);
         }
 
         private static RomFile[] _constantRoms =

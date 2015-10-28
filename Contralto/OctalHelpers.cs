@@ -13,6 +13,18 @@ namespace Contralto
             return Convert.ToString(i, 8);            
         }
 
+        public static string ToOctal(sbyte s)
+        {
+            if (s < 0)
+            {
+                return "-" + Convert.ToString(-s, 8);
+            }
+            else
+            {
+                return Convert.ToString(s, 8);
+            }
+        }
+
         public static string ToOctal(int i, int digits)
         {
             string octalString = Convert.ToString(i, 8);            

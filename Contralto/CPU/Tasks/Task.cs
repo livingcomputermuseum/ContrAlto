@@ -72,7 +72,13 @@ namespace Contralto.CPU
             {
                 // TODO: cache microinstructions (or pre-decode them) to save consing all these up every time.
                 MicroInstruction instruction = new MicroInstruction(UCodeMemory.UCodeROM[_mpc]);
+
+                // Grab BLOCK bit so that other tasks can look at it
                 _block = instruction.F1 == SpecialFunction1.Block;
+
+                //Console.WriteLine("R5:{0},R6:{1},IR:{2} - {3}:{4}", OctalHelpers.ToOctal(_cpu._r[5]), OctalHelpers.ToOctal(_cpu._r[6]), OctalHelpers.ToOctal(_cpu._ir), OctalHelpers.ToOctal(_mpc), UCodeDisassembler.DisassembleInstruction(instruction, _taskType));
+
+
                 return ExecuteInstruction(instruction);
             }
 
@@ -100,9 +106,11 @@ namespace Contralto.CPU
                 // the memory isn't ready yet.
                 // TODO: this needs to be seriously cleaned up.
                 //
-                if (instruction.BS == BusSource.ReadMD ||
+                if ((instruction.BS == BusSource.ReadMD &&
+                        (instruction.F1 != SpecialFunction1.Constant &&
+                        instruction.F2 != SpecialFunction2.Constant)) ||        // ReadMD only occurs if not reading from constant ROM.
                     instruction.F1 == SpecialFunction1.LoadMAR ||
-                    instruction.F2 == SpecialFunction2.StoreMD)
+                    instruction.F2 == SpecialFunction2.StoreMD) 
                 {
 
                     MemoryOperation op;
@@ -336,12 +344,7 @@ namespace Contralto.CPU
                 // Do writeback to selected R register from shifter output
                 if (loadR)
                 {
-                    _cpu._r[_rSelect] = Shifter.DoOperation(_cpu._l, _cpu._t);
-
-                    if(_rSelect == 26)
-                    {
-                        Console.WriteLine("cksum is now {0}", OctalHelpers.ToOctal(_cpu._r[_rSelect]));
-                    }
+                    _cpu._r[_rSelect] = Shifter.DoOperation(_cpu._l, _cpu._t);                   
                 }
 
                 // Do writeback to selected R register from M

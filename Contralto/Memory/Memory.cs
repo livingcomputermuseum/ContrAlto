@@ -19,8 +19,7 @@ namespace Contralto.Memory
         }
 
         public void Load(int address, ushort data)
-        {
-            Console.WriteLine("wrote {0} to {1}", OctalHelpers.ToOctal(data), OctalHelpers.ToOctal(address));
+        {            
             _mem[address] = data;
         }
 
