@@ -99,6 +99,13 @@ namespace Contralto.CPU
                         _rSelect = (_rSelect & 0xfffc) | ((((uint)_cpu._ir & 0x1800) >> 11) ^ 3);
                         break;
 
+                    case EmulatorF2.LoadDNS:
+                        //
+                        // "...DNS also addresses R from (3-IR[3 - 4])..."
+                        //
+                        _rSelect = (_rSelect & 0xfffc) | ((((uint)_cpu._ir & 0x1800) >> 11) ^ 3);
+                        break;
+
                 }
             }
 
@@ -206,10 +213,8 @@ namespace Contralto.CPU
                         }
                         else
                         {
-                            // Use the PROM.
-                            // We OR in 0x80 because the top address line is controlled by the value of ACSOURCE(2), which is always
-                            // 1 here (since ACSOURCE is 14 decimal).
-                            _nextModifier = ControlROM.ACSourceROM[((_cpu._ir & 0x7f00) >> 8) | 0x80];
+                            // Use the PROM.                            
+                            _nextModifier = ControlROM.ACSourceROM[((_cpu._ir & 0x7f00) >> 8)];
                         }                       
                         break;
 
@@ -228,14 +233,136 @@ namespace Contralto.CPU
                         break;
                         
                     case EmulatorF2.LoadDNS:
-                        // DNS<- modifies the normal shift operations.
-                        Shifter.SetDNS(true);                    
+                        // DNS<- does the following:
+                        // - modifies the normal shift operations to perform Nova-style shifts (done here)
+                        // - addresses R from 3-IR[3-4] (destination AC)  (see Early LoadDNS handler)
+                        // - stores into R unless IR[12] is set (done here)
+                        // - calculates Nova-style CARRY bit (done here)
+                        // - sets the SKIP and CARRY flip-flops appropriately (see Late LoadDNS handler)
+                        int carry = 0;
+
+                        // Also indicates modifying CARRY
+                        _loadR = (_cpu._ir & 0x0008) == 0;
+                        
+                        // At this point the ALU has already done its operation but the shifter has not yet run.
+                        // We need to set the CARRY bit that will be passed through the shifter appropriately.
+                        
+                        // Select carry input value based on carry control
+                        switch(_cpu._ir & 0x30)
+                        {
+                            case 0x00:
+                                // Nothing; CARRY unaffected.
+                                carry = _carry;
+                                break;
+
+                            case 0x10:
+                                carry = 0;  // Z
+                                break;
+
+                            case 0x20:
+                                carry = 1;  // O
+                                break;
+
+                            case 0x30:
+                                carry = (~_carry) & 0x1;  // C
+                                break;
+                        }
+
+                        // Now modify the result based on the current ALU result
+                        switch (_cpu._ir & 0x700)
+                        {
+                            case 0x000:
+                            case 0x200:
+                            case 0x700:
+                                // COM, MOV, AND - Carry unaffected
+                                break;
+
+                            case 0x100:                                                                
+                            case 0x300:
+                            case 0x400:
+                            case 0x500:
+                            case 0x600:
+                                // NEG, INC, ADC, SUB, ADD, AND - invert the carry bit
+                                if (ALU.Carry != 0)
+                                {
+                                    carry = (~carry) & 0x1;
+                                }
+                                break;                                
+                        }                        
+
+                        // Tell the Shifter to do a Nova-style shift with the
+                        // given carry bit.
+                        Shifter.SetDNS(true, carry);                        
+
                         break; 
 
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled emulator F2 {0}.", ef2));
                         break;
                 }
+            }
+
+            protected override void ExecuteSpecialFunction2Late(MicroInstruction instruction)
+            {
+                EmulatorF2 ef2 = (EmulatorF2)instruction.F2;
+                switch (ef2)
+                {
+                    case EmulatorF2.LoadDNS:
+                        //
+                        // Set SKIP and CARRY flip-flops based on the final result of the operation after having
+                        // passed through the shifter.
+                        //
+                        ushort result = Shifter.Output;
+                        int carry = Shifter.DNSCarry;
+                        switch (_cpu._ir & 0x7)
+                        {
+                            case 0:
+                                // None, SKIP is reset
+                                _skip = 0;
+                                break;
+
+                            case 1:     // SKP
+                                // Always skip
+                                _skip = 1;
+                                break;
+
+                            case 2:     // SZC
+                                // Skip if carry result is zero
+                                _skip = (carry == 0) ? 1 : 0;
+                                break;
+
+                            case 3:     // SNC
+                                // Skip if carry result is nonzero
+                                _skip = carry;
+                                break;
+
+                            case 4:     // SZR
+                                _skip = (result == 0) ? 1 : 0;
+                                break;
+
+                            case 5:     // SNR
+                                _skip = (result != 0) ? 1 : 0;
+                                break;
+
+                            case 6:     // SEZ
+                                _skip = (result == 0 || carry == 0) ? 1 : 0;
+                                break;
+
+                            case 7:     // SBN
+                                _skip = (result != 0 && carry != 0) ? 1 : 0;
+                                break;
+                        }
+
+                        if (_loadR)
+                        {
+                            // Write carry flag back.
+                            _carry = carry;
+                        }
+
+                        break;
+                }
+            
+
             }
 
             // From Section 3, Pg. 31:

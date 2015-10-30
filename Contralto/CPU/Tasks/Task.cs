@@ -90,16 +90,17 @@ namespace Contralto.CPU
             /// <returns>True if a task switch has been requested by a TASK instruction, false otherwise.</returns>
             protected virtual bool ExecuteInstruction(MicroInstruction instruction)
             {
-                bool nextTask = false;
-                bool loadR = false;
+                bool nextTask = false;                
                 ushort aluData = 0;
                 ushort nextModifier = 0;
+                _loadR = false;
                 _loadS = false;
                 _rSelect = 0;
                 _busData = 0;
 
 
                 Shifter.SetMagic(false);
+                Shifter.SetDNS(false, 0);
 
                 //
                 // Wait for memory state machine if a memory operation is requested by this instruction and
@@ -157,7 +158,7 @@ namespace Contralto.CPU
 
                         case BusSource.LoadR:
                             _busData = 0;       // "Loading R forces the BUS to 0 so that an ALU function of 0 and T may be executed simultaneously"
-                            loadR = true;
+                            _loadR = true;
                             break;
 
                         case BusSource.None:
@@ -215,7 +216,7 @@ namespace Contralto.CPU
                 // more than one source is gated to it.  Up to 32 such mask contans can be provided for each of the four bus sources
                 // > 4.
                 // NOTE also:
-                // "Note that the [emulator task F2] functions which replace the low bits of RSELECT with IR aaffect only the 
+                // "Note that the [emulator task F2] functions which replace the low bits of RSELECT with IR affect only the 
                 // selection of R; they do not affect the address supplied to the constant ROM."
                 // Hence we use the unmodified RSELECT value here and above.
                 if ((int)instruction.BS > 4 ||
@@ -342,9 +343,9 @@ namespace Contralto.CPU
                 // Write back to registers:
                 //
                 // Do writeback to selected R register from shifter output
-                if (loadR)
-                {
-                    _cpu._r[_rSelect] = Shifter.DoOperation(_cpu._l, _cpu._t);                   
+                if (_loadR)
+                {                    
+                    _cpu._r[_rSelect] = Shifter.DoOperation(_cpu._l, _cpu._t);
                 }
 
                 // Do writeback to selected R register from M
@@ -385,6 +386,11 @@ namespace Contralto.CPU
                 }
 
                 //
+                // Execute special functions that happen late in the cycle
+                //
+                ExecuteSpecialFunction2Late(instruction);
+
+                //
                 // Select next address, using the address modifier from the last instruction.
                 //
                 _mpc = (ushort)(instruction.NEXT | nextModifier);
@@ -405,6 +411,11 @@ namespace Contralto.CPU
 
             protected abstract void ExecuteSpecialFunction2(MicroInstruction instruction);
 
+            protected virtual void ExecuteSpecialFunction2Late(MicroInstruction instruction)
+            {
+                // Nothing by default.
+            }
+
             //
             // Per uInstruction Task Data:
             // Modified by both the base Task implementation and any subclasses
@@ -415,6 +426,7 @@ namespace Contralto.CPU
             protected ushort _nextModifier;   // Bits ORed onto the NEXT field of the current instruction
             protected uint _rSelect;        // RSELECT field from current instruction, potentially modified by task
             protected bool _loadS;          // Whether to load S from M at and of cycle
+            protected bool _loadR;          // Whether to load R from shifter at end of cycle.
 
 
             //

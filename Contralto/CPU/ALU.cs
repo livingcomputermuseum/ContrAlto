@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Contralto.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -65,7 +66,13 @@ namespace Contralto.CPU
 
                 case AluFunction.BusMinus1:
                     r = bus - 1;
-                    _carry = (r < 0) ? 1 : 0;
+
+                    // Just for clarification; the datasheet specifies:
+                    // "Because subtraction is actually performed by complementary
+                    //  addition (1s complement), a carry out means borrow; thus,
+                    //  a carry is generated when there is no underflow and no carry
+                    //  is generated when there is underflow."
+                    _carry = (r <= 0) ? 0 : 1;
                     break;
 
                 case AluFunction.BusPlusT:
@@ -75,12 +82,12 @@ namespace Contralto.CPU
 
                 case AluFunction.BusMinusT:
                     r = bus - t;
-                    _carry = (r < 0) ? 1 : 0;
+                    _carry = (r <= 0) ? 0 : 1;
                     break;
 
                 case AluFunction.BusMinusTMinus1:
                     r = bus - t - 1;
-                    _carry = (r < 0) ? 1 : 0;
+                    _carry = (r <= 0) ? 0 : 1;
                     break;
 
                 case AluFunction.BusPlusTPlus1:

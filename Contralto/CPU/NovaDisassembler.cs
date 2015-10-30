@@ -12,6 +12,36 @@ namespace Contralto.CPU.Nova
     /// </summary>
     public static class NovaDisassembler
     {
+
+        static NovaDisassembler()
+        {
+            _altoIOTable = new Dictionary<ushort, string>();
+
+            _altoIOTable.Add(0x6210, "MUL");
+            _altoIOTable.Add(0x6211, "DIV");
+            _altoIOTable.Add(0x6000, "CYCLE");
+            _altoIOTable.Add(0x6900, "JSRII");
+            _altoIOTable.Add(0x6a00, "JSRIS");
+            _altoIOTable.Add(0x6e00, "CONVERT");
+            _altoIOTable.Add(0x6203, "RCLK");
+            _altoIOTable.Add(0x6204, "SIO");
+            _altoIOTable.Add(0x6205, "BLT");
+            _altoIOTable.Add(0x6206, "BLKS");
+            _altoIOTable.Add(0x6207, "SIT");
+            _altoIOTable.Add(0x6208, "JMPRAM");
+            _altoIOTable.Add(0x6209, "RDRAM");
+            _altoIOTable.Add(0x620a, "WRTRAM");
+            _altoIOTable.Add(0x620c, "VERSION");
+            _altoIOTable.Add(0x620d, "DREAD");
+            _altoIOTable.Add(0x620e, "DWRITE");
+            _altoIOTable.Add(0x620f, "DEXCH");
+            _altoIOTable.Add(0x6212, "DIAGNOSE1");
+            _altoIOTable.Add(0x6213, "DIAGNOSE2");
+            _altoIOTable.Add(0x6214, "BITBLT");
+            _altoIOTable.Add(0x6215, "XMLDA");
+            _altoIOTable.Add(0x6216, "XMSTA");
+        }
+
         /// <summary>
         /// Disassembles the specified instruction
         /// </summary>
@@ -165,6 +195,15 @@ namespace Contralto.CPU.Nova
         {
             StringBuilder d = new StringBuilder();
 
+            //
+            // First see if this is an Alto-specific instruction; if so
+            // use those mnemonics.  Otherwise decode as a Nova I/O instruction.
+            //
+            if (_altoIOTable.ContainsKey(instructionWord))
+            {
+                return _altoIOTable[instructionWord];
+            }
+
             // Accumulator
             int ac = (instructionWord & 0x1800) >> 11;
 
@@ -238,6 +277,11 @@ namespace Contralto.CPU.Nova
 
             return d.ToString();
         }
+
+        /// <summary>
+        /// Holds a map from opcode to Alto I/O mnemonics
+        /// </summary>
+        private static Dictionary<ushort, string> _altoIOTable;
 
         private enum InstructionClass
         {            
