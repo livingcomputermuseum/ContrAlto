@@ -27,10 +27,17 @@ namespace Contralto.CPU
     {
         static Shifter()
         {
+            Reset();
+        }
+
+        public static void Reset()
+        {
             _op = ShifterOp.Invalid;
             _count = 0;
             _output = 0;
             _magic = false;
+            _dns = false;
+            _dnsCarry = 0;
         }
 
         /// <summary>
@@ -71,6 +78,12 @@ namespace Contralto.CPU
         /// <param name="dns"></param>
         public static void SetDNS(bool dns, int carry)
         {
+            // Sanity check
+            if (carry != 0 && carry != 1)
+            {
+                throw new InvalidOperationException("carry can only be 0 or 1.");
+            }
+
             _dns = dns;
             _dnsCarry = carry;
         }
@@ -109,7 +122,16 @@ namespace Contralto.CPU
                     }
                     else if (_dns)
                     {
-                        throw new NotImplementedException("DNS LSH 1");
+                        //
+                        // "Rotate the 17 input bits left by one bit.  This has the effect of rotating
+                        // bit 0 left into the carry position and the carry bit into bit 15."
+                        //
+
+                        // Put input carry into bit 15.
+                        _output = (ushort)(_output | _dnsCarry);
+
+                        // update carry
+                        _dnsCarry = ((input & 0x8000) >> 15);
                     }
                     break;
 
@@ -124,7 +146,16 @@ namespace Contralto.CPU
                     }
                     else if (_dns)
                     {
-                        throw new NotImplementedException("DNS RSH 1");
+                        //
+                        // "Rotate the 17 bits right by one bit.  Bit 15 is rotated into the carry position
+                        // and the carry bit into bit 0."
+                        //
+
+                        // Put input carry into bit 0.
+                        _output |= (ushort)(_output | (_dnsCarry << 15));
+
+                        // update carry
+                        _dnsCarry = input & 0x1;
                     }
                     break;
 
@@ -138,8 +169,11 @@ namespace Contralto.CPU
                     }
 
                     if (_dns)
-                    {                     
-                        throw new NotImplementedException("DNS LCY");                        
+                    {
+                        //
+                        // "Swap the 8-bit halves of the 16-bit result.  The carry is not affected."
+                        //
+                        _output = (ushort)(((input & 0xff00) >> 8) | ((input & 0x00ff) << 8));
                     }
                     break;
 

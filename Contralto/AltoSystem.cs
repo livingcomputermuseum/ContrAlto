@@ -41,6 +41,9 @@ namespace Contralto
         {
             _cpu.Reset();
             _memBus.Reset();
+            _mem.Reset();
+            ALU.Reset();
+            Shifter.Reset();
             _diskController.Reset();
         }
 

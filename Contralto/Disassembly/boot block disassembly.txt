@@ -1,0 +1,329 @@
+000:000000 - JMP 000						
+001:000345 - JMP 345						; Entrypoint
+
+002:000354 - JMP 354						; Unused (version info, overwritten by disk status by microcode.
+003:000403 - JMP .+3    ;(6)				; Ditto
+004:120064 - COMC 1,0,SZR					; Build date
+005:064330 - NIOP 1,30
+
+
+006:004415 - JSR .+15    ;(23)				; JSR to zero-length routine at 23; side effect is loading 24 into AC3 (starting offset of data storage)
+007:171000 - MOV 3,2						; copy address 24 into AC2
+010:020410 - LDA 0,.+10    ;(20)			; Load AC0 with 44120		; disk command (command seal, check header, check label, read data, xfer on, drive 0)
+011:024411 - LDA 1,.+11    ;(22)			; Load AC1 with 402			; address ?
+012:004540 - JSR .+140    ;(152)			; jump to subroutine at 152; copy label from 402 to 40 and 62.
+013:020406 - LDA 0,.+6    ;(21)				; AC0 gets 400
+014:041007 - STA 0,AC2+7					; store 400 at 33
+015:004210 - JSR 210						; jump to subroutine at 210; 
+016:064401 - DIA 1,1						; we die here; this is a JSRII instruction which indirects to 0... assume this should actually start real code
+
+; data ? 
+017:176776 - SUBSC# 3,3,SEZ
+
+; data
+020:044120 - STA 1,120
+021:000400 - JMP .+0    ;(21)
+022:000402 - JMP .+2    ;(24)
+
+023:005400 - JSR AC3+0						; Return from zero-length routine
+
+; Appear to be used as pointers to DCBs at 26 and 50; swapped by routine at 112
+024:176217 - ADCR# 3,3,SBN
+025:176175 - ADCLC# 3,3,SNR
+
+; beginning of first DCB
+026:176217 - ADCR# 3,3,SBN					; Pointer to next DCB
+027:027400 - LDA@ 1,AC3+0					; Disk Status
+030:044130 - STA 1,130						; Disk command
+031:176205 - ADCR 3,3,SNR					; Header address
+032:176207 - ADCR 3,3,SBN					; Label address
+033:175550 - INCLO# 3,3						; Data address (gets 400 (STA at 14))
+034:000000 - JMP 0							; non-error interrupt mask
+035:000000 - JMP 0							; error interrupt mask
+036:000000 - JMP 0							; reserved
+037:000000 - JMP 0							; disk address
+
+; 1st copy of label block at 402 starts here
+040:130374 - COMSC# 1,2,SZR					; 000400 - disk address (?)
+041:000000 - JMP 0							; 120374 - previous disk address
+042:000000 - JMP 0							; 000000 - blank
+043:000000 - JMP 0							; 001000 - num chars
+044:176007 - ADC 3,3,SBN					; 000001 - page number
+045:000001 - JMP 1							; 000001 - version
+046:000000 - JMP 0							; 000000 - sn high
+047:000176 - JMP 176						; 000176 - sn low
+; ends here
+
+; beginning of 2nd DCB						
+050:000000 - JMP 0                    		; Pointer to next DCB      
+051:000000 - JMP 0                          ; Disk Status
+052:044130 - STA 1,130                      ; Disk command
+053:176227 - ADCRZ 3,3,SBN                  ; Header address
+054:176231 - ADCRZ# 3,3,SKP                 ; Label address
+055:176150 - ADCLO# 3,3                     ; Data address
+056:000000 - JMP 0                          ; non-error interrupt mask
+057:000000 - JMP 0                          ; error interrupt mask
+060:000000 - JMP 0                          ; reserved
+061:130374 - COMSC# 1,2,SZR                 ; disk address
+
+; 2nd copy of label block at 402 starts here (and magically matches
+; what's already there!)
+062:000400 - JMP .+0    ;(62)				; 000400 - disk address (?)
+063:120374 - COMSC# 1,0,SZR					; 120374 - previous disk address
+064:000000 - JMP 0							; 000000 - blank
+065:001000 - JMP AC2+0						; 001000 - num chars
+066:000001 - JMP 1							; 000001 - page number
+067:000001 - JMP 1							; 000001 - version
+070:000000 - JMP 0							; 000000 - sn high
+071:000176 - JMP 176						; 000176 - sn low
+; ends here
+
+; temp locations used for return addresses, etc. 
+072:000000 - JMP 0
+073:176016 - ADC# 3,3,SEZ				
+074:176147 - ADCLO 3,3,SBN
+075:176310 - ADCS# 3,3					
+076:000536 - JMP .+136    ;(234)
+
+; subroutine
+077:055051 - STA 3,AC2+51				; save return address
+100:035000 - LDA 3,AC2+0				; AC3 gets 26
+101:021405 - LDA 0,AC3+5				; AC0 gets 400 from 33
+102:024717 - LDA 1,.+-61    ;(21)		; AC1 gets 400 from 21
+103:123000 - ADD 1,0					; AC0 gets AC0+AC1 (1000)
+104:024404 - LDA 1,.+4    ;(110)		; AC1 gets -1000 (176777)
+105:106032 - ADCZ# 0,1,SZC				; Add 1s cmpl of AC0 (176777) and AC1 (no writeback), skip if carry is zero
+106:011051 - ISZ AC2+51					; increment return address
+107:003051 - JMP@ AC2+51				; return to ret address (+1 added if carry is nonzero)
+
+; data
+110:176777 - SUBSC# 3,3,SBN
+111:000420 - JMP .+20    ;(131)
+
+; subroutine; apparently we're too cool to save our return address.
+112:021000 - LDA 0,AC2+0	; swap contents of locations 24 & 25
+113:025001 - LDA 1,AC2+1
+114:045000 - STA 1,AC2+0
+115:041001 - STA 0,AC2+1
+116:001400 - JMP AC3+0		; return
+
+; subroutine.
+117:055050 - STA 3,AC2+50			; save ret
+120:176460 - SUBC 3,3				; get zero
+121:055046 - STA 3,AC2+46			; write zero to 72
+122:000551 - JMP .+151    ;(273)	; continue at 273
+
+;subroutine
+123:055050 - STA 3,AC2+50		; save return address
+124:035000 - LDA 3,AC2+0		; AC3 gets DCB address (26 or 50)
+125:021412 - LDA 0,AC3+12		; AC0 gets word 0 of label block @ 40
+126:025411 - LDA 1,AC3+11		; AC1 gets word at 37 (disk address, word 11 of 1st DCB)
+127:035001 - LDA 3,AC2+1		; AC3 gets other DCB address (@25 - 50 or 26)
+130:041411 - STA 0,AC3+11		; write word 0 of label block to 61
+131:045413 - STA 1,AC3+13		; write zero to 63
+132:102460 - SUBC 0,0			; AC0 gets 0
+133:041400 - STA 0,AC3+0		; zero out 50, 51 (pointer to next DCB, disk status)
+134:041401 - STA 0,AC3+1
+135:041412 - STA 0,AC3+12		; zero out 62, 66 (label words)
+136:041416 - STA 0,AC3+16
+137:005053 - JSR AC2+53			; 77		; do subroutine at 77; this appears to check if loading is done
+140:000405 - JMP .+5    ;(145)	;
+141:035001 - LDA 3,AC2+1		; AC3 gets address of 2nd DCB (50 or 26)
+142:041405 - STA 0,AC3+5		; write 0 to DCB data address
+143:057000 - STA@ 3,AC2+0		
+144:003050 - JMP@ AC2+50		; return
+
+; jumped here from 140
+145:004752 - JSR .+-26    ;(117)
+146:003047 - JMP@ AC2+47		; wait, what?  47?  return to.... caller of 210, at 16.  This is the end of the loader routine.
+
+; data
+147:000521 - JMP .+121    ;(270)		; KBLK address (pointer to first DCB used by disk hardware)
+
+; data
+150:177756 - ANDSO# 3,3,SEZ
+151:000377 - JMP 377
+
+; subroutine: copy label block from 402 twice, to 40 and 62.  Initialize DCBs at 26 and 50.
+; on entry:
+; AC0 contains disk command
+; AC1 contains 402 (label address for sector 0, where microcode boot copied it originally)
+; AC2 contains 24 (offset for all data)
+; on exit:
+; Label record at 402 (8 bytes long) copied to locs 40-47 and 62-71;
+; DCB interrupt masks and addresses zeroed out (at 34-37, 56-61)
+; loc 25 points to DCB at 50
+
+152:055047 - STA 3,AC2+47				; save return address @ 73
+153:045051 - STA 1,AC2+51				; write label address to 75 (AC1 loaded with 402 by caller)
+154:015051 - DSZ AC2+51					; decrement address at 75 (401)
+155:041004 - STA 0,AC2+4				; write 44120 to 30		; DCB commands
+156:041026 - STA 0,AC2+26				; write 44120 to 52
+157:034561 - LDA 3,.+161    ;(340)		; load AC3 with 2
+160:055050 - STA 3,AC2+50				; write 2 to 74 - loop counter used at 202
+161:157000 - ADD 2,3					; 24 + 2, result in AC3
+162:055000 - STA 3,AC2+0				; store 26 at 24 (top of data structure pointed by AC2)
+
+; top of loop
+163:102460 - SUBC 0,0					; put a zero in AC0
+164:041406 - STA 0,AC3+6				; zero out values at 34, 35, 36, 37 and 56, 57, 60, 61 (DCB entries)
+165:041407 - STA 0,AC3+7				;
+166:041410 - STA 0,AC3+10
+167:041411 - STA 0,AC3+11
+170:024417 - LDA 1,.+17    ;(207)		; AC1 gets 177770 (-10)
+171:136400 - SUB 1,3					; subtract AC3 from AC1, result in AC3 (26 minus -10 = 36) (calculate label offset)?
+172:055773 - STA 3,AC3+-5				; store AC3 in AC3-5 (31)
+173:165400 - INC 3,1					; inc AC3, store in AC1 (37)
+174:125400 - INC 1,1					; Inc AC1 (AC1 now AC3 + 2 = 40)
+175:045774 - STA 1,AC3+-4				; store AC1 at AC3-4 (32)
+176:021051 - LDA 0,AC2+51				; AC0 gets AC2+51 (24+51) 			; blt source (label address -1 = 401)
+177:034410 - LDA 3,.+10    ;(207)		; AC3 gets 177770					; blt count  (8 words)
+200:166000 - ADC 3,1					; AC1 gets complement of AC1+AC3    ; blt dest   (47 or 61)
+201:061005 - BLT						; block transfer -- copy label block from 402 to destination.
+202:015050 - DSZ AC2+50					; decrement copy counter at AC2+50 (74), skip next if zero
+203:135401 - INC 1,3,SKP				; Increment AC1 (copy destination), stow in AC3, skip next instruction.
+204:003047 - JMP@ AC2+47				; RTS: exit from DSZ at 202, jump to AC2+47 (@73 -- return from subroutine)
+205:055001 - STA 3,AC2+1				; get here from 203; AC3 stored at AC2 + 1 (25 -- end address + 1 of copied label)
+206:000755 - JMP .+-23    ;(163)		; loop back to 163...
+
+207:177770 - ANDSC# 3,3					; data - BLT word count (complement)
+
+210:055047 - STA 3,AC2+47				; save return address
+211:004712 - JSR .+-66    ;(123)		; JSR to 123
+212:004700 - JSR .+-100    ;(112)		; JSR to 112 - swap DCBs @ 24,25
+
+; loop here; wait for disk
+213:035000 - LDA 3,AC2+0				; AC3 gets current DCB address
+214:025412 - LDA 1,AC3+12				; AC1 gets label data (previous disk address)
+215:022732 - LDA@ 0,.+-46    ;(147)		; Load AC0 with contents KBLK (check controller status)
+216:101014 - MOV# 0,0,SZR				; if zero (error or idle) then go to 199
+217:000406 - JMP .+6    ;(225)			; not idle, go to 225
+220:021401 - LDA 0,AC3+1
+221:101014 - MOV# 0,0,SZR
+222:000406 - JMP .+6    ;(230)
+223:056724 - STA@ 3,.+-54    ;(147)
+224:000767 - JMP .+-11    ;(213)
+
+225:125014 - MOV# 1,1,SZR				; we get here when the disk controller is not idle; see if prev. addr is zero
+226:000403 - JMP .+3    ;(231)			; not zero, go to 231
+227:000764 - JMP .+-14    ;(213)		; zero, loop at 213.
+230:004667 - JSR .+-111    ;(117)
+231:004672 - JSR .+-106    ;(123)		; next  DCB?
+232:004665 - JSR .+-113    ;(117)		; 
+233:000757 - JMP .+-21    ;(212)
+
+
+234:174400 - NEG 3,3
+235:160000 - COM 3,0
+236:024501 - LDA 1,.+101    ;(337)
+237:034711 - LDA 3,.+-67    ;(150)
+240:061005 - BLT
+241:004416 - JSR .+16    ;(257)
+
+; data
+242:111111 - MOVL# 0,2,SKP
+243:000006 - JMP 6
+244:000000 - JMP 0
+245:000015 - JMP 15
+246:000200 - JMP 200
+247:000012 - JMP 12
+250:100022 - COMZ 0,0,SZC
+251:000016 - JMP 16
+252:000001 - JMP 1
+253:000000 - JMP 0
+254:100022 - COMZ 0,0,SZC
+255:000040 - JMP 40
+256:000001 - JMP 1
+
+257:161000 - MOV 3,0
+260:024765 - LDA 1,.+-13    ;(245)
+261:034411 - LDA 3,.+11    ;(272)
+262:061005 - BLT
+263:020757 - LDA 0,.+-21    ;(242)
+264:024457 - LDA 1,.+57    ;(343)
+265:034663 - LDA 3,.+-115    ;(150)
+266:061006 - BLKS
+267:020451 - LDA 0,.+51    ;(340)
+270:042621 - STA@ 0,.+-157    ;(111)
+271:000400 - JMP .+0    ;(271)
+
+;
+272:177764 - ANDSC 3,3,SZR
+
+; continuation of subroutine at 122
+273:035000 - LDA 3,AC2+0
+274:021401 - LDA 0,AC3+1
+275:101015 - MOV# 0,0,SNR
+276:000775 - JMP .+-3    ;(273)
+277:024652 - LDA 1,.+-126    ;(151)
+300:107405 - AND 0,1,SNR
+301:003050 - JMP@ AC2+50	; return
+302:011046 - ISZ AC2+46
+303:025046 - LDA 1,AC2+46
+304:020433 - LDA 0,.+33    ;(337)
+305:122532 - SUBLZ# 1,0,SZC
+306:001052 - JMP AC2+52
+307:102460 - SUBC 0,0
+310:041401 - STA 0,AC3+1
+311:041410 - STA 0,AC3+10
+312:041412 - STA 0,AC3+12
+313:041413 - STA 0,AC3+13
+314:041414 - STA 0,AC3+14
+315:041415 - STA 0,AC3+15
+316:041416 - STA 0,AC3+16
+317:020417 - LDA 0,.+17    ;(336)
+320:107405 - AND 0,1,SNR
+321:000403 - JMP .+3    ;(324)
+322:056625 - STA@ 3,.+-153    ;(147)
+323:000750 - JMP .+-30    ;(273)
+324:054421 - STA 3,.+21    ;(345)
+325:021411 - LDA 0,AC3+11
+326:024412 - LDA 1,.+12    ;(340)
+327:123400 - AND 1,0
+330:125400 - INC 1,1
+331:044413 - STA 1,.+13    ;(344)
+332:004770 - JSR .+-10    ;(322)
+
+; data
+333:000000 - JMP 0
+334:000000 - JMP 0
+335:044002 - STA 1,2
+336:000007 - JMP 7
+337:000037 - JMP 37
+340:000002 - JMP 2
+341:000000 - JMP 0
+342:000000 - JMP 0
+343:000061 - JMP 61
+344:000001 - JMP 1
+
+345:102000 - ADC 0,0						; set up first BLT of all memory to reset Parity
+346:024110 - LDA 1,110
+347:134000 - COM 1,3
+350:061005 - BLT							; do BLT
+351:056111 - STA@ 3,111						; write R3 to 420, reset display list (disable display)
+352:000003 - JMP 3							; continue @3
+
+353:000000 - JMP 0
+354:000000 - JMP 0
+355:000000 - JMP 0
+356:000000 - JMP 0
+
+; data
+357:040463 - STA 0,.+63    ;(442)
+360:044463 - STA 1,.+63    ;(443)
+361:054476 - STA 3,.+76    ;(457)
+362:004401 - JSR .+1    ;(363)
+363:024471 - LDA 1,.+71    ;(454)
+364:167000 - ADD 3,1
+365:034470 - LDA 3,.+70    ;(455)
+366:020470 - LDA 0,.+70    ;(456)
+367:061005 - BLT
+370:034466 - LDA 3,.+66    ;(456)
+371:021605 - LDA 0,AC3+-173
+372:040452 - STA 0,.+52    ;(444)
+373:021665 - LDA 0,AC3+-113
+374:040445 - STA 0,.+45    ;(441)
+375:021640 - LDA 0,AC3+-140
+376:101100 - MOVL 0,0
+377:040446 - STA 0,.+46    ;(445)
+400:102460 - SUBC 0,0

@@ -96,6 +96,8 @@ namespace Contralto
             _otherRegs.Rows[2].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.M, 6);
             _otherRegs.Rows[3].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.IR, 6);
             _otherRegs.Rows[4].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.ALUC0, 1);
+            //_otherRegs.Rows[4].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.Carry, 1);
+            //_otherRegs.Rows[4].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.Skip, 1);
             _otherRegs.Rows[5].Cells[1].Value = OctalHelpers.ToOctal(_system.MemoryBus.MAR, 6);
             _otherRegs.Rows[6].Cells[1].Value = OctalHelpers.ToOctal(_system.MemoryBus.MD, 6);
             _otherRegs.Rows[7].Cells[1].Value = OctalHelpers.ToOctal(_system.MemoryBus.Cycle & 0x3f, 2);
@@ -183,9 +185,11 @@ namespace Contralto
             _otherRegs.Rows.Add("M", "0");
             _otherRegs.Rows.Add("IR", "0");
             _otherRegs.Rows.Add("ALUC0", "0");
+            //_otherRegs.Rows.Add("CARRY", "0");
+            //_otherRegs.Rows.Add("SKIP", "0");
             _otherRegs.Rows.Add("MAR", "0");
             _otherRegs.Rows.Add("MD", "0");
-            _otherRegs.Rows.Add("MCycle", "0");
+            _otherRegs.Rows.Add("MCycle", "0");            
 
             _diskData.Rows.Add("Cycles", "0");
             _diskData.Rows.Add("Cylinder", "0");
@@ -492,6 +496,8 @@ namespace Contralto
 
         private void OnStepButtonClicked(object sender, EventArgs e)
         {
+            StopExecThread();
+
             SetExecutionState(ExecutionState.SingleStep);            
             ExecuteStep();
             SetExecutionState(ExecutionState.Stopped);            
@@ -499,6 +505,7 @@ namespace Contralto
 
         private void OnAutoStepButtonClicked(object sender, EventArgs e)
         {
+            StopExecThread();
             //
             // Continuously step (and update the UI)
             // until the "Stop" button is pressed or something bad happens.
@@ -510,6 +517,7 @@ namespace Contralto
 
         private void RunButton_Click(object sender, EventArgs e)
         {
+            StopExecThread();
             //
             // Continuously execute, but do not update UI
             // until the "Stop" button is pressed or something bad happens.
@@ -524,6 +532,7 @@ namespace Contralto
 
         private void RunToNextTaskButton_Click(object sender, EventArgs e)
         {
+            StopExecThread();
             //
             // Continuously execute until the next task switch but do not update UI
             // until the "Stop" button is pressed or something bad happens.
@@ -546,6 +555,8 @@ namespace Contralto
         /// <param name="e"></param>
         private void NovaStep_Click(object sender, EventArgs e)
         {
+            StopExecThread();
+
             {
                 _execThread = new Thread(new System.Threading.ParameterizedThreadStart(ExecuteProc));
                 _execThread.Start(ExecutionType.NextNovaInstruction);
@@ -554,6 +565,27 @@ namespace Contralto
         }
 
         private void OnStopButtonClicked(object sender, EventArgs e)
+        {            
+            StopExecThread();
+            Refresh();
+        }
+        
+
+        private void ResetButton_Click(object sender, EventArgs e)
+        {
+            StopExecThread();
+            _system.Reset();
+            Refresh();
+        }
+
+        private void ExecuteStep()
+        {
+            StopExecThread();
+            _system.SingleStep();
+            Refresh();
+        }
+
+        private void StopExecThread()
         {
             if (_execThread != null &&
                 _execThread.IsAlive)
@@ -568,17 +600,6 @@ namespace Contralto
             }
 
             SetExecutionState(ExecutionState.Stopped);
-        }
-
-        private void ResetButton_Click(object sender, EventArgs e)
-        {
-            _system.Reset();
-        }
-
-        private void ExecuteStep()
-        {
-            _system.SingleStep();
-            Refresh();
         }
 
         private void ExecuteProc(object param)

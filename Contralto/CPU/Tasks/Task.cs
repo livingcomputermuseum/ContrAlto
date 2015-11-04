@@ -339,13 +339,19 @@ namespace Contralto.CPU
                         break;
                 }
 
+               
+                // We always do the shifter operation; DNS may need its output.
+                //
+                Shifter.DoOperation(_cpu._l, _cpu._t);
+
                 //
                 // Write back to registers:
                 //
-                // Do writeback to selected R register from shifter output
+                // Do writeback to selected R register from shifter output.
+                //
                 if (_loadR)
-                {                    
-                    _cpu._r[_rSelect] = Shifter.DoOperation(_cpu._l, _cpu._t);
+                {
+                    _cpu._r[_rSelect] = Shifter.Output;
                 }
 
                 // Do writeback to selected R register from M

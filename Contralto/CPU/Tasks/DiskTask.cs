@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Contralto.Memory;
+using Contralto.Logging;
 
 namespace Contralto.CPU
 {
@@ -61,6 +62,7 @@ namespace Contralto.CPU
                 {
                     case DiskF1.LoadKDATA:
                         // "The KDATA register is loaded from BUS[0-15]."
+                        Log.Write(LogComponent.DiskController, "KDATA loaded with {0}", OctalHelpers.ToOctal(_busData));
                         _cpu._system.DiskController.KDATA = _busData;
                         break;
 
@@ -69,6 +71,7 @@ namespace Contralto.CPU
                         //  in addition, it causes the head address bit to be loaded from KDATA[13]."
                         // (the latter is done by DiskController)
                         _cpu._system.DiskController.KADR = (ushort)((_busData & 0xfe) >> 1);
+                        Log.Write(LogComponent.DiskController, "KADR bus data is {0}", OctalHelpers.ToOctal(_busData));
                         break;
 
                     case DiskF1.LoadKCOMM:
@@ -173,6 +176,10 @@ namespace Contralto.CPU
                         // "NEXT <- NEXT OR (IF disk not ready to accept command THEN 1 ELSE 0)
                         // for now, always zero (not sure when this would be 1 yet)
                         _nextModifier |= GetInitModifier(instruction);
+                        if (!_cpu._system.DiskController.Ready)
+                        {
+                            _nextModifier |= 1;
+                        }
                         break;
 
                     default:

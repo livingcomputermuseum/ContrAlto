@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Contralto.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,11 @@ namespace Contralto.Memory
     {
         public Memory()
         {
+            Reset();
+        }
+
+        public void Reset()
+        {
             _mem = new ushort[0x10000];
         }
 
@@ -19,7 +25,8 @@ namespace Contralto.Memory
         }
 
         public void Load(int address, ushort data)
-        {            
+        {
+            //Log.Write(LogComponent.DiskWordTask, "Word {0} written to {1}", OctalHelpers.ToOctal(data), OctalHelpers.ToOctal(address));
             _mem[address] = data;
         }
 

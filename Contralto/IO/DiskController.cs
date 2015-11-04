@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using Contralto.Memory;
 using System.IO;
+using Contralto.Logging;
 
 namespace Contralto.IO
 {
@@ -24,10 +25,7 @@ namespace Contralto.IO
 
             _pack.Load(fs);
 
-            fs.Close();
-        
-            // Wakeup the sector task first thing
-            _system.CPU.WakeupTask(CPU.TaskType.DiskSector);                       
+            fs.Close();                                   
         }        
 
         public ushort KDATA
@@ -36,7 +34,10 @@ namespace Contralto.IO
             {                
                 return _kData;
             }
-            set { _kData = value; }
+            set
+            {
+                _kData = value;
+            }
         }
 
         public ushort KADR
@@ -53,6 +54,25 @@ namespace Contralto.IO
                 // "0 normally, 1 if the command is to terminate immediately after the correct cylinder
                 // position is reached (before any data is transferred)."
                 _dataXfer = (_kAdr & 0x2) != 0x2;
+
+                Log.Write(LogComponent.DiskController, "KADR set to {0} (Seal {1}, Header {2}, Label {3}, Data {4}, Xfer {5}, Drive {6})",
+                    OctalHelpers.ToOctal(_kAdr),
+                    OctalHelpers.ToOctal((_kAdr & 0xff00) >> 8),
+                    OctalHelpers.ToOctal((_kAdr & 0xc0) >> 6),
+                    OctalHelpers.ToOctal((_kAdr & 0x30) >> 4),
+                    OctalHelpers.ToOctal((_kAdr & 0xc) >> 2),
+                    _dataXfer,
+                    _kAdr & 0x1);
+
+                Log.Write(LogComponent.DiskController, "  Disk Address is C/H/S {0}/{1}/{2}, Drive {3} Restore {4}",
+                    (_kData & 0x0ff8) >> 3,
+                    (_kData & 0x4) >> 2,
+                    (_kData & 0xf000) >> 12,
+                    ((_kData & 0x2) >> 1),
+                    (_kData & 0x1));
+
+                Log.Write(LogComponent.DiskController, "  Selected disk is {0}", ((_kData & 0x2) >> 1) ^ (_kAdr & 0x1));
+
             }
         }
 
@@ -148,15 +168,27 @@ namespace Contralto.IO
             get { return _sectorClocks - _elapsedSectorTime; }
         }
 
+
+        public bool Ready
+        {
+            get
+            {
+                // Not ready if we're in the middle of a seek.
+                return (_kStat & 0x0040) == 0;
+            }
+        }
+
         public void Reset()
         {
             ClearStatus();
             _recNo = 0;
             _elapsedSectorTime = 0.0;
-            _cylinder = 0;
+            _cylinder = _destCylinder = 0;
             _sector = 0;
             _head = 0;
             _kStat = 0;
+            _kData = 0;
+            _sendAdr = false;
 
             _wdInhib = true;
             _xferOff = true;
@@ -164,8 +196,13 @@ namespace Contralto.IO
             _wdInit = false;
 
             _diskBitCounterEnable = false;
+            _sectorWordIndex = 0;
+            _sectorWordTime = 0;
 
             InitSector();
+
+            // Wakeup the sector task first thing
+            _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
         }
 
         public void Clock()
@@ -219,11 +256,15 @@ namespace Contralto.IO
                         _cylinder--;
                     }
 
+                    Log.Write(LogComponent.DiskController, "Seek progress: cylinder {0} reached.", _cylinder);
+
                     // Are we *there* yet?
                     if (_cylinder == _destCylinder)
                     {
                         // clear Seek bit
                         _kStat &= 0xffbf;
+
+                        Log.Write(LogComponent.DiskController, "Seek to {0} completed.", _cylinder);
                     }
                 }
             }
@@ -282,6 +323,8 @@ namespace Contralto.IO
             {
                 throw new InvalidOperationException("STROBE while SENDADR bit of KCOM not 1.  Unexpected.");
             }
+
+            Log.Write(LogComponent.DiskController, "STROBE: Seek initialized.");
             
             _destCylinder = (_kData & 0x0ff8) >> 3;
 
@@ -290,6 +333,8 @@ namespace Contralto.IO
             if (_destCylinder > 202)
             {
                 _kStat |= 0x0080;
+
+                Log.Write(LogComponent.DiskController, "Seek failed, specified cylinder {0} is out of range.", _destCylinder);
             }
             else
             {
@@ -304,6 +349,8 @@ namespace Contralto.IO
                 // And figure out how long this will take.
                 _seekClocks = CalculateSeekTime();
                 _elapsedSeekTime = 0.0;
+
+                Log.Write(LogComponent.DiskController, "Seek to {0} from {1} commencing.  Will take {2} clocks.", _destCylinder, _cylinder, _seekClocks);
             }
         }
 
@@ -380,7 +427,8 @@ namespace Contralto.IO
                 if (_wffo || _diskBitCounterEnable)
                 {
                     if (!_xferOff)
-                    {                 
+                    {
+                        Log.Write(LogComponent.DiskWordTask, "Word {0} read into KDATA", OctalHelpers.ToOctal(diskWord));  
                         _kData = diskWord;
                     }
 
@@ -403,6 +451,7 @@ namespace Contralto.IO
 
                 if (bWakeup)
                 {
+                    Log.Write(LogComponent.DiskWordTask, "Sector task awoken.");
                     _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
                 }
 
