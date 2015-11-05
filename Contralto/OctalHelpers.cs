@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Contralto
 {
-    public static class OctalHelpers
+    public static class Conversion
     {
         public static string ToOctal(int i)
         {

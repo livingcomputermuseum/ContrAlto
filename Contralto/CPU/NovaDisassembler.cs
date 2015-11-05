@@ -98,29 +98,29 @@ namespace Contralto.CPU.Nova
                     d.AppendFormat("{0}{1} {2}",
                         func,
                         indirect ? "@" : String.Empty,
-                        OctalHelpers.ToOctal(disp));
+                        Conversion.ToOctal(disp));
                     break;
 
                 case MemIndex.PCRelative:
                     d.AppendFormat("{0}{1} .+{2}    ;({3})",
                         func,
                         indirect ? "@" : String.Empty,
-                        OctalHelpers.ToOctal((sbyte)disp),
-                        OctalHelpers.ToOctal((sbyte)disp + address));
+                        Conversion.ToOctal((sbyte)disp),
+                        Conversion.ToOctal((sbyte)disp + address));
                     break;
 
                 case MemIndex.AC2Relative:
                     d.AppendFormat("{0}{1} AC2+{2}",
                         func,
                         indirect ? "@" : String.Empty,
-                        OctalHelpers.ToOctal((sbyte)disp));
+                        Conversion.ToOctal((sbyte)disp));
                     break;
 
                 case MemIndex.AC3Relative:
                     d.AppendFormat("{0}{1} AC3+{2}",
                         func,
                         indirect ? "@" : String.Empty,
-                        OctalHelpers.ToOctal((sbyte)disp));
+                        Conversion.ToOctal((sbyte)disp));
                     break;
 
                 default:
@@ -156,7 +156,7 @@ namespace Contralto.CPU.Nova
                         inst,
                         indirect ? "@" : String.Empty,
                         ac,
-                        OctalHelpers.ToOctal(disp));
+                        Conversion.ToOctal(disp));
                     break;
 
                 case MemIndex.PCRelative:
@@ -164,8 +164,8 @@ namespace Contralto.CPU.Nova
                         inst,
                         indirect ? "@" : String.Empty,
                         ac,
-                        OctalHelpers.ToOctal((sbyte)disp),
-                        OctalHelpers.ToOctal((sbyte)disp + address));
+                        Conversion.ToOctal((sbyte)disp),
+                        Conversion.ToOctal((sbyte)disp + address));
                     break;
 
                 case MemIndex.AC2Relative:
@@ -173,7 +173,7 @@ namespace Contralto.CPU.Nova
                         inst,
                         indirect ? "@" : String.Empty,
                         ac,
-                        OctalHelpers.ToOctal((sbyte)disp));
+                        Conversion.ToOctal((sbyte)disp));
                     break;
 
                 case MemIndex.AC3Relative:
@@ -181,7 +181,7 @@ namespace Contralto.CPU.Nova
                         inst,
                         indirect ? "@" : String.Empty,
                         ac,
-                        OctalHelpers.ToOctal((sbyte)disp));
+                        Conversion.ToOctal((sbyte)disp));
                     break;
 
                 default:
@@ -222,13 +222,13 @@ namespace Contralto.CPU.Nova
                     trans,
                     cont == IOControl.None ? String.Empty : cont.ToString(),
                     ac,
-                    OctalHelpers.ToOctal(deviceCode));
+                    Conversion.ToOctal(deviceCode));
             }
             else
             {
                 d.AppendFormat("{0} {1}",
                     (IOSkip)cont,                    
-                    OctalHelpers.ToOctal(deviceCode));
+                    Conversion.ToOctal(deviceCode));
             }
 
             return d.ToString();

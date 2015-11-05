@@ -37,7 +37,7 @@ namespace Contralto.CPU
                 switch (instruction.BS)
                 {
                     case BusSource.ReadR:
-                        source = String.Format("R[{0}] ", OctalHelpers.ToOctal((int)rSelect));
+                        source = String.Format("R[{0}] ", Conversion.ToOctal((int)rSelect));
                         break;
 
                     case BusSource.LoadR:
@@ -73,7 +73,7 @@ namespace Contralto.CPU
                 instruction.F2 == SpecialFunction2.Constant)
             {
                 source += String.Format("C({0})",
-                    OctalHelpers.ToOctal(ControlROM.ConstantROM[(instruction.RSELECT << 3) | ((uint)instruction.BS)]));
+                    Conversion.ToOctal(ControlROM.ConstantROM[(instruction.RSELECT << 3) | ((uint)instruction.BS)]));
             }
 
             switch (instruction.ALUF)
@@ -261,22 +261,22 @@ namespace Contralto.CPU
             // Do writeback to selected R register from shifter output
             if (loadR)
             {
-                loadL = String.Format("R[{0}]<- {1}", OctalHelpers.ToOctal((int)rSelect), loadL != String.Empty ? loadL : operation);
+                loadL = String.Format("R[{0}]<- {1}", Conversion.ToOctal((int)rSelect), loadL != String.Empty ? loadL : operation);
             }
 
             // Do writeback to selected S register from M
             if (loadS)
             {
-                loadL = String.Format("S[{0}]<- {1}", OctalHelpers.ToOctal((int)rSelect), loadL);
+                loadL = String.Format("S[{0}]<- {1}", Conversion.ToOctal((int)rSelect), loadL);
             }
 
             if (!string.IsNullOrEmpty(loadL) || !string.IsNullOrEmpty(loadT))
             {
-                disassembly.AppendFormat("{0}{1}{2}{3} :{4}", f1, f2, loadT, loadL, OctalHelpers.ToOctal(instruction.NEXT));
+                disassembly.AppendFormat("{0}{1}{2}{3} :{4}", f1, f2, loadT, loadL, Conversion.ToOctal(instruction.NEXT));
             }
             else
             {
-                disassembly.AppendFormat("{0}{1}{2} :{3}", f1, f2, operation, OctalHelpers.ToOctal(instruction.NEXT));
+                disassembly.AppendFormat("{0}{1}{2} :{3}", f1, f2, operation, Conversion.ToOctal(instruction.NEXT));
             }
 
 
@@ -292,7 +292,7 @@ namespace Contralto.CPU
 
                 default:
                     loadS = false;
-                    return String.Format("BS{0}", OctalHelpers.ToOctal((int)instruction.BS));
+                    return String.Format("BS{0}", Conversion.ToOctal((int)instruction.BS));
             }
         }
 
@@ -304,7 +304,7 @@ namespace Contralto.CPU
                     return DisassembleEmulatorSpecialFunction1(instruction);                    
 
                 default:
-                    return String.Format("F1{0}", OctalHelpers.ToOctal((int)instruction.F1));
+                    return String.Format("F1{0}", Conversion.ToOctal((int)instruction.F1));
             }
         }
 
@@ -316,7 +316,7 @@ namespace Contralto.CPU
                     return DisassembleEmulatorSpecialFunction2(instruction);                    
 
                 default:
-                    return String.Format("F2{0}", OctalHelpers.ToOctal((int)instruction.F2));
+                    return String.Format("F2{0}", Conversion.ToOctal((int)instruction.F2));
             }
         }
 
@@ -328,7 +328,7 @@ namespace Contralto.CPU
             {
                 case EmulatorBusSource.ReadSLocation:
                     loadS = false;
-                    return String.Format("<-S[{0}]", OctalHelpers.ToOctal((int)instruction.RSELECT));
+                    return String.Format("<-S[{0}]", Conversion.ToOctal((int)instruction.RSELECT));
 
                 case EmulatorBusSource.LoadSLocation:
                     loadS = true;
@@ -370,7 +370,7 @@ namespace Contralto.CPU
                     return "STARTF ";
 
                 default:
-                    return String.Format("F1{0}", OctalHelpers.ToOctal((int)ef1));
+                    return String.Format("F1{0}", Conversion.ToOctal((int)ef1));
             }
 
         }
@@ -403,7 +403,7 @@ namespace Contralto.CPU
                     return "IDISP ";
 
                 default:
-                    return String.Format("F2{0}", OctalHelpers.ToOctal((int)ef2));
+                    return String.Format("F2{0}", Conversion.ToOctal((int)ef2));
             }
         }
     }

@@ -54,21 +54,30 @@ namespace Contralto.IO
                 _recNo = 0;
 
                 // "In addition, it causes the head address bit to be loaded from KDATA[13]."
-                _head = (_kDataWrite & 0x4) >> 2;
+                int newHead = (_kDataWrite & 0x4) >> 2;
+
+                Log.Write(LogComponent.DiskController, "At sector time {0}:", _elapsedSectorTime);
+                if (newHead != _head)
+                {
+                    // If we switch heads, we need to reload the sector
+                    _head = newHead;
+                    LoadSector();
+                }
 
                 // "0 normally, 1 if the command is to terminate immediately after the correct cylinder
                 // position is reached (before any data is transferred)."
                 _dataXfer = (_kAdr & 0x2) != 0x2;
 
                 Log.Write(LogComponent.DiskController, "KADR set to {0} (Header {1}, Label {2}, Data {3}, Xfer {4}, Drive {5})",
-                    OctalHelpers.ToOctal(_kAdr),
-                    OctalHelpers.ToOctal((_kAdr & 0xc0) >> 6),
-                    OctalHelpers.ToOctal((_kAdr & 0x30) >> 4),
-                    OctalHelpers.ToOctal((_kAdr & 0xc) >> 2),
+                    Conversion.ToOctal(_kAdr),
+                    Conversion.ToOctal((_kAdr & 0xc0) >> 6),
+                    Conversion.ToOctal((_kAdr & 0x30) >> 4),
+                    Conversion.ToOctal((_kAdr & 0xc) >> 2),
                     _dataXfer,
                     _kAdr & 0x1);
 
-                Log.Write(LogComponent.DiskController, "  -Disk Address is C/H/S {0}/{1}/{2}, Drive {3} Restore {4}",
+                Log.Write(LogComponent.DiskController, "  -Disk Address ({0}) is C/H/S {1}/{2}/{3}, Drive {4} Restore {5}",
+                    Conversion.ToOctal(_kDataWrite),
                     (_kDataWrite & 0x0ff8) >> 3,
                     _head,
                     (_kDataWrite & 0xf000) >> 12,
@@ -116,7 +125,8 @@ namespace Contralto.IO
         {
             get
             {                
-                return _kStat;
+                // Bits 4-7 of KSTAT are always 1s.
+                return (ushort)(_kStat | (0x0f00));
             }
             set
             {
@@ -172,11 +182,11 @@ namespace Contralto.IO
             get { return _sectorClocks - _elapsedSectorTime; }
         }
 
-
         public bool Ready
         {
             get
             {
+                // TODO: verify if this is correct.
                 // Not ready if we're in the middle of a seek.
                 return (_kStat & 0x0040) == 0;
             }
@@ -215,7 +225,7 @@ namespace Contralto.IO
             _elapsedSectorTime++;            
 
             // TODO: only signal sector changes if disk is loaded, etc.
-            if (_elapsedSectorTime > _sectorClocks)
+            if (_elapsedSectorTime > _sectorClocks )
             {
                 //
                 // Next sector; save fractional part of elapsed time (to more accurately keep track of time), move to next sector
@@ -223,7 +233,7 @@ namespace Contralto.IO
                 //
                 _elapsedSectorTime -= _sectorClocks;
 
-                _sector = (_sector + 1) % 12;
+                _sector = (_sector + 1) % 12;                
 
                 _kStat = (ushort)((_kStat & 0x0fff) | (_sector << 12));
 
@@ -239,8 +249,12 @@ namespace Contralto.IO
                 // Load new sector in
                 LoadSector();
 
-                _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
-
+                // Only wake up if not actively seeking.
+                if ((_kStat & 0x0040) == 0)
+                {
+                    Log.Write(LogType.Verbose, LogComponent.DiskController, "Waking up sector task for C/H/S {0}/{1}/{2}", _cylinder, _head, _sector);
+                    _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
+                }
             }
 
             // If seek is in progress, move closer to the desired cylinder...
@@ -277,7 +291,7 @@ namespace Contralto.IO
             //
             // Spin the disk platter and read in words as applicable.
             //
-            SpinDisk();           
+            SpinDisk();
 
             //
             // Update the WDINIT signal; this is based on WDALLOW (!_wdInhib) which sets WDINIT (this is done
@@ -433,7 +447,7 @@ namespace Contralto.IO
                 {
                     if (!_xferOff)
                     {
-                        Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Sector {0} Word {1} read into KDATA", _sector, OctalHelpers.ToOctal(diskWord));  
+                        Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Sector {0} Word {1} read into KDATA", _sector, Conversion.ToOctal(diskWord));  
                         _kDataRead = diskWord;
                     }
 
@@ -456,7 +470,7 @@ namespace Contralto.IO
 
                 if (bWakeup)
                 {
-                    Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Word task awoken.");
+                    Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Word task awoken for word {0}.", _sectorWordIndex);
                     _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
                 }
 
@@ -474,6 +488,27 @@ namespace Contralto.IO
             //
             DiabloDiskSector sector = _pack.GetSector(_cylinder, _head, _sector);
 
+            // debugging
+            /*
+            if (_cylinder >= 32)
+            {
+                Console.WriteLine("loading in C/H/S {0}/{1}/{2}", _cylinder, _head, _sector);
+                for(int i=0;i<sector.Header.Length;i++)
+                {
+                    Console.WriteLine("Header {0}, memory {1} (alt {2})",
+                        Conversion.ToOctal(sector.Header[i]),
+                        Conversion.ToOctal(_system.MemoryBus.DebugReadWord((ushort)(0x30 + i))),
+                        Conversion.ToOctal(_system.MemoryBus.DebugReadWord((ushort)(0x1e + i))));
+                }
+
+                for (int i = 0; i < sector.Label.Length; i++)
+                {
+                    Console.WriteLine("Label {0}, memory {1} (alt {2})",
+                        Conversion.ToOctal(sector.Label[i]),
+                        Conversion.ToOctal(_system.MemoryBus.DebugReadWord((ushort)(0x32 + i))),
+                        Conversion.ToOctal(_system.MemoryBus.DebugReadWord((ushort)(0x20 + i))));
+                }
+            } */
 
             // Header (2 words data, 1 word cksum)
             for (int i = _headerOffset + 1, j = 1; i < _headerOffset + 3; i++, j--)
@@ -484,7 +519,7 @@ namespace Contralto.IO
 
             ushort checksum = CalculateChecksum(_sectorData, _headerOffset + 1, 2);
             _sectorData[_headerOffset + 3].Data = checksum;
-            Log.Write(LogType.Verbose, LogComponent.DiskController, "Header checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, OctalHelpers.ToOctal(checksum));
+            Log.Write(LogType.Verbose, LogComponent.DiskController, "Header checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, Conversion.ToOctal(checksum));
             
             // Label (8 words data, 1 word cksum)
             for (int i = _labelOffset + 1, j = 7; i < _labelOffset + 9; i++, j--)
@@ -495,7 +530,7 @@ namespace Contralto.IO
 
             checksum = CalculateChecksum(_sectorData, _labelOffset + 1, 8);
             _sectorData[_labelOffset + 9].Data = checksum;
-            Log.Write(LogType.Verbose, LogComponent.DiskController, "Label checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, OctalHelpers.ToOctal(checksum));
+            Log.Write(LogType.Verbose, LogComponent.DiskController, "Label checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, Conversion.ToOctal(checksum));
 
             // sector data (256 words data, 1 word cksum)
             for (int i = _dataOffset + 1, j = 255; i < _dataOffset + 257; i++, j--)
@@ -506,7 +541,7 @@ namespace Contralto.IO
 
             checksum = CalculateChecksum(_sectorData, _dataOffset + 1, 256);
             _sectorData[_dataOffset + 257].Data = checksum;
-            Log.Write(LogType.Verbose, LogComponent.DiskController, "Data checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, OctalHelpers.ToOctal(checksum));
+            Log.Write(LogType.Verbose, LogComponent.DiskController, "Data checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, Conversion.ToOctal(checksum));
 
         }
 

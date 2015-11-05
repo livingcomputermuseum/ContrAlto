@@ -17,7 +17,7 @@ namespace Contralto.Memory
     {
         public MemoryBus()
         {
-            _bus = new Dictionary<ushort, IMemoryMappedDevice>(65536);            
+            _bus = new Dictionary<ushort, IMemoryMappedDevice>(65536);
             Reset();
         }
 
@@ -35,7 +35,7 @@ namespace Contralto.Memory
                     if (_bus.ContainsKey(addr))
                     {
                         throw new InvalidOperationException(
-                            String.Format("Memory mapped address collision for dev {0} at address {1}", dev, OctalHelpers.ToOctal(addr)));
+                            String.Format("Memory mapped address collision for dev {0} at address {1}", dev, Conversion.ToOctal(addr)));
                     }
                     else
                     {
@@ -243,7 +243,7 @@ namespace Contralto.Memory
             else
             {
                 //throw new NotImplementedException(String.Format("Read from unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));
-                Console.WriteLine("Read from unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address));
+                Console.WriteLine("Read from unimplemented memory-mapped I/O device at {0}.", Conversion.ToOctal(address));
                 return 0;
             }
         }
@@ -259,13 +259,13 @@ namespace Contralto.Memory
             // Look up address in hash; if populated ask the device
             // to store a value otherwise throw.
             if (_bus.ContainsKey(address))
-            {
+            {               
                 _bus[address].Load(address, data);
             }
             else
             {
                 // throw new NotImplementedException(String.Format("Write to unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));
-                Console.WriteLine("Write to unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address));
+                Console.WriteLine("Write to unimplemented memory-mapped I/O device at {0}.", Conversion.ToOctal(address));
             }
         }
 

@@ -76,9 +76,9 @@ namespace Contralto
             // Registers
             for(int i=0;i<32;i++)
             {
-                _registerData.Rows[i].Cells[0].Value = OctalHelpers.ToOctal(i,2);
-                _registerData.Rows[i].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.R[i], 6);
-                _registerData.Rows[i].Cells[2].Value = OctalHelpers.ToOctal(_system.CPU.S[0][i], 6);
+                _registerData.Rows[i].Cells[0].Value = Conversion.ToOctal(i,2);
+                _registerData.Rows[i].Cells[1].Value = Conversion.ToOctal(_system.CPU.R[i], 6);
+                _registerData.Rows[i].Cells[2].Value = Conversion.ToOctal(_system.CPU.S[0][i], 6);
             }
 
             // Tasks
@@ -87,20 +87,20 @@ namespace Contralto
                 _taskData.Rows[i].Cells[0].Value = GetTextForTask((TaskType)i);
                 _taskData.Rows[i].Cells[1].Value = GetTextForTaskState(_system.CPU.Tasks[i]);
                 _taskData.Rows[i].Cells[2].Value =
-                    _system.CPU.Tasks[i] != null ? OctalHelpers.ToOctal(_system.CPU.Tasks[i].MPC, 4) : String.Empty;                
+                    _system.CPU.Tasks[i] != null ? Conversion.ToOctal(_system.CPU.Tasks[i].MPC, 4) : String.Empty;                
             }
 
             // Other registers            
-            _otherRegs.Rows[0].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.L, 6);
-            _otherRegs.Rows[1].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.T, 6);
-            _otherRegs.Rows[2].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.M, 6);
-            _otherRegs.Rows[3].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.IR, 6);
-            _otherRegs.Rows[4].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.ALUC0, 1);
+            _otherRegs.Rows[0].Cells[1].Value = Conversion.ToOctal(_system.CPU.L, 6);
+            _otherRegs.Rows[1].Cells[1].Value = Conversion.ToOctal(_system.CPU.T, 6);
+            _otherRegs.Rows[2].Cells[1].Value = Conversion.ToOctal(_system.CPU.M, 6);
+            _otherRegs.Rows[3].Cells[1].Value = Conversion.ToOctal(_system.CPU.IR, 6);
+            _otherRegs.Rows[4].Cells[1].Value = Conversion.ToOctal(_system.CPU.ALUC0, 1);
             //_otherRegs.Rows[4].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.Carry, 1);
             //_otherRegs.Rows[4].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.Skip, 1);
-            _otherRegs.Rows[5].Cells[1].Value = OctalHelpers.ToOctal(_system.MemoryBus.MAR, 6);
-            _otherRegs.Rows[6].Cells[1].Value = OctalHelpers.ToOctal(_system.MemoryBus.MD, 6);
-            _otherRegs.Rows[7].Cells[1].Value = OctalHelpers.ToOctal(_system.MemoryBus.Cycle & 0x3f, 2);
+            _otherRegs.Rows[5].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.MAR, 6);
+            _otherRegs.Rows[6].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.MD, 6);
+            _otherRegs.Rows[7].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.Cycle & 0x3f, 2);
 
             // Disk info
             _diskData.Rows[0].Cells[1].Value = _system.DiskController.ClocksUntilNextSector.ToString("0.00");
@@ -108,10 +108,10 @@ namespace Contralto
             _diskData.Rows[2].Cells[1].Value = _system.DiskController.SeekCylinder.ToString();
             _diskData.Rows[3].Cells[1].Value = _system.DiskController.Head.ToString();
             _diskData.Rows[4].Cells[1].Value = _system.DiskController.Sector.ToString();
-            _diskData.Rows[5].Cells[1].Value = OctalHelpers.ToOctal(_system.DiskController.KDATA, 6);
-            _diskData.Rows[6].Cells[1].Value = OctalHelpers.ToOctal(_system.DiskController.KADR, 6);
-            _diskData.Rows[7].Cells[1].Value = OctalHelpers.ToOctal(_system.DiskController.KCOM, 6);
-            _diskData.Rows[8].Cells[1].Value = OctalHelpers.ToOctal(_system.DiskController.KSTAT, 6);
+            _diskData.Rows[5].Cells[1].Value = Conversion.ToOctal(_system.DiskController.KDATA, 6);
+            _diskData.Rows[6].Cells[1].Value = Conversion.ToOctal(_system.DiskController.KADR, 6);
+            _diskData.Rows[7].Cells[1].Value = Conversion.ToOctal(_system.DiskController.KCOM, 6);
+            _diskData.Rows[8].Cells[1].Value = Conversion.ToOctal(_system.DiskController.KSTAT, 6);
             _diskData.Rows[9].Cells[1].Value = _system.DiskController.RECNO.ToString();           
 
             // Find the right source line.
@@ -275,11 +275,11 @@ namespace Contralto
                     break;
 
                 case "Address":
-                    e.Value = OctalHelpers.ToOctal(e.RowIndex, 6);
+                    e.Value = Conversion.ToOctal(e.RowIndex, 6);
                     break;
 
                 case "Data":
-                    e.Value = OctalHelpers.ToOctal(_system.MemoryBus.DebugReadWord((ushort)e.RowIndex), 6);
+                    e.Value = Conversion.ToOctal(_system.MemoryBus.DebugReadWord((ushort)e.RowIndex), 6);
                     
                     break;
 
