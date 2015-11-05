@@ -196,12 +196,12 @@
 213:035000 - LDA 3,AC2+0				; AC3 gets current DCB address
 214:025412 - LDA 1,AC3+12				; AC1 gets label data (previous disk address)
 215:022732 - LDA@ 0,.+-46    ;(147)		; Load AC0 with contents KBLK (check controller status)
-216:101014 - MOV# 0,0,SZR				; if zero (error or idle) then go to 199
+216:101014 - MOV# 0,0,SZR				; if zero (idle) then go to 220
 217:000406 - JMP .+6    ;(225)			; not idle, go to 225
-220:021401 - LDA 0,AC3+1
-221:101014 - MOV# 0,0,SZR
-222:000406 - JMP .+6    ;(230)
-223:056724 - STA@ 3,.+-54    ;(147)
+220:021401 - LDA 0,AC3+1				; Load AC3 with next DCB address
+221:101014 - MOV# 0,0,SZR				; is this zero?
+222:000406 - JMP .+6    ;(230)			; no -- goto 230
+223:056724 - STA@ 3,.+-54    ;(147)		; yes - write DCB to KBLK (tell disk controller to execute DCB)
 224:000767 - JMP .+-11    ;(213)
 
 225:125014 - MOV# 1,1,SZR				; we get here when the disk controller is not idle; see if prev. addr is zero
@@ -238,7 +238,7 @@
 257:161000 - MOV 3,0
 260:024765 - LDA 1,.+-13    ;(245)
 261:034411 - LDA 3,.+11    ;(272)
-262:061005 - BLT
+262:061005 - BLT`
 263:020757 - LDA 0,.+-21    ;(242)
 264:024457 - LDA 1,.+57    ;(343)
 265:034663 - LDA 3,.+-115    ;(150)

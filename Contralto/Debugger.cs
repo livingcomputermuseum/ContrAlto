@@ -112,13 +112,7 @@ namespace Contralto
             _diskData.Rows[6].Cells[1].Value = OctalHelpers.ToOctal(_system.DiskController.KADR, 6);
             _diskData.Rows[7].Cells[1].Value = OctalHelpers.ToOctal(_system.DiskController.KCOM, 6);
             _diskData.Rows[8].Cells[1].Value = OctalHelpers.ToOctal(_system.DiskController.KSTAT, 6);
-            _diskData.Rows[9].Cells[1].Value = _system.DiskController.RECNO.ToString();
-
-            for (ushort i = 0; i < 1024; i++)
-            {
-                _memoryData.Rows[i].Cells[2].Value = OctalHelpers.ToOctal(_system.MemoryBus.DebugReadWord(i), 6);
-                _memoryData.Rows[i].Cells[3].Value = Contralto.CPU.Nova.NovaDisassembler.DisassembleInstruction(i, _system.MemoryBus.DebugReadWord(i));
-            }
+            _diskData.Rows[9].Cells[1].Value = _system.DiskController.RECNO.ToString();           
 
             // Find the right source line.
             HighlightMicrocodeSourceLine(_system.CPU.CurrentTask.MPC);
@@ -170,15 +164,8 @@ namespace Contralto
                 _taskData.Rows.Add("0", "0", "0");
             }
 
-            
-            for (ushort i=0;i<1024;i++)
-            {
-                _memoryData.Rows.Add(
-                    false,
-                    OctalHelpers.ToOctal(i, 6),
-                    OctalHelpers.ToOctal(_system.MemoryBus.DebugReadWord(i), 6),
-                    Contralto.CPU.Nova.NovaDisassembler.DisassembleInstruction(i, _system.MemoryBus.DebugReadWord(i)));
-            }
+            // TODO: handle extended memory
+            _memoryData.RowCount = 65536;            
 
             _otherRegs.Rows.Add("L", "0");
             _otherRegs.Rows.Add("T", "0");
@@ -266,9 +253,53 @@ namespace Contralto
             }
         }
 
+
+        /// <summary>
+        /// Fill in memory view on demand.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnMemoryCellValueNeeded(object sender, DataGridViewCellValueEventArgs e)
+        {
+            // TODO: handle extended memory
+            if (e.RowIndex > 65535)
+            {
+                // Top of memory, nothing to do
+                return;
+            }
+
+            switch(_memoryData.Columns[e.ColumnIndex].Name)
+            {
+                case "Bkpt":
+                    e.Value = GetNovaBreakpoint((UInt16)e.RowIndex);
+                    break;
+
+                case "Address":
+                    e.Value = OctalHelpers.ToOctal(e.RowIndex, 6);
+                    break;
+
+                case "Data":
+                    e.Value = OctalHelpers.ToOctal(_system.MemoryBus.DebugReadWord((ushort)e.RowIndex), 6);
+                    
+                    break;
+
+                case "Disassembly":
+                    e.Value = CPU.Nova.NovaDisassembler.DisassembleInstruction(
+                        (ushort)e.RowIndex, 
+                        _system.MemoryBus.DebugReadWord((ushort)e.RowIndex));
+                    break;
+            }
+
+        }
+
         private void ModifyMicrocodeBreakpoint(UInt16 address, bool set)
         {
             _microcodeBreakpointEnabled[address] = set;
+        }
+
+        private bool GetNovaBreakpoint(UInt16 address)
+        {
+            return _novaBreakpointEnabled[address];
         }
 
         private void ModifyNovaBreakpoint(UInt16 address, bool set)

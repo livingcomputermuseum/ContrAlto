@@ -25,8 +25,7 @@ namespace Contralto.Memory
         }
 
         public void Load(int address, ushort data)
-        {
-            //Log.Write(LogComponent.DiskWordTask, "Word {0} written to {1}", OctalHelpers.ToOctal(data), OctalHelpers.ToOctal(address));
+        {           
             _mem[address] = data;
         }
 

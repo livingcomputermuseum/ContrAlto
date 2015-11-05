@@ -46,8 +46,7 @@ namespace Contralto.CPU
                         return _cpu._system.DiskController.KSTAT;
 
                     case DiskBusSource.ReadKDATA:
-                        ushort kdata = _cpu._system.DiskController.KDATA;                        
-                        return kdata;
+                        return _cpu._system.DiskController.KDATA;                        
 
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled bus source {0}", bs));
@@ -61,8 +60,7 @@ namespace Contralto.CPU
                 switch (df1)
                 {
                     case DiskF1.LoadKDATA:
-                        // "The KDATA register is loaded from BUS[0-15]."
-                        Log.Write(LogComponent.DiskController, "KDATA loaded with {0}", OctalHelpers.ToOctal(_busData));
+                        // "The KDATA register is loaded from BUS[0-15]."                        
                         _cpu._system.DiskController.KDATA = _busData;
                         break;
 
@@ -70,8 +68,7 @@ namespace Contralto.CPU
                         // "This causes the KADR register to be loaded from BUS[8-14].
                         //  in addition, it causes the head address bit to be loaded from KDATA[13]."
                         // (the latter is done by DiskController)
-                        _cpu._system.DiskController.KADR = (ushort)((_busData & 0xfe) >> 1);
-                        Log.Write(LogComponent.DiskController, "KADR bus data is {0}", OctalHelpers.ToOctal(_busData));
+                        _cpu._system.DiskController.KADR = (ushort)((_busData & 0xff));                        
                         break;
 
                     case DiskF1.LoadKCOMM:
@@ -89,9 +86,15 @@ namespace Contralto.CPU
                     case DiskF1.LoadKSTAT:
                         // "KSTAT[12-15] are loaded from BUS[12-15].  (Actually BUS[13] is ORed onto
                         // KSTAT[13].)"                        
+                        
+                        // From the schematic (and ucode source, based on the values it actually uses for BUS[13]), BUS[13]
+                        // is also inverted.  So there's that, too.
 
-                        // OR in BUS[12-15] after masking in KSTAT[13] so it is ORed in properly.                        
-                        _cpu._system.DiskController.KSTAT = (ushort)(((_cpu._system.DiskController.KSTAT & 0xfff4)) | (_busData & 0xf));                        
+                        // build BUS[12-15] with bit 13 flipped.
+                        int modifiedBusData = (_busData & 0xb) | ((~_busData) & 0x4);
+
+                        // OR in BUS[12-15] after masking in KSTAT[13] so it is ORed in properly.    
+                        _cpu._system.DiskController.KSTAT = (ushort)(((_cpu._system.DiskController.KSTAT & 0xfff4)) | modifiedBusData);                                               
                         break;
 
                     case DiskF1.STROBE:

@@ -79,11 +79,11 @@
             this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ResetButton = new System.Windows.Forms.Button();
             this.RunToNextTaskButton = new System.Windows.Forms.Button();
-            this.B = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.NovaStep = new System.Windows.Forms.Button();
+            this.Bkpt = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.Address = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Data = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Disassembly = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.NovaStep = new System.Windows.Forms.Button();
             this.Microcode.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._sourceViewer)).BeginInit();
             this.groupBox1.SuspendLayout();
@@ -481,11 +481,13 @@
             // 
             this._memoryData.AllowUserToAddRows = false;
             this._memoryData.AllowUserToDeleteRows = false;
+            this._memoryData.AllowUserToResizeRows = false;
             dataGridViewCellStyle12.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this._memoryData.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle12;
+            this._memoryData.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
             this._memoryData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this._memoryData.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.B,
+            this.Bkpt,
             this.Address,
             this.Data,
             this.Disassembly});
@@ -503,6 +505,7 @@
             this._memoryData.Name = "_memoryData";
             this._memoryData.ReadOnly = true;
             this._memoryData.RowHeadersVisible = false;
+            this._memoryData.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this._memoryData.RowTemplate.DefaultCellStyle.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this._memoryData.RowTemplate.Height = 18;
             this._memoryData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
@@ -512,7 +515,9 @@
             this._memoryData.ShowRowErrors = false;
             this._memoryData.Size = new System.Drawing.Size(279, 273);
             this._memoryData.TabIndex = 0;
+            this._memoryData.VirtualMode = true;
             this._memoryData.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.MemoryViewCellClick);
+            this._memoryData.CellValueNeeded += new System.Windows.Forms.DataGridViewCellValueEventHandler(this.OnMemoryCellValueNeeded);
             // 
             // label1
             // 
@@ -613,21 +618,31 @@
             this.RunToNextTaskButton.UseVisualStyleBackColor = true;
             this.RunToNextTaskButton.Click += new System.EventHandler(this.RunToNextTaskButton_Click);
             // 
-            // B
+            // NovaStep
             // 
-            this.B.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
-            this.B.FalseValue = "false";
-            this.B.HeaderText = "B";
-            this.B.Name = "B";
-            this.B.ReadOnly = true;
-            this.B.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.B.ToolTipText = "Breakpoint";
-            this.B.TrueValue = "true";
-            this.B.Width = 20;
+            this.NovaStep.Location = new System.Drawing.Point(207, 954);
+            this.NovaStep.Name = "NovaStep";
+            this.NovaStep.Size = new System.Drawing.Size(66, 23);
+            this.NovaStep.TabIndex = 14;
+            this.NovaStep.Text = "Nova Step";
+            this.NovaStep.UseVisualStyleBackColor = true;
+            this.NovaStep.Click += new System.EventHandler(this.NovaStep_Click);
+            // 
+            // Bkpt
+            // 
+            this.Bkpt.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            this.Bkpt.FalseValue = "false";
+            this.Bkpt.HeaderText = "B";
+            this.Bkpt.Name = "Bkpt";
+            this.Bkpt.ReadOnly = true;
+            this.Bkpt.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.Bkpt.ToolTipText = "Breakpoint";
+            this.Bkpt.TrueValue = "true";
+            this.Bkpt.Width = 20;
             // 
             // Address
             // 
-            this.Address.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.Address.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.Address.HeaderText = "Addr";
             this.Address.MinimumWidth = 16;
             this.Address.Name = "Address";
@@ -638,7 +653,7 @@
             // 
             // Data
             // 
-            this.Data.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.Data.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.Data.HeaderText = "Data";
             this.Data.MinimumWidth = 16;
             this.Data.Name = "Data";
@@ -655,16 +670,6 @@
             this.Disassembly.ReadOnly = true;
             this.Disassembly.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.Disassembly.ToolTipText = "Disassembly";
-            // 
-            // NovaStep
-            // 
-            this.NovaStep.Location = new System.Drawing.Point(207, 954);
-            this.NovaStep.Name = "NovaStep";
-            this.NovaStep.Size = new System.Drawing.Size(66, 23);
-            this.NovaStep.TabIndex = 14;
-            this.NovaStep.Text = "Nova Step";
-            this.NovaStep.UseVisualStyleBackColor = true;
-            this.NovaStep.Click += new System.EventHandler(this.NovaStep_Click);
             // 
             // Debugger
             // 
@@ -745,10 +750,10 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
         private System.Windows.Forms.Button ResetButton;
         private System.Windows.Forms.Button RunToNextTaskButton;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn B;
+        private System.Windows.Forms.Button NovaStep;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn Bkpt;
         private System.Windows.Forms.DataGridViewTextBoxColumn Address;
         private System.Windows.Forms.DataGridViewTextBoxColumn Data;
         private System.Windows.Forms.DataGridViewTextBoxColumn Disassembly;
-        private System.Windows.Forms.Button NovaStep;
     }
 }

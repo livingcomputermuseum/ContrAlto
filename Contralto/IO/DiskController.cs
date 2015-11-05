@@ -28,15 +28,20 @@ namespace Contralto.IO
             fs.Close();                                   
         }        
 
+        /// <summary>
+        /// TODO: this is messy; the read and write sides of KDATA are distinct hardware.
+        /// According to docs, on a Write, eventually it appears on the Read side during an actual write to the disk
+        /// but not right away.  For now, this never happens (since we don't yet support writing).
+        /// </summary>
         public ushort KDATA
         {
             get
             {                
-                return _kData;
+                return _kDataRead;
             }
             set
             {
-                _kData = value;
+                _kDataWrite = value;
             }
         }
 
@@ -49,29 +54,28 @@ namespace Contralto.IO
                 _recNo = 0;
 
                 // "In addition, it causes the head address bit to be loaded from KDATA[13]."
-                _head = (_kData & 0x4) >> 2;
+                _head = (_kDataWrite & 0x4) >> 2;
 
                 // "0 normally, 1 if the command is to terminate immediately after the correct cylinder
                 // position is reached (before any data is transferred)."
                 _dataXfer = (_kAdr & 0x2) != 0x2;
 
-                Log.Write(LogComponent.DiskController, "KADR set to {0} (Seal {1}, Header {2}, Label {3}, Data {4}, Xfer {5}, Drive {6})",
+                Log.Write(LogComponent.DiskController, "KADR set to {0} (Header {1}, Label {2}, Data {3}, Xfer {4}, Drive {5})",
                     OctalHelpers.ToOctal(_kAdr),
-                    OctalHelpers.ToOctal((_kAdr & 0xff00) >> 8),
                     OctalHelpers.ToOctal((_kAdr & 0xc0) >> 6),
                     OctalHelpers.ToOctal((_kAdr & 0x30) >> 4),
                     OctalHelpers.ToOctal((_kAdr & 0xc) >> 2),
                     _dataXfer,
                     _kAdr & 0x1);
 
-                Log.Write(LogComponent.DiskController, "  Disk Address is C/H/S {0}/{1}/{2}, Drive {3} Restore {4}",
-                    (_kData & 0x0ff8) >> 3,
-                    (_kData & 0x4) >> 2,
-                    (_kData & 0xf000) >> 12,
-                    ((_kData & 0x2) >> 1),
-                    (_kData & 0x1));
+                Log.Write(LogComponent.DiskController, "  -Disk Address is C/H/S {0}/{1}/{2}, Drive {3} Restore {4}",
+                    (_kDataWrite & 0x0ff8) >> 3,
+                    _head,
+                    (_kDataWrite & 0xf000) >> 12,
+                    (_kDataWrite & 0x2) >> 1,
+                    (_kDataWrite & 0x1));
 
-                Log.Write(LogComponent.DiskController, "  Selected disk is {0}", ((_kData & 0x2) >> 1) ^ (_kAdr & 0x1));
+                Log.Write(LogComponent.DiskController, "  -Selected disk is {0}", ((_kDataWrite & 0x2) >> 1) ^ (_kAdr & 0x1));
 
             }
         }
@@ -187,7 +191,8 @@ namespace Contralto.IO
             _sector = 0;
             _head = 0;
             _kStat = 0;
-            _kData = 0;
+            _kDataRead = 0;
+            _kDataWrite = 0;
             _sendAdr = false;
 
             _wdInhib = true;
@@ -229,7 +234,7 @@ namespace Contralto.IO
                 _sectorWordIndex = 0;
                 _sectorWordTime = 0.0;
 
-                _kData = 13;
+                _kDataRead = 0;
 
                 // Load new sector in
                 LoadSector();
@@ -326,7 +331,7 @@ namespace Contralto.IO
 
             Log.Write(LogComponent.DiskController, "STROBE: Seek initialized.");
             
-            _destCylinder = (_kData & 0x0ff8) >> 3;
+            _destCylinder = (_kDataWrite & 0x0ff8) >> 3;
 
             // set "seek fail" bit based on selected cylinder (if out of bounds) and do not
             // commence a seek if so.
@@ -428,8 +433,8 @@ namespace Contralto.IO
                 {
                     if (!_xferOff)
                     {
-                        Log.Write(LogComponent.DiskWordTask, "Word {0} read into KDATA", OctalHelpers.ToOctal(diskWord));  
-                        _kData = diskWord;
+                        Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Sector {0} Word {1} read into KDATA", _sector, OctalHelpers.ToOctal(diskWord));  
+                        _kDataRead = diskWord;
                     }
 
                     if (!_wdInhib)
@@ -451,7 +456,7 @@ namespace Contralto.IO
 
                 if (bWakeup)
                 {
-                    Log.Write(LogComponent.DiskWordTask, "Sector task awoken.");
+                    Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Word task awoken.");
                     _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
                 }
 
@@ -477,7 +482,9 @@ namespace Contralto.IO
                 _sectorData[i] = new DataCell(sector.Header[j], CellType.Data);
             }
 
-            _sectorData[_headerOffset + 3].Data = CalculateChecksum(_sectorData, _headerOffset + 1, 2);
+            ushort checksum = CalculateChecksum(_sectorData, _headerOffset + 1, 2);
+            _sectorData[_headerOffset + 3].Data = checksum;
+            Log.Write(LogType.Verbose, LogComponent.DiskController, "Header checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, OctalHelpers.ToOctal(checksum));
             
             // Label (8 words data, 1 word cksum)
             for (int i = _labelOffset + 1, j = 7; i < _labelOffset + 9; i++, j--)
@@ -486,7 +493,9 @@ namespace Contralto.IO
                 _sectorData[i] = new DataCell(sector.Label[j], CellType.Data);
             }
 
-            _sectorData[_labelOffset + 9].Data = CalculateChecksum(_sectorData, _labelOffset + 1, 8);
+            checksum = CalculateChecksum(_sectorData, _labelOffset + 1, 8);
+            _sectorData[_labelOffset + 9].Data = checksum;
+            Log.Write(LogType.Verbose, LogComponent.DiskController, "Label checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, OctalHelpers.ToOctal(checksum));
 
             // sector data (256 words data, 1 word cksum)
             for (int i = _dataOffset + 1, j = 255; i < _dataOffset + 257; i++, j--)
@@ -495,7 +504,9 @@ namespace Contralto.IO
                 _sectorData[i] = new DataCell(sector.Data[j], CellType.Data);
             }
 
-            _sectorData[_dataOffset + 257].Data = CalculateChecksum(_sectorData, _dataOffset + 1, 256);
+            checksum = CalculateChecksum(_sectorData, _dataOffset + 1, 256);
+            _sectorData[_dataOffset + 257].Data = checksum;
+            Log.Write(LogType.Verbose, LogComponent.DiskController, "Data checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, OctalHelpers.ToOctal(checksum));
 
         }
 
@@ -542,7 +553,7 @@ namespace Contralto.IO
             //
             ushort checksum = 0x151;
 
-            for(int i = offset; i < length;i++)
+            for(int i = offset; i < offset + length;i++)
             {
                 // Sanity check that we're checksumming actual data
                 if (sectorData[i].Type != CellType.Data)
@@ -556,7 +567,8 @@ namespace Contralto.IO
             return checksum;
         }
 
-        private ushort _kData;
+        private ushort _kDataRead;
+        private ushort _kDataWrite;
         private ushort _kAdr;
         private ushort _kCom;
         private ushort _kStat;

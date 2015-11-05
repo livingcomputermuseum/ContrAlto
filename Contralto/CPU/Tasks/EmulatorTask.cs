@@ -282,7 +282,7 @@ namespace Contralto.CPU
                             case 0x400:
                             case 0x500:
                             case 0x600:
-                                // NEG, INC, ADC, SUB, ADD, AND - invert the carry bit
+                                // NEG, INC, ADC, SUB, ADD - invert the carry bit
                                 if (_cpu._aluC0 != 0)
                                 {
                                     carry = (~carry) & 0x1;
