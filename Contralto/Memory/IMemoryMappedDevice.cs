@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Contralto.CPU;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -42,15 +43,16 @@ namespace Contralto.Memory
         /// Reads a word from the specified address.
         /// </summary>
         /// <param name="address"></param>
+        /// <param name="extendedMemory"></param>
         /// <returns></returns>
-        ushort Read(int address);
+        ushort Read(int address, TaskType task, bool extendedMemory);
 
         /// <summary>
         /// Writes a word to the specified address.
         /// </summary>
         /// <param name="address"></param>
         /// <param name="data"></param>
-        void Load(int address, ushort data);
+        void Load(int address, ushort data, TaskType task, bool extendedMemory);
 
         /// <summary>
         /// Specifies the range (or ranges) of addresses decoded by this device.

@@ -40,7 +40,17 @@ namespace Contralto.CPU
                 switch (ebs)
                 {
                     case EmulatorBusSource.ReadSLocation:
-                        return _cpu._s[_cpu._rb][_rSelect];
+                        if (_rSelect != 0)
+                        {
+                            return _cpu._s[_cpu._rb][_rSelect];
+                        }
+                        else
+                        {
+                            // "...when reading data from the S registers onto the processor bus,
+                            //  the RSELECT value 0 causes the current value of the M register to
+                            //  appear on the bus..."
+                            return _cpu._m;
+                        }
 
                     case EmulatorBusSource.LoadSLocation:
                         _loadS = true;
@@ -71,7 +81,7 @@ namespace Contralto.CPU
                         break;
 
                     case EmulatorF1.SWMODE:
-                        // nothing! for now.
+                        throw new NotImplementedException();
                         break;
 
                     default:

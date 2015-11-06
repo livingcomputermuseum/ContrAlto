@@ -241,8 +241,9 @@ namespace Contralto.CPU
                         // Do nothing.  Well, that was easy.
                         break;
 
-                    case SpecialFunction1.LoadMAR:
-                        _cpu._system.MemoryBus.LoadMAR(aluData);    // Start main memory reference
+                    case SpecialFunction1.LoadMAR:  
+                        // Do MAR or XMAR reference based on whether F2 is MD<-, indicating an extended memory reference.
+                        _cpu._system.MemoryBus.LoadMAR(aluData, _taskType, instruction.F2 == SpecialFunction2.StoreMD);
                         break;
 
                     case SpecialFunction1.Task:
@@ -326,7 +327,12 @@ namespace Contralto.CPU
                         break;
 
                     case SpecialFunction2.StoreMD:
-                        _cpu._system.MemoryBus.LoadMD(_busData);
+                        // Special case for XMAR; if F1 is a LoadMAR we do nothing here;
+                        // the handler for LoadMAR will load the correct bank.
+                        if (instruction.F1 != SpecialFunction1.LoadMAR)
+                        {
+                            _cpu._system.MemoryBus.LoadMD(_busData);
+                        }
                         break;
 
                     case SpecialFunction2.Constant:

@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Contralto.Memory;
+using Contralto.CPU;
+using Contralto.Logging;
 
 namespace Contralto.IO
 {
@@ -18,13 +20,14 @@ namespace Contralto.IO
             
         }
 
-        public ushort Read(int address)
+        public ushort Read(int address, TaskType task, bool extendedMemoryReference)
         {
             // TODO: implement; return nothing pressed for any address now.
+            Log.Write(LogComponent.Keyboard, "Keyboard read; unimplemented.");
             return 0xffff;
         }
 
-        public void Load(int address, ushort data)
+        public void Load(int address, ushort data, TaskType task, bool extendedMemoryReference)
         {
             // nothing
         }

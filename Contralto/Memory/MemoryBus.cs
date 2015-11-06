@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Contralto.CPU;
+using Contralto.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -51,6 +53,7 @@ namespace Contralto.Memory
             _memoryAddress = 0;
             _memoryData = 0;
             _memoryOperationActive = false;
+            _extendedMemoryReference = false;
         }
 
         public ushort MAR
@@ -79,7 +82,9 @@ namespace Contralto.Memory
         /// </summary>
         public ushort DebugReadWord(ushort address)
         {
-            return ReadFromBus(address);
+            // TODO: allow debug reads from any bank.
+            // probably add special debug calls to IMemoryMappedDevice iface.
+            return ReadFromBus(address, TaskType.Emulator, false);
         }
 
         public void Clock()
@@ -91,12 +96,12 @@ namespace Contralto.Memory
                 {
                     case 3:
                         // Buffered read of single word
-                        _memoryData = ReadFromBus(_memoryAddress);
+                        _memoryData = ReadFromBus(_memoryAddress, _task, _extendedMemoryReference);
                         break;
 
                     case 4:
                         // Buffered read of double-word
-                        _memoryData2 = ReadFromBus((ushort)(_memoryAddress ^ 1));
+                        _memoryData2 = ReadFromBus((ushort)(_memoryAddress ^ 1), _task, _extendedMemoryReference);
                         break;
 
                     case 5:
@@ -137,7 +142,7 @@ namespace Contralto.Memory
             }
         }
 
-        public void LoadMAR(ushort address)
+        public void LoadMAR(ushort address, TaskType task, bool extendedMemoryReference)
         {
             if (_memoryOperationActive)
             {
@@ -149,9 +154,11 @@ namespace Contralto.Memory
                 _memoryOperationActive = true;
                 _doubleWordStore = false;
                 _memoryAddress = address;
+                _extendedMemoryReference = extendedMemoryReference;
+                _task = task;
                 _memoryCycle = 1;
             }
-        }
+        }        
 
         public ushort ReadMD()
         {
@@ -171,6 +178,7 @@ namespace Contralto.Memory
 
                     case 5:
                         // Single word read
+                        Log.Write(LogType.Verbose, LogComponent.Memory, "Single-word read of {0} from {1} (cycle 5)", Conversion.ToOctal(_memoryData), Conversion.ToOctal(_memoryAddress ^ 1));
                         return _memoryData;                        
 
                     // ***
@@ -190,10 +198,12 @@ namespace Contralto.Memory
                 // If this is memory cycle 6 we will return the last half of the doubleword to complete a double-word read.
                 if (_memoryCycle == 6)
                 {
+                    Log.Write(LogType.Verbose, LogComponent.Memory, "Double-word read of {0} from {1} (cycle 6)", Conversion.ToOctal(_memoryData2), Conversion.ToOctal(_memoryAddress ^ 1));
                     return _memoryData2;
                 }
                 else
                 {
+                    Log.Write(LogType.Verbose, LogComponent.Memory, "Single-word read of {0} from {1} (post cycle 6)", Conversion.ToOctal(_memoryData), Conversion.ToOctal(_memoryAddress));
                     return _memoryData;
                 }
             }
@@ -214,13 +224,27 @@ namespace Contralto.Memory
                     case 3:
                         _memoryData = data; // Only really necessary to show in debugger
                         // Start of doubleword write:
-                        WriteToBus(_memoryAddress, data);
+                        WriteToBus(_memoryAddress, data, _task, _extendedMemoryReference);
                         _doubleWordStore = true;
+
+                        Log.Write(
+                            LogType.Verbose,
+                            LogComponent.Memory,
+                            "Single-word store of {0} to {1} (cycle 3)",
+                            Conversion.ToOctal(data),
+                            Conversion.ToOctal(_memoryAddress));
                         break;
 
                     case 4:
                         _memoryData = data; // Only really necessary to show in debugger
-                        WriteToBus(_doubleWordStore ? (ushort)(_memoryAddress ^ 1) : _memoryAddress, data);
+                        Log.Write(
+                            LogType.Verbose,
+                            LogComponent.Memory, 
+                            _doubleWordStore ? "Double-word store of {0} to {1} (cycle 4)" : "Single-word store of {0} to {1} (cycle 4)", 
+                            Conversion.ToOctal(data),
+                            _doubleWordStore ? Conversion.ToOctal(_memoryAddress ^ 1) : Conversion.ToOctal(_memoryAddress));
+
+                        WriteToBus(_doubleWordStore ? (ushort)(_memoryAddress ^ 1) : _memoryAddress, data, _task, _extendedMemoryReference);
                         break;
                 }       
 
@@ -232,13 +256,13 @@ namespace Contralto.Memory
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        private ushort ReadFromBus(ushort address)
+        private ushort ReadFromBus(ushort address, TaskType task, bool extendedMemoryReference)
         {
             // Look up address in hash; if populated ask the device
             // to return a value otherwise throw.
             if (_bus.ContainsKey(address))
             {
-                return _bus[address].Read(address);
+                return _bus[address].Read(address, task, extendedMemoryReference);
             }
             else
             {
@@ -254,13 +278,13 @@ namespace Contralto.Memory
         /// <param name="address"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        private void WriteToBus(ushort address, ushort data)
+        private void WriteToBus(ushort address, ushort data, TaskType task, bool extendedMemoryReference)
         {
             // Look up address in hash; if populated ask the device
             // to store a value otherwise throw.
             if (_bus.ContainsKey(address))
             {               
-                _bus[address].Load(address, data);
+                _bus[address].Load(address, data, task, extendedMemoryReference);
             }
             else
             {
@@ -277,7 +301,9 @@ namespace Contralto.Memory
         private bool _memoryOperationActive;
         private int _memoryCycle;
         private ushort _memoryAddress;
-        
+        private bool _extendedMemoryReference;
+        private TaskType _task;
+
         // Buffered read data (on cycles 3 and 4)
         private ushort _memoryData;
         private ushort _memoryData2;
