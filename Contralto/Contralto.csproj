@@ -48,6 +48,8 @@
     <Compile Include="CPU\ConstantMemory.cs" />
     <Compile Include="CPU\CPU.cs" />
     <Compile Include="CPU\NovaDisassembler.cs" />
+    <Compile Include="CPU\Tasks\DisplayHorizontalTask.cs" />
+    <Compile Include="CPU\Tasks\DisplayWordTask.cs" />
     <Compile Include="CPU\UCodeDisassembler.cs" />
     <Compile Include="CPU\Tasks\DiskTask.cs" />
     <Compile Include="CPU\Tasks\EmulatorTask.cs" />
@@ -61,6 +63,7 @@
     <Compile Include="Debugger.Designer.cs">
       <DependentUpon>Debugger.cs</DependentUpon>
     </Compile>
+    <Compile Include="Display\DisplayController.cs" />
     <Compile Include="IClockable.cs" />
     <Compile Include="IO\DiskController.cs" />
     <Compile Include="IO\DiabloPack.cs" />

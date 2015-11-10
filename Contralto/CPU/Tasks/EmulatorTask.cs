@@ -76,8 +76,9 @@ namespace Contralto.CPU
                         break;
 
                     case EmulatorF1.STARTF:
-                        // Dispatch function to I/O based on contents of AC0... (TBD: what are these?)
-                        throw new NotImplementedException();
+                        // Dispatch function to Ethernet I/O based on contents of AC0... (TBD: what are these?)
+                        // For now do nothing, since we have no Ethernet implemented
+                        //throw new NotImplementedException();
                         break;
 
                     case EmulatorF1.SWMODE:

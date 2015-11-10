@@ -31,6 +31,7 @@ namespace Contralto.CPU
             _tasks[(int)TaskType.Emulator] = new EmulatorTask(this);
             _tasks[(int)TaskType.DiskSector] = new DiskTask(this, true);
             _tasks[(int)TaskType.DiskWord] = new DiskTask(this, false);
+            _tasks[(int)TaskType.DisplayWord] = new DisplayWordTask(this);
 
             Reset();
         }

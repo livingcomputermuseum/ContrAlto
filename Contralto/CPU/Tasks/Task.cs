@@ -409,8 +409,16 @@ namespace Contralto.CPU
                 return nextTask;
             }
 
-            protected abstract ushort GetBusSource(int bs);
-            protected abstract void ExecuteSpecialFunction1(MicroInstruction instruction);
+            protected virtual ushort GetBusSource(int bs)
+            {
+                // Nothing by default.
+                return 0;
+            }
+
+            protected virtual void ExecuteSpecialFunction1(MicroInstruction instruction)
+            {
+                // Nothing by default
+            }
 
             /// <summary>
             /// Used to allow Task-specific F2s that need to modify RSELECT to do so.
@@ -421,7 +429,10 @@ namespace Contralto.CPU
                 // Nothing by default.
             }
 
-            protected abstract void ExecuteSpecialFunction2(MicroInstruction instruction);
+            protected virtual void ExecuteSpecialFunction2(MicroInstruction instruction)
+            {
+                // Nothing by default.
+            }
 
             protected virtual void ExecuteSpecialFunction2Late(MicroInstruction instruction)
             {

@@ -135,6 +135,22 @@ namespace Contralto.CPU
         ReadKDATA = 4,
     }
 
+    enum DisplayWordF2
+    {
+        LoadDDR = 8,
+    }
+
+    enum DisplayHorizontalF2
+    {
+        EVENFIELD = 8,
+        SETMODE = 9,
+    }
+
+    enum DisplayVerticalF2
+    {
+        EVENFIELD = 8,
+    }
+
     public class MicroInstruction
     {
         public MicroInstruction(UInt32 code)

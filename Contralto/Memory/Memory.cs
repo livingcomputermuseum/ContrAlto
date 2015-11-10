@@ -34,10 +34,11 @@ namespace Contralto.Memory
                 address += 0x10000 * GetBankNumber(task, extendedMemory);
                 ushort data = _mem[address];
 
+                /*
                 if (extendedMemory)
                 {
                     Log.Write(LogComponent.Memory, "extended memory read from {0} - {1}", Conversion.ToOctal(address), Conversion.ToOctal(data));
-                }
+                } */
 
                 return data;
             }
@@ -59,10 +60,11 @@ namespace Contralto.Memory
                 address += 0x10000 * GetBankNumber(task, extendedMemory);
                 _mem[address] = data;
 
+                /*
                 if (extendedMemory)
                 {
                     Log.Write(LogComponent.Memory, "extended memory write to {0} of {1}", Conversion.ToOctal(address), Conversion.ToOctal(data));
-                }
+                } */
             }
         }
 

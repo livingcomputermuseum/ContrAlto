@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Contralto.CPU;
 using Contralto.IO;
 using Contralto.Memory;
+using Contralto.Display;
 
 namespace Contralto
 {
@@ -23,6 +24,7 @@ namespace Contralto
             _mem = new Memory.Memory();
             _keyboard = new Keyboard();
             _diskController = new DiskController(this);
+            _displayController = new DisplayController(this);
 
             // Attach memory-mapped devices to the bus
             _memBus.AddDevice(_mem);
@@ -32,7 +34,8 @@ namespace Contralto
             _clockableDevices = new List<IClockable>();
             _clockableDevices.Add(_memBus);
             _clockableDevices.Add(_diskController);
-            _clockableDevices.Add(_cpu);
+            _clockableDevices.Add(_displayController);
+            _clockableDevices.Add(_cpu);            
 
             Reset();
         }
@@ -45,6 +48,7 @@ namespace Contralto
             ALU.Reset();
             Shifter.Reset();
             _diskController.Reset();
+            _displayController.Reset();
         }
 
         public void SingleStep()
@@ -85,6 +89,7 @@ namespace Contralto
         private Contralto.Memory.Memory _mem;
         private Keyboard _keyboard;
         private DiskController _diskController;
+        private DisplayController _displayController;
 
         private List<IClockable> _clockableDevices;
     }

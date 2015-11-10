@@ -368,7 +368,7 @@ namespace Contralto.IO
                 // And figure out how long this will take.
                 _seekClocks = CalculateSeekTime();
                 _elapsedSeekTime = 0.0;
-
+                
                 Log.Write(LogComponent.DiskController, "Seek to {0} from {1} commencing.  Will take {2} clocks.", _destCylinder, _cylinder, _seekClocks);
             }
         }
@@ -384,7 +384,7 @@ namespace Contralto.IO
             //
             double seekTimeMsec = 15.0 + 8.6 * Math.Sqrt(dt);
 
-            return seekTimeMsec / AltoSystem.ClockInterval;
+            return (seekTimeMsec / AltoSystem.ClockInterval) / 100;     // div 100 to make things faster for now
         }
 
         /// <summary>

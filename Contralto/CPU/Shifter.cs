@@ -143,6 +143,11 @@ namespace Contralto.CPU
                         // "...and places the low order bit of T into the high order bit position 
                         // of the shifter output on right shifts."
                         _output |= (ushort)((t & 0x1) << 15);
+
+                        if (_count != 1)
+                        {
+                            throw new NotImplementedException("magic LCY 8 not implemented yet.");
+                        }
                     }
                     else if (_dns)
                     {
