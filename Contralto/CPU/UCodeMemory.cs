@@ -32,6 +32,9 @@ namespace Contralto.CPU
         {            
             _uCodeRam = new UInt32[1024];
             LoadMicrocode(_uCodeRoms);
+
+            _decodeCache = new MicroInstruction[2048];
+            CacheMicrocodeDecode();
         }
 
         public static UInt32[] UCodeROM
@@ -42,6 +45,11 @@ namespace Contralto.CPU
         public static UInt32[] UCodeRAM
         {
             get { return _uCodeRam; }
+        }
+
+        public static MicroInstruction[] DecodeCache
+        {
+            get { return _decodeCache; }
         }
 
         private static void LoadMicrocode(RomFile[] romInfo)
@@ -90,6 +98,14 @@ namespace Contralto.CPU
             return mappedAddress;
         }
 
+        private static void CacheMicrocodeDecode()
+        {
+            for(int i=0;i<_uCodeRom.Length;i++)
+            {
+                _decodeCache[i] = new MicroInstruction(_uCodeRom[i]);
+            }
+        }
+
         private static RomFile[] _uCodeRoms =
         {
             // first K
@@ -114,7 +130,10 @@ namespace Contralto.CPU
         };        
 
         private static UInt32[] _uCodeRom;
-        private static UInt32[] _uCodeRam;        
+        private static UInt32[] _uCodeRam;
+
+
+        private static MicroInstruction[] _decodeCache;
 
 
     }

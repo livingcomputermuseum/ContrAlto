@@ -17,19 +17,17 @@ namespace Contralto.CPU
         {
             public DisplayWordTask(AltoCPU cpu) : base(cpu)
             {
-                _taskType = TaskType.DisplayWord;
-
-                // The Wakeup signal is always true for the Emulator task.
+                _taskType = TaskType.DisplayWord;                
                 _wakeup = false;
             }            
-            
+
             protected override void ExecuteSpecialFunction2(MicroInstruction instruction)
             {
                 DisplayWordF2 ef2 = (DisplayWordF2)instruction.F2;
                 switch (ef2)
                 {
                     case DisplayWordF2.LoadDDR:
-
+                        _cpu._system.DisplayController.LoadDDR(_busData);
                         break;
 
                     default:

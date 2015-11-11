@@ -297,7 +297,7 @@ namespace Contralto.IO
             // Update the WDINIT signal; this is based on WDALLOW (!_wdInhib) which sets WDINIT (this is done
             // in KCOM way above).
             // WDINIT is reset when BLOCK (a BLOCK F1 is being executed) and WDTSKACT (the disk word task is running) are 1.
-            //
+            //            
             if (_system.CPU.CurrentTask.Priority == (int)CPU.TaskType.DiskWord &&
                 _system.CPU.CurrentTask.BLOCK)
             {
@@ -639,7 +639,7 @@ namespace Contralto.IO
         // Sector timing.  Based on table on pg. 43 of the Alto Hardware Manual
         private double _elapsedSectorTime;     // elapsed time in this sector (in clocks)
         private const double _sectorDuration = (40.0 / 12.0); // time in msec for one sector
-        private const double _sectorClocks = _sectorDuration / 0.00017;     // number of clock cycles per sector time.
+        private const double _sectorClocks = _sectorDuration / (0.00017);     // number of clock cycles per sector time.
 
        
         private int _sectorWordIndex;

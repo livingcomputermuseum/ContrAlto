@@ -48,7 +48,10 @@
     <Compile Include="CPU\ConstantMemory.cs" />
     <Compile Include="CPU\CPU.cs" />
     <Compile Include="CPU\NovaDisassembler.cs" />
+    <Compile Include="CPU\Tasks\DisplayVerticalTask.cs" />
     <Compile Include="CPU\Tasks\DisplayHorizontalTask.cs" />
+    <Compile Include="CPU\Tasks\CursorTask.cs" />
+    <Compile Include="CPU\Tasks\MemoryRefreshTask.cs" />
     <Compile Include="CPU\Tasks\DisplayWordTask.cs" />
     <Compile Include="CPU\UCodeDisassembler.cs" />
     <Compile Include="CPU\Tasks\DiskTask.cs" />

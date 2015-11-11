@@ -60,6 +60,11 @@ namespace Contralto.Memory
                 address += 0x10000 * GetBankNumber(task, extendedMemory);
                 _mem[address] = data;
 
+                if (address == 0x110 && data != 0)
+                {
+                    Console.WriteLine("DASTART WRITE!");
+                }
+
                 /*
                 if (extendedMemory)
                 {

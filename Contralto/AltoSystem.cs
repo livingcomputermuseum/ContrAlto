@@ -51,6 +51,17 @@ namespace Contralto
             _displayController.Reset();
         }
 
+        /// <summary>
+        /// Attaches an emulated display device to the system.
+        /// TODO: This is currently tightly-coupled with the Debugger, make
+        /// more general.
+        /// </summary>
+        /// <param name="d"></param>
+        public void AttachDisplay(Debugger d)
+        {
+            _displayController.AttachDisplay(d);
+        }
+
         public void SingleStep()
         {
             // Run every device that needs attention for a single clock cycle.
@@ -73,6 +84,11 @@ namespace Contralto
         public DiskController DiskController
         {
             get { return _diskController; }
+        }
+
+        public DisplayController DisplayController
+        {
+            get { return _displayController; }
         }
 
         /// <summary>

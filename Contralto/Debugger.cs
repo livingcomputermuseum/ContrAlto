@@ -10,6 +10,7 @@ using System.Windows.Forms;
 
 using Contralto.CPU;
 using System.Threading;
+using System.Drawing.Imaging;
 
 namespace Contralto
 {
@@ -69,6 +70,43 @@ namespace Contralto
             base.Refresh();
 
             RefreshUI();
+        }        
+
+        public void RefreshAltoDisplay()
+        {
+            BeginInvoke(new StepDelegate(RefreshDisplayBox));            
+        }
+
+        private void RefreshDisplayBox()
+        {
+            // Update the display
+            BitmapData data = _displayBuffer.LockBits(_displayRect, ImageLockMode.WriteOnly, PixelFormat.Format1bppIndexed);
+
+            IntPtr ptr = data.Scan0;
+            System.Runtime.InteropServices.Marshal.Copy(_displayData, 0, ptr, _displayData.Length);
+
+            _displayBuffer.UnlockBits(data);
+            DisplayBox.Refresh();
+        }
+
+        /// <summary>
+        /// Invoked by the DisplayController to put a word on the emulated screen.
+        /// </summary>
+        /// <param name="scanline"></param>
+        /// <param name="wordOffset"></param>
+        /// <param name="word"></param>
+        public void DrawDisplayWord(int scanline, int wordOffset, ushort word)
+        {
+            // TODO: move magic numbers to constants
+            int address = scanline * 76 + wordOffset * 2;
+
+            if (address > _displayData.Length)
+            {
+                throw new InvalidOperationException("Display word address is out of bounds.");
+            }
+
+            _displayData[address] = (byte)(word >> 8);
+            _displayData[address + 1] = (byte)(word);
         }
 
         private void RefreshUI()
@@ -150,6 +188,15 @@ namespace Contralto
                     ExecutionStateLabel.Text = String.Format("Stopped (error {0})", _lastExceptionText);
                     break;
             }
+
+            // Update the display
+            BitmapData data = _displayBuffer.LockBits(_displayRect, ImageLockMode.WriteOnly, PixelFormat.Format1bppIndexed);
+
+            IntPtr ptr = data.Scan0;
+            System.Runtime.InteropServices.Marshal.Copy(_displayData, 0, ptr, _displayData.Length);
+
+            _displayBuffer.UnlockBits(data);
+
         }
 
         private void InitControls()
@@ -187,7 +234,11 @@ namespace Contralto
             _diskData.Rows.Add("KADR", "0");
             _diskData.Rows.Add("KCOM", "0");
             _diskData.Rows.Add("KSTAT", "0");
-            _diskData.Rows.Add("RECNO", "0");            
+            _diskData.Rows.Add("RECNO", "0");
+
+            _displayBuffer = new Bitmap(608, 808, PixelFormat.Format1bppIndexed);
+
+            DisplayBox.Image = _displayBuffer;
 
         }
 
@@ -375,7 +426,7 @@ namespace Contralto
                 Color.LightSeaGreen,// 8 - memory refresh
                 Color.LightYellow,  // 9 - display word
                 Color.LightPink,    // 10 - cursor
-                Color.LightGoldenrodYellow, // 11 - display horizontal
+                Color.Chartreuse, // 11 - display horizontal
                 Color.LightCoral,   // 12 - display vertical
                 Color.LightSteelBlue, // 13 - parity
                 Color.Gray,         // 14 - disk word
@@ -763,6 +814,16 @@ namespace Contralto
         // Nova Debugger breakpoints; same as above
         private bool[] _novaBreakpointEnabled;
 
+        // Display related data.
+        // At some point this should move elsewhere.
+        // Note: display is actually 606 pixels wide, but that's not an even multiple of 8, so we round up.
+        private byte[] _displayData = new byte[808 * 76];
+        private Bitmap _displayBuffer;
+        private Rectangle _displayRect = new Rectangle(0, 0, 608, 808);
 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            _system.CPU.Hack();
+        }
     }
 }
