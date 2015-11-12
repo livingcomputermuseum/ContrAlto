@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using Contralto.Memory;
 
 namespace Contralto.CPU
 {
@@ -23,15 +22,15 @@ namespace Contralto.CPU
 
             protected override void ExecuteSpecialFunction2(MicroInstruction instruction)
             {
-                DisplayWordF2 ef2 = (DisplayWordF2)instruction.F2;
-                switch (ef2)
+                DisplayWordF2 dw2 = (DisplayWordF2)instruction.F2;
+                switch (dw2)
                 {
                     case DisplayWordF2.LoadDDR:
                         _cpu._system.DisplayController.LoadDDR(_busData);
                         break;
 
                     default:
-                        throw new InvalidOperationException(String.Format("Unhandled display word F2 {0}.", ef2));
+                        throw new InvalidOperationException(String.Format("Unhandled display word F2 {0}.", dw2));
                         break;
                 }
             }

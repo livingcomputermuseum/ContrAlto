@@ -84,6 +84,28 @@ namespace Contralto.Display
             _clocks++;
             _totalClocks++;
 
+            //
+            // "If the DWT has not executed a BLOCK, if DHT is not blocked, and if the
+            //  buffer is not full, DWT wakeups are generated."
+            //
+            if (_dataBuffer.Count < 16 &&
+                !_system.CPU.IsBlocked(TaskType.DisplayHorizontal) &&
+                !_dwtBlocked)
+            {
+                //Console.WriteLine("DWT wakeup, {0}", _dataBuffer.Count);
+                _system.CPU.WakeupTask(TaskType.DisplayWord);
+            }
+            else
+            {
+                // We can't take any words right now, remove Wakeup from
+                // the DWT.
+                if (_dataBuffer.Count >= 16)
+                {
+                    //Log.Write(LogComponent.Display, "buffer full, blocking DWT.");
+                }
+                _system.CPU.BlockTask(TaskType.DisplayWord);
+            }
+
             switch (_state)
             {
                 case DisplayState.VerticalBlank:
@@ -98,44 +120,17 @@ namespace Contralto.Display
 
                         // Wake up DVT, DHT
                         _dwtBlocked = false;
-                        _dhtBlocked = false;
-                        _system.CPU.WakeupTask(TaskType.DisplayVertical);
+                        _dhtBlocked = false;                        
                         _system.CPU.WakeupTask(TaskType.DisplayHorizontal);
-                        _system.CPU.BlockTask(TaskType.DisplayWord);
-
-                        // Run MRT
-                        _system.CPU.WakeupTask(TaskType.MemoryRefresh);
-
-                        // TODO: clear DWT, DHT block flip-flop
-                        _state = DisplayState.VisibleScanline;
+                        _system.CPU.BlockTask(TaskType.DisplayWord);                        
+                        
+                        _state = DisplayState.HorizontalBlank;
 
                         //Console.WriteLine("Frame");
                     }
                     break;
 
-                case DisplayState.VisibleScanline:
-                    //
-                    // "If the DWT has not executed a BLOCK, if DHT is not blocked, and if the
-                    //  buffer is not full, DWT wakeups are generated."
-                    //
-                    if (_dataBuffer.Count < 16 &&                        
-                        !_system.CPU.IsBlocked(TaskType.DisplayHorizontal) &&
-                        !_dwtBlocked)
-                    {
-                        //Console.WriteLine("DWT wakeup, {0}", _dataBuffer.Count);
-                        _system.CPU.WakeupTask(TaskType.DisplayWord);
-                    }
-                    else
-                    {
-                        // We can't take any words right now, remove Wakeup from
-                        // the DWT.
-                        if (_dataBuffer.Count >= 16)
-                        {
-                            //Log.Write(LogComponent.Display, "buffer full, blocking DWT.");
-                        }
-                        _system.CPU.BlockTask(TaskType.DisplayWord);
-                    }
-
+                case DisplayState.VisibleScanline:                   
                     //
                     // A scanline is 38 words wide; we clock in each word
                     // from the buffer (if present).
@@ -151,7 +146,7 @@ namespace Contralto.Display
                             displayWord = _dataBuffer.Dequeue();
                         }
 
-                        _display.DrawDisplayWord(_scanline, _word, displayWord);
+                        //_display.DrawDisplayWord(_scanline, _word, displayWord);
 
                         _word++;
                         if (_word > 37)
@@ -165,7 +160,7 @@ namespace Contralto.Display
                     break;
 
                 case DisplayState.HorizontalBlank:
-                    // Kill time until end of HBlank
+                    // Kill time until end of HBlank                   
                     if (_clocks > _horizontalBlankClocks)
                     {
                         _clocks -= _horizontalBlankClocks;
@@ -180,11 +175,14 @@ namespace Contralto.Display
                             _state = DisplayState.VerticalBlank;
                             _evenField = !_evenField;
 
-                            _system.CPU.BlockTask(TaskType.DisplayVertical);
+                            // Wakeup DVT
+                            _system.CPU.WakeupTask(TaskType.DisplayVertical);
+
+                            // Block DHT
                             _system.CPU.BlockTask(TaskType.DisplayHorizontal);
                             _system.CPU.BlockTask(TaskType.DisplayWord);
 
-                            _display.RefreshAltoDisplay();
+                            //_display.RefreshAltoDisplay();
                             
                             _frames++;
                             //Log.Write(LogComponent.Display, "Display field completed. {0} total clocks elapsed.", _totalClocks);
@@ -192,7 +190,10 @@ namespace Contralto.Display
                         }
                         else
                         {
-                            _state = DisplayState.VisibleScanline;                            
+                            _state = DisplayState.VisibleScanline;
+
+                            // Run MRT
+                            _system.CPU.WakeupTask(TaskType.MemoryRefresh);
                         }
                     }
                     break;
@@ -248,9 +249,9 @@ namespace Contralto.Display
         // Timing constants
         // 38uS per scanline; 4uS for hblank.
         // ~35 scanlines for vblank (1330uS)
-        private const double _wordClocks = (34.0 / 38.0) / 0.17;        // uSec to clocks
-        private const double _horizontalBlankClocks = 4.0 / 0.17;
-        private const double _verticalBlankClocks = 1333.0 / 0.17;
+        private const double _wordClocks = (34.0 / 38.0) / 0.017;        // uSec to clocks
+        private const double _horizontalBlankClocks = 4.0 / 0.017;
+        private const double _verticalBlankClocks = 1333.0 / 0.017;
 
 
     }

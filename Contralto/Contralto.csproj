@@ -66,6 +66,7 @@
     <Compile Include="Debugger.Designer.cs">
       <DependentUpon>Debugger.cs</DependentUpon>
     </Compile>
+    <Compile Include="Display\FakeDisplayController.cs" />
     <Compile Include="Display\DisplayController.cs" />
     <Compile Include="IClockable.cs" />
     <Compile Include="IO\DiskController.cs" />

@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using Contralto.CPU;
 using System.Threading;
 using System.Drawing.Imaging;
+using Contralto.IO;
 
 namespace Contralto
 {
@@ -27,7 +28,8 @@ namespace Contralto
 
             InitializeComponent();
             InitControls();
-            RefreshUI();         
+            InitKeymap();
+            RefreshUI();                     
         }        
 
         public void LoadSourceCode(string path)
@@ -773,6 +775,98 @@ namespace Contralto
         }
 
 
+        // Hacky initial implementation of keyboard input.
+        private void Debugger_KeyDown(object sender, KeyEventArgs e)
+        {
+            e.SuppressKeyPress = true;
+            if (_keyMap.ContainsKey(e.KeyCode))
+            {
+                _system.Keyboard.KeyDown(_keyMap[e.KeyCode]);
+            }
+        }
+
+        private void DisplayBox_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+        {
+                   
+        }
+
+        private void Debugger_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+        {
+            if (_keyMap.ContainsKey(e.KeyCode))
+            {
+                _system.Keyboard.KeyDown(_keyMap[e.KeyCode]);
+            }
+        }
+
+        private void Debugger_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (_keyMap.ContainsKey(e.KeyCode))
+            {
+                _system.Keyboard.KeyUp(_keyMap[e.KeyCode]);
+            }
+
+            e.SuppressKeyPress = true;
+        }
+
+        private void InitKeymap()
+        {
+            _keyMap = new Dictionary<Keys, AltoKey>();
+
+            _keyMap.Add(Keys.A, AltoKey.A);
+            _keyMap.Add(Keys.B, AltoKey.B);
+            _keyMap.Add(Keys.C, AltoKey.C);
+            _keyMap.Add(Keys.D, AltoKey.D);
+            _keyMap.Add(Keys.E, AltoKey.E);
+            _keyMap.Add(Keys.F, AltoKey.F);
+            _keyMap.Add(Keys.G, AltoKey.G);
+            _keyMap.Add(Keys.H, AltoKey.H);
+            _keyMap.Add(Keys.I, AltoKey.I);
+            _keyMap.Add(Keys.J, AltoKey.J);
+            _keyMap.Add(Keys.K, AltoKey.K);
+            _keyMap.Add(Keys.L, AltoKey.L);
+            _keyMap.Add(Keys.M, AltoKey.M);
+            _keyMap.Add(Keys.N, AltoKey.N);
+            _keyMap.Add(Keys.O, AltoKey.O);
+            _keyMap.Add(Keys.P, AltoKey.P);
+            _keyMap.Add(Keys.Q, AltoKey.Q);
+            _keyMap.Add(Keys.R, AltoKey.R);
+            _keyMap.Add(Keys.S, AltoKey.S);
+            _keyMap.Add(Keys.T, AltoKey.T);
+            _keyMap.Add(Keys.U, AltoKey.U);
+            _keyMap.Add(Keys.V, AltoKey.V);
+            _keyMap.Add(Keys.W, AltoKey.W);
+            _keyMap.Add(Keys.X, AltoKey.X);
+            _keyMap.Add(Keys.Y, AltoKey.Y);
+            _keyMap.Add(Keys.Z, AltoKey.Z);
+            _keyMap.Add(Keys.D0, AltoKey.D0);
+            _keyMap.Add(Keys.D1, AltoKey.D1);
+            _keyMap.Add(Keys.D2, AltoKey.D2);
+            _keyMap.Add(Keys.D3, AltoKey.D3);
+            _keyMap.Add(Keys.D4, AltoKey.D4);
+            _keyMap.Add(Keys.D5, AltoKey.D5);
+            _keyMap.Add(Keys.D6, AltoKey.D6);
+            _keyMap.Add(Keys.D7, AltoKey.D7);
+            _keyMap.Add(Keys.D8, AltoKey.D8);
+            _keyMap.Add(Keys.D9, AltoKey.D9);
+            _keyMap.Add(Keys.Space, AltoKey.Space);
+            _keyMap.Add(Keys.OemPeriod, AltoKey.Period);
+            _keyMap.Add(Keys.Oemcomma, AltoKey.Comma);
+            _keyMap.Add(Keys.OemQuotes, AltoKey.Quote);
+            _keyMap.Add(Keys.OemBackslash, AltoKey.BSlash);
+            _keyMap.Add(Keys.OemQuestion, AltoKey.FSlash);
+            _keyMap.Add(Keys.Oemplus, AltoKey.Plus);
+            _keyMap.Add(Keys.OemMinus, AltoKey.Minus);            
+            _keyMap.Add(Keys.Escape, AltoKey.ESC);
+            _keyMap.Add(Keys.Delete, AltoKey.DEL);
+            _keyMap.Add(Keys.Left, AltoKey.Arrow);
+            _keyMap.Add(Keys.LShiftKey, AltoKey.LShift);
+            _keyMap.Add(Keys.RShiftKey, AltoKey.RShift);
+            _keyMap.Add(Keys.ControlKey, AltoKey.CTRL);
+
+
+        }
+
+
         private enum ExecutionType
         {
             None = 0,
@@ -821,9 +915,14 @@ namespace Contralto
         private Bitmap _displayBuffer;
         private Rectangle _displayRect = new Rectangle(0, 0, 608, 808);
 
+        // Keyboard mapping from windows vkeys to Alto keys
+        private Dictionary<Keys, AltoKey> _keyMap;
+
         private void button1_Click(object sender, EventArgs e)
         {
             _system.CPU.Hack();
         }
+
+
     }
 }

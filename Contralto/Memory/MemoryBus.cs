@@ -87,6 +87,13 @@ namespace Contralto.Memory
             return ReadFromBus(address, TaskType.Emulator, false);
         }
 
+        public ushort DebugReadWord(TaskType task, ushort address)
+        {
+            // TODO: allow debug reads from any bank.
+            // probably add special debug calls to IMemoryMappedDevice iface.
+            return ReadFromBus(address, task, false);
+        }
+
         public void Clock()
         {
             _memoryCycle++;
@@ -267,7 +274,7 @@ namespace Contralto.Memory
             else
             {
                 //throw new NotImplementedException(String.Format("Read from unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));
-                Console.WriteLine("Read from unimplemented memory-mapped I/O device at {0}.", Conversion.ToOctal(address));
+                //Console.WriteLine("Read from unimplemented memory-mapped I/O device at {0}.", Conversion.ToOctal(address));
                 return 0;
             }
         }
@@ -289,7 +296,7 @@ namespace Contralto.Memory
             else
             {
                 // throw new NotImplementedException(String.Format("Write to unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));
-                Console.WriteLine("Write to unimplemented memory-mapped I/O device at {0}.", Conversion.ToOctal(address));
+                //Console.WriteLine("Write to unimplemented memory-mapped I/O device at {0}.", Conversion.ToOctal(address));
             }
         }
 

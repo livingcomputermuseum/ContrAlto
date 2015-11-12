@@ -151,6 +151,12 @@ namespace Contralto.CPU
         EVENFIELD = 8,
     }
 
+    enum CursorF2
+    {
+        LoadXPREG = 8,
+        LoadCSR = 9,
+    }
+
     public class MicroInstruction
     {
         public MicroInstruction(UInt32 code)

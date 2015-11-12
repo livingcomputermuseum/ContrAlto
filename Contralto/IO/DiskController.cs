@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Contralto.Memory;
 using System.IO;
 using Contralto.Logging;
+using Contralto.CPU;
 
 namespace Contralto.IO
 {
@@ -36,7 +37,8 @@ namespace Contralto.IO
         public ushort KDATA
         {
             get
-            {                
+            {
+                _debugRead = false;
                 return _kDataRead;
             }
             set
@@ -235,10 +237,7 @@ namespace Contralto.IO
 
                 _sector = (_sector + 1) % 12;                
 
-                _kStat = (ushort)((_kStat & 0x0fff) | (_sector << 12));
-
-                // TODO: seclate semantics.  Looks like if the sector task was BLOCKed when a new sector is signaled
-                // then the seclate flag is set.
+                _kStat = (ushort)((_kStat & 0x0fff) | (_sector << 12));               
 
                 // Reset internal state machine for sector data
                 _sectorWordIndex = 0;
@@ -254,6 +253,12 @@ namespace Contralto.IO
                 {
                     Log.Write(LogType.Verbose, LogComponent.DiskController, "Waking up sector task for C/H/S {0}/{1}/{2}", _cylinder, _head, _sector);
                     _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
+
+                    // Reset SECLATE
+                    _seclateClocks = 0;
+                    _seclate = false;
+                    _seclateEnable = true;
+                    _kStat &= 0xffef;
                 }
             }
 
@@ -293,12 +298,35 @@ namespace Contralto.IO
             //
             SpinDisk();
 
+            // Deal with SECLATE semantics:  If the Disk Sector task wakes up and runs before
+            // we hit the trigger time, then _seclate remains false.
+            // Otherwise, when the trigger time is hit _seclate is raised until
+            // the beginning of the next sector.
+            if (_system.CPU.CurrentTask.Priority == (int)TaskType.DiskSector)
+            {
+                // Sector task is running; clear enable for seclate signal
+                _seclateEnable = false;
+            }
+
+            if (_seclateEnable)
+            {
+                _seclateClocks++;
+
+                if (_seclateClocks > _seclateDuration)
+                {
+                    _seclate = true;
+                    _kStat |= 0x0010;       // TODO: move to constant field!
+                    //Log.Write(LogComponent.DiskSectorTask, "SECLATE for sector {0} at sector time {1}", _sector, _elapsedSectorTime);
+                    _seclateEnable = false;
+                }
+            }
+
             //
             // Update the WDINIT signal; this is based on WDALLOW (!_wdInhib) which sets WDINIT (this is done
             // in KCOM way above).
             // WDINIT is reset when BLOCK (a BLOCK F1 is being executed) and WDTSKACT (the disk word task is running) are 1.
             //            
-            if (_system.CPU.CurrentTask.Priority == (int)CPU.TaskType.DiskWord &&
+            if (_system.CPU.CurrentTask.Priority == (int)TaskType.DiskWord &&
                 _system.CPU.CurrentTask.BLOCK)
             {
                 _wdInit = false;
@@ -433,22 +461,28 @@ namespace Contralto.IO
                 // If the word task is enabled AND the write ("crystal") clock is enabled
                 // then we will wake up the word task now.
                 // 
-                if (!_wdInhib && !_bClkSource)
+                if (!_seclate && !_wdInhib && !_bClkSource)
                 {                    
                     bWakeup = true;                    
-                }                
+                }
 
                 //
                 // If the clock is enabled OR the WFFO bit is set (go ahead and run the bit clock)
-                // then we will wake up the word task and read in the data if transfers are not
-                // inhibited.  TODO: this should only happen on reads.
+                // and we weren't late reading this sector,  then we will wake up the word task 
+                // and read in the data if transfers are not inhibited.  TODO: this should only happen on reads.
                 //
-                if (_wffo || _diskBitCounterEnable)
+                if (!_seclate && (_wffo || _diskBitCounterEnable))
                 {
                     if (!_xferOff)
                     {
+                        if (_debugRead)
+                        {
+                            Console.WriteLine("--- missed word {0}({1}) ---", _sectorWordIndex, _kDataRead);
+                        }
+
                         Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Sector {0} Word {1} read into KDATA", _sector, Conversion.ToOctal(diskWord));  
                         _kDataRead = diskWord;
+                        _debugRead = _sectorData[_sectorWordIndex].Type == CellType.Data;
                     }
 
                     if (!_wdInhib)
@@ -471,12 +505,12 @@ namespace Contralto.IO
                 if (bWakeup)
                 {
                     Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Word task awoken for word {0}.", _sectorWordIndex);
-                    _system.CPU.WakeupTask(CPU.TaskType.DiskWord);
+                    _system.CPU.WakeupTask(TaskType.DiskWord);
                 }
 
                 // Last, move to the next word.
                 _sectorWordIndex++;
-            }
+            }            
         }
 
         private void LoadSector()
@@ -486,29 +520,7 @@ namespace Contralto.IO
             // Note that this data is packed in in REVERSE ORDER because that's
             // how it gets written out and it's how the Alto expects it to be read back in.
             //
-            DiabloDiskSector sector = _pack.GetSector(_cylinder, _head, _sector);
-
-            // debugging
-            /*
-            if (_cylinder >= 32)
-            {
-                Console.WriteLine("loading in C/H/S {0}/{1}/{2}", _cylinder, _head, _sector);
-                for(int i=0;i<sector.Header.Length;i++)
-                {
-                    Console.WriteLine("Header {0}, memory {1} (alt {2})",
-                        Conversion.ToOctal(sector.Header[i]),
-                        Conversion.ToOctal(_system.MemoryBus.DebugReadWord((ushort)(0x30 + i))),
-                        Conversion.ToOctal(_system.MemoryBus.DebugReadWord((ushort)(0x1e + i))));
-                }
-
-                for (int i = 0; i < sector.Label.Length; i++)
-                {
-                    Console.WriteLine("Label {0}, memory {1} (alt {2})",
-                        Conversion.ToOctal(sector.Label[i]),
-                        Conversion.ToOctal(_system.MemoryBus.DebugReadWord((ushort)(0x32 + i))),
-                        Conversion.ToOctal(_system.MemoryBus.DebugReadWord((ushort)(0x20 + i))));
-                }
-            } */
+            DiabloDiskSector sector = _pack.GetSector(_cylinder, _head, _sector);            
 
             // Header (2 words data, 1 word cksum)
             for (int i = _headerOffset + 1, j = 1; i < _headerOffset + 3; i++, j--)
@@ -639,8 +651,7 @@ namespace Contralto.IO
         // Sector timing.  Based on table on pg. 43 of the Alto Hardware Manual
         private double _elapsedSectorTime;     // elapsed time in this sector (in clocks)
         private const double _sectorDuration = (40.0 / 12.0); // time in msec for one sector
-        private const double _sectorClocks = _sectorDuration / (0.00017);     // number of clock cycles per sector time.
-
+        private const double _sectorClocks = _sectorDuration / (0.00017);     // number of clock cycles per sector time.       
        
         private int _sectorWordIndex;
         private double _sectorWordTime;
@@ -662,6 +673,13 @@ namespace Contralto.IO
         private const int _headerOffset = 22;
         private const int _labelOffset = _headerOffset + 14;
         private const int _dataOffset = _labelOffset + 20;
+
+        // SECLATE data.
+        // 8.5uS for seclate delay (approx. 50 clocks)
+        private const double _seclateDuration = 0.0086 / 0.00017;
+        private bool _seclateEnable;
+        private bool _seclate;
+        private double _seclateClocks;
 
         // The data for the current sector
         private enum CellType
@@ -701,5 +719,7 @@ namespace Contralto.IO
         DiabloPack _pack;
 
         private AltoSystem _system;
+
+        private bool _debugRead;
     }
 }

@@ -4,8 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using Contralto.Memory;
-
 namespace Contralto.CPU
 {
     public partial class AltoCPU
@@ -23,8 +21,8 @@ namespace Contralto.CPU
             
             protected override void ExecuteSpecialFunction2(MicroInstruction instruction)
             {
-                DisplayHorizontalF2 ef2 = (DisplayHorizontalF2)instruction.F2;
-                switch (ef2)
+                DisplayHorizontalF2 dh2 = (DisplayHorizontalF2)instruction.F2;
+                switch (dh2)
                 {
                     case DisplayHorizontalF2.EVENFIELD:
                         _nextModifier |= (ushort)(_cpu._system.DisplayController.EVENFIELD ? 1 : 0);
@@ -35,7 +33,7 @@ namespace Contralto.CPU
                         break;
 
                     default:
-                        throw new InvalidOperationException(String.Format("Unhandled display word F2 {0}.", ef2));
+                        throw new InvalidOperationException(String.Format("Unhandled display word F2 {0}.", dh2));
                         break;
                 }
             }

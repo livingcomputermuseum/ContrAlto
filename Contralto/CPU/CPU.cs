@@ -33,8 +33,8 @@ namespace Contralto.CPU
             _tasks[(int)TaskType.DiskWord] = new DiskTask(this, false);
             //_tasks[(int)TaskType.DisplayWord] = new DisplayWordTask(this);
             //_tasks[(int)TaskType.DisplayHorizontal] = new DisplayHorizontalTask(this);
-            //_tasks[(int)TaskType.DisplayVertical] = new DisplayVerticalTask(this);
-            //_tasks[(int)TaskType.Cursor] = new CursorTask(this);
+            _tasks[(int)TaskType.DisplayVertical] = new DisplayVerticalTask(this);
+            _tasks[(int)TaskType.Cursor] = new CursorTask(this);
             _tasks[(int)TaskType.MemoryRefresh] = new MemoryRefreshTask(this);
 
             Reset();
@@ -43,14 +43,14 @@ namespace Contralto.CPU
         public void Hack()
         {
             _tasks[(int)TaskType.DisplayWord] = new DisplayWordTask(this);
-            _tasks[(int)TaskType.DisplayHorizontal] = new DisplayHorizontalTask(this);
-            _tasks[(int)TaskType.DisplayVertical] = new DisplayVerticalTask(this);
-            _tasks[(int)TaskType.Cursor] = new CursorTask(this);
+            //_tasks[(int)TaskType.DisplayHorizontal] = new DisplayHorizontalTask(this);
+            //_tasks[(int)TaskType.DisplayVertical] = new DisplayVerticalTask(this);
+            //_tasks[(int)TaskType.Cursor] = new CursorTask(this);
 
             _tasks[(int)TaskType.DisplayWord].Reset();
-            _tasks[(int)TaskType.DisplayHorizontal].Reset();
-            _tasks[(int)TaskType.DisplayVertical].Reset();
-            _tasks[(int)TaskType.Cursor].Reset();            
+            //_tasks[(int)TaskType.DisplayHorizontal].Reset();
+            //_tasks[(int)TaskType.DisplayVertical].Reset();
+            //_tasks[(int)TaskType.Cursor].Reset();            
         }
 
         public Task[] Tasks
