@@ -185,7 +185,7 @@ namespace Contralto.Memory
 
                     case 5:
                         // Single word read
-                        Log.Write(LogType.Verbose, LogComponent.Memory, "Single-word read of {0} from {1} (cycle 5)", Conversion.ToOctal(_memoryData), Conversion.ToOctal(_memoryAddress ^ 1));
+                        //Log.Write(LogType.Verbose, LogComponent.Memory, "Single-word read of {0} from {1} (cycle 5)", Conversion.ToOctal(_memoryData), Conversion.ToOctal(_memoryAddress ^ 1));
                         return _memoryData;                        
 
                     // ***
@@ -205,12 +205,13 @@ namespace Contralto.Memory
                 // If this is memory cycle 6 we will return the last half of the doubleword to complete a double-word read.
                 if (_memoryCycle == 6)
                 {
-                    Log.Write(LogType.Verbose, LogComponent.Memory, "Double-word read of {0} from {1} (cycle 6)", Conversion.ToOctal(_memoryData2), Conversion.ToOctal(_memoryAddress ^ 1));
+                    
+                    //Log.Write(LogType.Verbose, LogComponent.Memory, "Double-word read of {0} from {1} (cycle 6)", Conversion.ToOctal(_memoryData2), Conversion.ToOctal(_memoryAddress ^ 1));                    
                     return _memoryData2;
                 }
                 else
-                {
-                    Log.Write(LogType.Verbose, LogComponent.Memory, "Single-word read of {0} from {1} (post cycle 6)", Conversion.ToOctal(_memoryData), Conversion.ToOctal(_memoryAddress));
+                {                    
+                    //Log.Write(LogType.Verbose, LogComponent.Memory, "Single-word read of {0} from {1} (post cycle 6)", Conversion.ToOctal(_memoryData), Conversion.ToOctal(_memoryAddress));
                     return _memoryData;
                 }
             }
@@ -234,23 +235,26 @@ namespace Contralto.Memory
                         WriteToBus(_memoryAddress, data, _task, _extendedMemoryReference);
                         _doubleWordStore = true;
 
+                        /*
                         Log.Write(
                             LogType.Verbose,
                             LogComponent.Memory,
                             "Single-word store of {0} to {1} (cycle 3)",
                             Conversion.ToOctal(data),
-                            Conversion.ToOctal(_memoryAddress));
+                            Conversion.ToOctal(_memoryAddress)); */
                         break;
 
                     case 4:
                         _memoryData = data; // Only really necessary to show in debugger
+
+                        /*
                         Log.Write(
                             LogType.Verbose,
                             LogComponent.Memory, 
                             _doubleWordStore ? "Double-word store of {0} to {1} (cycle 4)" : "Single-word store of {0} to {1} (cycle 4)", 
                             Conversion.ToOctal(data),
                             _doubleWordStore ? Conversion.ToOctal(_memoryAddress ^ 1) : Conversion.ToOctal(_memoryAddress));
-
+                            */
                         WriteToBus(_doubleWordStore ? (ushort)(_memoryAddress ^ 1) : _memoryAddress, data, _task, _extendedMemoryReference);
                         break;
                 }       

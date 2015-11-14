@@ -477,7 +477,7 @@ namespace Contralto.IO
                     {
                         if (_debugRead)
                         {
-                            Console.WriteLine("--- missed word {0}({1}) ---", _sectorWordIndex, _kDataRead);
+                            //Console.WriteLine("--- missed word {0}({1}) ---", _sectorWordIndex, _kDataRead);
                         }
 
                         Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Sector {0} Word {1} read into KDATA", _sector, Conversion.ToOctal(diskWord));  

@@ -11,7 +11,7 @@ namespace Contralto.CPU
         /// <summary>
         /// DisplayVerticalTask provides functionality for the DVT task
         /// </summary>
-        private class DisplayVerticalTask : Task
+        private sealed class DisplayVerticalTask : Task
         {
             public DisplayVerticalTask(AltoCPU cpu) : base(cpu)
             {

@@ -16,7 +16,7 @@ namespace Contralto.CPU
         /// (for both Disk Sector and Disk Word tasks, since the special functions are
         /// identical between the two)
         /// </summary>
-        private class DiskTask : Task
+        private sealed class DiskTask : Task
         {
             public DiskTask(AltoCPU cpu, bool diskSectorTask) : base(cpu)
             {

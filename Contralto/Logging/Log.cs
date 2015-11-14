@@ -21,6 +21,7 @@ namespace Contralto.Logging
         Memory = 0x20,
         Keyboard = 0x40,
         Display = 0x80,
+        Microcode = 0x100,
 
         All = 0x7fffffff
     }

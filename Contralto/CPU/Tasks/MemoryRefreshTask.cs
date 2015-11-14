@@ -13,7 +13,7 @@ namespace Contralto.CPU
         /// <summary>
         /// DisplayWordTask provides functionality for the Memory Refresh task
         /// </summary>
-        private class MemoryRefreshTask : Task
+        private sealed class MemoryRefreshTask : Task
         {
             public MemoryRefreshTask(AltoCPU cpu) : base(cpu)
             {

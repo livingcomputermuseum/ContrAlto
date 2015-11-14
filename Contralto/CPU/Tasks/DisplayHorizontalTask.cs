@@ -11,7 +11,7 @@ namespace Contralto.CPU
         /// <summary>
         /// DisplayWordTask provides functionality for the DHT task
         /// </summary>
-        private class DisplayHorizontalTask : Task
+        private sealed class DisplayHorizontalTask : Task
         {
             public DisplayHorizontalTask(AltoCPU cpu) : base(cpu)
             {

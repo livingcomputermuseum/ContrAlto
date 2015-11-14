@@ -13,7 +13,7 @@ namespace Contralto.CPU
         /// <summary>
         /// EmulatorTask provides emulator (NOVA instruction set) specific operations.
         /// </summary>
-        private class EmulatorTask : Task
+        private sealed class EmulatorTask : Task
         {
             public EmulatorTask(AltoCPU cpu) : base(cpu)
             {
@@ -81,8 +81,16 @@ namespace Contralto.CPU
                         //throw new NotImplementedException();
                         break;
 
-                    case EmulatorF1.SWMODE:
-                        throw new NotImplementedException();
+                    case EmulatorF1.SWMODE:                        
+                        _swMode = true;
+                        break;
+
+                    case EmulatorF1.RDRAM:
+                        _rdRam = true;
+                        break;
+
+                    case EmulatorF1.WRTRAM:
+                        _wrtRam = true;
                         break;
 
                     default:

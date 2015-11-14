@@ -56,6 +56,7 @@ namespace Contralto.CPU
                 // "...each task start[s] at the location which is its task number"
                 // 
                 _mpc = (ushort)_taskType;
+                _rdRam = false;
             }
 
             public virtual void BlockTask()
@@ -71,7 +72,7 @@ namespace Contralto.CPU
             public bool ExecuteNext()
             {
                 // TODO: cache microinstructions (or pre-decode them) to save consing all these up every time.
-                MicroInstruction instruction = UCodeMemory.DecodeCache[_mpc];
+                MicroInstruction instruction = UCodeMemory.GetInstruction(_mpc);
 
                 // Grab BLOCK bit so that other tasks / hardware can look at it
                 _block = instruction.F1 == SpecialFunction1.Block;
@@ -90,7 +91,8 @@ namespace Contralto.CPU
             /// <returns>True if a task switch has been requested by a TASK instruction, false otherwise.</returns>
             protected virtual bool ExecuteInstruction(MicroInstruction instruction)
             {
-                bool nextTask = false;                
+                bool nextTask = false;
+                bool swMode = false;            
                 ushort aluData = 0;
                 ushort nextModifier = 0;
                 _loadR = false;
@@ -226,8 +228,37 @@ namespace Contralto.CPU
                     _busData &= ControlROM.ConstantROM[(instruction.RSELECT << 3) | ((uint)instruction.BS)];
                 }
 
+                //
+                // If there was a RDRAM operation last cycle, we AND in the uCode RAM data here.
+                //
+                if (_rdRam)
+                {
+                    _busData &= UCodeMemory.ReadRAM();
+                    _rdRam = false;
+                }                
+
                 // Do ALU operation
                 aluData = ALU.Execute(instruction.ALUF, _busData, _cpu._t, _skip);
+
+                //
+                // If there was a WRTRAM operation last cycle, we write the uCode RAM here
+                // using the results of this instruction's ALU operation.
+                //
+                if (_wrtRam)
+                {
+                    UCodeMemory.WriteRAM(aluData, _cpu._m);
+                    _wrtRam = false;
+                }
+
+                //
+                // If there was an SWMODE operation last cycle, we set the flag to ensure it
+                // takes effect at the end of this cycle.
+                //
+                if (_swMode)
+                {
+                    _swMode = false;
+                    swMode = true;
+                }
 
                 // Reset shifter op
                 Shifter.SetOperation(ShifterOp.None, 0);
@@ -385,6 +416,14 @@ namespace Contralto.CPU
                     }
 
                     _cpu._t = loadTFromALU ? aluData : _busData;
+
+                    //
+                    // Control RAM: "...the control RAM address is specified by the control RAM
+                    // address register... which is loaded from the ALU output whenver T is loaded
+                    // from its source."
+                    //
+                    UCodeMemory.LoadControlRAMAddress(aluData);
+                    
                 }
 
                 // Load L (and M) from ALU outputs.
@@ -399,13 +438,24 @@ namespace Contralto.CPU
 
                 //
                 // Execute special functions that happen late in the cycle
-                //
+                //                
                 ExecuteSpecialFunction2Late(instruction);
+
+                //
+                // Switch banks if the last instruction had an SWMODE F1;
+                // this depends on the value of the NEXT field in this instruction
+                //
+                if (swMode)
+                {
+                    Console.WriteLine("SWMODE NEXT {0} Modifier {1}", Conversion.ToOctal(instruction.NEXT), Conversion.ToOctal(nextModifier));
+                    UCodeMemory.SwitchMode((ushort)(instruction.NEXT | nextModifier));
+                }
 
                 //
                 // Select next address, using the address modifier from the last instruction.
                 //
                 _mpc = (ushort)(instruction.NEXT | nextModifier);
+
                 return nextTask;
             }
 
@@ -450,6 +500,9 @@ namespace Contralto.CPU
             protected uint _rSelect;        // RSELECT field from current instruction, potentially modified by task
             protected bool _loadS;          // Whether to load S from M at and of cycle
             protected bool _loadR;          // Whether to load R from shifter at end of cycle.
+            protected bool _rdRam;          // Whether to load uCode RAM onto the bus during the next cycle.
+            protected bool _wrtRam;         // Whether to write uCode RAM from M and ALU outputs during the next cycle.
+            protected bool _swMode;         // Whether to switch uCode banks during the next cycle.
 
 
             //

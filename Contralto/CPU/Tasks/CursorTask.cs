@@ -11,7 +11,7 @@ namespace Contralto.CPU
         /// <summary>
         /// DisplayWordTask provides functionality for the DWT task
         /// </summary>
-        private class CursorTask : Task
+        private sealed class CursorTask : Task
         {
             public CursorTask(AltoCPU cpu) : base(cpu)
             {

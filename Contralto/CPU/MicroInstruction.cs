@@ -171,6 +171,19 @@ namespace Contralto.CPU
             NEXT =    (ushort)(code & 0x3ff);
         }
 
+        public override string ToString()
+        {
+            return String.Format("RSELECT={0} ALUF={1} BS={2} F1={3} F2={4} LoadT={5} LoadL={6} NEXT={7}",
+                Conversion.ToOctal((int)RSELECT),
+                ALUF,
+                BS,
+                F1,
+                F2,
+                LoadT,
+                LoadL,
+                Conversion.ToOctal(NEXT));
+        }
+
         public UInt32 RSELECT;
         public AluFunction ALUF;
         public BusSource BS;

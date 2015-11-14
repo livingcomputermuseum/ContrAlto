@@ -47,21 +47,21 @@ namespace Contralto
 
                 SourceLine src = new SourceLine(line);
 
-                int i = _sourceViewer.Rows.Add(
+                int i = _rom0SourceViewer.Rows.Add(
                     false,  // breakpoint
                     GetTextForTask(src.Task),
                     src.Address,
                     src.Text);
 
                 // Give the row a color based on the task
-                _sourceViewer.Rows[i].DefaultCellStyle.BackColor = GetColorForTask(src.Task);              
+                _rom0SourceViewer.Rows[i].DefaultCellStyle.BackColor = GetColorForTask(src.Task);              
 
                 // Tag the row based on the PROM address (if any) to make it easy to find.
                 if (!String.IsNullOrEmpty(src.Address))
                 {
-                    _sourceViewer.Rows[i].Tag = Convert.ToUInt16(src.Address, 8);
+                    _rom0SourceViewer.Rows[i].Tag = Convert.ToUInt16(src.Address, 8);
                 }
-            }
+            }            
 
             // Ensure the UI view gets refreshed to display the current MPC source
             Refresh();    
@@ -114,20 +114,20 @@ namespace Contralto
         private void RefreshUI()
         {
             // Registers
-            for(int i=0;i<32;i++)
+            for (int i = 0; i < 32; i++)
             {
-                _registerData.Rows[i].Cells[0].Value = Conversion.ToOctal(i,2);
+                _registerData.Rows[i].Cells[0].Value = Conversion.ToOctal(i, 2);
                 _registerData.Rows[i].Cells[1].Value = Conversion.ToOctal(_system.CPU.R[i], 6);
                 _registerData.Rows[i].Cells[2].Value = Conversion.ToOctal(_system.CPU.S[0][i], 6);
             }
 
             // Tasks
-            for (int i=0;i<16;i++)
+            for (int i = 0; i < 16; i++)
             {
                 _taskData.Rows[i].Cells[0].Value = GetTextForTask((TaskType)i);
                 _taskData.Rows[i].Cells[1].Value = GetTextForTaskState(_system.CPU.Tasks[i]);
                 _taskData.Rows[i].Cells[2].Value =
-                    _system.CPU.Tasks[i] != null ? Conversion.ToOctal(_system.CPU.Tasks[i].MPC, 4) : String.Empty;                
+                    _system.CPU.Tasks[i] != null ? Conversion.ToOctal(_system.CPU.Tasks[i].MPC, 4) : String.Empty;
             }
 
             // Other registers            
@@ -152,19 +152,35 @@ namespace Contralto
             _diskData.Rows[6].Cells[1].Value = Conversion.ToOctal(_system.DiskController.KADR, 6);
             _diskData.Rows[7].Cells[1].Value = Conversion.ToOctal(_system.DiskController.KCOM, 6);
             _diskData.Rows[8].Cells[1].Value = Conversion.ToOctal(_system.DiskController.KSTAT, 6);
-            _diskData.Rows[9].Cells[1].Value = _system.DiskController.RECNO.ToString();           
+            _diskData.Rows[9].Cells[1].Value = _system.DiskController.RECNO.ToString();
 
-            // Find the right source line.
-            HighlightMicrocodeSourceLine(_system.CPU.CurrentTask.MPC);
+            //
+            // Select active tab based on current UCode bank
+            switch (UCodeMemory.Bank)
+            {
+                case MicrocodeBank.ROM0:
+                    SourceTabs.TabIndex = 0;
+                    break;
+
+                case MicrocodeBank.ROM1:
+                    SourceTabs.TabIndex = 1;
+                    break;
+
+                case MicrocodeBank.RAM0:
+                    SourceTabs.TabIndex = 2;
+                    break;
+            }            
+
+            RefreshMicrocodeDisassembly();
 
             // Highlight the nova memory location corresponding to the emulator PC.
             // TODO: this should be configurable
             ushort pc = _system.CPU.R[6];
 
-            HighlightNovaSourceLine(pc);                
+            HighlightNovaSourceLine(pc);
 
             // Exec state
-            switch(_execState)
+            switch (_execState)
             {
                 case ExecutionState.Stopped:
                     ExecutionStateLabel.Text = "Stopped";
@@ -199,6 +215,30 @@ namespace Contralto
 
             _displayBuffer.UnlockBits(data);
 
+        }
+
+        private void RefreshMicrocodeDisassembly()
+        {
+            // Update non-ROM code listings, depending on the currently active tab
+            switch (SourceTabs.SelectedIndex)
+            {
+                case 0:
+                    // Find the right source line and highlight it.
+                    HighlightMicrocodeSourceLine(_rom0SourceViewer, _system.CPU.CurrentTask.MPC);
+                    break;
+
+                case 1:
+                    SourceTabs.TabIndex = 1;
+                    RefreshMicrocodeDisassembly(MicrocodeBank.ROM1);
+                    HighlightMicrocodeSourceLine(_rom1SourceViewer, _system.CPU.CurrentTask.MPC);
+                    break;
+
+                case 2:
+                    SourceTabs.TabIndex = 2;
+                    RefreshMicrocodeDisassembly(MicrocodeBank.RAM0);
+                    HighlightMicrocodeSourceLine(_ram0SourceViewer, _system.CPU.CurrentTask.MPC);
+                    break;
+            }
         }
 
         private void InitControls()
@@ -241,8 +281,8 @@ namespace Contralto
             _displayBuffer = new Bitmap(608, 808, PixelFormat.Format1bppIndexed);
 
             DisplayBox.Image = _displayBuffer;
-
         }
+        
 
         /// <summary>
         /// Handle breakpoint placement on column 0.
@@ -256,12 +296,12 @@ namespace Contralto
             {
                 // See if this is a source line, if so check/uncheck the box
                 // and set/unset a breakpoint for the line
-                if (_sourceViewer.Rows[e.RowIndex].Tag != null)
+                if (_rom0SourceViewer.Rows[e.RowIndex].Tag != null)
                 {
-                    bool value = (bool)_sourceViewer.Rows[e.RowIndex].Cells[0].Value;
-                    _sourceViewer.Rows[e.RowIndex].Cells[0].Value = !value;
+                    bool value = (bool)_rom0SourceViewer.Rows[e.RowIndex].Cells[0].Value;
+                    _rom0SourceViewer.Rows[e.RowIndex].Cells[0].Value = !value;
 
-                    ModifyMicrocodeBreakpoint((UInt16)_sourceViewer.Rows[e.RowIndex].Tag, !value);
+                    ModifyMicrocodeBreakpoint((UInt16)_rom0SourceViewer.Rows[e.RowIndex].Tag, !value);
                 }
 
             }
@@ -280,17 +320,63 @@ namespace Contralto
             }
         }
 
-
-        private void HighlightMicrocodeSourceLine(UInt16 address)
+        private void RefreshMicrocodeDisassembly(MicrocodeBank bank)
         {
-            foreach (DataGridViewRow row in _sourceViewer.Rows)
+            DataGridView view = null;
+            uint[] uCode = null;
+            switch (bank)
+            {
+                case MicrocodeBank.ROM1:
+                    view = _rom1SourceViewer;
+                    uCode = UCodeMemory.UCodeROM;
+                    break;
+
+                case MicrocodeBank.RAM0:
+                    view = _ram0SourceViewer;
+                    uCode = UCodeMemory.UCodeRAM;
+                    break;
+            }
+
+            bool bFirstTime = view.Rows.Count == 0;                       
+
+            
+            for(int i=0;i<1024;i++)
+            {
+                int address = (bank == MicrocodeBank.RAM0) ? i : 1024 + i;
+                MicroInstruction instruction = new MicroInstruction(uCode[address]);
+
+                if (bFirstTime)
+                {
+                    // Create new row
+                    int index = view.Rows.Add(
+                       false,  // breakpoint
+                       Conversion.ToOctal(address, 4),
+                       Conversion.ToOctal((int)uCode[address], 11),
+                       UCodeDisassembler.DisassembleInstruction(instruction, TaskType.Emulator));
+
+                    view.Rows[index].Tag = (ushort)i;
+                }
+                else
+                {
+                    // Update existing row
+                    view.Rows[i].Cells[1].Value = Conversion.ToOctal(address, 4);
+                    view.Rows[i].Cells[2].Value = Conversion.ToOctal((int)uCode[address], 11);
+                    view.Rows[i].Cells[3].Value = UCodeDisassembler.DisassembleInstruction(instruction, TaskType.Emulator);
+                }                
+            }
+        }
+
+
+        private void HighlightMicrocodeSourceLine(DataGridView view, UInt16 address)
+        {            
+            foreach (DataGridViewRow row in view.Rows)
             {
                 if (row.Tag != null &&
                     (ushort)(row.Tag) == address)
                 {
-                    _sourceViewer.ClearSelection();
+                    view.ClearSelection();
                     row.Selected = true;
-                    _sourceViewer.CurrentCell = row.Cells[0];
+                    view.CurrentCell = row.Cells[0];
                     break;
                 }
             }
@@ -554,6 +640,11 @@ namespace Contralto
 
         }
 
+        private void OnTabChanged(object sender, EventArgs e)
+        {
+            RefreshMicrocodeDisassembly();
+        }
+
         private void Debugger_Load(object sender, EventArgs e)
         {
 
@@ -569,7 +660,7 @@ namespace Contralto
                     UInt16 address = Convert.ToUInt16(JumpToAddress.Text, 8);
 
                     // find the source address that matches this, if any.
-                    HighlightMicrocodeSourceLine(address);
+                    HighlightMicrocodeSourceLine(_rom0SourceViewer, address);
                 }
                 catch
                 {
@@ -778,10 +869,21 @@ namespace Contralto
         // Hacky initial implementation of keyboard input.
         private void Debugger_KeyDown(object sender, KeyEventArgs e)
         {
-            e.SuppressKeyPress = true;
+            //e.Handled = true;
+            //e.SuppressKeyPress = true;
             if (_keyMap.ContainsKey(e.KeyCode))
             {
                 _system.Keyboard.KeyDown(_keyMap[e.KeyCode]);
+            }
+
+            if (e.Control)
+            {
+                _system.Keyboard.KeyDown(_keyMap[Keys.ControlKey]);
+            }
+
+            if (e.Shift)
+            {
+                _system.Keyboard.KeyDown(_keyMap[Keys.LShiftKey]);
             }
         }
 
@@ -792,10 +894,11 @@ namespace Contralto
 
         private void Debugger_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
         {
+            /*
             if (_keyMap.ContainsKey(e.KeyCode))
             {
                 _system.Keyboard.KeyDown(_keyMap[e.KeyCode]);
-            }
+            } */
         }
 
         private void Debugger_KeyUp(object sender, KeyEventArgs e)
@@ -805,7 +908,18 @@ namespace Contralto
                 _system.Keyboard.KeyUp(_keyMap[e.KeyCode]);
             }
 
-            e.SuppressKeyPress = true;
+           // e.Handled = true;
+           // e.SuppressKeyPress = true;
+
+            if (e.Control)
+            {
+                _system.Keyboard.KeyUp(_keyMap[Keys.ControlKey]);
+            }
+
+            if (e.Shift)
+            {
+                _system.Keyboard.KeyUp(_keyMap[Keys.LShiftKey]);
+            }
         }
 
         private void InitKeymap()
@@ -862,6 +976,7 @@ namespace Contralto
             _keyMap.Add(Keys.LShiftKey, AltoKey.LShift);
             _keyMap.Add(Keys.RShiftKey, AltoKey.RShift);
             _keyMap.Add(Keys.ControlKey, AltoKey.CTRL);
+            _keyMap.Add(Keys.Return, AltoKey.Return);
 
 
         }
@@ -922,7 +1037,6 @@ namespace Contralto
         {
             _system.CPU.Hack();
         }
-
-
+        
     }
 }
