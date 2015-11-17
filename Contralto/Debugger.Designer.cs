@@ -110,7 +110,6 @@
             this.NovaStep = new System.Windows.Forms.Button();
             this.groupBox6 = new System.Windows.Forms.GroupBox();
             this.DisplayBox = new System.Windows.Forms.PictureBox();
-            this.button1 = new System.Windows.Forms.Button();
             this.Microcode.SuspendLayout();
             this.SourceTabs.SuspendLayout();
             this.Rom0Page.SuspendLayout();
@@ -960,23 +959,11 @@
             this.DisplayBox.TabStop = false;
             this.DisplayBox.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.DisplayBox_PreviewKeyDown);
             // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(799, 873);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 1;
-            this.button1.TabStop = false;
-            this.button1.Text = "HACK";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
             // Debugger
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1376, 997);
-            this.Controls.Add(this.button1);
             this.Controls.Add(this.groupBox6);
             this.Controls.Add(this.NovaStep);
             this.Controls.Add(this.RunToNextTaskButton);
@@ -1071,7 +1058,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Disassembly;
         private System.Windows.Forms.GroupBox groupBox6;
         private System.Windows.Forms.PictureBox DisplayBox;
-        private System.Windows.Forms.Button button1;
         private System.Windows.Forms.TabControl SourceTabs;
         private System.Windows.Forms.TabPage Rom0Page;
         private System.Windows.Forms.TabPage Rom1Page;

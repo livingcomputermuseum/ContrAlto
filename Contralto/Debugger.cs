@@ -89,6 +89,8 @@ namespace Contralto
 
             _displayBuffer.UnlockBits(data);
             DisplayBox.Refresh();
+
+            Array.Clear(_displayData, 0, _displayData.Length);
         }
 
         /// <summary>
@@ -833,7 +835,7 @@ namespace Contralto
 
                     break;
                 }
-
+                
                 if (_execAbort ||                                               // The Stop button was hit
                     _microcodeBreakpointEnabled[_system.CPU.CurrentTask.MPC] || // A microcode breakpoint was hit
                     (execType == ExecutionType.NextTask && 
@@ -855,7 +857,7 @@ namespace Contralto
 
                     _execAbort = false;                    
                     break;
-                }                
+                }
             }
         }
 
@@ -1031,12 +1033,6 @@ namespace Contralto
         private Rectangle _displayRect = new Rectangle(0, 0, 608, 808);
 
         // Keyboard mapping from windows vkeys to Alto keys
-        private Dictionary<Keys, AltoKey> _keyMap;
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            _system.CPU.Hack();
-        }
-        
+        private Dictionary<Keys, AltoKey> _keyMap;        
     }
 }

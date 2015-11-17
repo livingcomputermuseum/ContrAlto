@@ -25,7 +25,7 @@ namespace Contralto
             _keyboard = new Keyboard();
             _diskController = new DiskController(this);
             _displayController = new DisplayController(this);
-            _fakeDisplayController = new FakeDisplayController(this);
+            //_fakeDisplayController = new FakeDisplayController(this);
 
             // Attach memory-mapped devices to the bus
             _memBus.AddDevice(_mem);
@@ -36,7 +36,7 @@ namespace Contralto
             _clockableDevices.Add(_memBus);
             _clockableDevices.Add(_diskController);
             _clockableDevices.Add(_displayController);
-            _clockableDevices.Add(_fakeDisplayController);
+            //_clockableDevices.Add(_fakeDisplayController);
             _clockableDevices.Add(_cpu);            
 
             Reset();
@@ -62,13 +62,14 @@ namespace Contralto
         public void AttachDisplay(Debugger d)
         {
             _displayController.AttachDisplay(d);
-            _fakeDisplayController.AttachDisplay(d);
+           // _fakeDisplayController.AttachDisplay(d);
         }
 
         public void SingleStep()
         {
             // Run every device that needs attention for a single clock cycle.
-            for (int i = 0; i < _clockableDevices.Count; i++)
+            int count = _clockableDevices.Count;
+            for (int i = 0; i < count; i++)
             {
                 _clockableDevices[i].Clock();
             }

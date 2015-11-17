@@ -98,7 +98,7 @@ namespace Contralto.Display
                     _display.DrawDisplayWord(scanline, wordOffset, (ushort)(dcb.whiteOnBlack ? 0x0 : 0xffff));
                 }
 
-                //_display.RefreshAltoDisplay();
+                _display.RefreshAltoDisplay();
 
                 // decrement scan line counter for this DCB, if < 0, grab next DCB.
                 dcb.scanlineCount--;

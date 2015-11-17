@@ -35,8 +35,16 @@ namespace Contralto.Display
             _state = DisplayState.VerticalBlank;
             _scanline = 0;
             _word = 0;
-            _dwtBlocked = false;
+            _dwtBlocked = true;
             _dhtBlocked = false;
+
+            _whiteOnBlack = false;
+            _lowRes = false;
+
+            // Wakeup DVT
+            _system.CPU.WakeupTask(TaskType.DisplayVertical);
+            _system.CPU.BlockTask(TaskType.DisplayHorizontal);
+            _system.CPU.BlockTask(TaskType.DisplayWord);
         }
 
         public void Clock()
@@ -63,13 +71,16 @@ namespace Contralto.Display
             //
             // Check the BLOCK status of the DWT and DHT tasks for the last executed uInstruction.
             // 
-            _dhtBlocked = _system.CPU.CurrentTask.Priority == (int)CPU.TaskType.DisplayHorizontal &&
-                            _system.CPU.CurrentTask.BLOCK;
+
+            if (_system.CPU.CurrentTask.Priority == (int)CPU.TaskType.DisplayHorizontal &&
+                            _system.CPU.CurrentTask.BLOCK)
+            {             
+                _dhtBlocked = true;
+            }            
 
             if (_system.CPU.CurrentTask.Priority == (int)CPU.TaskType.DisplayWord &&
                             _system.CPU.CurrentTask.BLOCK)
-            {
-                //Console.WriteLine("DWT BLOCK");
+            {                
                 _dwtBlocked = true;
 
                 //
@@ -88,23 +99,12 @@ namespace Contralto.Display
             // "If the DWT has not executed a BLOCK, if DHT is not blocked, and if the
             //  buffer is not full, DWT wakeups are generated."
             //
-            if (_dataBuffer.Count < 16 &&
-                !_system.CPU.IsBlocked(TaskType.DisplayHorizontal) &&
+            if (_dataBuffer.Count < 16 &&                
+                !_dhtBlocked &&
                 !_dwtBlocked)
-            {
-                //Console.WriteLine("DWT wakeup, {0}", _dataBuffer.Count);
+            {                
                 _system.CPU.WakeupTask(TaskType.DisplayWord);
-            }
-            else
-            {
-                // We can't take any words right now, remove Wakeup from
-                // the DWT.
-                if (_dataBuffer.Count >= 16)
-                {
-                    //Log.Write(LogComponent.Display, "buffer full, blocking DWT.");
-                }
-                _system.CPU.BlockTask(TaskType.DisplayWord);
-            }
+            }                       
 
             switch (_state)
             {
@@ -112,7 +112,7 @@ namespace Contralto.Display
                     // Just killing time
                     if (_clocks > _verticalBlankClocks)
                     {
-                        // End of VBlank
+                        // End of VBlank, start new visible frame
                         _clocks -= _verticalBlankClocks;                        
                         _scanline = _evenField ? 0 : 1;
                         _word = 0;
@@ -121,12 +121,9 @@ namespace Contralto.Display
                         // Wake up DVT, DHT
                         _dwtBlocked = false;
                         _dhtBlocked = false;                        
-                        _system.CPU.WakeupTask(TaskType.DisplayHorizontal);
-                        _system.CPU.BlockTask(TaskType.DisplayWord);                        
+                        _system.CPU.WakeupTask(TaskType.DisplayHorizontal);                                             
                         
-                        _state = DisplayState.HorizontalBlank;
-
-                        //Console.WriteLine("Frame");
+                        _state = DisplayState.HorizontalBlank;                        
                     }
                     break;
 
@@ -139,14 +136,14 @@ namespace Contralto.Display
                     {
                         _clocks -= _wordClocks;
 
-                        ushort displayWord = 0xaaaa;
+                        ushort displayWord = (ushort)(_whiteOnBlack ? 0 : 0xffff);
                         if (_dataBuffer.Count > 0)
                         {
                             // Dequeue a word and draw it to the screen
-                            displayWord = _dataBuffer.Dequeue();
+                            displayWord = _whiteOnBlack ? _dataBuffer.Dequeue() : (ushort)~_dataBuffer.Dequeue();
                         }
 
-                        //_display.DrawDisplayWord(_scanline, _word, displayWord);
+                        _display.DrawDisplayWord(_scanline, _word, displayWord);
 
                         _word++;
                         if (_word > 37)
@@ -154,7 +151,7 @@ namespace Contralto.Display
                             // Done with this line
                             _dwtBlocked = false;
                             _dataBuffer.Clear();
-                            _state = DisplayState.HorizontalBlank;
+                            _state = DisplayState.HorizontalBlank;                            
                         }
                     }
                     break;
@@ -170,7 +167,7 @@ namespace Contralto.Display
                         _word = 0;                                                                 
 
                         if (_scanline > 807)
-                        {
+                        {                            
                             // Done with field, move to vblank, tell display to render
                             _state = DisplayState.VerticalBlank;
                             _evenField = !_evenField;
@@ -178,13 +175,13 @@ namespace Contralto.Display
                             // Wakeup DVT
                             _system.CPU.WakeupTask(TaskType.DisplayVertical);
 
-                            // Block DHT
+                            // Block DHT, DWT
                             _system.CPU.BlockTask(TaskType.DisplayHorizontal);
                             _system.CPU.BlockTask(TaskType.DisplayWord);
 
-                            //_display.RefreshAltoDisplay();
+                            _display.RefreshAltoDisplay();
                             
-                            _frames++;
+                            _fields++;
                             //Log.Write(LogComponent.Display, "Display field completed. {0} total clocks elapsed.", _totalClocks);
                             _totalClocks = 0;
                         }
@@ -204,14 +201,20 @@ namespace Contralto.Display
         {            
             _dataBuffer.Enqueue(word);
 
-            //Console.WriteLine("Enqueue {0}", _dataBuffer.Count);
+            //Console.WriteLine("Enqueue {0}, scanline {1}", word, _scanline);
 
             // Sanity check: data length should never exceed 16 words.            
             if (_dataBuffer.Count > 16)
-            {
-                _dataBuffer.Dequeue();
-                _system.CPU.BlockTask(TaskType.DisplayWord);
+            {                
+                //_dataBuffer.Dequeue();
+                //_system.CPU.BlockTask(TaskType.DisplayWord);
             } 
+        }
+
+        public void SETMODE(ushort word)
+        {
+            _lowRes = (word & 0x8000) != 0;
+            _whiteOnBlack = (word & 0x4000) != 0;
         }
 
         public bool EVENFIELD
@@ -228,15 +231,17 @@ namespace Contralto.Display
         }
 
         private bool _evenField;
+        private bool _lowRes;
+        private bool _whiteOnBlack;
         private double _clocks;
         private double _totalClocks;
-        private int _frames;
+        private int _fields;
         private DisplayState _state;
 
         // Indicates whether the DWT or DHT blocked itself
         // in which case they cannot be reawakened until the next field.
         private bool _dwtBlocked;
-        private bool _dhtBlocked;
+        private bool _dhtBlocked;        
 
         private int _scanline;
         private int _word;

@@ -42,6 +42,11 @@ namespace Contralto.Memory
                     else
                     {
                         _bus.Add(addr, dev);
+
+                        if (dev is Memory)
+                        {
+                            _mainMemory = (Memory)dev;
+                        }
                     }
                 }
             }
@@ -269,17 +274,27 @@ namespace Contralto.Memory
         /// <returns></returns>
         private ushort ReadFromBus(ushort address, TaskType task, bool extendedMemoryReference)
         {
-            // Look up address in hash; if populated ask the device
-            // to return a value otherwise throw.
-            if (_bus.ContainsKey(address))
+            if (address <= Memory.MemTop)
             {
-                return _bus[address].Read(address, task, extendedMemoryReference);
+                // Main memory access; shortcut hashtable lookup for performance reasons.
+                return _mainMemory.Read(address, task, extendedMemoryReference);
             }
             else
             {
-                //throw new NotImplementedException(String.Format("Read from unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));
-                //Console.WriteLine("Read from unimplemented memory-mapped I/O device at {0}.", Conversion.ToOctal(address));
-                return 0;
+                // Memory-mapped device access:
+                // Look up address in hash; if populated ask the device
+                // to return a value otherwise throw.
+                IMemoryMappedDevice memoryMappedDevice = null;
+                if (_bus.TryGetValue(address, out memoryMappedDevice))
+                {
+                    return memoryMappedDevice.Read(address, task, extendedMemoryReference);
+                }
+                else
+                {
+                    //throw new NotImplementedException(String.Format("Read from unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));
+                    //Console.WriteLine("Read from unimplemented memory-mapped I/O device at {0}.", Conversion.ToOctal(address));
+                    return 0;
+                }
             }
         }
 
@@ -291,16 +306,26 @@ namespace Contralto.Memory
         /// <returns></returns>
         private void WriteToBus(ushort address, ushort data, TaskType task, bool extendedMemoryReference)
         {
-            // Look up address in hash; if populated ask the device
-            // to store a value otherwise throw.
-            if (_bus.ContainsKey(address))
-            {               
-                _bus[address].Load(address, data, task, extendedMemoryReference);
+            if (address <= Memory.MemTop)
+            {
+                // Main memory access; shortcut hashtable lookup for performance reasons.
+                _mainMemory.Load(address, data, task, extendedMemoryReference);
             }
             else
             {
-                // throw new NotImplementedException(String.Format("Write to unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));
-                //Console.WriteLine("Write to unimplemented memory-mapped I/O device at {0}.", Conversion.ToOctal(address));
+                // Memory-mapped device access:
+                // Look up address in hash; if populated ask the device
+                // to store a value otherwise throw.
+                IMemoryMappedDevice memoryMappedDevice = null;
+                if (_bus.TryGetValue(address, out memoryMappedDevice))
+                {
+                    memoryMappedDevice.Load(address, data, task, extendedMemoryReference);
+                }
+                else
+                {
+                    // throw new NotImplementedException(String.Format("Write to unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));
+                    //Console.WriteLine("Write to unimplemented memory-mapped I/O device at {0}.", Conversion.ToOctal(address));
+                }
             }
         }
 
@@ -308,7 +333,13 @@ namespace Contralto.Memory
         /// Hashtable used for address-based dispatch to devices on the memory bus.
         /// </summary>
         private Dictionary<ushort, IMemoryMappedDevice> _bus;
-        
+
+        //
+        // Optimzation: keep reference to main memory; since 99.9999% of accesses go directly there,
+        // we can avoid the hashtable overhead using a simple address check.
+        //
+        private Memory _mainMemory;
+
         private bool _memoryOperationActive;
         private int _memoryCycle;
         private ushort _memoryAddress;

@@ -15,6 +15,14 @@ namespace Contralto.Memory
             Reset();
         }
 
+        /// <summary>
+        /// The top address of main memory (above which lies the I/O space)
+        /// </summary>
+        public static ushort MemTop
+        {
+            get { return _memTop; }
+        }
+
         public void Reset()
         {
             // 4 64K banks
@@ -33,13 +41,6 @@ namespace Contralto.Memory
             {
                 address += 0x10000 * GetBankNumber(task, extendedMemory);
                 ushort data = _mem[address];
-
-                /*
-                if (extendedMemory)
-                {
-                    Log.Write(LogComponent.Memory, "extended memory read from {0} - {1}", Conversion.ToOctal(address), Conversion.ToOctal(data));
-                } */
-
                 return data;
             }
         }
@@ -58,18 +59,7 @@ namespace Contralto.Memory
             else
             {
                 address += 0x10000 * GetBankNumber(task, extendedMemory);
-                _mem[address] = data;
-
-                if (address == 0x110 && data != 0)
-                {
-                    Console.WriteLine("DASTART WRITE!");
-                }
-
-                /*
-                if (extendedMemory)
-                {
-                    Log.Write(LogComponent.Memory, "extended memory write to {0} of {1}", Conversion.ToOctal(address), Conversion.ToOctal(data));
-                } */
+                _mem[address] = data;               
             }
         }
 
@@ -85,12 +75,12 @@ namespace Contralto.Memory
 
         private readonly MemoryRange[] _addresses =
         {
-            new MemoryRange(0, _memTop),         // Main bank of RAM to 176777; IO page above this.
-            new MemoryRange(_xmBanksStart, _xmBanksStart + 16),    // Memory bank registers
+            new MemoryRange(0, _memTop),                                     // Main bank of RAM to 176777; IO page above this.
+            new MemoryRange(_xmBanksStart, (ushort)(_xmBanksStart + 16)),    // Memory bank registers
         };
 
-        private const int _memTop = 0xfdff;         // 176777
-        private const int _xmBanksStart = 0xffe0;   // 177740
+        private static readonly ushort _memTop = 0xfdff;         // 176777
+        private static readonly ushort _xmBanksStart = 0xffe0;   // 177740
 
         private ushort[] _mem;
 
