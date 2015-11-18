@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Contralto.Memory;
 
@@ -76,7 +72,7 @@ namespace Contralto.CPU
 
                 // Grab BLOCK bit so that other tasks / hardware can look at it
                 _block = instruction.F1 == SpecialFunction1.Block;
-
+               
                 //Console.WriteLine("R5:{0},R6:{1},IR:{2} - {3}:{4}", OctalHelpers.ToOctal(_cpu._r[5]), OctalHelpers.ToOctal(_cpu._r[6]), OctalHelpers.ToOctal(_cpu._ir), OctalHelpers.ToOctal(_mpc), UCodeDisassembler.DisassembleInstruction(instruction, _taskType));
 
 
@@ -92,9 +88,10 @@ namespace Contralto.CPU
             protected virtual bool ExecuteInstruction(MicroInstruction instruction)
             {
                 bool nextTask = false;
-                bool swMode = false;            
-                ushort aluData = 0;
-                ushort nextModifier = 0;
+                bool swMode = false;
+                bool block = false;       
+                ushort aluData;
+                ushort nextModifier;
                 _loadR = false;
                 _loadS = false;
                 _rSelect = 0;
@@ -109,13 +106,13 @@ namespace Contralto.CPU
                 // the memory isn't ready yet.
                 // TODO: this needs to be seriously cleaned up.
                 //
-                if ((instruction.BS == BusSource.ReadMD &&
-                        (instruction.F1 != SpecialFunction1.Constant &&
-                        instruction.F2 != SpecialFunction2.Constant)) ||        // ReadMD only occurs if not reading from constant ROM.
+                bool constantAccess =
+                        instruction.F1 == SpecialFunction1.Constant ||
+                        instruction.F2 == SpecialFunction2.Constant;
+                if ((instruction.BS == BusSource.ReadMD && !constantAccess) ||        // ReadMD only occurs if not reading from constant ROM.
                     instruction.F1 == SpecialFunction1.LoadMAR ||
                     instruction.F2 == SpecialFunction2.StoreMD) 
                 {
-
                     MemoryOperation op;
 
                     if (instruction.BS == BusSource.ReadMD)
@@ -148,8 +145,7 @@ namespace Contralto.CPU
                 ExecuteSpecialFunction2Early(instruction);
 
                 // Select BUS data.
-                if (instruction.F1 != SpecialFunction1.Constant &&
-                    instruction.F2 != SpecialFunction2.Constant)
+                if (!constantAccess)
                 {
                     // Normal BUS data (not constant ROM access).
                     switch (instruction.BS)
@@ -201,8 +197,7 @@ namespace Contralto.CPU
                             break;
 
                         default:
-                            throw new InvalidOperationException(String.Format("Unhandled bus source {0}.", instruction.BS));
-                            break;
+                            throw new InvalidOperationException(String.Format("Unhandled bus source {0}.", instruction.BS));                            
                     }
                 }
                 else
@@ -222,8 +217,7 @@ namespace Contralto.CPU
                 // selection of R; they do not affect the address supplied to the constant ROM."
                 // Hence we use the unmodified RSELECT value here and above.
                 if ((int)instruction.BS > 4 ||
-                    instruction.F1 == SpecialFunction1.Constant ||
-                    instruction.F2 == SpecialFunction2.Constant)
+                    constantAccess)
                 {
                     _busData &= ControlROM.ConstantROM[(instruction.RSELECT << 3) | ((uint)instruction.BS)];
                 }
@@ -283,9 +277,12 @@ namespace Contralto.CPU
 
                     case SpecialFunction1.Block:
                         // Technically this is to be invoked by the hardware device associated with a task.
-                        // That logic would be circituous and unless there's a good reason not to that is discovered
+                        // That logic would be circuituous and unless there's a good reason not to that is discovered
                         // later, I'm just going to directly block the current task here.
                         _cpu.BlockTask(this._taskType);
+
+                        // Let task-specific behavior take place at the end of this cycle.
+                        block = true;                        
                         break;
 
                     case SpecialFunction1.LLSH1:
@@ -452,6 +449,14 @@ namespace Contralto.CPU
                 }
 
                 //
+                // Do task-specific BLOCK behavior if the last instruction had a BLOCK F1.
+                //
+                if (block)
+                {
+                    ExecuteBlock();
+                }
+
+                //
                 // Select next address, using the address modifier from the last instruction.
                 //
                 _mpc = (ushort)(instruction.NEXT | nextModifier);
@@ -487,6 +492,15 @@ namespace Contralto.CPU
             protected virtual void ExecuteSpecialFunction2Late(MicroInstruction instruction)
             {
                 // Nothing by default.
+            }
+
+            /// <summary>
+            /// Allows task-specific handling for BLOCK microinstructions.
+            /// (Disk and Display BLOCKs have side effects apart from removing Wakeup from the task, for example).
+            /// </summary>
+            protected virtual void ExecuteBlock()
+            {
+                // Nothing by default
             }
 
             //

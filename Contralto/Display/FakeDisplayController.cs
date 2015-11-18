@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Contralto.Logging;
-using Contralto.CPU;
-
-namespace Contralto.Display
+﻿namespace Contralto.Display
 {
     /// <summary>
     /// FakeDisplayController draws the display without the aid of the

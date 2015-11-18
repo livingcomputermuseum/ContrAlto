@@ -1,17 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Contralto.Memory;
 using System.IO;
 using Contralto.Logging;
 using Contralto.CPU;
 
 namespace Contralto.IO
 {
-    public class DiskController : IClockable
+    public class DiskController
     {
         public DiskController(AltoSystem system)
         {
@@ -22,7 +16,7 @@ namespace Contralto.IO
             _pack = new DiabloPack(DiabloDiskType.Diablo31);
 
             // TODO: this does not belong here.
-            FileStream fs = new FileStream("Disk\\tdisk4.dsk", FileMode.Open, FileAccess.Read);
+            FileStream fs = new FileStream("Disk\\games.dsk", FileMode.Open, FileAccess.Read);
 
             _pack.Load(fs);
 
@@ -57,8 +51,7 @@ namespace Contralto.IO
 
                 // "In addition, it causes the head address bit to be loaded from KDATA[13]."
                 int newHead = (_kDataWrite & 0x4) >> 2;
-
-                Log.Write(LogComponent.DiskController, "At sector time {0}:", _elapsedSectorTime);
+                
                 if (newHead != _head)
                 {
                     // If we switch heads, we need to reload the sector
@@ -121,6 +114,7 @@ namespace Contralto.IO
         public bool WDINIT
         {
             get { return _wdInit; }
+            set { _wdInit = value; }
         }
 
         public ushort KSTAT
@@ -149,10 +143,7 @@ namespace Contralto.IO
         /// <summary>
         /// This is a hack to see how the microcode expects INIT to work
         /// </summary>
-        public bool RecordInit
-        {
-            get { return _sectorWordTime < 10; }
-        }
+
 
         public int Cylinder
         {
@@ -181,7 +172,7 @@ namespace Contralto.IO
 
         public double ClocksUntilNextSector
         {
-            get { return _sectorClocks - _elapsedSectorTime; }
+            get { return 0; }  // _sectorClocks - _elapsedSectorTime; }
         }
 
         public bool Ready
@@ -197,8 +188,7 @@ namespace Contralto.IO
         public void Reset()
         {
             ClearStatus();
-            _recNo = 0;
-            _elapsedSectorTime = 0.0;
+            _recNo = 0;            
             _cylinder = _destCylinder = 0;
             _sector = 0;
             _head = 0;
@@ -213,125 +203,124 @@ namespace Contralto.IO
             _wdInit = false;
 
             _diskBitCounterEnable = false;
-            _sectorWordIndex = 0;
-            _sectorWordTime = 0;
+            _sectorWordIndex = 0;            
 
             InitSector();
 
             // Wakeup the sector task first thing
             _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
+            
+            // Create events to be reused during execution
+            _sectorEvent = new Event(_sectorDuration, null, SectorCallback);
+            _wordEvent = new Event(_wordDuration, null, WordCallback);
+            _seekEvent = new Event(0, null, SeekCallback);
+            _seclateEvent = new Event(_seclateDuration, null, SeclateCallback);
+
+            // And schedule the first sector pulse.
+            _system.Scheduler.Schedule(_sectorEvent);
         }
 
-        public void Clock()
+        /// <summary>
+        /// Allows the Disk Sector task to disable the SECLATE signal.
+        /// </summary>
+        public void DisableSeclate()
         {
-            _elapsedSectorTime++;            
+            _seclateEnable = false;
+        }
 
-            // TODO: only signal sector changes if disk is loaded, etc.
-            if (_elapsedSectorTime > _sectorClocks )
+        private void SectorCallback(ulong timeNsec, ulong skewNsec, object context)
+        {            
+            //
+            // Next sector; move to next sector and wake up Disk Sector task.
+            //            
+            _sector = (_sector + 1) % 12;            
+
+            _kStat = (ushort)((_kStat & 0x0fff) | (_sector << 12));
+
+            // Reset internal state machine for sector data
+            _sectorWordIndex = 0;            
+
+            _kDataRead = 0;
+
+            // Load new sector in
+            LoadSector();
+
+            // Only wake up if not actively seeking.
+            if ((_kStat & 0x0040) == 0)
             {
-                //
-                // Next sector; save fractional part of elapsed time (to more accurately keep track of time), move to next sector
-                // and wake up sector task.
-                //
-                _elapsedSectorTime -= _sectorClocks;
+                Log.Write(LogType.Verbose, LogComponent.DiskController, "Waking up sector task for C/H/S {0}/{1}/{2}", _cylinder, _head, _sector);
+                _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
 
-                _sector = (_sector + 1) % 12;                
+                // Reset SECLATE                
+                _seclate = false;
+                _seclateEnable = true;
+                _kStat &= 0xffef;
 
-                _kStat = (ushort)((_kStat & 0x0fff) | (_sector << 12));               
+                // Schedule a disk word wakeup to spin the disk
+                _wordEvent.TimestampNsec = _wordDuration;
+                _system.Scheduler.Schedule(_wordEvent);
 
-                // Reset internal state machine for sector data
-                _sectorWordIndex = 0;
-                _sectorWordTime = 0.0;
-
-                _kDataRead = 0;
-
-                // Load new sector in
-                LoadSector();
-
-                // Only wake up if not actively seeking.
-                if ((_kStat & 0x0040) == 0)
-                {
-                    Log.Write(LogType.Verbose, LogComponent.DiskController, "Waking up sector task for C/H/S {0}/{1}/{2}", _cylinder, _head, _sector);
-                    _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
-
-                    // Reset SECLATE
-                    _seclateClocks = 0;
-                    _seclate = false;
-                    _seclateEnable = true;
-                    _kStat &= 0xffef;
-                }
+                // Schedule SECLATE trigger
+                _seclateEvent.TimestampNsec = _seclateDuration;
+                _system.Scheduler.Schedule(_seclateEvent);
             }
 
-            // If seek is in progress, move closer to the desired cylinder...
-            // TODO: move bitfields to enums / constants, this is getting silly.
-            if ((_kStat & 0x0040) != 0)
-            {
-                _elapsedSeekTime++;
-                if (_elapsedSeekTime > _seekClocks)
-                {
-                    _elapsedSeekTime -= _seekClocks;
+            // Schedule next sector pulse
+            _sectorEvent.TimestampNsec = _sectorDuration - skewNsec;
+            _system.Scheduler.Schedule(_sectorEvent);            
+        }
 
-                    if (_cylinder < _destCylinder)
-                    {
-                        _cylinder++;
-                    }
-                    else if (_cylinder > _destCylinder)
-                    {
-                        _cylinder--;
-                    }
-
-                    Log.Write(LogComponent.DiskController, "Seek progress: cylinder {0} reached.", _cylinder);
-
-                    // Are we *there* yet?
-                    if (_cylinder == _destCylinder)
-                    {
-                        // clear Seek bit
-                        _kStat &= 0xffbf;
-
-                        Log.Write(LogComponent.DiskController, "Seek to {0} completed.", _cylinder);
-                    }
-                }
-            }
-
-            //
-            // Spin the disk platter and read in words as applicable.
-            //
+        private void WordCallback(ulong timeNsec, ulong skewNsec, object context)
+        {
             SpinDisk();
 
-            // Deal with SECLATE semantics:  If the Disk Sector task wakes up and runs before
-            // we hit the trigger time, then _seclate remains false.
-            // Otherwise, when the trigger time is hit _seclate is raised until
-            // the beginning of the next sector.
-            if (_system.CPU.CurrentTask.Priority == (int)TaskType.DiskSector)
+            // Schedule next word if this wasn't the last word this sector.
+            if (_sectorWordIndex < _sectorWordCount)
             {
-                // Sector task is running; clear enable for seclate signal
-                _seclateEnable = false;
+                _wordEvent.TimestampNsec = _wordDuration - skewNsec;
+                _system.Scheduler.Schedule(_wordEvent);
             }
-
-            if (_seclateEnable)
-            {
-                _seclateClocks++;
-
-                if (_seclateClocks > _seclateDuration)
-                {
-                    _seclate = true;
-                    _kStat |= 0x0010;       // TODO: move to constant field!
-                    //Log.Write(LogComponent.DiskSectorTask, "SECLATE for sector {0} at sector time {1}", _sector, _elapsedSectorTime);
-                    _seclateEnable = false;
-                }
-            }
-
-            //
-            // Update the WDINIT signal; this is based on WDALLOW (!_wdInhib) which sets WDINIT (this is done
-            // in KCOM way above).
-            // WDINIT is reset when BLOCK (a BLOCK F1 is being executed) and WDTSKACT (the disk word task is running) are 1.
-            //            
-            if (_system.CPU.CurrentTask.Priority == (int)TaskType.DiskWord &&
-                _system.CPU.CurrentTask.BLOCK)
-            {
-                _wdInit = false;
-            }            
         }
+
+        private void SeekCallback(ulong timeNsec, ulong skewNsec, object context)
+        {
+            if (_cylinder < _destCylinder)
+            {
+                _cylinder++;
+            }
+            else if (_cylinder > _destCylinder)
+            {
+                _cylinder--;
+            }
+
+            Log.Write(LogComponent.DiskController, "Seek progress: cylinder {0} reached.", _cylinder);
+
+            // Are we *there* yet?
+            if (_cylinder == _destCylinder)
+            {
+                // clear Seek bit
+                _kStat &= 0xffbf;
+
+                Log.Write(LogComponent.DiskController, "Seek to {0} completed.", _cylinder);
+            }
+            else
+            {
+                // Nope.
+                // Schedule next seek step.
+                _seekEvent.TimestampNsec = _seekDuration - skewNsec;
+                _system.Scheduler.Schedule(_seekEvent);
+            }
+        }
+
+        private void SeclateCallback(ulong timeNsec, ulong skewNsec, object context)
+        {
+            if (_seclateEnable)
+            {                
+                _seclate = true;
+                _kStat |= 0x0010;       // TODO: move to constant field!
+                Log.Write(LogComponent.DiskSectorTask, "SECLATE for sector {0}.", _sector);
+            }
+        }       
 
         public void ClearStatus()
         {
@@ -394,17 +383,19 @@ namespace Contralto.IO
                 _kStat |= 0x0040;
 
                 // And figure out how long this will take.
-                _seekClocks = CalculateSeekTime();
-                _elapsedSeekTime = 0.0;
+                _seekDuration = CalculateSeekTime();
+
+                _seekEvent.TimestampNsec = _seekDuration;
+                _system.Scheduler.Schedule(_seekEvent);
                 
-                Log.Write(LogComponent.DiskController, "Seek to {0} from {1} commencing.  Will take {2} clocks.", _destCylinder, _cylinder, _seekClocks);
+                Log.Write(LogComponent.DiskController, "Seek to {0} from {1} commencing.  Will take {2} nsec.", _destCylinder, _cylinder, _seekDuration);
             }
         }
 
-        private double CalculateSeekTime()
+        private ulong CalculateSeekTime()
         {
             // How many cylinders are we moving?
-            int dt = Math.Abs(_destCylinder - _cylinder);
+            int dt = Math.Abs(_destCylinder - _cylinder);            
 
             //
             // From the Hardware Manual, pg 43:
@@ -412,7 +403,7 @@ namespace Contralto.IO
             //
             double seekTimeMsec = 15.0 + 8.6 * Math.Sqrt(dt);
 
-            return (seekTimeMsec / AltoSystem.ClockInterval) / 100;     // div 100 to make things faster for now
+            return (ulong)(seekTimeMsec * Conversion.MsecToNsec) / 100;     // hack to speed things up
         }
 
         /// <summary>
@@ -437,80 +428,71 @@ namespace Contralto.IO
             // to generate these slices during these periods (and the clock comes from the
             // disk itself when actual data is present).  For our purposes, the two clocks
             // are one and the same.
-            //            
+            //                                         
 
-            // Move the disk forward one clock
-            _sectorWordTime++;
+            //
+            // Pick out the word that just passed under the head.  This may not be
+            // actual data (it could be the pre-header delay, inter-record gaps or sync words)
+            // and we may not actually end up doing anything with it, but we may
+            // need it to decide whether to do anything at all.
+            //                
+            ushort diskWord = _sectorData[_sectorWordIndex].Data;
 
-            // If we have reached a new word timeslice, do something appropriate.
-            if (_sectorWordTime > _wordDuration)
+            bool bWakeup = false;
+            //
+            // If the word task is enabled AND the write ("crystal") clock is enabled
+            // then we will wake up the word task now.
+            // 
+            if (!_seclate && !_wdInhib && !_bClkSource)
+            {                    
+                bWakeup = true;                    
+            }
+
+            //
+            // If the clock is enabled OR the WFFO bit is set (go ahead and run the bit clock)
+            // and we weren't late reading this sector,  then we will wake up the word task 
+            // and read in the data if transfers are not inhibited.  TODO: this should only happen on reads.
+            //
+            if (!_seclate && (_wffo || _diskBitCounterEnable))
             {
-                // Save the fractional portion of the timeslice for the next slice
-                _sectorWordTime -= _wordDuration;                
-
-                //
-                // Pick out the word that just passed under the head.  This may not be
-                // actual data (it could be the pre-header delay, inter-record gaps or sync words)
-                // and we may not actually end up doing anything with it, but we may
-                // need it to decide whether to do anything at all.
-                //                
-                ushort diskWord = _sectorData[_sectorWordIndex].Data;
-
-                bool bWakeup = false;
-                //
-                // If the word task is enabled AND the write ("crystal") clock is enabled
-                // then we will wake up the word task now.
-                // 
-                if (!_seclate && !_wdInhib && !_bClkSource)
-                {                    
-                    bWakeup = true;                    
-                }
-
-                //
-                // If the clock is enabled OR the WFFO bit is set (go ahead and run the bit clock)
-                // and we weren't late reading this sector,  then we will wake up the word task 
-                // and read in the data if transfers are not inhibited.  TODO: this should only happen on reads.
-                //
-                if (!_seclate && (_wffo || _diskBitCounterEnable))
+                if (!_xferOff)
                 {
-                    if (!_xferOff)
+                    if (_debugRead)
                     {
-                        if (_debugRead)
-                        {
-                            //Console.WriteLine("--- missed word {0}({1}) ---", _sectorWordIndex, _kDataRead);
-                        }
-
-                        Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Sector {0} Word {1} read into KDATA", _sector, Conversion.ToOctal(diskWord));  
-                        _kDataRead = diskWord;
-                        _debugRead = _sectorData[_sectorWordIndex].Type == CellType.Data;
+                        //Console.WriteLine("--- missed word {0}({1}) ---", _sectorWordIndex, _kDataRead);
                     }
 
-                    if (!_wdInhib)
-                    {
-                        bWakeup = true;
-                    }
+                    Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Sector {0} Word {1} read into KDATA", _sector, Conversion.ToOctal(diskWord));  
+                    _kDataRead = diskWord;
+                    _debugRead = _sectorData[_sectorWordIndex].Type == CellType.Data;
                 }
 
-                //
-                // If the WFFO bit is cleared (wait for the sync word to be read) 
-                // then we check the word for a "1" (the sync word) to enable
-                // the clock.  This occurs late in the cycle so that the NEXT word
-                // (not the sync word) is actually read.  TODO: this should only happen on reads.
-                //
-                if (!_wffo && diskWord == 1)
-                {                    
-                    _diskBitCounterEnable = true;
-                }
-
-                if (bWakeup)
+                if (!_wdInhib)
                 {
-                    Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Word task awoken for word {0}.", _sectorWordIndex);
-                    _system.CPU.WakeupTask(TaskType.DiskWord);
+                    bWakeup = true;
                 }
+            }
 
-                // Last, move to the next word.
-                _sectorWordIndex++;
-            }            
+            //
+            // If the WFFO bit is cleared (wait for the sync word to be read) 
+            // then we check the word for a "1" (the sync word) to enable
+            // the clock.  This occurs late in the cycle so that the NEXT word
+            // (not the sync word) is actually read.  TODO: this should only happen on reads.
+            //
+            if (!_wffo && diskWord == 1)
+            {                    
+                _diskBitCounterEnable = true;
+            }
+
+            if (bWakeup)
+            {
+                Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Word task awoken for word {0}.", _sectorWordIndex);
+                _system.CPU.WakeupTask(TaskType.DiskWord);
+            }
+
+            // Last, move to the next word.
+            _sectorWordIndex++;
+                      
         }
 
         private void LoadSector()
@@ -584,7 +566,7 @@ namespace Contralto.IO
 
             _sectorData[_dataOffset] = new DataCell(1, CellType.Sync);
             // read-postamble
-            for (int i = _dataOffset + 257; i < _sectorWords;i++)
+            for (int i = _dataOffset + 257; i < _sectorWordCount;i++)
             {
                 _sectorData[i] = new DataCell(0, CellType.Gap);
             }            
@@ -648,14 +630,7 @@ namespace Contralto.IO
         // WDINIT signal
         private bool _wdInit;
 
-        // Sector timing.  Based on table on pg. 43 of the Alto Hardware Manual
-        private double _elapsedSectorTime;     // elapsed time in this sector (in clocks)
-        private const double _sectorDuration = (40.0 / 12.0); // time in msec for one sector
-        private const double _sectorClocks = _sectorDuration / (0.00017);     // number of clock cycles per sector time.       
-       
-        private int _sectorWordIndex;
-        private double _sectorWordTime;
-
+        // Sector timing.  Based on table on pg. 43 of the Alto Hardware Manual                                        
 
         // From altoconsts23.mu:  [all constants in octal, for reference]
         // $MFRRDL		$177757;	DISK HEADER READ DELAY IS 21 WORDS
@@ -664,10 +639,14 @@ namespace Contralto.IO
         // $MIR0BL		$177775;	DISK INTERRECORD PREAMBLE IS 3 WORDS            <<-- writing
         // $MRPAL		$177775;	DISK READ POSTAMBLE LENGTH IS 3 WORDS
         // $MWPAL		$177773;	DISK WRITE POSTAMBLE LENGTH IS 5 WORDS          <<-- writing, clearly.
-        private const int _sectorWords = 269 + 22 + 34;                          // Based on : 269 data words (+ cksums) / sector, + X words for delay / preamble / sync
-        private const double _wordDuration = (_sectorClocks / (double)_sectorWords);       
-        private const double _headerReadDelay = 17;        
-        private const double _interRecordDelay = 4;
+        private static ulong _sectorDuration = (ulong)((40.0 / 12.0) * Conversion.MsecToNsec);      // time in nsec for one sector    
+        private static int _sectorWordCount = 269 + 22 + 34;                                            // Based on : 269 data words (+ cksums) / sector, + X words for delay / preamble / sync
+        private static ulong _wordDuration = (ulong)(_sectorDuration / (ulong)(_sectorWordCount + 1));  // time in nsec for one word
+        private int _sectorWordIndex;                                                               // current word being read
+
+        private Event _sectorEvent;
+        private Event _wordEvent;
+                
 
         // offsets in words for start of data in sector
         private const int _headerOffset = 22;
@@ -676,10 +655,16 @@ namespace Contralto.IO
 
         // SECLATE data.
         // 8.5uS for seclate delay (approx. 50 clocks)
-        private const double _seclateDuration = 0.0086 / 0.00017;
+        private static ulong _seclateDuration = 85 * Conversion.UsecToNsec;
         private bool _seclateEnable;
         private bool _seclate;
-        private double _seclateClocks;
+        private Event _seclateEvent;     
+
+        // Cylinder seek time (in nsec)  Again, see the manual.
+        // Timing varies based on how many cylinders are being traveled during a seek; see
+        // CalculateSeekTime() for more.        
+        private ulong _seekDuration;
+        private Event _seekEvent;
 
         // The data for the current sector
         private enum CellType
@@ -706,14 +691,8 @@ namespace Contralto.IO
             }
         }
 
-        private DataCell[] _sectorData = new DataCell[_sectorWords];
-
-
-        // Cylinder seek timing.  Again, see the manual.
-        // Timing varies based on how many cylinders are being traveled during a seek; see
-        // CalculateSeekTime() for more.
-        private double _elapsedSeekTime;
-        private double _seekClocks;
+        private DataCell[] _sectorData = new DataCell[_sectorWordCount];
+        
 
         // The pack loaded into the drive
         DiabloPack _pack;

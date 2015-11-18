@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Contralto.Memory;
-using Contralto.Logging;
 
 namespace Contralto.CPU
 {
@@ -31,7 +24,17 @@ namespace Contralto.CPU
 
             protected override bool ExecuteInstruction(MicroInstruction instruction)
             {
-                bool task = base.ExecuteInstruction(instruction);                
+                bool task = base.ExecuteInstruction(instruction);
+
+                // Deal with SECLATE semantics:  If the Disk Sector task wakes up and runs before
+                // the Disk Controller hits the SECLATE trigger time, then SECLATE remains false.
+                // Otherwise, when the trigger time is hit SECLATE is raised until
+                // the beginning of the next sector.
+                if (_taskType == TaskType.DiskSector)
+                {
+                    // Sector task is running; clear enable for seclate signal
+                    _cpu._system.DiskController.DisableSeclate();
+                }
 
                 return task;
             }
@@ -187,6 +190,19 @@ namespace Contralto.CPU
 
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled disk special function 2 {0}", df2));
+                }
+            }
+
+            protected override void ExecuteBlock()
+            {
+                //
+                // Update the WDINIT signal; this is based on WDALLOW (!_wdInhib) which sets WDINIT (this is done
+                // in KCOM way above).
+                // WDINIT is reset when BLOCK (a BLOCK F1 is being executed) and WDTSKACT (the disk word task is running) are 1.
+                //               
+                if (_taskType == TaskType.DiskWord)
+                {
+                    _cpu._system.DiskController.WDINIT = false;                    
                 }
             }
 

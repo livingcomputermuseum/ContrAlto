@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Contralto.CPU
 {
@@ -16,7 +12,7 @@ namespace Contralto.CPU
         RotateRight,          
     }
 
-    //NOTE: FOR NOVA (NOVEL) SHIFTS (from aug '76 manual):
+    // NOTE: FOR NOVA (NOVEL) SHIFTS (from aug '76 manual):
     // The emulator has two additional bits of state, the SKIP and CARRY flip flops.CARRY is identical
     // to the Nova carry bit, and is set or cleared as appropriate when the DNS+- (do Nova shifts)
     // function is executed.DNS also addresses R from(1R[3 - 4] XOR 3), and sets the SKIP flip flop if 
@@ -95,13 +91,7 @@ namespace Contralto.CPU
         /// <param name="input">Normal input to be shifted</param>
         /// <param name="t">CPU t register, for MAGIC shifts only</param>        
         public static ushort DoOperation(ushort input, ushort t)
-        {
-            // Sanity check: MAGIC and DNS cannot be set at the same time.
-            if (_magic && _dns)
-            {
-                throw new InvalidOperationException("Both MAGIC and DNS bits are set.");
-            }
-            
+        {           
             switch(_op)
             {
                 case ShifterOp.Invalid:
@@ -119,6 +109,11 @@ namespace Contralto.CPU
                         // "MAGIC places the high order bit of T into the low order bit of the
                         // shifter output on left shifts..."
                         _output |= (ushort)((t & 0x8000) >> 15);
+
+                        if (_count != 1)
+                        {
+                            throw new NotImplementedException("magic LCY 8 not implemented yet.");
+                        }
                     }
                     else if (_dns)
                     {
@@ -179,7 +174,7 @@ namespace Contralto.CPU
                         // "Swap the 8-bit halves of the 16-bit result.  The carry is not affected."
                         //
                         _output = (ushort)(((input & 0xff00) >> 8) | ((input & 0x00ff) << 8));
-                    }
+                    }                    
                     break;
 
                 case ShifterOp.RotateRight:

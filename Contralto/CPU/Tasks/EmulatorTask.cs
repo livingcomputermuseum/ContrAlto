@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Contralto.Memory;
 
 namespace Contralto.CPU
 {
@@ -316,8 +310,7 @@ namespace Contralto.CPU
                         break; 
 
                     default:
-                        throw new InvalidOperationException(String.Format("Unhandled emulator F2 {0}.", ef2));
-                        break;
+                        throw new InvalidOperationException(String.Format("Unhandled emulator F2 {0}.", ef2));                        
                 }
             }
 

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Contralto.CPU
 {
@@ -33,8 +29,7 @@ namespace Contralto.CPU
                         break;
 
                     default:
-                        throw new InvalidOperationException(String.Format("Unhandled cursor F2 {0}.", cf2));
-                        break;
+                        throw new InvalidOperationException(String.Format("Unhandled cursor F2 {0}.", cf2));                        
                 }
             }
         }

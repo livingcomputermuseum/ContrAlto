@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Contralto.CPU
 {
@@ -131,7 +127,8 @@ namespace Contralto.CPU
 
             if (_ramBank > 0)
             {
-                throw new InvalidOperationException("RAM bank > 0, unexpected.");                
+                //throw new InvalidOperationException("RAM bank > 0, unexpected.");                
+                return 0xffff;
             }
 
             // pretend no ram for the moment                
@@ -164,7 +161,8 @@ namespace Contralto.CPU
 
             if (_ramBank > 0)
             {
-                throw new InvalidOperationException("RAM bank > 0, unexpected.");                
+                //throw new InvalidOperationException("RAM bank > 0, unexpected.");                
+                return;
             }
 
             Logging.Log.Write(Logging.LogComponent.Microcode, "CRAM address for write: Bank {0}, addr {1}",

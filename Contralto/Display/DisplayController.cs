@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Contralto.Logging;
+﻿using System.Collections.Generic;
 using Contralto.CPU;
 
 namespace Contralto.Display
@@ -25,6 +19,12 @@ namespace Contralto.Display
         public void AttachDisplay(Debugger display)
         {
             _display = display;
+        }
+
+        public int Fields
+        {
+            get { return _fields; }
+            set { _fields = value; }
         }
 
         public void Reset()
@@ -254,9 +254,9 @@ namespace Contralto.Display
         // Timing constants
         // 38uS per scanline; 4uS for hblank.
         // ~35 scanlines for vblank (1330uS)
-        private const double _wordClocks = (34.0 / 38.0) / 0.017;        // uSec to clocks
-        private const double _horizontalBlankClocks = 4.0 / 0.017;
-        private const double _verticalBlankClocks = 1333.0 / 0.017;
+        private const double _wordClocks = (34.0 / 38.0) / 0.060;        // uSec to clocks
+        private const double _horizontalBlankClocks = 4.0 / 0.060;
+        private const double _verticalBlankClocks = 1333.0 / 0.060;
 
 
     }

@@ -90,6 +90,7 @@ namespace Contralto
             _displayBuffer.UnlockBits(data);
             DisplayBox.Refresh();
 
+            // If you want interlacing to be more visible:
             Array.Clear(_displayData, 0, _displayData.Length);
         }
 

@@ -1,10 +1,6 @@
 ﻿using Contralto.CPU;
-using Contralto.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Contralto.Memory
 {
@@ -185,8 +181,7 @@ namespace Contralto.Memory
                     case 3:
                     case 4:
                         // This should not happen; CPU should check whether the operation is possible using Ready and stall if not.
-                        throw new InvalidOperationException("Invalid ReadMR request during cycle 3 or 4 of memory operation.");
-                        break;
+                        throw new InvalidOperationException("Invalid ReadMR request during cycle 3 or 4 of memory operation.");                        
 
                     case 5:
                         // Single word read

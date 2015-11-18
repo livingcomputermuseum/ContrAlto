@@ -1,9 +1,4 @@
-﻿using Contralto.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
 
 namespace Contralto.CPU
 {
@@ -30,7 +25,7 @@ namespace Contralto.CPU
 
         public static ushort Execute(AluFunction fn, ushort bus, ushort t, int skip)
         {
-            int r = 0;
+            int r;
             switch (fn)
             {
                 case AluFunction.Bus:
@@ -40,7 +35,7 @@ namespace Contralto.CPU
 
                 case AluFunction.T:
                     _carry = 0;     // M = 1
-                    r= t;
+                    r = t;
                     break;
 
                 case AluFunction.BusOrT:

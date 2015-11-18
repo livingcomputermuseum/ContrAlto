@@ -1,12 +1,7 @@
-﻿using Contralto.Memory;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Timers;
 
 namespace Contralto.CPU
-{   
+{
     public enum TaskType
     {
         Invalid = -1,
@@ -38,7 +33,7 @@ namespace Contralto.CPU
             _tasks[(int)TaskType.MemoryRefresh] = new MemoryRefreshTask(this);
 
             Reset();
-        }       
+        }
 
         public Task[] Tasks
         {
@@ -123,7 +118,21 @@ namespace Contralto.CPU
 
         public void Clock()
         {
-            ExecuteNext();
+            if (_currentTask.ExecuteNext())
+            {
+                // Invoke the task switch, this will take effect after
+                // the NEXT instruction, not this one.
+                TaskSwitch();
+            }
+            else
+            {
+                // If we have a new task, switch to it now.
+                if (_nextTask != null)
+                {
+                    _currentTask = _nextTask;
+                    _nextTask = null;
+                }
+            }
         }
 
         /// <summary>
@@ -171,28 +180,7 @@ namespace Contralto.CPU
         public Task NextTask
         {
             get { return _nextTask; }
-        }
-
-        private void ExecuteNext()
-        {
-            if (_currentTask.ExecuteNext())
-            {
-                // Invoke the task switch, this will take effect after
-                // the NEXT instruction, not this one.
-                TaskSwitch();
-            }
-            else
-            {
-                // If we have a new task, switch to it now.
-                if (_nextTask != null)
-                {
-                    _currentTask = _nextTask;
-                    _nextTask = null;
-                }
-            }
-
-            _clocks++;
-        }
+        }        
 
         private void TaskSwitch()
         {
@@ -224,12 +212,9 @@ namespace Contralto.CPU
         // Task data
         private Task _nextTask;         // The task to switch two after the next microinstruction
         private Task _currentTask;      // The currently executing task
-        private Task[] _tasks = new Task[16];        
-
-        private long _clocks;
+        private Task[] _tasks = new Task[16];                
 
         // The system this CPU belongs to
-        private AltoSystem _system;
-
+        private AltoSystem _system;        
     }
 }
