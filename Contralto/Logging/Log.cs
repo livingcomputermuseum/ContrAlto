@@ -44,7 +44,7 @@ namespace Contralto.Logging
         static Log()
         {
             // TODO: make configurable
-            _components = LogComponent.None;
+            _components = LogComponent.None; //LogComponent.Memory; // | LogComponent.Microcode;
             _type = LogType.Normal | LogType.Warning | LogType.Error;
         }
 

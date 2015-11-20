@@ -435,7 +435,13 @@ namespace Contralto.IO
             // actual data (it could be the pre-header delay, inter-record gaps or sync words)
             // and we may not actually end up doing anything with it, but we may
             // need it to decide whether to do anything at all.
-            //                
+            //      
+            
+            if (_sectorWordIndex >= _sectorWordCount)
+            {
+                return;
+            }
+                  
             ushort diskWord = _sectorData[_sectorWordIndex].Data;
 
             bool bWakeup = false;
@@ -639,9 +645,10 @@ namespace Contralto.IO
         // $MIR0BL		$177775;	DISK INTERRECORD PREAMBLE IS 3 WORDS            <<-- writing
         // $MRPAL		$177775;	DISK READ POSTAMBLE LENGTH IS 3 WORDS
         // $MWPAL		$177773;	DISK WRITE POSTAMBLE LENGTH IS 5 WORDS          <<-- writing, clearly.
-        private static ulong _sectorDuration = (ulong)((40.0 / 12.0) * Conversion.MsecToNsec);      // time in nsec for one sector    
+        private static double _scale = 1.0;
+        private static ulong _sectorDuration = (ulong)((40.0 / 12.0) * Conversion.MsecToNsec * _scale);      // time in nsec for one sector    
         private static int _sectorWordCount = 269 + 22 + 34;                                            // Based on : 269 data words (+ cksums) / sector, + X words for delay / preamble / sync
-        private static ulong _wordDuration = (ulong)(_sectorDuration / (ulong)(_sectorWordCount + 1));  // time in nsec for one word
+        private static ulong _wordDuration = (ulong)((_sectorDuration / (ulong)(_sectorWordCount + 1)) * _scale);  // time in nsec for one word
         private int _sectorWordIndex;                                                               // current word being read
 
         private Event _sectorEvent;

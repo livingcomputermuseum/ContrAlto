@@ -12,7 +12,17 @@
                 _taskType = TaskType.MemoryRefresh;
                 
                 _wakeup = false;
-            }                                   
+            }
+
+            protected override bool ExecuteInstruction(MicroInstruction instruction)
+            {
+                //
+                // Based on readings of the MRT microcode, the MRT keeps its wakeup
+                // until it executes a BLOCK.
+                // "; This version assumes MRTACT is cleared by BLOCK, not MAR<- R37"
+                //
+                return base.ExecuteInstruction(instruction);
+            }
         }
     }
 }

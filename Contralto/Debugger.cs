@@ -91,7 +91,7 @@ namespace Contralto
             DisplayBox.Refresh();
 
             // If you want interlacing to be more visible:
-            Array.Clear(_displayData, 0, _displayData.Length);
+            //Array.Clear(_displayData, 0, _displayData.Length);
         }
 
         /// <summary>
@@ -100,18 +100,59 @@ namespace Contralto
         /// <param name="scanline"></param>
         /// <param name="wordOffset"></param>
         /// <param name="word"></param>
-        public void DrawDisplayWord(int scanline, int wordOffset, ushort word)
+        public void DrawDisplayWord(int scanline, int wordOffset, ushort word, bool lowRes)
         {
             // TODO: move magic numbers to constants
-            int address = scanline * 76 + wordOffset * 2;
 
-            if (address > _displayData.Length)
+            if (lowRes)
             {
-                throw new InvalidOperationException("Display word address is out of bounds.");
+                // Low resolution; double up pixels.
+                int address = scanline * 76 + wordOffset * 4;
+
+                if (address > _displayData.Length)
+                {
+                    throw new InvalidOperationException("Display word address is out of bounds.");
+                }
+
+                UInt32 stretched = StretchWord(word);
+
+                _displayData[address] = (byte)(stretched >> 24);
+                _displayData[address + 1] = (byte)(stretched >> 16);
+                _displayData[address + 2] = (byte)(stretched >> 8);
+                _displayData[address + 3] = (byte)(stretched);
+            }
+            else
+            {
+                int address = scanline * 76 + wordOffset * 2;
+
+                if (address > _displayData.Length)
+                {
+                    throw new InvalidOperationException("Display word address is out of bounds.");
+                }
+
+                _displayData[address] = (byte)(word >> 8);
+                _displayData[address + 1] = (byte)(word);
+            }            
+        }
+
+        /// <summary>
+        /// "Stretches" a 16 bit word into a 32-bit word (for low-res display purposes).
+        /// </summary>
+        /// <param name="word"></param>
+        /// <returns></returns>
+        private UInt32 StretchWord(ushort word)
+        {
+            UInt32 stretched = 0;
+            
+            for(int i=0x8000, j=15;j>=0; i=i>>1, j--)
+            {
+                uint bit = (uint)(word & i) >> j;
+
+                stretched |= (bit << (j * 2 + 1));
+                stretched |= (bit << (j * 2));
             }
 
-            _displayData[address] = (byte)(word >> 8);
-            _displayData[address + 1] = (byte)(word);
+            return stretched;
         }
 
         private void RefreshUI()
@@ -925,6 +966,56 @@ namespace Contralto
             }
         }
 
+        private void OnDisplayMouseMove(object sender, MouseEventArgs e)
+        {
+            _system.Mouse.MouseMove(e.X, e.Y);
+        }
+
+        private void OnDisplayMouseDown(object sender, MouseEventArgs e)
+        {
+            AltoMouseButton button = AltoMouseButton.None;
+
+            switch(e.Button)
+            {
+                case MouseButtons.Left:
+                    button = AltoMouseButton.Left;
+                    break;
+
+                case MouseButtons.Right:
+                    button = AltoMouseButton.Right;
+                    break;
+
+                case MouseButtons.Middle:
+                    button = AltoMouseButton.Middle;
+                    break;
+            }
+
+            _system.Mouse.MouseDown(button);
+
+        }
+
+        private void OnDisplayMouseUp(object sender, MouseEventArgs e)
+        {
+            AltoMouseButton button = AltoMouseButton.None;
+
+            switch (e.Button)
+            {
+                case MouseButtons.Left:
+                    button = AltoMouseButton.Left;
+                    break;
+
+                case MouseButtons.Right:
+                    button = AltoMouseButton.Right;
+                    break;
+
+                case MouseButtons.Middle:
+                    button = AltoMouseButton.Middle;
+                    break;
+            }
+
+            _system.Mouse.MouseUp(button);
+        }
+
         private void InitKeymap()
         {
             _keyMap = new Dictionary<Keys, AltoKey>();
@@ -1034,6 +1125,8 @@ namespace Contralto
         private Rectangle _displayRect = new Rectangle(0, 0, 608, 808);
 
         // Keyboard mapping from windows vkeys to Alto keys
-        private Dictionary<Keys, AltoKey> _keyMap;        
+        private Dictionary<Keys, AltoKey> _keyMap;
+
+       
     }
 }

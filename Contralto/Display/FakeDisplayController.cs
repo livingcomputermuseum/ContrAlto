@@ -47,7 +47,7 @@
                 {
                     for (int word = 0; word < 38; word++)
                     {
-                        _display.DrawDisplayWord(scanline, word, 0xffff);
+                        _display.DrawDisplayWord(scanline, word, 0xffff, false);
                     }
                 }
 
@@ -65,7 +65,7 @@
                 // fill in HTAB
                 for(int htab = 0;htab<dcb.hTab; htab++)
                 {
-                    _display.DrawDisplayWord(scanline, wordOffset, (ushort)(dcb.whiteOnBlack ? 0x0 : 0xffff));
+                    _display.DrawDisplayWord(scanline, wordOffset, (ushort)(dcb.whiteOnBlack ? 0x0 : 0xffff), false);
                     wordOffset++;
                 }
 
@@ -79,14 +79,14 @@
                         data = (ushort)~data;
                     }
 
-                    _display.DrawDisplayWord(scanline, wordOffset, data);
+                    _display.DrawDisplayWord(scanline, wordOffset, data, false);
                     wordOffset++;
                 }
 
                 // erase remainder of line, if any
                 for (; wordOffset < 38; wordOffset++)
                 {
-                    _display.DrawDisplayWord(scanline, wordOffset, (ushort)(dcb.whiteOnBlack ? 0x0 : 0xffff));
+                    _display.DrawDisplayWord(scanline, wordOffset, (ushort)(dcb.whiteOnBlack ? 0x0 : 0xffff), false);
                 }
 
                 _display.RefreshAltoDisplay();

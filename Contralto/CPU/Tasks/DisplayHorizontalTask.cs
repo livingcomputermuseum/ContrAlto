@@ -34,11 +34,23 @@ namespace Contralto.CPU
 
                     case DisplayHorizontalF2.SETMODE:
                         _cpu._system.DisplayController.SETMODE(_busData);
+
+                        // "If bit 0 = 1, the bit clock rate is set to 100ns period (at the start of the next scan line),
+                        // and a 1 is merged into NEXT[9]."
+                        if ((_busData & 0x8000) != 0)
+                        {
+                            _nextModifier |= 1;
+                        }
                         break;
 
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled display word F2 {0}.", dh2));                        
                 }
+            }
+
+            protected override void ExecuteBlock()
+            {
+                _cpu._system.DisplayController.DHTBLOCK = true;                
             }
         }
     }

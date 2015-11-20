@@ -92,6 +92,7 @@
     <Compile Include="IO\DiskController.cs" />
     <Compile Include="IO\DiabloPack.cs" />
     <Compile Include="IO\Keyboard.cs" />
+    <Compile Include="IO\Mouse.cs" />
     <Compile Include="Logging\Log.cs" />
     <Compile Include="Memory\IMemoryMappedDevice.cs" />
     <Compile Include="Memory\Memory.cs" />

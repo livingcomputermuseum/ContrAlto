@@ -34,7 +34,14 @@ namespace Contralto.CPU
                 {
                     // Sector task is running; clear enable for seclate signal
                     _cpu._system.DiskController.DisableSeclate();
+                    
                 }
+
+                /*
+                if (_taskType == TaskType.DiskWord)
+                {
+                    _wakeup = false;
+                } */
 
                 return task;
             }

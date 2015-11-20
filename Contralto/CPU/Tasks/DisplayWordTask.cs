@@ -12,14 +12,17 @@ namespace Contralto.CPU
         {
             public DisplayWordTask(AltoCPU cpu) : base(cpu)
             {
-                _taskType = TaskType.DisplayWord;                
-                _wakeup = false;
+                _taskType = TaskType.DisplayWord;
+                _wakeup = false;                                
             }
 
             protected override bool ExecuteInstruction(MicroInstruction instruction)
             {
-                // We put ourselves back to sleep immediately once we've started running
-                _wakeup = false;
+                // We remove our wakeup only if there isn't a wakeup being generated for us by the
+                // display controller.
+                _wakeup = (!_cpu._system.DisplayController.FIFOFULL &&
+                            !_cpu._system.DisplayController.DHTBLOCK &&
+                            !_cpu._system.DisplayController.DWTBLOCK);                
 
                 return base.ExecuteInstruction(instruction);
             }
@@ -35,6 +38,19 @@ namespace Contralto.CPU
 
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled display word F2 {0}.", dw2));                        
+                }
+            }
+
+            protected override void ExecuteBlock()
+            {
+                _cpu._system.DisplayController.DWTBLOCK = true;
+
+                //
+                // Wake up DHT if it has not blocked itself.
+                //
+                if (!_cpu._system.DisplayController.DHTBLOCK)
+                {
+                    _cpu.WakeupTask(TaskType.DisplayHorizontal);
                 }
             }
         }

@@ -6,6 +6,7 @@ namespace Contralto.Memory
 {
     public enum MemoryOperation
     {
+        None,
         LoadAddress,
         Read,
         Store
@@ -33,7 +34,7 @@ namespace Contralto.Memory
                     if (_bus.ContainsKey(addr))
                     {
                         throw new InvalidOperationException(
-                            String.Format("Memory mapped address collision for dev {0} at address {1}", dev, Conversion.ToOctal(addr)));
+                            String.Format("Memory mapped address collision for dev {0} at address {1} with {2}", dev, Conversion.ToOctal(addr), _bus[addr]));
                     }
                     else
                     {
@@ -269,7 +270,7 @@ namespace Contralto.Memory
         /// <returns></returns>
         private ushort ReadFromBus(ushort address, TaskType task, bool extendedMemoryReference)
         {
-            if (address <= Memory.MemTop)
+            if (address <= Memory.RamTop)
             {
                 // Main memory access; shortcut hashtable lookup for performance reasons.
                 return _mainMemory.Read(address, task, extendedMemoryReference);
@@ -301,7 +302,7 @@ namespace Contralto.Memory
         /// <returns></returns>
         private void WriteToBus(ushort address, ushort data, TaskType task, bool extendedMemoryReference)
         {
-            if (address <= Memory.MemTop)
+            if (address <= Memory.RamTop)
             {
                 // Main memory access; shortcut hashtable lookup for performance reasons.
                 _mainMemory.Load(address, data, task, extendedMemoryReference);

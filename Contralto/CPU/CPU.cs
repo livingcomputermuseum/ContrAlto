@@ -144,7 +144,7 @@ namespace Contralto.CPU
         {            
             if (_tasks[(int)task] != null)
             {
-                _tasks[(int)task].WakeupTask();
+                _tasks[(int)task].WakeupTask();                
             }
         }
 

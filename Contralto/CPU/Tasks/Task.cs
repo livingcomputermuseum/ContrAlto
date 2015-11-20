@@ -68,7 +68,7 @@ namespace Contralto.CPU
             public bool ExecuteNext()
             {
                 // TODO: cache microinstructions (or pre-decode them) to save consing all these up every time.
-                MicroInstruction instruction = UCodeMemory.GetInstruction(_mpc);
+                MicroInstruction instruction = UCodeMemory.GetInstruction(_mpc, _taskType);
 
                 // Grab BLOCK bit so that other tasks / hardware can look at it
                 _block = instruction.F1 == SpecialFunction1.Block;
@@ -105,30 +105,10 @@ namespace Contralto.CPU
                 // Wait for memory state machine if a memory operation is requested by this instruction and
                 // the memory isn't ready yet.
                 // TODO: this needs to be seriously cleaned up.
-                //
-                bool constantAccess =
-                        instruction.F1 == SpecialFunction1.Constant ||
-                        instruction.F2 == SpecialFunction2.Constant;
-                if ((instruction.BS == BusSource.ReadMD && !constantAccess) ||        // ReadMD only occurs if not reading from constant ROM.
-                    instruction.F1 == SpecialFunction1.LoadMAR ||
-                    instruction.F2 == SpecialFunction2.StoreMD) 
-                {
-                    MemoryOperation op;
-
-                    if (instruction.BS == BusSource.ReadMD)
-                    {
-                        op = MemoryOperation.Read;
-                    }
-                    else if (instruction.F1 == SpecialFunction1.LoadMAR)
-                    {
-                        op = MemoryOperation.LoadAddress;
-                    }
-                    else
-                    {
-                        op = MemoryOperation.Store;
-                    }
-
-                    if (!_cpu._system.MemoryBus.Ready(op))
+                //                
+                if (instruction.MemoryAccess) 
+                {                    
+                    if (!_cpu._system.MemoryBus.Ready(instruction.MemoryOperation))
                     {
                         // Suspend operation for this cycle.
                         return false;
@@ -145,7 +125,7 @@ namespace Contralto.CPU
                 ExecuteSpecialFunction2Early(instruction);
 
                 // Select BUS data.
-                if (!constantAccess)
+                if (!instruction.ConstantAccess)
                 {
                     // Normal BUS data (not constant ROM access).
                     switch (instruction.BS)
@@ -172,9 +152,8 @@ namespace Contralto.CPU
                             _busData = _cpu._system.MemoryBus.ReadMD();
                             break;
 
-                        case BusSource.ReadMouse:
-                            //throw new NotImplementedException("ReadMouse bus source not implemented.");
-                            _busData = 0;   // TODO: implement;
+                        case BusSource.ReadMouse:                            
+                            _busData = _cpu._system.Mouse.PollMouseBits();
                             break;
 
                         case BusSource.ReadDisp:
@@ -217,7 +196,7 @@ namespace Contralto.CPU
                 // selection of R; they do not affect the address supplied to the constant ROM."
                 // Hence we use the unmodified RSELECT value here and above.
                 if ((int)instruction.BS > 4 ||
-                    constantAccess)
+                    instruction.ConstantAccess)
                 {
                     _busData &= ControlROM.ConstantROM[(instruction.RSELECT << 3) | ((uint)instruction.BS)];
                 }
@@ -372,7 +351,6 @@ namespace Contralto.CPU
                         ExecuteSpecialFunction2(instruction);
                         break;
                 }
-
                
                 // We always do the shifter operation; DNS may need its output.
                 //
@@ -397,30 +375,15 @@ namespace Contralto.CPU
                 // Load T
                 if (instruction.LoadT)
                 {
-                    // Does this operation change the source for T?
-                    bool loadTFromALU = false;
-                    switch (instruction.ALUF)
-                    {
-                        case AluFunction.Bus:
-                        case AluFunction.BusOrT:
-                        case AluFunction.BusPlus1:
-                        case AluFunction.BusMinus1:
-                        case AluFunction.BusPlusTPlus1:
-                        case AluFunction.BusPlusSkip:
-                        case AluFunction.AluBusAndT:
-                            loadTFromALU = true;
-                            break;
-                    }
-
-                    _cpu._t = loadTFromALU ? aluData : _busData;
+                    // Does this operation change the source for T?                    
+                    _cpu._t = instruction.LoadTFromALU ? aluData : _busData;
 
                     //
                     // Control RAM: "...the control RAM address is specified by the control RAM
                     // address register... which is loaded from the ALU output whenver T is loaded
                     // from its source."
                     //
-                    UCodeMemory.LoadControlRAMAddress(aluData);
-                    
+                    UCodeMemory.LoadControlRAMAddress(aluData);                    
                 }
 
                 // Load L (and M) from ALU outputs.
@@ -444,7 +407,7 @@ namespace Contralto.CPU
                 //
                 if (swMode)
                 {
-                    Console.WriteLine("SWMODE NEXT {0} Modifier {1}", Conversion.ToOctal(instruction.NEXT), Conversion.ToOctal(nextModifier));
+                    //Console.WriteLine("SWMODE NEXT {0} Modifier {1}", Conversion.ToOctal(instruction.NEXT), Conversion.ToOctal(nextModifier));
                     UCodeMemory.SwitchMode((ushort)(instruction.NEXT | nextModifier));
                 }
 

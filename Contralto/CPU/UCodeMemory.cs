@@ -50,6 +50,12 @@ namespace Contralto.CPU
             // Precache ROM
             CacheMicrocodeROM();
 
+            // Precache (empty) RAM
+            for(ushort i=0;i<_uCodeRam.Length;i++)
+            {
+                UpdateRAMCache(i);
+            }
+
             // Start in ROM0 -- TODO: need to implement reset logic
             _microcodeBank = MicrocodeBank.ROM0;
             _ramAddr = 0;
@@ -128,7 +134,7 @@ namespace Contralto.CPU
             if (_ramBank > 0)
             {
                 //throw new InvalidOperationException("RAM bank > 0, unexpected.");                
-                return 0xffff;
+                _ramBank = 0;
             }
 
             // pretend no ram for the moment                
@@ -162,7 +168,7 @@ namespace Contralto.CPU
             if (_ramBank > 0)
             {
                 //throw new InvalidOperationException("RAM bank > 0, unexpected.");                
-                return;
+                _ramBank = 0;
             }
 
             Logging.Log.Write(Logging.LogComponent.Microcode, "CRAM address for write: Bank {0}, addr {1}",
@@ -186,9 +192,19 @@ namespace Contralto.CPU
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-        public static MicroInstruction GetInstruction(ushort address)
+        public static MicroInstruction GetInstruction(ushort address, TaskType task)
         {
-            return _decodeCache[address + (int)_microcodeBank * 1024];            
+            // Only RAM-enabled tasks can execute from anything other than ROM (right now)
+            if (task == TaskType.Emulator)
+            {
+                // banked
+                return _decodeCache[address + (int)_microcodeBank * 1024];
+            }
+            else
+            {
+                // ROM only
+                return _decodeCache[address];
+            }
         }
 
         private static void LoadMicrocode(RomFile[] romInfo)
@@ -244,9 +260,8 @@ namespace Contralto.CPU
             // Invert the requisite bits just to make things easier; the high bits of F1 and F2 and the Load L bit are inverted
             // already; we leave those alone.
             const UInt32 bitMask = 0x00088400;
-
-            UInt32 masked = ~word & bitMask;
-            word = (word & ~bitMask) | masked;
+            
+            word ^= bitMask;
 
             return word;
         }
@@ -270,7 +285,7 @@ namespace Contralto.CPU
             UInt32 instructionWord = _uCodeRam[address];
             _decodeCache[2048 + address] = new MicroInstruction(MapRAMWord(instructionWord));
 
-            Console.WriteLine(_decodeCache[2048 + address]);
+            //Console.WriteLine(_decodeCache[2048 + address]);
         }
 
         private static RomFile[] _uCodeRoms =

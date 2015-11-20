@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Contralto.Memory;
+using System;
 
 namespace Contralto.CPU
 {
@@ -157,6 +158,7 @@ namespace Contralto.CPU
     {
         public MicroInstruction(UInt32 code)
         {
+            // Parse fields
             RSELECT = (code & 0xf8000000) >> 27;
             ALUF =    (AluFunction)((code & 0x07800000) >> 23);
             BS =      (BusSource)((code &        0x00700000) >> 20);
@@ -165,6 +167,54 @@ namespace Contralto.CPU
             LoadT =   ((code & 0x00000800) >> 11) == 0 ? false : true;
             LoadL =   ((code & 0x00000400) >> 10) == 0 ? false : true;
             NEXT =    (ushort)(code & 0x3ff);
+
+            // Parse metadata:
+
+            // Whether this instruction references constant memory
+            ConstantAccess =
+                       F1 == SpecialFunction1.Constant ||
+                       F2 == SpecialFunction2.Constant;
+
+            // Whether this instruction accesses memory
+            MemoryAccess = 
+                (BS == BusSource.ReadMD && !ConstantAccess) ||        // ReadMD only occurs if not reading from constant ROM.
+                F1 == SpecialFunction1.LoadMAR ||
+                F2 == SpecialFunction2.StoreMD;
+
+            // What kind of memory access this instruction performs, if any.
+            if (MemoryAccess)
+            {
+                if (BS == BusSource.ReadMD)
+                {
+                    MemoryOperation = MemoryOperation.Read;
+                }
+                else if (F1 == SpecialFunction1.LoadMAR)
+                {
+                    MemoryOperation = MemoryOperation.LoadAddress;
+                }
+                else
+                {
+                    MemoryOperation = MemoryOperation.Store;
+                }
+            }
+            else
+            {
+                MemoryOperation = MemoryOperation.None;
+            }
+
+            // Whether to load T from the ALU or the bus.
+            switch (ALUF)
+            {
+                case AluFunction.Bus:
+                case AluFunction.BusOrT:
+                case AluFunction.BusPlus1:
+                case AluFunction.BusMinus1:
+                case AluFunction.BusPlusTPlus1:
+                case AluFunction.BusPlusSkip:
+                case AluFunction.AluBusAndT:
+                    LoadTFromALU = true;
+                    break;
+            }
         }
 
         public override string ToString()
@@ -188,5 +238,11 @@ namespace Contralto.CPU
         public bool LoadT;
         public bool LoadL;
         public ushort NEXT;
+
+        // Metadata about the instruction that can be precalculated and used during execution
+        public bool ConstantAccess;
+        public bool MemoryAccess;
+        public MemoryOperation MemoryOperation;
+        public bool LoadTFromALU;
     }
 }

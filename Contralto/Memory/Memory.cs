@@ -13,7 +13,7 @@ namespace Contralto.Memory
         /// <summary>
         /// The top address of main memory (above which lies the I/O space)
         /// </summary>
-        public static ushort MemTop
+        public static ushort RamTop
         {
             get { return _memTop; }
         }
@@ -35,8 +35,7 @@ namespace Contralto.Memory
             else
             {
                 address += 0x10000 * GetBankNumber(task, extendedMemory);
-                ushort data = _mem[address];
-                return data;
+                return _mem[address];                
             }
         }
 
