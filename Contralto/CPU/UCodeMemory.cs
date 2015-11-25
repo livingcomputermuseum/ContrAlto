@@ -103,6 +103,7 @@ namespace Contralto.CPU
             Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: Current Bank {0}", _microcodeBank);
             
             // 2K ROM
+            /*
             switch(_microcodeBank)
             {
                 case MicrocodeBank.ROM0:
@@ -116,10 +117,10 @@ namespace Contralto.CPU
                 case MicrocodeBank.RAM0:
                     _microcodeBank = (nextAddress & 0x100) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.ROM1;
                     break;
-            }
+            } */
             
             // for 1K ROM
-            //_microcodeBank = _microcodeBank == MicrocodeBank.ROM0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
+            _microcodeBank = _microcodeBank == MicrocodeBank.ROM0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
 
             Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: New Bank {0}", _microcodeBank);            
         }
@@ -144,7 +145,7 @@ namespace Contralto.CPU
                 _lowHalfsel,
                 Conversion.ToOctal(_ramAddr));
 
-            UInt32 data = _uCodeRam[_ramAddr + (_ramBank * 1024)];
+            UInt32 data = MapRAMWord(_uCodeRam[_ramAddr + (_ramBank * 1024)]);
 
             // Flip the necessary bits before returning them.
             // (See table in section 8.3 of HWRef.)
@@ -181,7 +182,7 @@ namespace Contralto.CPU
 
             ushort address = (ushort)(_ramAddr + _ramBank * 1024);
             
-            _uCodeRam[address] = ((UInt32)(high) << 16) | low;
+            _uCodeRam[address] = MapRAMWord(((UInt32)(high) << 16) | low);
 
             UpdateRAMCache(address);
         }
@@ -283,7 +284,7 @@ namespace Contralto.CPU
         private static void UpdateRAMCache(ushort address)
         {
             UInt32 instructionWord = _uCodeRam[address];
-            _decodeCache[2048 + address] = new MicroInstruction(MapRAMWord(instructionWord));
+            _decodeCache[2048 + address] = new MicroInstruction(instructionWord);
 
             //Console.WriteLine(_decodeCache[2048 + address]);
         }

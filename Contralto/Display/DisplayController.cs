@@ -64,7 +64,7 @@ namespace Contralto.Display
             _cursorRegLatch = false;
             _cursorXLatch = false;
 
-            _verticalBlankEndWakeup = new Event(_verticalBlankDuration, null, VerticalBlankEndCallback);
+            _verticalBlankScanlineWakeup = new Event(_verticalBlankDuration, null, VerticalBlankScanlineCallback);
             _horizontalWakeup = new Event(_horizontalBlankDuration, null, HorizontalBlankEndCallback);
             _wordWakeup = new Event(_wordDuration, null, WordCallback);
 
@@ -74,7 +74,7 @@ namespace Contralto.Display
 
         private void FieldStart()
         {
-            // Start of Vertical Blanking (end of last field).  This lasts for 16 scanline times or so.
+            // Start of Vertical Blanking (end of last field).  This lasts for 34 scanline times or so.
             _evenField = !_evenField;
 
             // Wakeup DVT
@@ -86,34 +86,47 @@ namespace Contralto.Display
 
             _fields++;
 
-            _scanline = _evenField ? 0 : 1;                      
+            _scanline = _evenField ? 0 : 1;
 
-            // Schedule wakeup for end of vblank
-            _verticalBlankEndWakeup.TimestampNsec = _verticalBlankDuration;
-            _system.Scheduler.Schedule(_verticalBlankEndWakeup);            
+            _vblankScanlineCount = 0;
+
+            // Schedule wakeup for first scanline of vblank
+            _verticalBlankScanlineWakeup.TimestampNsec = _verticalBlankScanlineDuration;
+            _system.Scheduler.Schedule(_verticalBlankScanlineWakeup);            
         }
 
-        private void VerticalBlankEndCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void VerticalBlankScanlineCallback(ulong timeNsec, ulong skewNsec, object context)
         {
-            // End of VBlank, start new visible frame at beginning of first horizontal blanking period.            
+            // End of VBlank scanline.         
+            _vblankScanlineCount++;
 
-            // Wake up DHT
-            _system.CPU.WakeupTask(TaskType.DisplayHorizontal);
-
-            _dataBuffer.Clear();
-
-            _dwtBlocked = false;
-            _dhtBlocked = false;
-
-            // Schedule HBlank wakeup for end of first HBlank            
-            _horizontalWakeup.TimestampNsec = _horizontalBlankDuration - skewNsec;
-            _system.Scheduler.Schedule(_horizontalWakeup);
-            
             // Run MRT
-            //_system.CPU.WakeupTask(TaskType.MemoryRefresh);
+            _system.CPU.WakeupTask(TaskType.MemoryRefresh);
+            
+            if (_vblankScanlineCount > (_evenField ? 33 : 34))
+            {
+                // End of vblank:
+                // Wake up DHT
+                _system.CPU.WakeupTask(TaskType.DisplayHorizontal);
 
-            // Run CURT
-            _system.CPU.WakeupTask(TaskType.Cursor);
+                _dataBuffer.Clear();
+
+                _dwtBlocked = false;
+                _dhtBlocked = false;
+
+                // Run CURT
+                _system.CPU.WakeupTask(TaskType.Cursor);
+
+                // Schedule HBlank wakeup for end of first HBlank            
+                _horizontalWakeup.TimestampNsec = _horizontalBlankDuration - skewNsec;
+                _system.Scheduler.Schedule(_horizontalWakeup);                
+            }
+            else
+            {                
+                // Do the next vblank scanline
+                _verticalBlankScanlineWakeup.TimestampNsec = _verticalBlankScanlineDuration;
+                _system.Scheduler.Schedule(_verticalBlankScanlineWakeup);
+            }
         }        
 
         private void HorizontalBlankEndCallback(ulong timeNsec, ulong skewNsec, object context)
@@ -121,14 +134,7 @@ namespace Contralto.Display
             // Reset scanline word counter
             _word = 0;
 
-            // Deal with SWMODE latches for the scanline we're about to draw
-            if (_swModeLatch)
-            {
-                _lowRes = _lowResLatch;
-                _whiteOnBlack = _whiteOnBlackLatch;
-                _swModeLatch = false;
-            }
-
+            // Deal with cursor latches for this scanline
             if (_cursorRegLatch)
             {
                 _cursorRegLatched = _cursorReg;
@@ -140,9 +146,6 @@ namespace Contralto.Display
                 _cursorXLatched = _cursorX;
                 _cursorXLatch = false;
             }
-
-            // Run MRT on end of hsync
-            _system.CPU.WakeupTask(TaskType.MemoryRefresh);           
 
             // Schedule immediate wakeup for first word on this scanline
             _wordWakeup.TimestampNsec = 0;
@@ -213,15 +216,24 @@ namespace Contralto.Display
                 {
                     // More scanlines to do.      
                                                      
-                    // Run CURT at end of scanline
-                    _system.CPU.WakeupTask(TaskType.Cursor);
+                    // Run CURT and MRT at end of scanline
+                    _system.CPU.WakeupTask(TaskType.Cursor);                    
+                    _system.CPU.WakeupTask(TaskType.MemoryRefresh);
 
                     // Schedule HBlank wakeup for end of next HBlank                    
                     _horizontalWakeup.TimestampNsec = _horizontalBlankDuration - skewNsec;
                     _system.Scheduler.Schedule(_horizontalWakeup);
                     _dwtBlocked = false;
-                    _dataBuffer.Clear();                    
-                   
+                    _dataBuffer.Clear();
+
+                    // Deal with SWMODE latches for the scanline we're about to draw
+                    if (_swModeLatch)
+                    {
+                        _lowRes = _lowResLatch;
+                        _whiteOnBlack = _whiteOnBlackLatch;
+                        _swModeLatch = false;
+                    }                    
+
                 }
             }
             else
@@ -367,13 +379,16 @@ namespace Contralto.Display
         // ~35 scanlines for vblank (1330uS)
         private const double _scale = 1.0;        
         private const ulong _verticalBlankDuration = (ulong)(665000.0 * _scale);              // 665uS
+        private const ulong _verticalBlankScanlineDuration = (ulong)(38080 * _scale);         // 38uS
         private const ulong _horizontalBlankDuration = (ulong)(6084 * _scale);                // 6uS
         private const ulong _wordDuration = (ulong)(842.0 * _scale);                          // 32/38uS
+
+        private int _vblankScanlineCount;
         
         //
         // Scheduler events
         //        
-        private Event _verticalBlankEndWakeup;
+        private Event _verticalBlankScanlineWakeup;
         private Event _horizontalWakeup;
         private Event _wordWakeup;
     }

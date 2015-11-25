@@ -40,15 +40,15 @@
 033:175550 - INCLO# 3,3						; Data address (gets 400 (STA at 14))
 034:000000 - JMP 0							; non-error interrupt mask
 035:000000 - JMP 0							; error interrupt mask
-036:000000 - JMP 0							; reserved
-037:000000 - JMP 0							; disk address
+036:000000 - JMP 0							; reserved								; header checked/written here, this is always zero
+037:000000 - JMP 0							; disk address							; address is checked
 
 ; 1st copy of label block at 402 starts here
-040:130374 - COMSC# 1,2,SZR					; 000400 - disk address (?)
-041:000000 - JMP 0							; 120374 - previous disk address
+040:130374 - COMSC# 1,2,SZR					; 000400 - disk address (?)				; next address ?  Not checked; read
+041:000000 - JMP 0							; 120374 - previous disk address		; previous address (checked)
 042:000000 - JMP 0							; 000000 - blank
-043:000000 - JMP 0							; 001000 - num chars
-044:176007 - ADC 3,3,SBN					; 000001 - page number
+043:000000 - JMP 0							; 001000 - num chars					; checked
+044:176007 - ADC 3,3,SBN					; 000001 - page number					; not checked
 045:000001 - JMP 1							; 000001 - version
 046:000000 - JMP 0							; 000000 - sn high
 047:000176 - JMP 176						; 000176 - sn low
@@ -63,7 +63,7 @@
 055:176150 - ADCLO# 3,3                     ; Data address
 056:000000 - JMP 0                          ; non-error interrupt mask
 057:000000 - JMP 0                          ; error interrupt mask
-060:000000 - JMP 0                          ; reserved
+060:000000 - JMP 0                          ; reserved								; header checked/written here
 061:130374 - COMSC# 1,2,SZR                 ; disk address
 
 ; 2nd copy of label block at 402 starts here (and magically matches

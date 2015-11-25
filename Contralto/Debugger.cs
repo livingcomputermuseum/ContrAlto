@@ -1071,6 +1071,14 @@ namespace Contralto
             _keyMap.Add(Keys.RShiftKey, AltoKey.RShift);
             _keyMap.Add(Keys.ControlKey, AltoKey.CTRL);
             _keyMap.Add(Keys.Return, AltoKey.Return);
+            _keyMap.Add(Keys.F1, AltoKey.BlankTop);
+            _keyMap.Add(Keys.F2, AltoKey.BlankMiddle);
+            _keyMap.Add(Keys.F3, AltoKey.BlankBottom);
+            _keyMap.Add(Keys.Back, AltoKey.BS);
+            _keyMap.Add(Keys.Tab, AltoKey.TAB);
+            _keyMap.Add(Keys.OemSemicolon, AltoKey.Semicolon);
+            _keyMap.Add(Keys.OemOpenBrackets, AltoKey.LBracket);
+            _keyMap.Add(Keys.OemCloseBrackets, AltoKey.RBracket);
 
 
         }

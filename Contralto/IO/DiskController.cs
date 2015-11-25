@@ -264,10 +264,12 @@ namespace Contralto.IO
                 _seclateEvent.TimestampNsec = _seclateDuration;
                 _system.Scheduler.Schedule(_seclateEvent);
             }
-
-            // Schedule next sector pulse
-            _sectorEvent.TimestampNsec = _sectorDuration - skewNsec;
-            _system.Scheduler.Schedule(_sectorEvent);            
+            else
+            {
+                // Schedule next sector pulse
+                _sectorEvent.TimestampNsec = _sectorDuration - skewNsec;
+                _system.Scheduler.Schedule(_sectorEvent);            
+            }
         }
 
         private void WordCallback(ulong timeNsec, ulong skewNsec, object context)
@@ -279,6 +281,12 @@ namespace Contralto.IO
             {
                 _wordEvent.TimestampNsec = _wordDuration - skewNsec;
                 _system.Scheduler.Schedule(_wordEvent);
+            }
+            else
+            {
+                // // Schedule next sector pulse immediately
+                _sectorEvent.TimestampNsec = skewNsec;
+                _system.Scheduler.Schedule(_sectorEvent);       
             }
         }
 
@@ -383,7 +391,7 @@ namespace Contralto.IO
                 _kStat |= 0x0040;
 
                 // And figure out how long this will take.
-                _seekDuration = CalculateSeekTime();
+                _seekDuration = (ulong)(CalculateSeekTime() / (ulong)(Math.Abs(_destCylinder - _cylinder) + 1));
 
                 _seekEvent.TimestampNsec = _seekDuration;
                 _system.Scheduler.Schedule(_seekEvent);
@@ -403,7 +411,7 @@ namespace Contralto.IO
             //
             double seekTimeMsec = 15.0 + 8.6 * Math.Sqrt(dt);
 
-            return (ulong)(seekTimeMsec * Conversion.MsecToNsec) / 100;     // hack to speed things up
+            return (ulong)(seekTimeMsec * Conversion.MsecToNsec);     // hack to speed things up
         }
 
         /// <summary>
@@ -435,13 +443,7 @@ namespace Contralto.IO
             // actual data (it could be the pre-header delay, inter-record gaps or sync words)
             // and we may not actually end up doing anything with it, but we may
             // need it to decide whether to do anything at all.
-            //      
-            
-            if (_sectorWordIndex >= _sectorWordCount)
-            {
-                return;
-            }
-                  
+            //                                             
             ushort diskWord = _sectorData[_sectorWordIndex].Data;
 
             bool bWakeup = false;
@@ -463,9 +465,11 @@ namespace Contralto.IO
             {
                 if (!_xferOff)
                 {
-                    if (_debugRead)
+                    // Debugging: on a read/check, if we are overwriting a word that was never read by the
+                    // microcode via KDATA, log it.
+                    if (_debugRead && (((KADR & 0x00c0) >> 6) == 0 || ((KADR & 0x00c0) >> 6) == 1))
                     {
-                        //Console.WriteLine("--- missed word {0}({1}) ---", _sectorWordIndex, _kDataRead);
+                        Console.WriteLine("--- missed sector word {0}({1}) ---", _sectorWordIndex, _kDataRead);
                     }
 
                     Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Sector {0} Word {1} read into KDATA", _sector, Conversion.ToOctal(diskWord));  
@@ -645,10 +649,10 @@ namespace Contralto.IO
         // $MIR0BL		$177775;	DISK INTERRECORD PREAMBLE IS 3 WORDS            <<-- writing
         // $MRPAL		$177775;	DISK READ POSTAMBLE LENGTH IS 3 WORDS
         // $MWPAL		$177773;	DISK WRITE POSTAMBLE LENGTH IS 5 WORDS          <<-- writing, clearly.
-        private static double _scale = 1.0;
+        private static double _scale = 1.5;
         private static ulong _sectorDuration = (ulong)((40.0 / 12.0) * Conversion.MsecToNsec * _scale);      // time in nsec for one sector    
         private static int _sectorWordCount = 269 + 22 + 34;                                            // Based on : 269 data words (+ cksums) / sector, + X words for delay / preamble / sync
-        private static ulong _wordDuration = (ulong)((_sectorDuration / (ulong)(_sectorWordCount + 1)) * _scale);  // time in nsec for one word
+        private static ulong _wordDuration = (ulong)((_sectorDuration / (ulong)(_sectorWordCount)) * _scale);  // time in nsec for one word
         private int _sectorWordIndex;                                                               // current word being read
 
         private Event _sectorEvent;
@@ -662,7 +666,7 @@ namespace Contralto.IO
 
         // SECLATE data.
         // 8.5uS for seclate delay (approx. 50 clocks)
-        private static ulong _seclateDuration = 85 * Conversion.UsecToNsec;
+        private static ulong _seclateDuration = (ulong)(85.0 * Conversion.UsecToNsec * _scale);
         private bool _seclateEnable;
         private bool _seclate;
         private Event _seclateEvent;     

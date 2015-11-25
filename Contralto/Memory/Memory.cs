@@ -29,11 +29,16 @@ namespace Contralto.Memory
         {
             // Check for XM registers; this occurs regardless of XM flag since it's in the I/O page.
             if (address >= _xmBanksStart && address < _xmBanksStart + 16)
-            {
-                return _xmBanks[address - _xmBanksStart];
+            {                
+                return (ushort)(0xfff0 |_xmBanks[address - _xmBanksStart]);
             }
             else
             {
+                /*
+                if (extendedMemory)
+                {
+                    Log.Write(LogComponent.Memory, "Extended memory read, bank {0} address {1}, read {2}", GetBankNumber(task, extendedMemory), Conversion.ToOctal(address), Conversion.ToOctal(_mem[address + 0x10000 * GetBankNumber(task, extendedMemory)]));
+                } */
                 address += 0x10000 * GetBankNumber(task, extendedMemory);
                 return _mem[address];                
             }
@@ -52,6 +57,11 @@ namespace Contralto.Memory
             }
             else
             {
+                /*
+                if (extendedMemory)
+                {
+                    Log.Write(LogComponent.Memory, "Extended memory write, bank {0} address {1}, data {2}", GetBankNumber(task, extendedMemory), Conversion.ToOctal(address), Conversion.ToOctal(data));
+                } */
                 address += 0x10000 * GetBankNumber(task, extendedMemory);
                 _mem[address] = data;               
             }
@@ -64,7 +74,7 @@ namespace Contralto.Memory
 
         private int GetBankNumber(TaskType task, bool extendedMemory)
         {
-            return extendedMemory ? _xmBanks[(int)task] & 0x3 : (_xmBanks[(int)task] & 0xc) >> 2;
+            return extendedMemory ? (_xmBanks[(int)task]) & 0x3 : ((_xmBanks[(int)task]) & 0xc) >> 2;
         }
 
         private readonly MemoryRange[] _addresses =

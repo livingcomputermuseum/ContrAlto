@@ -1,11 +1,12 @@
-﻿namespace Contralto
+﻿using Contralto.CPU;
+
+namespace Contralto
 {
     class Program
     {
         static void Main(string[] args)
         {
-
-            AltoSystem system = new AltoSystem();            
+            AltoSystem system = new AltoSystem();                            
 
             // for now everything is driven through the debugger            
             Debugger d = new Debugger(system);
