@@ -32,12 +32,14 @@ namespace Contralto
             RefreshUI();                     
         }        
 
-        public void LoadSourceCode(string path)
+        public void LoadSourceCode(MicrocodeBank bank, string path)
         {
             if (path == null)
             {
                 throw new ArgumentNullException(path, "Microcode path must be specified.");
             }
+
+            DataGridView view = bank == MicrocodeBank.ROM0 ? _rom0SourceViewer : _rom1SourceViewer;
 
             StreamReader sr = new StreamReader(path);
 
@@ -47,19 +49,19 @@ namespace Contralto
 
                 SourceLine src = new SourceLine(line);
 
-                int i = _rom0SourceViewer.Rows.Add(
+                int i = view.Rows.Add(
                     false,  // breakpoint
                     GetTextForTask(src.Task),
                     src.Address,
                     src.Text);
 
                 // Give the row a color based on the task
-                _rom0SourceViewer.Rows[i].DefaultCellStyle.BackColor = GetColorForTask(src.Task);              
+                view.Rows[i].DefaultCellStyle.BackColor = GetColorForTask(src.Task);              
 
                 // Tag the row based on the PROM address (if any) to make it easy to find.
                 if (!String.IsNullOrEmpty(src.Address))
                 {
-                    _rom0SourceViewer.Rows[i].Tag = Convert.ToUInt16(src.Address, 8);
+                    view.Rows[i].Tag = Convert.ToUInt16(src.Address, 8);
                 }
             }            
 
@@ -272,8 +274,7 @@ namespace Contralto
                     break;
 
                 case 1:
-                    SourceTabs.TabIndex = 1;
-                    RefreshMicrocodeDisassembly(MicrocodeBank.ROM1);
+                    SourceTabs.TabIndex = 1;                    
                     HighlightMicrocodeSourceLine(_rom1SourceViewer, _system.CPU.CurrentTask.MPC);
                     break;
 
@@ -596,7 +597,7 @@ namespace Contralto
                 Task = TaskType.Invalid;
 
                 if (tokens.Length > 0 &&
-                    tokens[0].Length == 8 &&
+                    tokens[0].Length == 7 &&
                     tokens[0].EndsWith(">"))
                 {
                     // Close enough.  Look for the task tag and parse out the (octal) address
@@ -642,6 +643,10 @@ namespace Contralto
                             Task = TaskType.DiskWord;
                             break;
 
+                        case "XM":  //XMesa code, which runs in the Emulator task
+                            Task = TaskType.Emulator;
+                            break;
+
                         default:
                             Task = TaskType.Invalid;                            
                             break;
@@ -652,7 +657,7 @@ namespace Contralto
                         try
                         {
                             // Belongs to a task, so we can grab the address out as well
-                            Address = sourceText.Substring(2, 5);
+                            Address = sourceText.Substring(2, 4);
                         }
                         catch
                         {

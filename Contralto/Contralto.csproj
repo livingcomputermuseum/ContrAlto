@@ -108,7 +108,9 @@
     <None Include="Disassembly\altoIIcode3.mu">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Disassembly\MesaROM-full-annotated.mu" />
+    <None Include="Disassembly\MesaROM.mu">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Disk\bcpl.dsk">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

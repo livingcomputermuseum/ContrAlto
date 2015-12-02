@@ -38,7 +38,7 @@ namespace Contralto.Memory
                 if (extendedMemory)
                 {
                     Log.Write(LogComponent.Memory, "Extended memory read, bank {0} address {1}, read {2}", GetBankNumber(task, extendedMemory), Conversion.ToOctal(address), Conversion.ToOctal(_mem[address + 0x10000 * GetBankNumber(task, extendedMemory)]));
-                } */
+                } */                
                 address += 0x10000 * GetBankNumber(task, extendedMemory);
                 return _mem[address];                
             }
@@ -62,7 +62,8 @@ namespace Contralto.Memory
                 {
                     Log.Write(LogComponent.Memory, "Extended memory write, bank {0} address {1}, data {2}", GetBankNumber(task, extendedMemory), Conversion.ToOctal(address), Conversion.ToOctal(data));
                 } */
-                address += 0x10000 * GetBankNumber(task, extendedMemory);
+                address += 0x10000 * GetBankNumber(task, extendedMemory);                
+
                 _mem[address] = data;               
             }
         }

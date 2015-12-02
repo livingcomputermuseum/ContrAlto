@@ -11,7 +11,8 @@ namespace Contralto
             // for now everything is driven through the debugger            
             Debugger d = new Debugger(system);
             system.AttachDisplay(d);
-            d.LoadSourceCode("Disassembly\\altoIIcode3.mu");
+            d.LoadSourceCode(MicrocodeBank.ROM0, "Disassembly\\altoIIcode3.mu");
+            d.LoadSourceCode(MicrocodeBank.ROM1, "Disassembly\\MesaROM.mu");
             d.ShowDialog();                       
 
         }

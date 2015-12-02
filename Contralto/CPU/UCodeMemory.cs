@@ -102,8 +102,7 @@ namespace Contralto.CPU
         {                        
             Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: Current Bank {0}", _microcodeBank);
             
-            // 2K ROM
-            /*
+            // 2K ROM            
             switch(_microcodeBank)
             {
                 case MicrocodeBank.ROM0:
@@ -117,10 +116,10 @@ namespace Contralto.CPU
                 case MicrocodeBank.RAM0:
                     _microcodeBank = (nextAddress & 0x100) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.ROM1;
                     break;
-            } */
+            }
             
             // for 1K ROM
-            _microcodeBank = _microcodeBank == MicrocodeBank.ROM0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
+            //_microcodeBank = _microcodeBank == MicrocodeBank.ROM0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
 
             Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: New Bank {0}", _microcodeBank);            
         }

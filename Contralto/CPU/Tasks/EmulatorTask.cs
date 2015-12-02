@@ -73,6 +73,14 @@ namespace Contralto.CPU
                         // Dispatch function to Ethernet I/O based on contents of AC0... (TBD: what are these?)
                         // For now do nothing, since we have no Ethernet implemented
                         //throw new NotImplementedException();
+                        if ((_busData & 0x8000) != 0)
+                        {
+                            Console.WriteLine("Emulator STARTF --  boot");
+                        }                        
+                        else if(_busData != 0)
+                        {
+                            Console.WriteLine("Emulator STARTF --  {0}", Conversion.ToOctal(_busData));
+                        }
                         break;
 
                     case EmulatorF1.SWMODE:                        
