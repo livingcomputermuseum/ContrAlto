@@ -44,7 +44,7 @@ namespace Contralto.Logging
         static Log()
         {
             // TODO: make configurable
-            _components = LogComponent.DiskController | LogComponent.DiskSectorTask;
+            _components = LogComponent.None; // LogComponent.DiskController | LogComponent.DiskSectorTask;
             _type = LogType.Normal | LogType.Warning | LogType.Error;
         }
 

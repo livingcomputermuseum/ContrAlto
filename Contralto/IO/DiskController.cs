@@ -52,9 +52,7 @@ namespace Contralto.IO
                 _syncWordWritten = false;
 
                 // "In addition, it causes the head address bit to be loaded from KDATA[13]."
-                int newHead = (_kDataWrite & 0x4) >> 2;
-
-                _disk = ((_kDataWrite & 0x2) >> 1) ^ (_kAdr & 0x1);
+                int newHead = (_kDataWrite & 0x4) >> 2;                
 
                 if (newHead != _head)
                 {
@@ -83,18 +81,7 @@ namespace Contralto.IO
                     (_kDataWrite & 0x2) >> 1,
                     (_kDataWrite & 0x1));
 
-                Log.Write(LogComponent.DiskController, "  -Selected disk is {0}", _disk);
-
-                if (((_kAdr & 0xc) >> 2) == 2 ||
-                    ((_kAdr & 0xc) >> 2) == 3)
-                {
-                    Console.WriteLine("DATA WRITE");
-                }
-
-                if (_disk != 0)
-                {
-                    Console.WriteLine("*** DISK 1 SELECTED ***");
-                }
+                Log.Write(LogComponent.DiskController, "  -Selected disk is {0}", _disk);                       
 
                 if ((_kDataWrite & 0x1) != 0)
                 {
@@ -125,6 +112,18 @@ namespace Contralto.IO
                 {
                     _wdInit = true;
                 }
+
+                if (_sendAdr)
+                {
+                    // Select disk if _sendAdr is true
+                    _disk = ((_kDataWrite & 0x2) >> 1) ^ (_kAdr & 0x1);
+
+                    if (_disk != 0)
+                    {
+                        Console.WriteLine("*** DISK 1 SELECTED ***");
+                    }
+                }
+
             }
         }
 
@@ -507,7 +506,7 @@ namespace Contralto.IO
                         // microcode via KDATA, log it.
                         if (_debugRead)
                         {
-                            Console.WriteLine("--- missed sector word {0}({1}) ---", _sectorWordIndex, _kDataRead);
+                            Log.Write(LogType.Warning, LogComponent.DiskController, "--- missed sector word {0}({1}) ---", _sectorWordIndex, _kDataRead);
                         }
 
                         Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Sector {0} Word {1} read into KDATA", _sector, Conversion.ToOctal(diskWord));
@@ -517,7 +516,7 @@ namespace Contralto.IO
                     else
                     {
                         // Write                        
-                        Log.Write(LogType.Normal, LogComponent.DiskController, "Sector {0} Word {1} (rec {2}) to be written with {3} from KDATA", _sector, _sectorWordIndex, _recNo, Conversion.ToOctal(_kDataWrite));
+                        Log.Write(LogType.Verbose, LogComponent.DiskController, "Sector {0} Word {1} (rec {2}) to be written with {3} from KDATA", _sector, _sectorWordIndex, _recNo, Conversion.ToOctal(_kDataWrite));
 
                         if (_kDataWriteLatch)
                         {
@@ -528,14 +527,12 @@ namespace Contralto.IO
                         if (_syncWordWritten && _sectorWordIndex < _sectorData.Length)
                         {
                             if (_sectorData[_sectorWordIndex].Type == CellType.Data)
-                            {
-                                Console.WriteLine("Data written to data section.");
+                            {                                
                                 _sectorData[_sectorWordIndex].Data = _kDataWrite;
                             }
                             else
                             {
-                                Console.WriteLine("Data written to non-data section.");
-                                _sectorData[_sectorWordIndex].Data = _kDataWrite;
+                                Log.Write(LogType.Warning, LogComponent.DiskController, "Data written to non-data section (Sector {0} Word {1} Rec {2} Data {3})", _sector, _sectorWordIndex, _recNo, Conversion.ToOctal(_kDataWrite));                                
                             }
 
                             _sectorModified = true;
@@ -780,7 +777,7 @@ namespace Contralto.IO
         // $MIR0BL		$177775;	DISK INTERRECORD PREAMBLE IS 3 WORDS            <<-- writing
         // $MRPAL		$177775;	DISK READ POSTAMBLE LENGTH IS 3 WORDS
         // $MWPAL		$177773;	DISK WRITE POSTAMBLE LENGTH IS 5 WORDS          <<-- writing, clearly.
-        private static double _scale = 1.5;
+        private static double _scale = 1.75;
         private static ulong _sectorDuration = (ulong)((40.0 / 12.0) * Conversion.MsecToNsec * _scale);      // time in nsec for one sector    
         private static int _sectorWordCount = 269 + 22 + 34;                                            // Based on : 269 data words (+ cksums) / sector, + X words for delay / preamble / sync
         private static ulong _wordDuration = (ulong)((_sectorDuration / (ulong)(_sectorWordCount)) * _scale);  // time in nsec for one word

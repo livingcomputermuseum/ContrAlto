@@ -51,3 +51,16 @@ Current issues are around how the "INIT" mode of RWC works (the mysterious fourt
 
 The logic is 
 
+
+12/3/15:
+
+Project is on backburner while working on SUPDUP; notes for myself on current status:
+
+ - Disk reads/writes work (code is a bit hacky, but it's bound to be), need to allow persisting in-memory disk image back to disk image file.
+ - Drive selection logic seems to be correct, but "drive" logic needs to be decoupled from "controller" logic before multiple drives can be implemented
+ - Certain programs hang waiting for the disk to complete an action, the disk is inactive, so there is a deadlock.  Unsure exactly, but suspect a race condition
+    where the Alto code writes a new DCB (and expects the disk to notice it), but the DCB pointer gets clobbered by the controller after completing a previous task.
+ - Keyboard input has a few bugs (SHIFT gets stuck on occasionally) and UI needs major cleanup / refactoring.
+ - Disk controller is currently running 75% slower than normal to allow it to work properly; need to figure out why this is necessary -- are my timing calculations
+    off or are there issues with the microcode engine?
+ - 
