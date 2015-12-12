@@ -32,7 +32,7 @@
                 _clocks -= _frameClocks;
 
                 RenderDisplay();
-                _display.RefreshAltoDisplay();
+                _display.Render();
             }                    
         }
 
@@ -51,7 +51,7 @@
                     }
                 }
 
-                _display.RefreshAltoDisplay();
+                _display.Render();
                 return;
             }            
 
@@ -89,7 +89,7 @@
                     _display.DrawDisplayWord(scanline, wordOffset, (ushort)(dcb.whiteOnBlack ? 0x0 : 0xffff), false);
                 }
 
-                _display.RefreshAltoDisplay();
+                _display.Render();
 
                 // decrement scan line counter for this DCB, if < 0, grab next DCB.
                 dcb.scanlineCount--;
@@ -144,7 +144,7 @@
         private double _clocks;
                 
         private AltoSystem _system;
-        private Debugger _display;
+        private IAltoDisplay _display;
 
         // Timing constants
         // 38uS per scanline; 4uS for hblank.

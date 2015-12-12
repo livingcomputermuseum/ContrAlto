@@ -83,7 +83,7 @@ namespace Contralto.IO
             get { return _geometry; }
         }
 
-        public void Load(Stream imageStream)
+        public void Load(Stream imageStream, bool reverseByteOrder)
         {
             for(int cylinder = 0; cylinder < _geometry.Cylinders; cylinder++)
             {
@@ -117,6 +117,13 @@ namespace Contralto.IO
                             throw new InvalidOperationException("Short read while reading sector data.");
                         }
 
+                        if (reverseByteOrder)
+                        {
+                            SwapBytes(header);
+                            SwapBytes(label);
+                            SwapBytes(data);
+                        }
+
                         _sectors[cylinder, track, sector] = new DiabloDiskSector(header, label, data);                        
                     }
                 }
@@ -131,6 +138,16 @@ namespace Contralto.IO
         public DiabloDiskSector GetSector(int cylinder, int track, int sector)
         {
             return _sectors[cylinder, track, sector];
+        }
+
+        private void SwapBytes(byte[] data)
+        {
+            for(int i=0;i<data.Length;i+=2)
+            {
+                byte t = data[i];
+                data[i] = data[i + 1];
+                data[i + 1] = t;
+            }
         }
 
         private DiabloDiskSector[,,] _sectors;

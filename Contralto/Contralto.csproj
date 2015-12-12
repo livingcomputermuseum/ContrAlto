@@ -64,6 +64,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AltoSystem.cs" />
+    <Compile Include="AltoWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AltoWindow.Designer.cs">
+      <DependentUpon>AltoWindow.cs</DependentUpon>
+    </Compile>
     <Compile Include="CPU\ALU.cs" />
     <Compile Include="CPU\ConstantMemory.cs" />
     <Compile Include="CPU\CPU.cs" />
@@ -88,7 +94,9 @@
     </Compile>
     <Compile Include="Display\FakeDisplayController.cs" />
     <Compile Include="Display\DisplayController.cs" />
+    <Compile Include="Display\IAltoDisplay.cs" />
     <Compile Include="IClockable.cs" />
+    <Compile Include="IO\Diablo30Drive.cs" />
     <Compile Include="IO\DiskController.cs" />
     <Compile Include="IO\DiabloPack.cs" />
     <Compile Include="IO\Keyboard.cs" />
@@ -112,6 +120,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Disk\bcpl.dsk">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Disk\bravox.dsk">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Disk\Clark-Games.dsk">
@@ -260,6 +271,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="AltoWindow.resx">
+      <DependentUpon>AltoWindow.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Debugger.resx">
       <DependentUpon>Debugger.cs</DependentUpon>
     </EmbeddedResource>

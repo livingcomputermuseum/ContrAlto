@@ -12,13 +12,14 @@ using Contralto.CPU;
 using System.Threading;
 using System.Drawing.Imaging;
 using Contralto.IO;
+using Contralto.Display;
 
 namespace Contralto
 {
     /// <summary>
     /// A basic & hacky debugger.  To be improved.
     /// </summary>
-    public partial class Debugger : Form
+    public partial class Debugger : Form, IAltoDisplay
     {
         public Debugger(AltoSystem system)
         {
@@ -76,7 +77,7 @@ namespace Contralto
             RefreshUI();
         }        
 
-        public void RefreshAltoDisplay()
+        public void Render()
         {
             BeginInvoke(new StepDelegate(RefreshDisplayBox));            
         }

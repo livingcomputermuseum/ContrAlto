@@ -65,14 +65,11 @@ namespace Contralto
 
         /// <summary>
         /// Attaches an emulated display device to the system.
-        /// TODO: This is currently tightly-coupled with the Debugger, make
-        /// more general.
         /// </summary>
         /// <param name="d"></param>
-        public void AttachDisplay(Debugger d)
+        public void AttachDisplay(IAltoDisplay d)
         {
-            _displayController.AttachDisplay(d);
-           // _fakeDisplayController.AttachDisplay(d);
+            _displayController.AttachDisplay(d);           
         }
 
         public void SingleStep()

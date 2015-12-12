@@ -16,7 +16,7 @@ namespace Contralto.Display
             Reset();
         }
 
-        public void AttachDisplay(Debugger display)
+        public void AttachDisplay(IAltoDisplay display)
         {
             _display = display;
         }
@@ -207,7 +207,7 @@ namespace Contralto.Display
                     // Done with field.                    
 
                     // Draw the completed field to the emulated display.
-                    _display.RefreshAltoDisplay();
+                    _display.Render();
 
                     // And start over
                     FieldStart();
@@ -370,7 +370,7 @@ namespace Contralto.Display
         private Queue<ushort> _dataBuffer = new Queue<ushort>(16);
 
         private AltoSystem _system;
-        private Debugger _display;
+        private IAltoDisplay _display;
 
         private int _fields;
 

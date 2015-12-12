@@ -10,23 +10,35 @@ namespace Contralto.IO
         public DiskController(AltoSystem system)
         {
             _system = system;
-            Reset();
 
-            // Load the pack
-            _pack = new DiabloPack(DiabloDiskType.Diablo31);
+            // Load the drives
+            _drives = new Diablo30Drive[2];
+            _drives[0] = new Diablo30Drive(_system);
+            _drives[1] = new Diablo30Drive(_system);
 
             // TODO: this does not belong here.
-            FileStream fs = new FileStream("Disk\\nonprog.dsk", FileMode.Open, FileAccess.Read);
+            DiabloPack p0 = new DiabloPack(DiabloDiskType.Diablo31);
+            FileStream fs = new FileStream("Disk\\diag.dsk", FileMode.Open, FileAccess.Read);
+            p0.Load(fs, false);
+            fs.Close();
 
-            _pack.Load(fs);
+            _drives[0].LoadPack(p0);
 
-            fs.Close();                                   
-        }        
+            DiabloPack p1 = new DiabloPack(DiabloDiskType.Diablo31);
+            fs = new FileStream("Disk\\bravox.dsk", FileMode.Open, FileAccess.Read);
+            p1.Load(fs, true);
+            fs.Close();
+
+            _drives[1].LoadPack(p1);
+
+            Reset();
+
+        }
 
         /// <summary>
         /// TODO: this is messy; the read and write sides of KDATA are distinct hardware.
         /// According to docs, on a Write, eventually it appears on the Read side during an actual write to the disk
-        /// but not right away.  For now, this never happens (since we don't yet support writing).
+        /// but not right away.  
         /// </summary>
         public ushort KDATA
         {
@@ -52,14 +64,9 @@ namespace Contralto.IO
                 _syncWordWritten = false;
 
                 // "In addition, it causes the head address bit to be loaded from KDATA[13]."
-                int newHead = (_kDataWrite & 0x4) >> 2;                
+                int newHead = (_kDataWrite & 0x4) >> 2;
 
-                if (newHead != _head)
-                {
-                    // If we switch heads, we need to reload the sector
-                    _head = newHead;
-                    LoadSector();
-                }
+                SelectedDrive.Head = newHead;
 
                 // "0 normally, 1 if the command is to terminate immediately after the correct cylinder
                 // position is reached (before any data is transferred)."
@@ -76,12 +83,17 @@ namespace Contralto.IO
                 Log.Write(LogComponent.DiskController, "  -Disk Address ({0}) is C/H/S {1}/{2}/{3}, Drive {4} Restore {5}",
                     Conversion.ToOctal(_kDataWrite),
                     (_kDataWrite & 0x0ff8) >> 3,
-                    _head,
+                    newHead,
                     (_kDataWrite & 0xf000) >> 12,
                     (_kDataWrite & 0x2) >> 1,
                     (_kDataWrite & 0x1));
 
-                Log.Write(LogComponent.DiskController, "  -Selected disk is {0}", _disk);                       
+                //if ((_kAdr & 0x1) != 0)
+                {
+                    //_disk = ((_kDataWrite & 0x2) >> 1);
+                }
+
+                Log.Write(LogComponent.DiskController, "  -Selected disk is {0}", _disk);
 
                 if ((_kDataWrite & 0x1) != 0)
                 {
@@ -113,10 +125,11 @@ namespace Contralto.IO
                     _wdInit = true;
                 }
 
-                if (_sendAdr)
+                
+                if (_sendAdr & (_kDataWrite & 0x2) != 0)
                 {
                     // Select disk if _sendAdr is true
-                    _disk = ((_kDataWrite & 0x2) >> 1) ^ (_kAdr & 0x1);
+                    _disk = (_kAdr & 0x1);
 
                     if (_disk != 0)
                     {
@@ -139,50 +152,50 @@ namespace Contralto.IO
         public ushort KSTAT
         {
             get
-            {                
+            {
                 // Bits 4-7 of KSTAT are always 1s (it's a shortcut allowing the disk microcode to write
                 // "-1" to bits 4-7 of the disk status word at 522 without extra code.)
                 return (ushort)(_kStat | (0x0f00));
             }
             set
             {
-                _kStat = value;             
+                _kStat = value;
             }
         }
 
         public ushort RECNO
         {
-            get { return _recMap[_recNo];  }
+            get { return _recMap[_recNo]; }
         }
 
         public bool DataXfer
         {
             get { return _dataXfer; }
         }
-      
+
         public int Cylinder
         {
-            get { return _cylinder; }
+            get { return SelectedDrive.Cylinder; }
         }
 
         public int SeekCylinder
         {
-            get { return _destCylinder;  }
+            get { return _destCylinder; }
         }
 
         public int Head
         {
-            get { return _head; }
+            get { return SelectedDrive.Head; }
         }
 
         public int Sector
         {
-            get { return _sector; }
+            get { return SelectedDrive.Sector; }
         }
 
         public int Drive
         {
-            get { return 0;  }
+            get { return 0; }
         }
 
         public double ClocksUntilNextSector
@@ -202,10 +215,8 @@ namespace Contralto.IO
         public void Reset()
         {
             ClearStatus();
-            _recNo = 0;            
-            _cylinder = _destCylinder = 0;
+            _recNo = 0;
             _sector = 0;
-            _head = 0;
             _disk = 0;
             _kStat = 0;
             _kDataRead = 0;
@@ -219,21 +230,22 @@ namespace Contralto.IO
             _wdInit = false;
 
             _syncWordWritten = false;
-            _sectorModified = false;
 
             _diskBitCounterEnable = false;
-            _sectorWordIndex = 0;            
+            _sectorWordIndex = 0;
 
-            InitSector();
+            // Reset drives
+            _drives[0].Reset();
+            _drives[1].Reset();
 
             // Wakeup the sector task first thing
             _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
-            
+
             // Create events to be reused during execution
             _sectorEvent = new Event(_sectorDuration, null, SectorCallback);
             _wordEvent = new Event(_wordDuration, null, WordCallback);
-            _seekEvent = new Event(0, null, SeekCallback);
             _seclateEvent = new Event(_seclateDuration, null, SeclateCallback);
+            _seekEvent = new Event(_seekDuration, null, SeekCallback);
 
             // And schedule the first sector pulse.
             _system.Scheduler.Schedule(_sectorEvent);
@@ -249,17 +261,10 @@ namespace Contralto.IO
 
         private void SectorCallback(ulong timeNsec, ulong skewNsec, object context)
         {
-            // Write last sector out if it was modified
-            if (_sectorModified)
-            {
-                CommitSector();
-                _sectorModified = false;
-            }
-
             //
             // Next sector; move to next sector and wake up Disk Sector task.
             //            
-            _sector = (_sector + 1) % 12;            
+            _sector = (_sector + 1) % 12;
 
             _kStat = (ushort)((_kStat & 0x0fff) | (_sector << 12));
 
@@ -267,15 +272,15 @@ namespace Contralto.IO
             _sectorWordIndex = 0;
             _syncWordWritten = false;
 
-            _kDataRead = 0;            
+            _kDataRead = 0;
 
             // Load new sector in
-            LoadSector();
+            SelectedDrive.Sector = _sector;
 
             // Only wake up if not actively seeking.
             if ((_kStat & 0x0040) == 0)
             {
-                Log.Write(LogType.Verbose, LogComponent.DiskController, "Waking up sector task for C/H/S {0}/{1}/{2}", _cylinder, _head, _sector);
+                Log.Write(LogType.Verbose, LogComponent.DiskController, "Waking up sector task for C/H/S {0}/{1}/{2}", SelectedDrive.Cylinder, SelectedDrive.Head, _sector);
                 _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
 
                 // Reset SECLATE                
@@ -295,7 +300,7 @@ namespace Contralto.IO
             {
                 // Schedule next sector pulse
                 _sectorEvent.TimestampNsec = _sectorDuration - skewNsec;
-                _system.Scheduler.Schedule(_sectorEvent);            
+                _system.Scheduler.Schedule(_sectorEvent);
             }
         }
 
@@ -313,49 +318,19 @@ namespace Contralto.IO
             {
                 // // Schedule next sector pulse immediately
                 _sectorEvent.TimestampNsec = skewNsec;
-                _system.Scheduler.Schedule(_sectorEvent);       
-            }
-        }
-
-        private void SeekCallback(ulong timeNsec, ulong skewNsec, object context)
-        {
-            if (_cylinder < _destCylinder)
-            {
-                _cylinder++;
-            }
-            else if (_cylinder > _destCylinder)
-            {
-                _cylinder--;
-            }
-
-            Log.Write(LogComponent.DiskController, "Seek progress: cylinder {0} reached.", _cylinder);
-
-            // Are we *there* yet?
-            if (_cylinder == _destCylinder)
-            {
-                // clear Seek bit
-                _kStat &= 0xffbf;
-
-                Log.Write(LogComponent.DiskController, "Seek to {0} completed.", _cylinder);
-            }
-            else
-            {
-                // Nope.
-                // Schedule next seek step.
-                _seekEvent.TimestampNsec = _seekDuration - skewNsec;
-                _system.Scheduler.Schedule(_seekEvent);
+                _system.Scheduler.Schedule(_sectorEvent);
             }
         }
 
         private void SeclateCallback(ulong timeNsec, ulong skewNsec, object context)
         {
             if (_seclateEnable)
-            {                
+            {
                 _seclate = true;
                 _kStat |= 0x0010;       // TODO: move to constant field!
                 Log.Write(LogComponent.DiskSectorTask, "SECLATE for sector {0}.", _sector);
             }
-        }       
+        }
 
         public void ClearStatus()
         {
@@ -388,7 +363,7 @@ namespace Contralto.IO
             // "Initiates a disk seek operation.  The KDATA register must have been loaded previously,
             // and the SENDADR bit of the KCOMM register previously set to 1."
             //            
-            
+
             // sanity check: see if SENDADR bit is set, if not we'll signal an error (since I'm trusting that
             // the official Xerox uCode is doing the right thing, this will help ferret out emulation issues.
             // eventually this can be removed.)
@@ -398,25 +373,24 @@ namespace Contralto.IO
             }
 
             Log.Write(LogComponent.DiskController, "STROBE: Seek initialized.");
-            
-            InitSeek((_kDataWrite & 0x0ff8) >> 3);           
+
+            InitSeek((_kDataWrite & 0x0ff8) >> 3);
         }
 
         private void InitSeek(int destCylinder)
         {
-            _destCylinder = destCylinder;
-
             // set "seek fail" bit based on selected cylinder (if out of bounds) and do not
             // commence a seek if so.
-            if (_destCylinder > 202)
+            if (destCylinder > 202)
             {
                 _kStat |= 0x0080;
 
-                Log.Write(LogComponent.DiskController, "Seek failed, specified cylinder {0} is out of range.", _destCylinder);
+                Log.Write(LogComponent.DiskController, "Seek failed, specified cylinder {0} is out of range.", destCylinder);
             }
             else
             {
                 // Otherwise, start a seek.
+                _destCylinder = destCylinder;
 
                 // Clear the fail bit.
                 _kStat &= 0xff7f;
@@ -425,27 +399,13 @@ namespace Contralto.IO
                 _kStat |= 0x0040;
 
                 // And figure out how long this will take.
-                _seekDuration = (ulong)(CalculateSeekTime() / (ulong)(Math.Abs(_destCylinder - _cylinder) + 1));
+                _seekDuration = (ulong)(CalculateSeekTime() / (ulong)(Math.Abs(_destCylinder - SelectedDrive.Cylinder) + 1));
 
                 _seekEvent.TimestampNsec = _seekDuration;
                 _system.Scheduler.Schedule(_seekEvent);
 
-                Log.Write(LogComponent.DiskController, "Seek to {0} from {1} commencing.  Will take {2} nsec.", _destCylinder, _cylinder, _seekDuration);
+                Log.Write(LogComponent.DiskController, "Seek to {0} from {1} commencing.  Will take {2} nsec.", _destCylinder, SelectedDrive.Cylinder, _seekDuration);
             }
-        }
-
-        private ulong CalculateSeekTime()
-        {
-            // How many cylinders are we moving?
-            int dt = Math.Abs(_destCylinder - _cylinder);            
-
-            //
-            // From the Hardware Manual, pg 43:
-            // "Seek time (approx.):  15 + 8.6 * sqrt(dt)  (msec)
-            //
-            double seekTimeMsec = 15.0 + 8.6 * Math.Sqrt(dt);
-
-            return (ulong)(seekTimeMsec * Conversion.MsecToNsec);
         }
 
         /// <summary>
@@ -478,7 +438,7 @@ namespace Contralto.IO
             // and we may not actually end up doing anything with it, but we may
             // need it to decide whether to do anything at all.
             //                                             
-            ushort diskWord = _sectorData[_sectorWordIndex].Data;
+            DataCell diskWord = SelectedDrive.ReadWord(_sectorWordIndex);
 
             bool bWakeup = false;
             //
@@ -486,8 +446,8 @@ namespace Contralto.IO
             // then we will wake up the word task now.
             // 
             if (!_seclate && !_wdInhib && !_bClkSource)
-            {                    
-                bWakeup = true;                    
+            {
+                bWakeup = true;
             }
 
             //
@@ -509,9 +469,9 @@ namespace Contralto.IO
                             Log.Write(LogType.Warning, LogComponent.DiskController, "--- missed sector word {0}({1}) ---", _sectorWordIndex, _kDataRead);
                         }
 
-                        Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Sector {0} Word {1} read into KDATA", _sector, Conversion.ToOctal(diskWord));
-                        _kDataRead = diskWord;
-                        _debugRead = _sectorData[_sectorWordIndex].Type == CellType.Data;
+                        Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Sector {0} Word {1} read into KDATA", _sector, Conversion.ToOctal(diskWord.Data));
+                        _kDataRead = diskWord.Data;
+                        _debugRead = diskWord.Type == CellType.Data;
                     }
                     else
                     {
@@ -524,18 +484,10 @@ namespace Contralto.IO
                             _kDataWriteLatch = false;
                         }
 
-                        if (_syncWordWritten && _sectorWordIndex < _sectorData.Length)
+                        if (_syncWordWritten)
                         {
-                            if (_sectorData[_sectorWordIndex].Type == CellType.Data)
-                            {                                
-                                _sectorData[_sectorWordIndex].Data = _kDataWrite;
-                            }
-                            else
-                            {
-                                Log.Write(LogType.Warning, LogComponent.DiskController, "Data written to non-data section (Sector {0} Word {1} Rec {2} Data {3})", _sector, _sectorWordIndex, _recNo, Conversion.ToOctal(_kDataWrite));                                
-                            }
-
-                            _sectorModified = true;
+                            // Commit actual data to disk now that the sync word has been laid down
+                            SelectedDrive.WriteWord(_sectorWordIndex, _kDataWrite);
                         }
                     }
                 }
@@ -552,8 +504,8 @@ namespace Contralto.IO
             // the clock.  This occurs late in the cycle so that the NEXT word
             // (not the sync word) is actually read.  TODO: this should only happen on reads.
             //
-            if (!IsWrite() && !_wffo && diskWord == 1)
-            {                    
+            if (!IsWrite() && !_wffo && diskWord.Data == 1)
+            {
                 _diskBitCounterEnable = true;
             }
             else if (IsWrite() && _wffo && _kDataWrite == 1 && !_syncWordWritten)
@@ -563,7 +515,7 @@ namespace Contralto.IO
 
                 // "Adjust" the write index to the start of the data area for the current record.
                 // This is cheating.
-                switch(_recNo)
+                switch (_recNo)
                 {
                     case 0:
                         _sectorWordIndex = _headerOffset;
@@ -583,148 +535,65 @@ namespace Contralto.IO
             {
                 Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Word task awoken for word {0}.", _sectorWordIndex);
                 _system.CPU.WakeupTask(TaskType.DiskWord);
-            }            
+            }
 
             // Last, move to the next word.
             _sectorWordIndex++;
-                      
-        }
 
-        private void LoadSector()
-        {
-            //
-            // Pull data off disk and pack it into our faked-up sector.
-            // Note that this data is packed in in REVERSE ORDER because that's
-            // how it gets written out and it's how the Alto expects it to be read back in.
-            //
-            DiabloDiskSector sector = _pack.GetSector(_cylinder, _head, _sector);            
-
-            // Header (2 words data, 1 word cksum)
-            for (int i = _headerOffset + 1, j = 1; i < _headerOffset + 3; i++, j--)
-            {
-                // actual data to be loaded from disk / cksum calculated
-                _sectorData[i] = new DataCell(sector.Header[j], CellType.Data);
-            }
-
-            ushort checksum = CalculateChecksum(_sectorData, _headerOffset + 1, 2);
-            _sectorData[_headerOffset + 3].Data = checksum;
-            Log.Write(LogType.Verbose, LogComponent.DiskController, "Header checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, Conversion.ToOctal(checksum));
-            
-            // Label (8 words data, 1 word cksum)
-            for (int i = _labelOffset + 1, j = 7; i < _labelOffset + 9; i++, j--)
-            {
-                // actual data to be loaded from disk / cksum calculated
-                _sectorData[i] = new DataCell(sector.Label[j], CellType.Data);
-            }
-
-            checksum = CalculateChecksum(_sectorData, _labelOffset + 1, 8);
-            _sectorData[_labelOffset + 9].Data = checksum;
-            Log.Write(LogType.Verbose, LogComponent.DiskController, "Label checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, Conversion.ToOctal(checksum));
-
-            // sector data (256 words data, 1 word cksum)
-            for (int i = _dataOffset + 1, j = 255; i < _dataOffset + 257; i++, j--)
-            {
-                // actual data to be loaded from disk / cksum calculated
-                _sectorData[i] = new DataCell(sector.Data[j], CellType.Data);
-            }
-
-            checksum = CalculateChecksum(_sectorData, _dataOffset + 1, 256);
-            _sectorData[_dataOffset + 257].Data = checksum;
-            Log.Write(LogType.Verbose, LogComponent.DiskController, "Data checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, Conversion.ToOctal(checksum));
-
-        }
-
-        /// <summary>
-        /// Commits modified sector data back to the emulated disk.
-        /// Intended to be called at the end of the sector / beginning of the next.
-        /// TODO: we should modify this so that checksums are persisted, possibly...
-        /// </summary>
-        private void CommitSector()
-        {           
-            DiabloDiskSector sector = _pack.GetSector(_cylinder, _head, _sector);
-
-            // Header (2 words data, 1 word cksum)
-            for (int i = _headerOffset + 1, j = 1; i < _headerOffset + 3; i++, j--)
-            {
-                // actual data to be loaded from disk / cksum calculated
-                sector.Header[j] = _sectorData[i].Data;
-            }
-
-            // Label (8 words data, 1 word cksum)
-            for (int i = _labelOffset + 1, j = 7; i < _labelOffset + 9; i++, j--)
-            {
-                // actual data to be loaded from disk / cksum calculated
-                sector.Label[j] = _sectorData[i].Data;
-            }
-
-            // sector data (256 words data, 1 word cksum)
-            for (int i = _dataOffset + 1, j = 255; i < _dataOffset + 257; i++, j--)
-            {
-                // actual data to be loaded from disk / cksum calculated
-                sector.Data[j] = _sectorData[i].Data;
-            }            
-        }
-
-        private void InitSector()
-        {
-            // Fill in sector with default data (basically, fill in non-data areas).            
-
-            //
-            // header delay, 22 words
-            for (int i=0; i < _headerOffset; i++)
-            {                
-                _sectorData[i] = new DataCell(0, CellType.Gap);
-            }
-
-            _sectorData[_headerOffset] = new DataCell(1, CellType.Sync);
-            // inter-reccord delay between header & label (10 words)
-            for (int i = _headerOffset + 4; i < _labelOffset; i++)
-            {
-                _sectorData[i] = new DataCell(0, CellType.Gap);
-            }
-
-            _sectorData[_labelOffset] = new DataCell(1, CellType.Sync);
-            // inter-reccord delay between label & data (10 words)
-            for (int i = _labelOffset + 10; i < _dataOffset; i++)
-            {
-                _sectorData[i] = new DataCell(0, CellType.Gap);
-            }
-
-            _sectorData[_dataOffset] = new DataCell(1, CellType.Sync);
-            // read-postamble
-            for (int i = _dataOffset + 258; i < _sectorWordCount;i++)
-            {
-                _sectorData[i] = new DataCell(0, CellType.Gap);
-            }            
-        }
-
-        private ushort CalculateChecksum(DataCell[] sectorData, int offset, int length)
-        {
-            //
-            // From the uCode, the Alto's checksum algorithm is:
-            // 1. Load checksum with constant value of 521B (0x151)
-            // 2. For each word in the record, cksum <- word XOR cksum
-            // 3. Profit
-            //
-            ushort checksum = 0x151;
-
-            for(int i = offset; i < offset + length;i++)
-            {
-                // Sanity check that we're checksumming actual data
-                if (sectorData[i].Type != CellType.Data)
-                {
-                    throw new InvalidOperationException("Attempt to checksum non-data area of sector.");
-                }
-
-                checksum = (ushort)(checksum ^ sectorData[i].Data);
-            }
-
-            return checksum;
         }
 
         private bool IsWrite()
         {
             return ((_kAdr & 0x00c0) >> 6) == 2 || ((_kAdr & 0x00c0) >> 6) == 3;
+        }
+
+        private void SeekCallback(ulong timeNsec, ulong skewNsec, object context)
+        {
+            if (SelectedDrive.Cylinder < _destCylinder)
+            {
+                SelectedDrive.Cylinder++;
+            }
+            else if (SelectedDrive.Cylinder > _destCylinder)
+            {
+                SelectedDrive.Cylinder--;
+            }
+
+            Log.Write(LogComponent.DiskController, "Seek progress: cylinder {0} reached.", SelectedDrive.Cylinder);
+
+            // Are we *there* yet?
+            if (SelectedDrive.Cylinder == _destCylinder)
+            {
+                // clear Seek bit
+                _kStat &= 0xffbf;
+
+                Log.Write(LogComponent.DiskController, "Seek to {0} completed.", SelectedDrive.Cylinder);
+            }
+            else
+            {
+                // Nope.
+                // Schedule next seek step.
+                _seekEvent.TimestampNsec = _seekDuration - skewNsec;
+                _system.Scheduler.Schedule(_seekEvent);
+            }
+        }
+
+        private ulong CalculateSeekTime()
+        {
+            // How many cylinders are we moving?
+            int dt = Math.Abs(_destCylinder - SelectedDrive.Cylinder);
+
+            //
+            // From the Hardware Manual, pg 43:
+            // "Seek time (approx.):  15 + 8.6 * sqrt(dt)  (msec)
+            //
+            double seekTimeMsec = 15.0 + 8.6 * Math.Sqrt(dt);
+
+            return (ulong)(seekTimeMsec * Conversion.MsecToNsec);
+        }
+
+        private Diablo30Drive SelectedDrive
+        {
+            get { return _drives[_disk]; }
         }
 
         private ushort _kDataRead;
@@ -750,11 +619,15 @@ namespace Contralto.IO
         // Transfer bit
         private bool _dataXfer;
 
-        // Current disk position
-        private int _cylinder;
-        private int _destCylinder;
-        private int _head;
+        // Current sector        
         private int _sector;
+
+        //
+        // Seek state
+        //
+        private int _destCylinder;
+        private ulong _seekDuration;
+        private Event _seekEvent;
 
         // Selected disk
         private int _disk;
@@ -766,7 +639,6 @@ namespace Contralto.IO
         private bool _wdInit;
 
         private bool _syncWordWritten;
-        private bool _sectorModified;
 
         // Sector timing.  Based on table on pg. 43 of the Alto Hardware Manual                                        
 
@@ -785,7 +657,7 @@ namespace Contralto.IO
 
         private Event _sectorEvent;
         private Event _wordEvent;
-                
+
 
         // offsets in words for start of data in sector
         private const int _headerOffset = 22;
@@ -797,44 +669,10 @@ namespace Contralto.IO
         private static ulong _seclateDuration = (ulong)(85.0 * Conversion.UsecToNsec * _scale);
         private bool _seclateEnable;
         private bool _seclate;
-        private Event _seclateEvent;     
+        private Event _seclateEvent;
 
-        // Cylinder seek time (in nsec)  Again, see the manual.
-        // Timing varies based on how many cylinders are being traveled during a seek; see
-        // CalculateSeekTime() for more.        
-        private ulong _seekDuration;
-        private Event _seekEvent;
-
-        // The data for the current sector
-        private enum CellType
-        {
-            Data,
-            Gap,
-            Sync,
-        }
-
-        private struct DataCell
-        {
-            public DataCell(ushort data, CellType type)
-            {
-                Data = data;
-                Type = type;
-            }
-
-            public ushort Data;
-            public CellType Type;
-
-            public override string ToString()
-            {
-                return String.Format("{0} {1}", Data, Type);
-            }
-        }
-
-        private DataCell[] _sectorData = new DataCell[_sectorWordCount];
-        
-
-        // The pack loaded into the drive
-        DiabloPack _pack;
+        // Attached drives
+        private Diablo30Drive[] _drives;
 
         private AltoSystem _system;
 
