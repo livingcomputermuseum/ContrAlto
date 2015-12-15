@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AltoWindow));
             this.DisplayBox = new System.Windows.Forms.PictureBox();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -42,8 +43,7 @@
             this.loadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.debuggerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.showDebuggerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.SystemShowDebuggerMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.StatusLine = new System.Windows.Forms.StatusStrip();
@@ -70,7 +70,6 @@
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.settingsToolStripMenuItem,
-            this.debuggerToolStripMenuItem,
             this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
@@ -91,6 +90,7 @@
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
             this.exitToolStripMenuItem.Size = new System.Drawing.Size(92, 22);
             this.exitToolStripMenuItem.Text = "Exit";
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.OnFileExitClick);
             // 
             // settingsToolStripMenuItem
             // 
@@ -99,7 +99,8 @@
             this.SystemResetMenuItem,
             this.drive0ToolStripMenuItem,
             this.drive1ToolStripMenuItem,
-            this.optionsToolStripMenuItem});
+            this.optionsToolStripMenuItem,
+            this.SystemShowDebuggerMenuItem});
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
             this.settingsToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
             this.settingsToolStripMenuItem.Text = "System";
@@ -117,6 +118,7 @@
             this.SystemResetMenuItem.Name = "SystemResetMenuItem";
             this.SystemResetMenuItem.Size = new System.Drawing.Size(152, 22);
             this.SystemResetMenuItem.Text = "Reset";
+            this.SystemResetMenuItem.Click += new System.EventHandler(this.OnSystemResetMenuClick);
             // 
             // drive0ToolStripMenuItem
             // 
@@ -132,12 +134,14 @@
             this.loadToolStripMenuItem1.Name = "loadToolStripMenuItem1";
             this.loadToolStripMenuItem1.Size = new System.Drawing.Size(119, 22);
             this.loadToolStripMenuItem1.Text = "Load...";
+            this.loadToolStripMenuItem1.Click += new System.EventHandler(this.OnSystemDrive0LoadClick);
             // 
             // unloadToolStripMenuItem1
             // 
             this.unloadToolStripMenuItem1.Name = "unloadToolStripMenuItem1";
             this.unloadToolStripMenuItem1.Size = new System.Drawing.Size(119, 22);
             this.unloadToolStripMenuItem1.Text = "Unload...";
+            this.unloadToolStripMenuItem1.Click += new System.EventHandler(this.OnSystemDrive0UnloadClick);
             // 
             // drive1ToolStripMenuItem
             // 
@@ -153,12 +157,14 @@
             this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
             this.loadToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
             this.loadToolStripMenuItem.Text = "Load...";
+            this.loadToolStripMenuItem.Click += new System.EventHandler(this.OnSystemDrive1LoadClick);
             // 
             // unloadToolStripMenuItem
             // 
             this.unloadToolStripMenuItem.Name = "unloadToolStripMenuItem";
             this.unloadToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
             this.unloadToolStripMenuItem.Text = "Unload...";
+            this.unloadToolStripMenuItem.Click += new System.EventHandler(this.OnSystemDrive1UnloadClick);
             // 
             // optionsToolStripMenuItem
             // 
@@ -166,19 +172,12 @@
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.optionsToolStripMenuItem.Text = "Options...";
             // 
-            // debuggerToolStripMenuItem
+            // SystemShowDebuggerMenuItem
             // 
-            this.debuggerToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.showDebuggerToolStripMenuItem});
-            this.debuggerToolStripMenuItem.Name = "debuggerToolStripMenuItem";
-            this.debuggerToolStripMenuItem.Size = new System.Drawing.Size(66, 20);
-            this.debuggerToolStripMenuItem.Text = "Debugger";
-            // 
-            // showDebuggerToolStripMenuItem
-            // 
-            this.showDebuggerToolStripMenuItem.Name = "showDebuggerToolStripMenuItem";
-            this.showDebuggerToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
-            this.showDebuggerToolStripMenuItem.Text = "Show Debugger";
+            this.SystemShowDebuggerMenuItem.Name = "SystemShowDebuggerMenuItem";
+            this.SystemShowDebuggerMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.SystemShowDebuggerMenuItem.Text = "Show Debugger";
+            this.SystemShowDebuggerMenuItem.Click += new System.EventHandler(this.OnDebuggerShowClick);
             // 
             // helpToolStripMenuItem
             // 
@@ -193,6 +192,7 @@
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
             this.aboutToolStripMenuItem.Text = "About";
+            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.OnHelpAboutClick);
             // 
             // StatusLine
             // 
@@ -219,14 +219,18 @@
             this.Controls.Add(this.StatusLine);
             this.Controls.Add(this.DisplayBox);
             this.Controls.Add(this.menuStrip1);
+            this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
-            this.MinimizeBox = false;
+            this.MaximizeBox = false;
             this.Name = "AltoWindow";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Text = "ContrAlto";
+            this.Deactivate += new System.EventHandler(this.OnWindowDeactivate);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnKeyUp);
+            this.Leave += new System.EventHandler(this.OnWindowLeave);
             ((System.ComponentModel.ISupportInitialize)(this.DisplayBox)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
@@ -255,9 +259,8 @@
         private System.Windows.Forms.ToolStripMenuItem loadToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem unloadToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem debuggerToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem showDebuggerToolStripMenuItem;
         private System.Windows.Forms.StatusStrip StatusLine;
         private System.Windows.Forms.ToolStripStatusLabel StatusLabel;
+        private System.Windows.Forms.ToolStripMenuItem SystemShowDebuggerMenuItem;
     }
 }

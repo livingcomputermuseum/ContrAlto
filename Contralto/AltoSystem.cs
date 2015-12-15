@@ -5,6 +5,8 @@ using Contralto.IO;
 using Contralto.Memory;
 using Contralto.Display;
 using System.Timers;
+using System.IO;
+using System;
 
 namespace Contralto
 {
@@ -84,6 +86,33 @@ namespace Contralto
             _scheduler.Clock();
 
             _clocks++;
+        }
+
+        public void LoadDrive(int drive, string path)
+        {
+            if (drive < 0 || drive > 1)
+            {
+                throw new InvalidOperationException("drive must be 0 or 1.");
+            }
+            DiabloPack newPack = new DiabloPack(DiabloDiskType.Diablo31);
+
+            using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+            {
+                newPack.Load(fs, false);
+                fs.Close();
+            }
+
+            _diskController.Drives[drive].LoadPack(newPack);
+        }
+
+        public void UnloadDrive(int drive)
+        {
+            if (drive < 0 || drive > 1)
+            {
+                throw new InvalidOperationException("drive must be 0 or 1.");
+            }
+
+            _diskController.Drives[drive].UnloadPack();
         }
 
         public AltoCPU CPU

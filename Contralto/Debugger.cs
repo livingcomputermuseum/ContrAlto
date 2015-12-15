@@ -19,17 +19,24 @@ namespace Contralto
     /// <summary>
     /// A basic & hacky debugger.  To be improved.
     /// </summary>
-    public partial class Debugger : Form, IAltoDisplay
+    public partial class Debugger : Form
     {
-        public Debugger(AltoSystem system)
+        public Debugger(AltoSystem system, ExecutionController controller)
         {
             _system = system;
+            _controller = controller;
             _microcodeBreakpointEnabled = new bool[1024];
             _novaBreakpointEnabled = new bool[65536];
 
+            _controller.StepCallback += OnExecutionStep;
+            _controller.ErrorCallback += OnExecutionError;
+
+            // Pick up the current execution status (if the main window hands us a running
+            // system, we want to know).
+            _execType = _controller.IsRunning ? ExecutionType.Normal : ExecutionType.None;
+
             InitializeComponent();
-            InitControls();
-            InitKeymap();
+            InitControls();            
             RefreshUI();                     
         }        
 
@@ -75,87 +82,13 @@ namespace Contralto
             base.Refresh();
 
             RefreshUI();
-        }        
-
-        public void Render()
-        {
-            BeginInvoke(new StepDelegate(RefreshDisplayBox));            
         }
 
-        private void RefreshDisplayBox()
+
+        private void OnDebuggerClosed(object sender, FormClosedEventArgs e)
         {
-            // Update the display
-            BitmapData data = _displayBuffer.LockBits(_displayRect, ImageLockMode.WriteOnly, PixelFormat.Format1bppIndexed);
-
-            IntPtr ptr = data.Scan0;
-            System.Runtime.InteropServices.Marshal.Copy(_displayData, 0, ptr, _displayData.Length);
-
-            _displayBuffer.UnlockBits(data);
-            DisplayBox.Refresh();
-
-            // If you want interlacing to be more visible:
-            //Array.Clear(_displayData, 0, _displayData.Length);
-        }
-
-        /// <summary>
-        /// Invoked by the DisplayController to put a word on the emulated screen.
-        /// </summary>
-        /// <param name="scanline"></param>
-        /// <param name="wordOffset"></param>
-        /// <param name="word"></param>
-        public void DrawDisplayWord(int scanline, int wordOffset, ushort word, bool lowRes)
-        {
-            // TODO: move magic numbers to constants
-
-            if (lowRes)
-            {
-                // Low resolution; double up pixels.
-                int address = scanline * 76 + wordOffset * 4;
-
-                if (address > _displayData.Length)
-                {
-                    throw new InvalidOperationException("Display word address is out of bounds.");
-                }
-
-                UInt32 stretched = StretchWord(word);
-
-                _displayData[address] = (byte)(stretched >> 24);
-                _displayData[address + 1] = (byte)(stretched >> 16);
-                _displayData[address + 2] = (byte)(stretched >> 8);
-                _displayData[address + 3] = (byte)(stretched);
-            }
-            else
-            {
-                int address = scanline * 76 + wordOffset * 2;
-
-                if (address > _displayData.Length)
-                {
-                    throw new InvalidOperationException("Display word address is out of bounds.");
-                }
-
-                _displayData[address] = (byte)(word >> 8);
-                _displayData[address + 1] = (byte)(word);
-            }            
-        }
-
-        /// <summary>
-        /// "Stretches" a 16 bit word into a 32-bit word (for low-res display purposes).
-        /// </summary>
-        /// <param name="word"></param>
-        /// <returns></returns>
-        private UInt32 StretchWord(ushort word)
-        {
-            UInt32 stretched = 0;
-            
-            for(int i=0x8000, j=15;j>=0; i=i>>1, j--)
-            {
-                uint bit = (uint)(word & i) >> j;
-
-                stretched |= (bit << (j * 2 + 1));
-                stretched |= (bit << (j * 2));
-            }
-
-            return stretched;
+            _controller.StepCallback -= OnExecutionStep;
+            _controller.ErrorCallback -= OnExecutionError;
         }
 
         private void RefreshUI()
@@ -252,16 +185,7 @@ namespace Contralto
                 case ExecutionState.InternalError:
                     ExecutionStateLabel.Text = String.Format("Stopped (error {0})", _lastExceptionText);
                     break;
-            }
-
-            // Update the display
-            BitmapData data = _displayBuffer.LockBits(_displayRect, ImageLockMode.WriteOnly, PixelFormat.Format1bppIndexed);
-
-            IntPtr ptr = data.Scan0;
-            System.Runtime.InteropServices.Marshal.Copy(_displayData, 0, ptr, _displayData.Length);
-
-            _displayBuffer.UnlockBits(data);
-
+            }           
         }
 
         private void RefreshMicrocodeDisassembly()
@@ -323,10 +247,6 @@ namespace Contralto
             _diskData.Rows.Add("KCOM", "0");
             _diskData.Rows.Add("KSTAT", "0");
             _diskData.Rows.Add("RECNO", "0");
-
-            _displayBuffer = new Bitmap(608, 808, PixelFormat.Format1bppIndexed);
-
-            DisplayBox.Image = _displayBuffer;
         }
         
 
@@ -721,53 +641,38 @@ namespace Contralto
 
         private void OnStepButtonClicked(object sender, EventArgs e)
         {
-            StopExecThread();
-
-            SetExecutionState(ExecutionState.SingleStep);            
-            ExecuteStep();
-            SetExecutionState(ExecutionState.Stopped);            
+            _execType = ExecutionType.Step;
+            SetExecutionState(ExecutionState.SingleStep);
+            _controller.StartExecution();                        
         }
 
         private void OnAutoStepButtonClicked(object sender, EventArgs e)
         {
-            StopExecThread();
             //
             // Continuously step (and update the UI)
             // until the "Stop" button is pressed or something bad happens.
             //
-            _execThread = new Thread(new System.Threading.ParameterizedThreadStart(ExecuteProc));
-            _execThread.Start(ExecutionType.Auto);
+            _execType = ExecutionType.Auto;
             SetExecutionState(ExecutionState.AutoStep);
+            _controller.StartExecution();
         }
 
         private void RunButton_Click(object sender, EventArgs e)
         {
-            StopExecThread();
             //
             // Continuously execute, but do not update UI
             // until the "Stop" button is pressed or something bad happens.
-            //
-            //if (_execThread == null)
-            {
-                _execThread = new Thread(new System.Threading.ParameterizedThreadStart(ExecuteProc));
-                _execThread.Start(ExecutionType.Normal);
-                SetExecutionState(ExecutionState.Running);
-            }
+            //                  
+            _execType = ExecutionType.Normal;
+            SetExecutionState(ExecutionState.Running);
+            _controller.StartExecution();         
         }
 
         private void RunToNextTaskButton_Click(object sender, EventArgs e)
-        {
-            StopExecThread();
-            //
-            // Continuously execute until the next task switch but do not update UI
-            // until the "Stop" button is pressed or something bad happens.
-            //
-            //if (_execThread == null)
-            {
-                _execThread = new Thread(new System.Threading.ParameterizedThreadStart(ExecuteProc));
-                _execThread.Start(ExecutionType.NextTask);
-                SetExecutionState(ExecutionState.Running);
-            }
+        {            
+            _execType = ExecutionType.NextTask;
+            SetExecutionState(ExecutionState.Running);
+            _controller.StartExecution();
         }
 
         /// <summary>
@@ -780,315 +685,88 @@ namespace Contralto
         /// <param name="e"></param>
         private void NovaStep_Click(object sender, EventArgs e)
         {
-            StopExecThread();
-
-            {
-                _execThread = new Thread(new System.Threading.ParameterizedThreadStart(ExecuteProc));
-                _execThread.Start(ExecutionType.NextNovaInstruction);
-                SetExecutionState(ExecutionState.Running);
-            }
+            _execType = ExecutionType.NextNovaInstruction;
+            SetExecutionState(ExecutionState.Running);
+            _controller.StartExecution();
+            
         }
 
         private void OnStopButtonClicked(object sender, EventArgs e)
-        {            
-            StopExecThread();
+        {
+            _controller.StopExecution();
             Refresh();
         }
         
 
         private void ResetButton_Click(object sender, EventArgs e)
         {
-            StopExecThread();
-            _system.Reset();
+            _controller.Reset();            
             Refresh();
+        }    
+        
+        private void OnExecutionError(Exception e)
+        {
+            _lastExceptionText = e.Message;
+            SetExecutionState(ExecutionState.InternalError);
         }
 
-        private void ExecuteStep()
+        private bool OnExecutionStep()
         {
-            StopExecThread();
-            _system.SingleStep();
-            Refresh();
-        }
-
-        private void StopExecThread()
-        {
-            if (_execThread != null &&
-                _execThread.IsAlive)
+            switch (_execType)
             {
-                // Signal for the exec thread to end
-                _execAbort = true;
-
-                // Wait for the thread to exit.
-                _execThread.Join();
-
-                _execThread = null;
-            }
-
-            SetExecutionState(ExecutionState.Stopped);
-        }
-
-        private void ExecuteProc(object param)
-        {
-            ExecutionType execType = (ExecutionType)param;
-
-            StepDelegate refUI = new StepDelegate(RefreshUI);
-            StepDelegate inv = new StepDelegate(Invalidate);
-            while (true)
-            {
-                bool internalError = false;
-
-                try
-                {
-                    switch (execType)
+                case ExecutionType.Auto:
                     {
-                        case ExecutionType.Auto:
-                            {
-                                // Execute a single step, then update UI and 
-                                // sleep to give messages time to run.
-                                _system.SingleStep();
+                        // Execute a single step, then update UI and 
+                        // sleep to give messages time to run.
+                        this.BeginInvoke(new StepDelegate(RefreshUI));
+                        this.BeginInvoke(new StepDelegate(Invalidate));
+                        System.Threading.Thread.Sleep(10);
+                        return true; /* break always */
+                    }                    
 
-                                this.BeginInvoke(refUI);
-                                this.BeginInvoke(inv);
-                                System.Threading.Thread.Sleep(10);
-                            }
-                            break;
-
-                        case ExecutionType.Step:
-                        case ExecutionType.Normal:
-                        case ExecutionType.NextTask:
-                        case ExecutionType.NextNovaInstruction:
-                            {
-                                // Just execute one step, do not update UI.
-                                _system.SingleStep();
-                            }
-                            break;
-                    }
-                }
-                catch(Exception e)
-                {
-                    internalError = true;
-                    _lastExceptionText = e.Message;
-                }
-
-                if (internalError)
-                {
-                    //
-                    // Stop here because of an execution error.
-                    //
-                    this.BeginInvoke(refUI);
-                    this.BeginInvoke(inv);
-
-
-                    SetExecutionState(ExecutionState.InternalError);                    
-
-                    break;
-                }
-                
-                if (_execAbort ||                                               // The Stop button was hit
-                    _microcodeBreakpointEnabled[_system.CPU.CurrentTask.MPC] || // A microcode breakpoint was hit
-                    (execType == ExecutionType.NextTask && 
-                        _system.CPU.NextTask != null && 
-                        _system.CPU.NextTask != _system.CPU.CurrentTask) ||     // The next task was switched to                    
-                    (_system.CPU.CurrentTask.MPC == 0x10 &&                     // MPC is 20(octal) meaning a new Nova instruction and...
-                        (_novaBreakpointEnabled[_system.CPU.R[6]] ||            // A breakpoint is set here
-                          execType == ExecutionType.NextNovaInstruction)))      // or we're running only a single Nova instruction. 
-                {
-                    // Stop here as we've hit a breakpoint or have been stopped 
-                    // Update UI to indicate where we stopped.
-                    this.BeginInvoke(refUI);
-                    this.BeginInvoke(inv);
-
-                    if (!_execAbort)
+                case ExecutionType.Step:
+                    return true;  /* break always */ 
+                                   
+                case ExecutionType.Normal:                    
+                case ExecutionType.NextTask:
+                case ExecutionType.NextNovaInstruction:
+                    // See if we need to stop here
+                    if (_execAbort ||                                               // The Stop button was hit
+                        _microcodeBreakpointEnabled[_system.CPU.CurrentTask.MPC] || // A microcode breakpoint was hit
+                        (_execType == ExecutionType.NextTask &&
+                            _system.CPU.NextTask != null &&
+                            _system.CPU.NextTask != _system.CPU.CurrentTask) ||     // The next task was switched to                    
+                        (_system.CPU.CurrentTask.MPC == 0x10 &&                     // MPC is 20(octal) meaning a new Nova instruction and...
+                            (_novaBreakpointEnabled[_system.CPU.R[6]] ||            // A breakpoint is set here
+                             _execType == ExecutionType.NextNovaInstruction)))      // or we're running only a single Nova instruction. 
                     {
-                        SetExecutionState(ExecutionState.BreakpointStop);
+                        // Stop here as we've hit a breakpoint or have been stopped 
+                        // Update UI to indicate where we stopped.
+                        this.BeginInvoke(new StepDelegate(RefreshUI));
+                        this.BeginInvoke(new StepDelegate(Invalidate));
+
+                        if (!_execAbort)
+                        {
+                            SetExecutionState(ExecutionState.BreakpointStop);
+                        }
+
+                        _execAbort = false;
+                        return true;
                     }
 
-                    _execAbort = false;                    
                     break;
-                }
             }
+
+            return false;
         }
+
+       
 
         private void SetExecutionState(ExecutionState state)
         {
             _execState = state;
             this.BeginInvoke(new StepDelegate(RefreshUI));
         }
-
-
-        // Hacky initial implementation of keyboard input.
-        private void Debugger_KeyDown(object sender, KeyEventArgs e)
-        {
-            //e.Handled = true;
-            //e.SuppressKeyPress = true;
-            if (_keyMap.ContainsKey(e.KeyCode))
-            {
-                _system.Keyboard.KeyDown(_keyMap[e.KeyCode]);
-            }
-
-            if (e.Control)
-            {
-                _system.Keyboard.KeyDown(_keyMap[Keys.ControlKey]);
-            }
-
-            if (e.Shift)
-            {
-                _system.Keyboard.KeyDown(_keyMap[Keys.LShiftKey]);
-            }
-        }
-
-        private void DisplayBox_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
-        {
-                   
-        }
-
-        private void Debugger_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
-        {
-            /*
-            if (_keyMap.ContainsKey(e.KeyCode))
-            {
-                _system.Keyboard.KeyDown(_keyMap[e.KeyCode]);
-            } */
-        }
-
-        private void Debugger_KeyUp(object sender, KeyEventArgs e)
-        {
-            if (_keyMap.ContainsKey(e.KeyCode))
-            {
-                _system.Keyboard.KeyUp(_keyMap[e.KeyCode]);
-            }
-
-           // e.Handled = true;
-           // e.SuppressKeyPress = true;
-
-            if (e.Control)
-            {
-                _system.Keyboard.KeyUp(_keyMap[Keys.ControlKey]);
-            }
-
-            if (e.Shift)
-            {
-                _system.Keyboard.KeyUp(_keyMap[Keys.LShiftKey]);
-            }
-        }
-
-        private void OnDisplayMouseMove(object sender, MouseEventArgs e)
-        {
-            _system.Mouse.MouseMove(e.X, e.Y);
-        }
-
-        private void OnDisplayMouseDown(object sender, MouseEventArgs e)
-        {
-            AltoMouseButton button = AltoMouseButton.None;
-
-            switch(e.Button)
-            {
-                case MouseButtons.Left:
-                    button = AltoMouseButton.Left;
-                    break;
-
-                case MouseButtons.Right:
-                    button = AltoMouseButton.Right;
-                    break;
-
-                case MouseButtons.Middle:
-                    button = AltoMouseButton.Middle;
-                    break;
-            }
-
-            _system.Mouse.MouseDown(button);
-
-        }
-
-        private void OnDisplayMouseUp(object sender, MouseEventArgs e)
-        {
-            AltoMouseButton button = AltoMouseButton.None;
-
-            switch (e.Button)
-            {
-                case MouseButtons.Left:
-                    button = AltoMouseButton.Left;
-                    break;
-
-                case MouseButtons.Right:
-                    button = AltoMouseButton.Right;
-                    break;
-
-                case MouseButtons.Middle:
-                    button = AltoMouseButton.Middle;
-                    break;
-            }
-
-            _system.Mouse.MouseUp(button);
-        }
-
-        private void InitKeymap()
-        {
-            _keyMap = new Dictionary<Keys, AltoKey>();
-
-            _keyMap.Add(Keys.A, AltoKey.A);
-            _keyMap.Add(Keys.B, AltoKey.B);
-            _keyMap.Add(Keys.C, AltoKey.C);
-            _keyMap.Add(Keys.D, AltoKey.D);
-            _keyMap.Add(Keys.E, AltoKey.E);
-            _keyMap.Add(Keys.F, AltoKey.F);
-            _keyMap.Add(Keys.G, AltoKey.G);
-            _keyMap.Add(Keys.H, AltoKey.H);
-            _keyMap.Add(Keys.I, AltoKey.I);
-            _keyMap.Add(Keys.J, AltoKey.J);
-            _keyMap.Add(Keys.K, AltoKey.K);
-            _keyMap.Add(Keys.L, AltoKey.L);
-            _keyMap.Add(Keys.M, AltoKey.M);
-            _keyMap.Add(Keys.N, AltoKey.N);
-            _keyMap.Add(Keys.O, AltoKey.O);
-            _keyMap.Add(Keys.P, AltoKey.P);
-            _keyMap.Add(Keys.Q, AltoKey.Q);
-            _keyMap.Add(Keys.R, AltoKey.R);
-            _keyMap.Add(Keys.S, AltoKey.S);
-            _keyMap.Add(Keys.T, AltoKey.T);
-            _keyMap.Add(Keys.U, AltoKey.U);
-            _keyMap.Add(Keys.V, AltoKey.V);
-            _keyMap.Add(Keys.W, AltoKey.W);
-            _keyMap.Add(Keys.X, AltoKey.X);
-            _keyMap.Add(Keys.Y, AltoKey.Y);
-            _keyMap.Add(Keys.Z, AltoKey.Z);
-            _keyMap.Add(Keys.D0, AltoKey.D0);
-            _keyMap.Add(Keys.D1, AltoKey.D1);
-            _keyMap.Add(Keys.D2, AltoKey.D2);
-            _keyMap.Add(Keys.D3, AltoKey.D3);
-            _keyMap.Add(Keys.D4, AltoKey.D4);
-            _keyMap.Add(Keys.D5, AltoKey.D5);
-            _keyMap.Add(Keys.D6, AltoKey.D6);
-            _keyMap.Add(Keys.D7, AltoKey.D7);
-            _keyMap.Add(Keys.D8, AltoKey.D8);
-            _keyMap.Add(Keys.D9, AltoKey.D9);
-            _keyMap.Add(Keys.Space, AltoKey.Space);
-            _keyMap.Add(Keys.OemPeriod, AltoKey.Period);
-            _keyMap.Add(Keys.Oemcomma, AltoKey.Comma);
-            _keyMap.Add(Keys.OemQuotes, AltoKey.Quote);
-            _keyMap.Add(Keys.OemBackslash, AltoKey.BSlash);
-            _keyMap.Add(Keys.OemQuestion, AltoKey.FSlash);
-            _keyMap.Add(Keys.Oemplus, AltoKey.Plus);
-            _keyMap.Add(Keys.OemMinus, AltoKey.Minus);            
-            _keyMap.Add(Keys.Escape, AltoKey.ESC);
-            _keyMap.Add(Keys.Delete, AltoKey.DEL);
-            _keyMap.Add(Keys.Left, AltoKey.Arrow);
-            _keyMap.Add(Keys.LShiftKey, AltoKey.LShift);
-            _keyMap.Add(Keys.RShiftKey, AltoKey.RShift);
-            _keyMap.Add(Keys.ControlKey, AltoKey.CTRL);
-            _keyMap.Add(Keys.Return, AltoKey.Return);
-            _keyMap.Add(Keys.F1, AltoKey.BlankTop);
-            _keyMap.Add(Keys.F2, AltoKey.BlankMiddle);
-            _keyMap.Add(Keys.F3, AltoKey.BlankBottom);
-            _keyMap.Add(Keys.Back, AltoKey.BS);
-            _keyMap.Add(Keys.Tab, AltoKey.TAB);
-            _keyMap.Add(Keys.OemSemicolon, AltoKey.Semicolon);
-            _keyMap.Add(Keys.OemOpenBrackets, AltoKey.LBracket);
-            _keyMap.Add(Keys.OemCloseBrackets, AltoKey.RBracket);
-
-
-        }
-
 
         private enum ExecutionType
         {
@@ -1108,21 +786,21 @@ namespace Contralto
             Running,
             BreakpointStop,
             InternalError,
-        }
-
-        private delegate void StepDelegate();
+        }        
 
         private AltoSystem _system;
+        private ExecutionController _controller;
 
         // Unicode character for the Arrow used by Alto microcode
         private const char _arrowChar = (char)0x2190;
 
-        // Thread used for execution other than single-step
-        private Thread _execThread;
+        // Execution / error state       
         private bool _execAbort;
         private ExecutionState _execState;
+        private ExecutionType _execType;
         private string _lastExceptionText;
 
+        private delegate void StepDelegate();
 
         // Microcode Debugger breakpoints; one entry per address since we only need
         // to worry about a 10 bit address space, this is fast and uses little memory.
@@ -1131,16 +809,5 @@ namespace Contralto
         // Nova Debugger breakpoints; same as above
         private bool[] _novaBreakpointEnabled;
 
-        // Display related data.
-        // At some point this should move elsewhere.
-        // Note: display is actually 606 pixels wide, but that's not an even multiple of 8, so we round up.
-        private byte[] _displayData = new byte[808 * 76];
-        private Bitmap _displayBuffer;
-        private Rectangle _displayRect = new Rectangle(0, 0, 608, 808);
-
-        // Keyboard mapping from windows vkeys to Alto keys
-        private Dictionary<Keys, AltoKey> _keyMap;
-
-       
     }
 }

@@ -13,7 +13,7 @@
             Reset();
         }
 
-        public void AttachDisplay(Debugger display)
+        public void AttachDisplay(IAltoDisplay display)
         {
             _display = display;
         }

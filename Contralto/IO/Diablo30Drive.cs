@@ -32,6 +32,8 @@ namespace Contralto.IO
         {
             return String.Format("{0} {1}", Data, Type);
         }
+
+        public static DataCell Empty = new DataCell(0, CellType.Data);
     }
 
     /// <summary>
@@ -52,6 +54,7 @@ namespace Contralto.IO
             _cylinder = 0;            
             _head = 0;
 
+            _sectorModified = false;
             InitSector();
             LoadSector();
         }
@@ -59,11 +62,13 @@ namespace Contralto.IO
         public void LoadPack(DiabloPack pack)
         {
             _pack = pack;
+            Reset();
         }
 
         public void UnloadPack()
         {
             _pack = null;
+            Reset();
         }
 
         public bool IsLoaded()
@@ -136,12 +141,19 @@ namespace Contralto.IO
 
         public DataCell ReadWord(int index)
         {
-            return _sectorData[index];
+            if (_pack != null)
+            {
+                return _sectorData[index];
+            }
+            else
+            {
+                return DataCell.Empty;
+            }
         }
 
         public void WriteWord(int index, ushort data)
         {
-            if (index < _sectorData.Length)
+            if (_pack!= null && index < _sectorData.Length)
             {
                 if (_sectorData[index].Type == CellType.Data)
                 {
@@ -204,9 +216,7 @@ namespace Contralto.IO
             _sectorData[_dataOffset + 257].Data = checksum;
             Log.Write(LogType.Verbose, LogComponent.DiskController, "Data checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, Conversion.ToOctal(checksum));
 
-        }
-
-       
+        }       
 
         /// <summary>
         /// Commits modified sector data back to the emulated disk.

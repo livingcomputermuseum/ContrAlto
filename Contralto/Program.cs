@@ -1,9 +1,11 @@
 ﻿using Contralto.CPU;
+using System;
 
 namespace Contralto
 {
     class Program
     {
+        [STAThread]
         static void Main(string[] args)
         {
             AltoSystem system = new AltoSystem();

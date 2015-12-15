@@ -14,25 +14,9 @@ namespace Contralto.IO
             // Load the drives
             _drives = new Diablo30Drive[2];
             _drives[0] = new Diablo30Drive(_system);
-            _drives[1] = new Diablo30Drive(_system);
-
-            // TODO: this does not belong here.
-            DiabloPack p0 = new DiabloPack(DiabloDiskType.Diablo31);
-            FileStream fs = new FileStream("Disk\\diag.dsk", FileMode.Open, FileAccess.Read);
-            p0.Load(fs, false);
-            fs.Close();
-
-            _drives[0].LoadPack(p0);
-
-            DiabloPack p1 = new DiabloPack(DiabloDiskType.Diablo31);
-            fs = new FileStream("Disk\\bravox.dsk", FileMode.Open, FileAccess.Read);
-            p1.Load(fs, true);
-            fs.Close();
-
-            _drives[1].LoadPack(p1);
+            _drives[1] = new Diablo30Drive(_system);           
 
             Reset();
-
         }
 
         /// <summary>
@@ -210,6 +194,11 @@ namespace Contralto.IO
                 // TODO: verify what generates this signal
                 return true;
             }
+        }
+
+        public Diablo30Drive[] Drives
+        {
+            get { return _drives; }
         }
 
         public void Reset()

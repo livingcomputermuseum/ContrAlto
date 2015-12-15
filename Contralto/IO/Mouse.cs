@@ -43,18 +43,16 @@ namespace Contralto.IO
             // nothing
         }
 
-        public void MouseMove(int x, int y)
+        public void MouseMove(int dx, int dy)
         {
             _lock.EnterWriteLock();
-            _destX = x;
-            _destY = y;
-
+            
             // Calculate number of steps in x and y to be decremented every call to PollMouseBits
-            _xSteps = Math.Abs(_destX - _mouseX);
-            _xDir = Math.Sign(_destX - _mouseX);
+            _xSteps = Math.Abs(dx);
+            _xDir = Math.Sign(dx);
 
-            _ySteps = Math.Abs(_destY - _mouseY);
-            _yDir = Math.Sign(_destY - _mouseY);
+            _ySteps = Math.Abs(dy);
+            _yDir = Math.Sign(dy);
 
             //Console.WriteLine("Mouse move from ({0},{1}) to ({2},{3}).", _mouseX, _mouseY, _destX, _destY);
             _lock.ExitWriteLock();
@@ -176,10 +174,7 @@ namespace Contralto.IO
 
         /// <summary>
         /// Where the mouse is moving to every time PollMouseBits is called.
-        /// </summary>
-        private int _destX;
-        private int _destY;
-
+        /// </summary>       
         private int _xSteps;
         private int _xDir;
         private double _ySteps;
