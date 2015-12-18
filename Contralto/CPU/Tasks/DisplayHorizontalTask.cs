@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Contralto.Display;
+using System;
 
 namespace Contralto.CPU
 {
@@ -13,6 +14,8 @@ namespace Contralto.CPU
             {
                 _taskType = TaskType.DisplayHorizontal;                
                 _wakeup = false;
+
+                _displayController = _cpu._system.DisplayController;
             }
 
             protected override bool ExecuteInstruction(MicroInstruction instruction)
@@ -29,11 +32,11 @@ namespace Contralto.CPU
                 switch (dh2)
                 {
                     case DisplayHorizontalF2.EVENFIELD:
-                        _nextModifier |= (ushort)(_cpu._system.DisplayController.EVENFIELD ? 1 : 0);
+                        _nextModifier |= (ushort)(_displayController.EVENFIELD ? 1 : 0);
                         break;
 
                     case DisplayHorizontalF2.SETMODE:
-                        _cpu._system.DisplayController.SETMODE(_busData);
+                        _displayController.SETMODE(_busData);
 
                         // "If bit 0 = 1, the bit clock rate is set to 100ns period (at the start of the next scan line),
                         // and a 1 is merged into NEXT[9]."
@@ -50,8 +53,10 @@ namespace Contralto.CPU
 
             protected override void ExecuteBlock()
             {
-                _cpu._system.DisplayController.DHTBLOCK = true;                
+                _displayController.DHTBLOCK = true;                
             }
+
+            private DisplayController _displayController;
         }
     }
 }

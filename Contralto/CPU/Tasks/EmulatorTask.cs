@@ -55,31 +55,72 @@ namespace Contralto.CPU
                 }
             }
 
-            protected override void ExecuteSpecialFunction1(MicroInstruction instruction)
+            protected override void ExecuteSpecialFunction1Early(MicroInstruction instruction)
             {
                 EmulatorF1 ef1 = (EmulatorF1)instruction.F1;
                 switch (ef1)
                 {
                     case EmulatorF1.RSNF:
-                        // TODO: make configurable
+                        //   
+                        // Early:                     
                         // "...decoded by the Ethernet interface, which gates the host address wired on the
                         // backplane onto BUS[8-15].  BUS[0-7] is not driven and will therefore be -1.  If
                         // no Ethernet interface is present, BUS will be -1.
                         //
-                        _busData &= (0xff00 | 0x42);
+                        _busData &= (ushort)((0xff00 | _cpu._system.EthernetController.Address));
+                        break;
+                }
+            }
+
+            protected override void ExecuteSpecialFunction1(MicroInstruction instruction)
+            {
+                EmulatorF1 ef1 = (EmulatorF1)instruction.F1;
+                switch (ef1)
+                {
+                    case EmulatorF1.LoadRMR:
+                        //
+                        // "The emulator F1 RMR<- causes the reset mode register to be loaded from the processor bus.  The 16 bits of the
+                        // processor bus correspond to the 16 Alto tasks in the following way: the low order bit of the processor
+                        // bus specifies the initial mode of task 0, the lowest priority task (emulator), and the high-order bit of the
+                        // bus specifies the initial mode of task 15, the highest priority task(recall that task i starts at location i; the
+                        // reset mode register determines only which microinstruction bank will be used at the outset). A task will
+                        // commence in ROM0 if its associated bit in the reset mode register contains the value 1; otherwise it will
+                        // start in RAM0.Upon initial power - up of the Alto, and after each reset operation, the reset mode register
+                        // is automatically set to all ones, corresponding to starting all tasks in ROM0."
+                        //
+                        _cpu._rmr = _busData;
+                        break;
+
+                    case EmulatorF1.RSNF:
+                        // Handled in the Early handler.
                         break;
 
                     case EmulatorF1.STARTF:
-                        // Dispatch function to Ethernet I/O based on contents of AC0... (TBD: what are these?)
-                        // For now do nothing, since we have no Ethernet implemented
-                        //throw new NotImplementedException();
+                        // Dispatch function to Ethernet I/O based on contents of AC0.                        
                         if ((_busData & 0x8000) != 0)
                         {
-                            Console.WriteLine("Emulator STARTF --  boot");
+                            // 
+                            // BOOT (soft-reset) operation.
+                            // Reset the CPU using the current RMR (start tasks in RAM or ROM as specified.)
+                            _cpu.SoftReset();
                         }                        
                         else if(_busData != 0)
                         {
-                            Console.WriteLine("Emulator STARTF --  {0}", Conversion.ToOctal(_busData));
+                            //
+                            // Dispatch to the appropriate device.
+                            // The Ethernet controller is the only common device that is documented
+                            // to have used STARTF, so we'll just go there directly; if other
+                            // hardware is discovered we'll put together a more flexible dispatch.
+                            //
+                            if (_busData < 4)
+                            {
+                                _cpu._system.EthernetController.STARTF(_busData);
+                            }
+                            else
+                            {
+                                Logging.Log.Write(Logging.LogType.Warning, Logging.LogComponent.EmulatorTask, "STARTF for non-Ethernet device (code {0})",
+                                    Conversion.ToOctal(_busData));                                
+                            }
                         }
                         break;
 

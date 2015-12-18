@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Contralto.Display;
+using System;
 
 
 namespace Contralto.CPU
@@ -13,16 +14,18 @@ namespace Contralto.CPU
             public DisplayWordTask(AltoCPU cpu) : base(cpu)
             {
                 _taskType = TaskType.DisplayWord;
-                _wakeup = false;                                
+                _wakeup = false;
+
+                _displayController = _cpu._system.DisplayController;
             }
 
             protected override bool ExecuteInstruction(MicroInstruction instruction)
             {
                 // We remove our wakeup only if there isn't a wakeup being generated for us by the
                 // display controller.
-                _wakeup = (!_cpu._system.DisplayController.FIFOFULL &&
-                            !_cpu._system.DisplayController.DHTBLOCK &&
-                            !_cpu._system.DisplayController.DWTBLOCK);                
+                _wakeup = (!_displayController.FIFOFULL &&
+                            !_displayController.DHTBLOCK &&
+                            !_displayController.DWTBLOCK);                
 
                 return base.ExecuteInstruction(instruction);
             }
@@ -33,7 +36,7 @@ namespace Contralto.CPU
                 switch (dw2)
                 {
                     case DisplayWordF2.LoadDDR:
-                        _cpu._system.DisplayController.LoadDDR(_busData);
+                        _displayController.LoadDDR(_busData);
                         break;
 
                     default:
@@ -43,16 +46,18 @@ namespace Contralto.CPU
 
             protected override void ExecuteBlock()
             {
-                _cpu._system.DisplayController.DWTBLOCK = true;
+                _displayController.DWTBLOCK = true;
 
                 //
                 // Wake up DHT if it has not blocked itself.
                 //
-                if (!_cpu._system.DisplayController.DHTBLOCK)
+                if (!_displayController.DHTBLOCK)
                 {
                     _cpu.WakeupTask(TaskType.DisplayHorizontal);
                 }
             }
+
+            private DisplayController _displayController;
         }
     }
 }

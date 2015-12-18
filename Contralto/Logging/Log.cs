@@ -18,6 +18,9 @@ namespace Contralto.Logging
         Keyboard = 0x40,
         Display = 0x80,
         Microcode = 0x100,
+        CPU = 0x200,
+        EthernetController = 0x400,
+        EthernetTask = 0x800,
 
         All = 0x7fffffff
     }
@@ -44,7 +47,7 @@ namespace Contralto.Logging
         static Log()
         {
             // TODO: make configurable
-            _components = LogComponent.DiskController | LogComponent.DiskSectorTask;
+            _components = LogComponent.None; // LogComponent.EthernetController; // | LogComponent.Microcode | LogComponent.Memory | LogComponent.CPU;
             _type = LogType.Normal | LogType.Warning | LogType.Error;
         }
 

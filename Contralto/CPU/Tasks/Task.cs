@@ -103,8 +103,7 @@ namespace Contralto.CPU
 
                 //
                 // Wait for memory state machine if a memory operation is requested by this instruction and
-                // the memory isn't ready yet.
-                // TODO: this needs to be seriously cleaned up.
+                // the memory isn't ready yet.                
                 //                
                 if (instruction.MemoryAccess) 
                 {                    
@@ -186,11 +185,11 @@ namespace Contralto.CPU
                 }
 
                 // Constant ROM access:
-                // The constant memory is gated to the bus by F1=7, F2=7, or BS>4.  The constant memory is addressed by the
+                // "The constant memory is gated to the bus by F1=7, F2=7, or BS>4.  The constant memory is addressed by the
                 // (8 bit) concatenation of RSELECT and BS.  The intent in enabling constants with BS>4 is to provide a masking
                 // facility, particularly for the <-MOUSE and <-DISP bus sources.  This works because the processor bus ANDs if
                 // more than one source is gated to it.  Up to 32 such mask contans can be provided for each of the four bus sources
-                // > 4.
+                // > 4."
                 // NOTE also:
                 // "Note that the [emulator task F2] functions which replace the low bits of RSELECT with IR affect only the 
                 // selection of R; they do not affect the address supplied to the constant ROM."
@@ -208,7 +207,13 @@ namespace Contralto.CPU
                 {
                     _busData &= UCodeMemory.ReadRAM();
                     _rdRam = false;
-                }                
+                }
+
+                //
+                // Let F1s that need to modify bus data before the ALU runs do their thing
+                // (this is just used by the emulator RSNF...)
+                //
+                ExecuteSpecialFunction1Early(instruction);
 
                 // Do ALU operation
                 aluData = ALU.Execute(instruction.ALUF, _busData, _cpu._t, _skip);
@@ -408,7 +413,7 @@ namespace Contralto.CPU
                 if (swMode)
                 {
                     //Console.WriteLine("SWMODE NEXT {0} Modifier {1}", Conversion.ToOctal(instruction.NEXT), Conversion.ToOctal(nextModifier));
-                    UCodeMemory.SwitchMode((ushort)(instruction.NEXT | nextModifier));
+                    UCodeMemory.SwitchMode((ushort)(instruction.NEXT | nextModifier), _taskType);
                 }
 
                 //
@@ -431,6 +436,11 @@ namespace Contralto.CPU
             {
                 // Nothing by default.
                 return 0;
+            }
+
+            protected virtual void ExecuteSpecialFunction1Early(MicroInstruction instruction)
+            {
+                // Nothing by default
             }
 
             protected virtual void ExecuteSpecialFunction1(MicroInstruction instruction)

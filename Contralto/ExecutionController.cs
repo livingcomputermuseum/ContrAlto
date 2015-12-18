@@ -40,7 +40,19 @@ namespace Contralto
 
         public void Reset()
         {
+            bool running = IsRunning;
+
+            if (running)
+            {
+                StopExecution();
+            }
             _system.Reset();
+
+            if (running)
+            {
+                StartExecution();
+            }
+
         }       
 
         public bool IsRunning

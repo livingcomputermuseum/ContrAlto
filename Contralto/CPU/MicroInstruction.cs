@@ -154,6 +154,29 @@ namespace Contralto.CPU
         LoadCSR = 9,
     }
 
+    enum EthernetBusSource
+    {
+        EIDFCT = 4,
+    }
+
+    enum EthernetF1
+    {
+        EILFCT = 11,
+        EPFCT = 12,
+        EWFCT = 13,
+    }
+
+    enum EthernetF2
+    {
+        EODFCT = 8,
+        EOSFCT = 9,
+        ERBFCT = 10,
+        EEFCT = 11,
+        EBFCT = 12,
+        ECBFCT = 13,
+        EISFCT = 14,
+    }
+
     public class MicroInstruction
     {
         public MicroInstruction(UInt32 code)

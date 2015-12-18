@@ -40,9 +40,9 @@ namespace Contralto.IO
     /// Encapsulates logic that belongs to the drive, including loading/saving packs,
     /// seeking and reading sector data.
     /// </summary>
-    public class Diablo30Drive
+    public class DiabloDrive
     {
-        public Diablo30Drive(AltoSystem system)
+        public DiabloDrive(AltoSystem system)
         {
             _system = system;           
             Reset();
@@ -71,9 +71,14 @@ namespace Contralto.IO
             Reset();
         }
 
-        public bool IsLoaded()
+        public bool IsLoaded
         {
-            return _pack != null;
+            get { return _pack != null; }
+        }
+
+        public DiabloPack Pack
+        {
+            get { return _pack; }
         }
 
         public int Sector

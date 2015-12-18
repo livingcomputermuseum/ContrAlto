@@ -8,7 +8,8 @@ namespace Contralto.IO
 
     public enum AltoKey
     {
-        A = 0,
+        None = 0,
+        A,
         B,
         C,
         D,

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Contralto.IO;
+using System;
 
 namespace Contralto.CPU
 {
@@ -15,11 +16,8 @@ namespace Contralto.CPU
             {
                 _taskType = diskSectorTask ? TaskType.DiskSector : TaskType.DiskWord;
                 _wakeup = false;
-            }
 
-            public override void WakeupTask()
-            {
-                base.WakeupTask();
+                _diskController = _cpu._system.DiskController;
             }
 
             protected override bool ExecuteInstruction(MicroInstruction instruction)
@@ -33,8 +31,7 @@ namespace Contralto.CPU
                 if (_taskType == TaskType.DiskSector)
                 {
                     // Sector task is running; clear enable for seclate signal
-                    _cpu._system.DiskController.DisableSeclate();
-                    
+                    _diskController.DisableSeclate();                    
                 }
 
                 /*
@@ -53,10 +50,10 @@ namespace Contralto.CPU
                 switch (dbs)
                 {
                     case DiskBusSource.ReadKSTAT:
-                        return _cpu._system.DiskController.KSTAT;
+                        return _diskController.KSTAT;
 
                     case DiskBusSource.ReadKDATA:
-                        return _cpu._system.DiskController.KDATA;                        
+                        return _diskController.KDATA;                        
 
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled bus source {0}", bs));
@@ -71,26 +68,26 @@ namespace Contralto.CPU
                 {
                     case DiskF1.LoadKDATA:
                         // "The KDATA register is loaded from BUS[0-15]."                        
-                        _cpu._system.DiskController.KDATA = _busData;
+                        _diskController.KDATA = _busData;
                         break;
 
                     case DiskF1.LoadKADR:
                         // "This causes the KADR register to be loaded from BUS[8-14].
                         //  in addition, it causes the head address bit to be loaded from KDATA[13]."
                         // (the latter is done by DiskController)
-                        _cpu._system.DiskController.KADR = (ushort)((_busData & 0xff));                        
+                        _diskController.KADR = (ushort)((_busData & 0xff));                        
                         break;
 
                     case DiskF1.LoadKCOMM:
-                        _cpu._system.DiskController.KCOM = (ushort)((_busData & 0x7c00) >> 10);
+                        _diskController.KCOM = (ushort)((_busData & 0x7c00) >> 10);
                         break;
 
                     case DiskF1.CLRSTAT:
-                        _cpu._system.DiskController.ClearStatus();
+                        _diskController.ClearStatus();
                         break;
 
                     case DiskF1.INCRECNO:
-                        _cpu._system.DiskController.IncrementRecord();
+                        _diskController.IncrementRecord();
                         break;
 
                     case DiskF1.LoadKSTAT:
@@ -104,11 +101,11 @@ namespace Contralto.CPU
                         int modifiedBusData = (_busData & 0xb) | ((~_busData) & 0x4);
 
                         // OR in BUS[12-15] after masking in KSTAT[13] so it is ORed in properly.    
-                        _cpu._system.DiskController.KSTAT = (ushort)(((_cpu._system.DiskController.KSTAT & 0xfff4)) | modifiedBusData);                                               
+                        _diskController.KSTAT = (ushort)(((_diskController.KSTAT & 0xfff4)) | modifiedBusData);                                               
                         break;
 
                     case DiskF1.STROBE:
-                        _cpu._system.DiskController.Strobe();
+                        _diskController.Strobe();
                         break;
 
                     default:
@@ -131,7 +128,7 @@ namespace Contralto.CPU
                         // current record to be checked THEN 2 ELSE 0.")
                         // Current record is in bits 8-9 of the command register; this is shifted
                         // by INCREC by the microcode to present the next set of bits.
-                        int command = (_cpu._system.DiskController.KADR & 0x00c0) >> 6;
+                        int command = (_diskController.KADR & 0x00c0) >> 6;
 
                         _nextModifier |= GetInitModifier(instruction);
 
@@ -158,7 +155,7 @@ namespace Contralto.CPU
                         // "NEXT <- NEXT OR (IF current command wants data transfer THEN 1 ELSE 0)
                         _nextModifier |= GetInitModifier(instruction);
 
-                        if (_cpu._system.DiskController.DataXfer)
+                        if (_diskController.DataXfer)
                         {
                             _nextModifier |= 0x1;
                         }
@@ -166,7 +163,7 @@ namespace Contralto.CPU
 
                     case DiskF2.RECNO:
                         _nextModifier |= GetInitModifier(instruction);
-                        _nextModifier |= _cpu._system.DiskController.RECNO;
+                        _nextModifier |= _diskController.RECNO;
                         break;
 
                     case DiskF2.NFER:
@@ -179,7 +176,7 @@ namespace Contralto.CPU
                     case DiskF2.STROBON:
                         // "NEXT <- NEXT OR (IF seek strobe still on THEN 1 ELSE 0)"
                         _nextModifier |= GetInitModifier(instruction);
-                        if ((_cpu._system.DiskController.KSTAT & 0x0040) == 0x0040)
+                        if ((_diskController.KSTAT & 0x0040) == 0x0040)
                         {
                             _nextModifier |= 0x1;
                         }
@@ -189,7 +186,7 @@ namespace Contralto.CPU
                         // "NEXT <- NEXT OR (IF disk not ready to accept command THEN 1 ELSE 0)
                         // for now, always zero (not sure when this would be 1 yet)
                         _nextModifier |= GetInitModifier(instruction);
-                        if (!_cpu._system.DiskController.Ready)
+                        if (!_diskController.Ready)
                         {
                             _nextModifier |= 1;
                         }
@@ -209,7 +206,7 @@ namespace Contralto.CPU
                 //               
                 if (_taskType == TaskType.DiskWord)
                 {
-                    _cpu._system.DiskController.WDINIT = false;                    
+                    _diskController.WDINIT = false;                    
                 }
             }
 
@@ -236,8 +233,10 @@ namespace Contralto.CPU
                 // causing INIT to OR in 0 and RWC to or in 0, 2 or 3 (For read, check, or write respectively.)
                 //                
 
-                return (_taskType == TaskType.DiskWord && _cpu._system.DiskController.WDINIT) ? (ushort)0x1f : (ushort)0x0;                
-            }            
+                return (_taskType == TaskType.DiskWord && _diskController.WDINIT) ? (ushort)0x1f : (ushort)0x0;                
+            }
+
+            private DiskController _diskController;         
         }        
     }
 }

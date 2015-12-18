@@ -185,7 +185,9 @@ namespace Contralto
                 case ExecutionState.InternalError:
                     ExecutionStateLabel.Text = String.Format("Stopped (error {0})", _lastExceptionText);
                     break;
-            }           
+            }
+
+            this.BringToFront();        
         }
 
         private void RefreshMicrocodeDisassembly()

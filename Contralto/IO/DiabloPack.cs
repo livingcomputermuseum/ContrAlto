@@ -74,6 +74,7 @@ namespace Contralto.IO
         public DiabloPack(DiabloDiskType type)
         {
             _diskType = type;
+            _packName = null;
             _geometry = new DiskGeometry(type == DiabloDiskType.Diablo31 ? 203 : 406, 2, 12);
             _sectors = new DiabloDiskSector[_geometry.Cylinders, _geometry.Tracks, _geometry.Sectors];           
         }
@@ -83,8 +84,14 @@ namespace Contralto.IO
             get { return _geometry; }
         }
 
-        public void Load(Stream imageStream, bool reverseByteOrder)
+        public string PackName
         {
+            get { return _packName; }
+        }
+
+        public void Load(Stream imageStream, string path, bool reverseByteOrder)
+        {
+            _packName = path;
             for(int cylinder = 0; cylinder < _geometry.Cylinders; cylinder++)
             {
                 for(int track = 0; track < _geometry.Tracks; track++)
@@ -150,6 +157,7 @@ namespace Contralto.IO
             }
         }
 
+        private string _packName;               // The file from whence the data came
         private DiabloDiskSector[,,] _sectors;
         private DiabloDiskType _diskType;
         private DiskGeometry _geometry;

@@ -54,6 +54,8 @@ namespace Contralto.Memory
             _memoryCycle = 0;
             _memoryAddress = 0;
             _memoryData = 0;
+            _doubleWordStore = false;
+            _doubleWordMixed = false;
             _memoryOperationActive = false;
             _extendedMemoryReference = false;
         }
@@ -162,6 +164,7 @@ namespace Contralto.Memory
             {
                 _memoryOperationActive = true;
                 _doubleWordStore = false;
+                _doubleWordMixed = false;
                 _memoryAddress = address;
                 _extendedMemoryReference = extendedMemoryReference;
                 _task = task;
@@ -204,14 +207,16 @@ namespace Contralto.Memory
                 // ("Because the Alto II latches memory contents, it is possible to execute _MD anytime after
                 // cycle 5 of a reference and obtain the results of the read operation")
                 // If this is memory cycle 6 we will return the last half of the doubleword to complete a double-word read.
-                if (_memoryCycle == 6)
+                if (_memoryCycle == 6 || (_memoryCycle == 5 && _doubleWordMixed))
                 {
-                    
+
                     //Log.Write(LogType.Verbose, LogComponent.Memory, "Double-word read of {0} from {1} (cycle 6)", Conversion.ToOctal(_memoryData2), Conversion.ToOctal(_memoryAddress ^ 1));                    
+                    _doubleWordMixed = false;
                     return _memoryData2;
                 }
                 else
-                {                    
+                {
+                    _doubleWordMixed = false;
                     //Log.Write(LogType.Verbose, LogComponent.Memory, "Single-word read of {0} from {1} (post cycle 6)", Conversion.ToOctal(_memoryData), Conversion.ToOctal(_memoryAddress));
                     return _memoryData;
                 }
@@ -235,6 +240,7 @@ namespace Contralto.Memory
                         // Start of doubleword write:
                         WriteToBus(_memoryAddress, data, _task, _extendedMemoryReference);
                         _doubleWordStore = true;
+                        _doubleWordMixed = true;
 
                         /*
                         Log.Write(
@@ -348,5 +354,8 @@ namespace Contralto.Memory
 
         // Indicates a double-word store (started on cycle 3)
         private bool _doubleWordStore;
+
+        // Indicates a mixed double-word store/load (started in cycle 3)
+        private bool _doubleWordMixed;
     }
 }

@@ -69,7 +69,7 @@ namespace Contralto.Display
             _wordWakeup = new Event(_wordDuration, null, WordCallback);
 
             // Kick things off
-            FieldStart();           
+            _system.Scheduler.Schedule(_verticalBlankScanlineWakeup);
         }
 
         private void FieldStart()
@@ -102,7 +102,13 @@ namespace Contralto.Display
 
             // Run MRT
             _system.CPU.WakeupTask(TaskType.MemoryRefresh);
-            
+
+            // Run Ethernet if a countdown wakeup is in progress
+            if (_system.EthernetController.CountdownWakeup)
+            {                
+                _system.CPU.WakeupTask(TaskType.Ethernet);
+            }
+
             if (_vblankScanlineCount > (_evenField ? 33 : 34))
             {
                 // End of vblank:

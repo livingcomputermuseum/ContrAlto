@@ -40,7 +40,8 @@ namespace Contralto
         /// </summary>
         public object Context
         {
-            get { return _context; }            
+            get { return _context; }  
+            set { _context = value; }          
         }
 
         /// <summary>
@@ -155,10 +156,6 @@ namespace Contralto
 
         public void Push(Event e)
         {
-            if (_queue.Count > 10)
-            {
-                Console.WriteLine("Count {0}", _queue.Count);
-            }
             // Degenerate case:  list is empty or new entry is earlier than the head of the list.
             if (_queue.Count == 0 || _queue.First.Value.TimestampNsec >= e.TimestampNsec)
             {

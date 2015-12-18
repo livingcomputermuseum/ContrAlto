@@ -33,6 +33,11 @@ namespace Contralto.CPU
             Init();
         }
 
+        public static void Reset()
+        {
+            Init();
+        }
+
         private static void Init()
         {     
             //       
@@ -56,12 +61,20 @@ namespace Contralto.CPU
                 UpdateRAMCache(i);
             }
 
-            // Start in ROM0 -- TODO: need to implement reset logic
-            _microcodeBank = MicrocodeBank.ROM0;
+            // Start in ROM0
+            _microcodeBank = new MicrocodeBank[16];
             _ramAddr = 0;
             _ramBank = 0;
             _ramSelect = true;
             _lowHalfsel = true;
+        }
+
+        public static void LoadBanksFromRMR(ushort rmr)
+        {
+            for(int i=0;i<16;i++)
+            {
+                _microcodeBank[i] = (rmr & (1 << i)) == 0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
+            }
         }
 
         /// <summary>
@@ -82,7 +95,8 @@ namespace Contralto.CPU
 
         public static MicrocodeBank Bank
         {
-            get { return _microcodeBank; }
+            // Just return the Bank for the Emulator task for now
+            get { return _microcodeBank[(int)TaskType.Emulator]; }
         }
 
         public static void LoadControlRAMAddress(ushort address)
@@ -96,32 +110,33 @@ namespace Contralto.CPU
         /// <summary>
         /// Implements the SWMODE F1 logic; selects the proper uCode bank (from
         /// RAM or ROM) based on the supplied NEXT value.
+        /// Technically this is only supported for the Emulator task.
         /// </summary>
         /// <param name="nextAddress"></param>
-        public static void SwitchMode(ushort nextAddress)
+        public static void SwitchMode(ushort nextAddress, TaskType task)
         {                        
-            Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: Current Bank {0}", _microcodeBank);
+            Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: Current Bank {0}", _microcodeBank[(int)task]);
             
             // 2K ROM            
-            switch(_microcodeBank)
+            switch(_microcodeBank[(int)task])
             {
                 case MicrocodeBank.ROM0:
-                    _microcodeBank = (nextAddress & 0x100) == 0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM1;
+                    _microcodeBank[(int)task] = (nextAddress & 0x100) == 0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM1;
                     break;
 
                 case MicrocodeBank.ROM1:
-                    _microcodeBank = (nextAddress & 0x100) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.RAM0;
+                    _microcodeBank[(int)task] = (nextAddress & 0x100) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.RAM0;
                     break;
 
                 case MicrocodeBank.RAM0:
-                    _microcodeBank = (nextAddress & 0x100) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.ROM1;
+                    _microcodeBank[(int)task] = (nextAddress & 0x100) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.ROM1;
                     break;
             }
-            
-            // for 1K ROM
-            //_microcodeBank = _microcodeBank == MicrocodeBank.ROM0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
 
-            Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: New Bank {0}", _microcodeBank);            
+            // for 1K ROM
+            //_microcodeBank[(int)task] = _microcodeBank[(int)task] == MicrocodeBank.ROM0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
+
+            Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: New Bank {0} for Task {1}", _microcodeBank[(int)task], task);            
         }
 
         public static ushort ReadRAM()
@@ -193,18 +208,8 @@ namespace Contralto.CPU
         /// <param name="address"></param>
         /// <returns></returns>
         public static MicroInstruction GetInstruction(ushort address, TaskType task)
-        {
-            // Only RAM-enabled tasks can execute from anything other than ROM (right now)
-            if (task == TaskType.Emulator)
-            {
-                // banked
-                return _decodeCache[address + (int)_microcodeBank * 1024];
-            }
-            else
-            {
-                // ROM only
-                return _decodeCache[address];
-            }
+        {            
+            return _decodeCache[address + (int)_microcodeBank[(int)task] * 1024];            
         }
 
         private static void LoadMicrocode(RomFile[] romInfo)
@@ -316,7 +321,7 @@ namespace Contralto.CPU
 
         private static MicroInstruction[] _decodeCache;
 
-        private static MicrocodeBank _microcodeBank;
+        private static MicrocodeBank[] _microcodeBank;
 
         private static int _ramBank;
         private static bool _ramSelect;

@@ -47,7 +47,11 @@
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.StatusLine = new System.Windows.Forms.StatusStrip();
-            this.StatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.CaptureStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.Drive0ImageName = new System.Windows.Forms.ToolStripMenuItem();
+            this.Drive1ImageName = new System.Windows.Forms.ToolStripMenuItem();
+            this.SystemStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.DiskStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)(this.DisplayBox)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.StatusLine.SuspendLayout();
@@ -88,7 +92,7 @@
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(92, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.OnFileExitClick);
             // 
@@ -108,7 +112,9 @@
             // SystemStartMenuItem
             // 
             this.SystemStartMenuItem.Name = "SystemStartMenuItem";
-            this.SystemStartMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.SystemStartMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
+            | System.Windows.Forms.Keys.S)));
+            this.SystemStartMenuItem.Size = new System.Drawing.Size(210, 22);
             this.SystemStartMenuItem.Text = "Start";
             this.SystemStartMenuItem.Click += new System.EventHandler(this.OnSystemStartMenuClick);
             // 
@@ -116,7 +122,9 @@
             // 
             this.SystemResetMenuItem.Enabled = false;
             this.SystemResetMenuItem.Name = "SystemResetMenuItem";
-            this.SystemResetMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.SystemResetMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
+            | System.Windows.Forms.Keys.R)));
+            this.SystemResetMenuItem.Size = new System.Drawing.Size(210, 22);
             this.SystemResetMenuItem.Text = "Reset";
             this.SystemResetMenuItem.Click += new System.EventHandler(this.OnSystemResetMenuClick);
             // 
@@ -124,22 +132,25 @@
             // 
             this.drive0ToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.loadToolStripMenuItem1,
-            this.unloadToolStripMenuItem1});
+            this.unloadToolStripMenuItem1,
+            this.Drive0ImageName});
             this.drive0ToolStripMenuItem.Name = "drive0ToolStripMenuItem";
-            this.drive0ToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.drive0ToolStripMenuItem.Size = new System.Drawing.Size(210, 22);
             this.drive0ToolStripMenuItem.Text = "Drive 0";
             // 
             // loadToolStripMenuItem1
             // 
             this.loadToolStripMenuItem1.Name = "loadToolStripMenuItem1";
-            this.loadToolStripMenuItem1.Size = new System.Drawing.Size(119, 22);
+            this.loadToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
+            | System.Windows.Forms.Keys.L)));
+            this.loadToolStripMenuItem1.Size = new System.Drawing.Size(167, 22);
             this.loadToolStripMenuItem1.Text = "Load...";
             this.loadToolStripMenuItem1.Click += new System.EventHandler(this.OnSystemDrive0LoadClick);
             // 
             // unloadToolStripMenuItem1
             // 
             this.unloadToolStripMenuItem1.Name = "unloadToolStripMenuItem1";
-            this.unloadToolStripMenuItem1.Size = new System.Drawing.Size(119, 22);
+            this.unloadToolStripMenuItem1.Size = new System.Drawing.Size(167, 22);
             this.unloadToolStripMenuItem1.Text = "Unload...";
             this.unloadToolStripMenuItem1.Click += new System.EventHandler(this.OnSystemDrive0UnloadClick);
             // 
@@ -147,35 +158,39 @@
             // 
             this.drive1ToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.loadToolStripMenuItem,
-            this.unloadToolStripMenuItem});
+            this.unloadToolStripMenuItem,
+            this.Drive1ImageName});
             this.drive1ToolStripMenuItem.Name = "drive1ToolStripMenuItem";
-            this.drive1ToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.drive1ToolStripMenuItem.Size = new System.Drawing.Size(210, 22);
             this.drive1ToolStripMenuItem.Text = "Drive 1";
             // 
             // loadToolStripMenuItem
             // 
             this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
-            this.loadToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
+            this.loadToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.loadToolStripMenuItem.Text = "Load...";
             this.loadToolStripMenuItem.Click += new System.EventHandler(this.OnSystemDrive1LoadClick);
             // 
             // unloadToolStripMenuItem
             // 
             this.unloadToolStripMenuItem.Name = "unloadToolStripMenuItem";
-            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
+            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.unloadToolStripMenuItem.Text = "Unload...";
             this.unloadToolStripMenuItem.Click += new System.EventHandler(this.OnSystemDrive1UnloadClick);
             // 
             // optionsToolStripMenuItem
             // 
+            this.optionsToolStripMenuItem.Enabled = false;
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(210, 22);
             this.optionsToolStripMenuItem.Text = "Options...";
             // 
             // SystemShowDebuggerMenuItem
             // 
             this.SystemShowDebuggerMenuItem.Name = "SystemShowDebuggerMenuItem";
-            this.SystemShowDebuggerMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.SystemShowDebuggerMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
+            | System.Windows.Forms.Keys.D)));
+            this.SystemShowDebuggerMenuItem.Size = new System.Drawing.Size(210, 22);
             this.SystemShowDebuggerMenuItem.Text = "Show Debugger";
             this.SystemShowDebuggerMenuItem.Click += new System.EventHandler(this.OnDebuggerShowClick);
             // 
@@ -197,7 +212,9 @@
             // StatusLine
             // 
             this.StatusLine.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.StatusLabel});
+            this.CaptureStatusLabel,
+            this.SystemStatusLabel,
+            this.DiskStatusLabel});
             this.StatusLine.Location = new System.Drawing.Point(0, 837);
             this.StatusLine.Name = "StatusLine";
             this.StatusLine.Size = new System.Drawing.Size(608, 22);
@@ -205,11 +222,37 @@
             this.StatusLine.Text = "statusStrip1";
             this.StatusLine.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
             // 
-            // StatusLabel
+            // CaptureStatusLabel
             // 
-            this.StatusLabel.Name = "StatusLabel";
-            this.StatusLabel.Size = new System.Drawing.Size(63, 17);
-            this.StatusLabel.Text = "StatusLabel";
+            this.CaptureStatusLabel.Name = "CaptureStatusLabel";
+            this.CaptureStatusLabel.Size = new System.Drawing.Size(102, 17);
+            this.CaptureStatusLabel.Text = "CaptureStatusLabel";
+            // 
+            // Drive0ImageName
+            // 
+            this.Drive0ImageName.Enabled = false;
+            this.Drive0ImageName.Name = "Drive0ImageName";
+            this.Drive0ImageName.Size = new System.Drawing.Size(167, 22);
+            this.Drive0ImageName.Text = "Image Name";
+            // 
+            // Drive1ImageName
+            // 
+            this.Drive1ImageName.Enabled = false;
+            this.Drive1ImageName.Name = "Drive1ImageName";
+            this.Drive1ImageName.Size = new System.Drawing.Size(152, 22);
+            this.Drive1ImageName.Text = "Image Name";
+            // 
+            // SystemStatusLabel
+            // 
+            this.SystemStatusLabel.Name = "SystemStatusLabel";
+            this.SystemStatusLabel.Size = new System.Drawing.Size(98, 17);
+            this.SystemStatusLabel.Text = "SystemStatusLabel";
+            // 
+            // DiskStatusLabel
+            // 
+            this.DiskStatusLabel.Name = "DiskStatusLabel";
+            this.DiskStatusLabel.Size = new System.Drawing.Size(82, 17);
+            this.DiskStatusLabel.Text = "DiskStatusLabel";
             // 
             // AltoWindow
             // 
@@ -260,7 +303,11 @@
         private System.Windows.Forms.ToolStripMenuItem unloadToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
         private System.Windows.Forms.StatusStrip StatusLine;
-        private System.Windows.Forms.ToolStripStatusLabel StatusLabel;
+        private System.Windows.Forms.ToolStripStatusLabel CaptureStatusLabel;
         private System.Windows.Forms.ToolStripMenuItem SystemShowDebuggerMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem Drive0ImageName;
+        private System.Windows.Forms.ToolStripMenuItem Drive1ImageName;
+        private System.Windows.Forms.ToolStripStatusLabel SystemStatusLabel;
+        private System.Windows.Forms.ToolStripStatusLabel DiskStatusLabel;
     }
 }

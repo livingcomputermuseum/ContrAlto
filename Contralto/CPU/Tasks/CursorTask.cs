@@ -5,7 +5,7 @@ namespace Contralto.CPU
     public partial class AltoCPU
     {
         /// <summary>
-        /// DisplayWordTask provides functionality for the DWT task
+        /// CursorTask provides functionality for the Cursor-specific task functions
         /// </summary>
         private sealed class CursorTask : Task
         {
@@ -34,7 +34,7 @@ namespace Contralto.CPU
                         break;
 
                     case CursorF2.LoadCSR:
-                        // TODO: load cursor shift register from bus
+                        // Load cursor shift register from bus
                         _cpu._system.DisplayController.LoadCSR(_busData);
                         break;
 

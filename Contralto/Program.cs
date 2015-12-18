@@ -10,12 +10,15 @@ namespace Contralto
         {
             AltoSystem system = new AltoSystem();
 
-            // for now everything is driven through the debugger
+            if (args.Length > 0)
+            {
+                system.LoadDrive(0, args[0]);
+            }
 
             AltoWindow mainWindow = new AltoWindow();
 
             mainWindow.AttachSystem(system);
-
+            
             /*
             Debugger d = new Debugger(system);
             system.AttachDisplay(d);

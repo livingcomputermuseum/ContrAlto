@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Contralto.Display;
+using System;
 
 namespace Contralto.CPU
 {
@@ -13,6 +14,8 @@ namespace Contralto.CPU
             {
                 _taskType = TaskType.DisplayVertical;                
                 _wakeup = false;
+
+                _displayController = _cpu._system.DisplayController;
             }
 
             protected override bool ExecuteInstruction(MicroInstruction instruction)
@@ -29,13 +32,15 @@ namespace Contralto.CPU
                 switch (dv2)
                 {
                     case DisplayVerticalF2.EVENFIELD:
-                        _nextModifier |= (ushort)(_cpu._system.DisplayController.EVENFIELD ? 1 : 0);
+                        _nextModifier |= (ushort)(_displayController.EVENFIELD ? 1 : 0);
                         break;
 
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled display vertical F2 {0}.", dv2));                        
                 }
             }
+
+            private DisplayController _displayController;
         }
     }
 }

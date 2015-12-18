@@ -31,6 +31,7 @@ namespace Contralto.CPU
             _tasks[(int)TaskType.DisplayVertical] = new DisplayVerticalTask(this);
             _tasks[(int)TaskType.Cursor] = new CursorTask(this);
             _tasks[(int)TaskType.MemoryRefresh] = new MemoryRefreshTask(this);
+            _tasks[(int)TaskType.Ethernet] = new EthernetTask(this);
 
             Reset();
         }
@@ -98,6 +99,7 @@ namespace Contralto.CPU
             _ir = 0;            
             _aluC0 = 0;
             _rb = 0;
+            _rmr = 0xffff;      // Start all tasks in ROM0
 
             // Reset tasks.
             for (int i=0;i<_tasks.Length;i++)
@@ -113,8 +115,7 @@ namespace Contralto.CPU
 
             _currentTask = _nextTask;
             _nextTask = null;
-
-        }
+        }        
 
         public void Clock()
         {
@@ -133,6 +134,35 @@ namespace Contralto.CPU
                     _nextTask = null;
                 }
             }
+        }
+
+        /// <summary>
+        /// "Silent Boot":  (See Section 9.2.2)
+        /// Used when a BOOT STARTF is invoked; resets task MPCs and sets
+        /// the starting bank (RAM0 or ROM0) appropriately based on the contents
+        /// of RMR.
+        /// All other register contents are left as-is.
+        /// </summary>
+        public void SoftReset()
+        {
+            // Reset tasks.
+            for (int i = 0; i < _tasks.Length; i++)
+            {
+                if (_tasks[i] != null)
+                {
+                    _tasks[i].Reset();
+                }
+            }
+
+            UCodeMemory.LoadBanksFromRMR(_rmr);
+
+            // Execute the initial task switch.
+            TaskSwitch();
+
+            _currentTask = _nextTask;
+            _nextTask = null;
+
+            Logging.Log.Write(Logging.LogComponent.CPU, "Silent Boot; microcode banks initialized to {0}", Conversion.ToOctal(_rmr));
         }
 
         /// <summary>
@@ -196,18 +226,21 @@ namespace Contralto.CPU
         }
 
         // AltoCPU registers
-        ushort _t;
-        ushort _l;
-        ushort _m;        
-        ushort _ir;
+        private ushort _t;
+        private ushort _l;
+        private ushort _m;        
+        private ushort _ir;
         
         // R and S register files and bank select
-        ushort[] _r;
-        ushort[][] _s;
-        ushort _rb;     // S register bank select
+        private ushort[] _r;
+        private ushort[][] _s;
+        private ushort _rb;     // S register bank select
 
         // Stores the last carry from the ALU on a Load L
         private ushort _aluC0;
+
+        // RMR (Reset Mode Register)
+        ushort _rmr;
 
         // Task data
         private Task _nextTask;         // The task to switch two after the next microinstruction

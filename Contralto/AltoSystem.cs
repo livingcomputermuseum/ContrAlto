@@ -19,15 +19,16 @@ namespace Contralto
         public AltoSystem()
         {
             _scheduler = new Scheduler();
-
-            _cpu = new AltoCPU(this);
+            
             _memBus = new MemoryBus();
             _mem = new Memory.Memory();
             _keyboard = new Keyboard();
             _diskController = new DiskController(this);
             _displayController = new DisplayController(this);
             _mouse = new Mouse();
-            //_fakeDisplayController = new FakeDisplayController(this);
+            _ethernetController = new EthernetController(this);
+
+            _cpu = new AltoCPU(this);
 
             // Attach memory-mapped devices to the bus
             _memBus.AddDevice(_mem);
@@ -37,8 +38,7 @@ namespace Contralto
             // Register devices that need clocks
             _clockableDevices = new List<IClockable>();            
             _clockableDevices.Add(_memBus);            
-            _clockableDevices.Add(_displayController);
-            //_clockableDevices.Add(_fakeDisplayController);
+            _clockableDevices.Add(_displayController);            
             _clockableDevices.Add(_cpu);
 
             Reset();
@@ -53,8 +53,7 @@ namespace Contralto
         public void Reset()
         {
             _scheduler.Reset();
-
-            _cpu.Reset();
+            
             _memBus.Reset();
             _mem.Reset();
             ALU.Reset();
@@ -62,7 +61,11 @@ namespace Contralto
             _diskController.Reset();
             _displayController.Reset();
             _keyboard.Reset();
-            _mouse.Reset();         
+            _mouse.Reset();
+            _cpu.Reset();
+            _ethernetController.Reset();
+
+            UCodeMemory.Reset();  
         }
 
         /// <summary>
@@ -98,7 +101,7 @@ namespace Contralto
 
             using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
             {
-                newPack.Load(fs, false);
+                newPack.Load(fs, path, false);
                 fs.Close();
             }
 
@@ -145,6 +148,11 @@ namespace Contralto
             get { return _mouse; }
         }
 
+        public EthernetController EthernetController
+        {
+            get { return _ethernetController; }
+        }
+
         public Scheduler Scheduler
         {
             get { return _scheduler; }
@@ -162,7 +170,7 @@ namespace Contralto
     
         private void T_Elapsed(object sender, ElapsedEventArgs e)
         {
-            System.Console.WriteLine("{0} CPU clocks/sec %{1}. {2} fields/sec", _clocks, ((double)_clocks / 5882353.0) * 100.0, _displayController.Fields);
+            //System.Console.WriteLine("{0} CPU clocks/sec %{1}. {2} fields/sec", _clocks, ((double)_clocks / 5882353.0) * 100.0, _displayController.Fields);
             _clocks = 0;
             _displayController.Fields = 0;
         }
@@ -174,7 +182,7 @@ namespace Contralto
         private Mouse _mouse;
         private DiskController _diskController;
         private DisplayController _displayController;
-        // private FakeDisplayController _fakeDisplayController;
+        private EthernetController _ethernetController;
 
         private Scheduler _scheduler;
         private ulong _clocks;

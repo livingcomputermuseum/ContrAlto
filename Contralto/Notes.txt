@@ -64,3 +64,19 @@ Project is on backburner while working on SUPDUP; notes for myself on current st
  - Disk controller is currently running 75% slower than normal to allow it to work properly; need to figure out why this is necessary -- are my timing calculations
     off or are there issues with the microcode engine?
  - 
+
+
+ 12/17/15:
+
+ Bug found:
+
+ Following code (hit while booting bravox.dsk) gets stuck forever:
+
+ 0001 SUB 3,0
+ 0002 DSZ@ AC3+0
+ 0003 JMP AC3+1
+
+ regs 0 and 3 are both zero; location 0 contains 177777, this is outside of the RAM area so cannot be modified; this loops forever.
+ unsure if this is intentional... (i.e. marks a non-bootable pack)
+
+

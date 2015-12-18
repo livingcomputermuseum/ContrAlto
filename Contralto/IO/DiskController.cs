@@ -12,9 +12,9 @@ namespace Contralto.IO
             _system = system;
 
             // Load the drives
-            _drives = new Diablo30Drive[2];
-            _drives[0] = new Diablo30Drive(_system);
-            _drives[1] = new Diablo30Drive(_system);           
+            _drives = new DiabloDrive[2];
+            _drives[0] = new DiabloDrive(_system);
+            _drives[1] = new DiabloDrive(_system);           
 
             Reset();
         }
@@ -113,12 +113,7 @@ namespace Contralto.IO
                 if (_sendAdr & (_kDataWrite & 0x2) != 0)
                 {
                     // Select disk if _sendAdr is true
-                    _disk = (_kAdr & 0x1);
-
-                    if (_disk != 0)
-                    {
-                        Console.WriteLine("*** DISK 1 SELECTED ***");
-                    }
+                    _disk = (_kAdr & 0x1);                    
                 }
 
             }
@@ -196,7 +191,7 @@ namespace Contralto.IO
             }
         }
 
-        public Diablo30Drive[] Drives
+        public DiabloDrive[] Drives
         {
             get { return _drives; }
         }
@@ -225,13 +220,12 @@ namespace Contralto.IO
 
             // Reset drives
             _drives[0].Reset();
-            _drives[1].Reset();
-
-            // Wakeup the sector task first thing
-            _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
+            _drives[1].Reset();            
 
             // Create events to be reused during execution
-            _sectorEvent = new Event(_sectorDuration, null, SectorCallback);
+
+            // Schedule the first sector immediately.
+            _sectorEvent = new Event(0, null, SectorCallback);
             _wordEvent = new Event(_wordDuration, null, WordCallback);
             _seclateEvent = new Event(_seclateDuration, null, SeclateCallback);
             _seekEvent = new Event(_seekDuration, null, SeekCallback);
@@ -305,7 +299,7 @@ namespace Contralto.IO
             }
             else
             {
-                // // Schedule next sector pulse immediately
+                // Schedule next sector pulse immediately
                 _sectorEvent.TimestampNsec = skewNsec;
                 _system.Scheduler.Schedule(_sectorEvent);
             }
@@ -370,6 +364,7 @@ namespace Contralto.IO
         {
             // set "seek fail" bit based on selected cylinder (if out of bounds) and do not
             // commence a seek if so.
+            // TODO: handle Model-44 cylinder count (and packs, for that matter)
             if (destCylinder > 202)
             {
                 _kStat |= 0x0080;
@@ -580,7 +575,7 @@ namespace Contralto.IO
             return (ulong)(seekTimeMsec * Conversion.MsecToNsec);
         }
 
-        private Diablo30Drive SelectedDrive
+        private DiabloDrive SelectedDrive
         {
             get { return _drives[_disk]; }
         }
@@ -661,7 +656,7 @@ namespace Contralto.IO
         private Event _seclateEvent;
 
         // Attached drives
-        private Diablo30Drive[] _drives;
+        private DiabloDrive[] _drives;
 
         private AltoSystem _system;
 

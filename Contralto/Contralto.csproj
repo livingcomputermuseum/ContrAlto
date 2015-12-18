@@ -80,6 +80,7 @@
     <Compile Include="CPU\ConstantMemory.cs" />
     <Compile Include="CPU\CPU.cs" />
     <Compile Include="CPU\NovaDisassembler.cs" />
+    <Compile Include="CPU\Tasks\EthernetTask.cs" />
     <Compile Include="CPU\Tasks\DisplayVerticalTask.cs" />
     <Compile Include="CPU\Tasks\DisplayHorizontalTask.cs" />
     <Compile Include="CPU\Tasks\CursorTask.cs" />
@@ -102,9 +103,10 @@
     <Compile Include="Display\DisplayController.cs" />
     <Compile Include="Display\IAltoDisplay.cs" />
     <Compile Include="IClockable.cs" />
-    <Compile Include="IO\Diablo30Drive.cs" />
+    <Compile Include="IO\DiabloDrive.cs" />
     <Compile Include="IO\DiskController.cs" />
     <Compile Include="IO\DiabloPack.cs" />
+    <Compile Include="IO\EthernetController.cs" />
     <Compile Include="IO\Keyboard.cs" />
     <Compile Include="IO\Mouse.cs" />
     <Compile Include="Logging\Log.cs" />
