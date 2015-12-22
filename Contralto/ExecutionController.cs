@@ -18,7 +18,8 @@ namespace Contralto
         {
             _system = system;
 
-            _execAbort = false;            
+            _execAbort = false;
+            _userAbort = false;
 
         }        
 
@@ -29,7 +30,7 @@ namespace Contralto
 
         public void StopExecution()
         {
-            _execAbort = true;
+            _userAbort = true;
 
             if (_execThread != null)
             {
@@ -80,6 +81,7 @@ namespace Contralto
             }
 
             _execAbort = false;
+            _userAbort = false;
 
             _execThread = new Thread(new System.Threading.ThreadStart(ExecuteProc));
             _execThread.Start();
@@ -108,7 +110,7 @@ namespace Contralto
                     _execAbort = _stepCallback();
                 }
 
-                if (_execAbort)
+                if (_execAbort || _userAbort)
                 {
                     // Halt execution
                     break;
@@ -119,6 +121,7 @@ namespace Contralto
         // Execution thread and state
         private Thread _execThread;        
         private bool _execAbort;
+        private bool _userAbort;
 
         private StepCallbackDelegate _stepCallback;
         private ErrorCallbackDelegate _errorCallback;

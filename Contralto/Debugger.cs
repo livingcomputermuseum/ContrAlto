@@ -134,6 +134,13 @@ namespace Contralto
             _diskData.Rows[8].Cells[1].Value = Conversion.ToOctal(_system.DiskController.KSTAT, 6);
             _diskData.Rows[9].Cells[1].Value = _system.DiskController.RECNO.ToString();
 
+            // Reserved memory locations
+            for (int i = 0; i < _reservedMemoryEntries.Length; i++)
+            {
+                _reservedMemory.Rows[i].Cells[2].Value =
+                    Conversion.ToOctal(_system.MemoryBus.DebugReadWord(_reservedMemoryEntries[i].Address), 6);
+            }
+
             //
             // Select active tab based on current UCode bank
             switch (UCodeMemory.Bank)
@@ -248,7 +255,15 @@ namespace Contralto
             _diskData.Rows.Add("KADR", "0");
             _diskData.Rows.Add("KCOM", "0");
             _diskData.Rows.Add("KSTAT", "0");
-            _diskData.Rows.Add("RECNO", "0");
+            _diskData.Rows.Add("RECNO", "0");    
+            
+            for(int i=0;i< _reservedMemoryEntries.Length;i++)
+            {
+                _reservedMemory.Rows.Add(
+                    Conversion.ToOctal(_reservedMemoryEntries[i].Address, 3),
+                    _reservedMemoryEntries[i].Name,
+                    Conversion.ToOctal(0, 6));
+            }
         }
         
 
@@ -641,6 +656,25 @@ namespace Contralto
             }
         }
 
+        private void OnMemoryJumpAddressKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Return ||
+                e.KeyCode == Keys.Enter)
+            {
+                try
+                {
+                    UInt16 address = Convert.ToUInt16(MemoryJumpToAddress.Text, 8);
+
+                    // find the source address that matches this, if any.
+                    HighlightNovaSourceLine(address);
+                }
+                catch
+                {
+                    // eh, just do nothing for now
+                }
+            }
+        }
+
         private void OnStepButtonClicked(object sender, EventArgs e)
         {
             _execType = ExecutionType.Step;
@@ -790,6 +824,80 @@ namespace Contralto
             InternalError,
         }        
 
+        private struct ReservedMemoryEntry
+        {
+            public ReservedMemoryEntry(ushort address, string name)
+            {
+                Address = address;
+                Name = name;
+            }
+
+            public ushort Address;
+            public string Name;
+        }
+
+        private ReservedMemoryEntry[] _reservedMemoryEntries =
+        {
+            new ReservedMemoryEntry(0x110, "DASTART"),
+            new ReservedMemoryEntry(0x111, "V.INT"),
+            new ReservedMemoryEntry(0x112, "ITQUAN"),
+            new ReservedMemoryEntry(0x113, "ITBITS"),
+            new ReservedMemoryEntry(0x114, "MOUSEX"),
+            new ReservedMemoryEntry(0x115, "MOUSEY"),
+            new ReservedMemoryEntry(0x116, "CURSORX"),
+            new ReservedMemoryEntry(0x117, "CURSORY"),
+            new ReservedMemoryEntry(0x118, "RTC"),
+            new ReservedMemoryEntry(0x119, "CURMAP0"),
+            new ReservedMemoryEntry(0x11a, "CURMAP1"),
+            new ReservedMemoryEntry(0x11b, "CURMAP2"),
+            new ReservedMemoryEntry(0x11c, "CURMAP3"),
+            new ReservedMemoryEntry(0x11d, "CURMAP4"),
+            new ReservedMemoryEntry(0x11e, "CURMAP5"),
+            new ReservedMemoryEntry(0x11f, "CURMAP6"),
+            new ReservedMemoryEntry(0x120, "CURMAP7"),
+            new ReservedMemoryEntry(0x121, "CURMAP8"),
+            new ReservedMemoryEntry(0x122, "CURMAP9"),
+            new ReservedMemoryEntry(0x123, "CURMAP10"),
+            new ReservedMemoryEntry(0x124, "CURMAP11"),
+            new ReservedMemoryEntry(0x125, "CURMAP12"),
+            new ReservedMemoryEntry(0x126, "CURMAP13"),
+            new ReservedMemoryEntry(0x127, "CURMAP14"),
+            new ReservedMemoryEntry(0x128, "CURMAP15"),
+            new ReservedMemoryEntry(0x12a, "WW"),
+            new ReservedMemoryEntry(0x12b, "ACTIVE"),
+            new ReservedMemoryEntry(0x140, "PCLOC"),
+            new ReservedMemoryEntry(0x141, "INTVEC0"),
+            new ReservedMemoryEntry(0x142, "INTVEC1"),
+            new ReservedMemoryEntry(0x143, "INTVEC2"),
+            new ReservedMemoryEntry(0x144, "INTVEC3"),
+            new ReservedMemoryEntry(0x145, "INTVEC4"),
+            new ReservedMemoryEntry(0x146, "INTVEC5"),
+            new ReservedMemoryEntry(0x147, "INTVEC6"),
+            new ReservedMemoryEntry(0x148, "INTVEC7"),
+            new ReservedMemoryEntry(0x149, "INTVEC8"),
+            new ReservedMemoryEntry(0x14a, "INTVEC9"),
+            new ReservedMemoryEntry(0x14b, "INTVEC10"),
+            new ReservedMemoryEntry(0x14c, "INTVEC11"),
+            new ReservedMemoryEntry(0x14d, "INTVEC12"),
+            new ReservedMemoryEntry(0x14e, "INTVEC13"),
+            new ReservedMemoryEntry(0x14f, "INTVEC14"),
+            new ReservedMemoryEntry(0x151, "KBLK"),
+            new ReservedMemoryEntry(0x152, "KSTAT"),
+            new ReservedMemoryEntry(0x153, "KADDR"),
+            new ReservedMemoryEntry(0x154, "S.INTBM"),
+            new ReservedMemoryEntry(0x155, "ITTIM"),
+            new ReservedMemoryEntry(0x156, "TRAPPC"),
+            new ReservedMemoryEntry(0x180, "EPLOC"),
+            new ReservedMemoryEntry(0x181, "EBLOC"),
+            new ReservedMemoryEntry(0x182, "EELOC"),
+            new ReservedMemoryEntry(0x183, "ELLOC"),
+            new ReservedMemoryEntry(0x184, "EICLOC"),
+            new ReservedMemoryEntry(0x185, "EIPLOC"),
+            new ReservedMemoryEntry(0x186, "EOCLOC"),
+            new ReservedMemoryEntry(0x187, "EOPLOC"),
+            new ReservedMemoryEntry(0x188, "EHLOC"),
+        };
+
         private AltoSystem _system;
         private ExecutionController _controller;
 
@@ -810,6 +918,7 @@ namespace Contralto
 
         // Nova Debugger breakpoints; same as above
         private bool[] _novaBreakpointEnabled;
+
 
     }
 }

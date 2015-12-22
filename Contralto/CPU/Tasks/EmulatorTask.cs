@@ -34,9 +34,9 @@ namespace Contralto.CPU
                 switch (ebs)
                 {
                     case EmulatorBusSource.ReadSLocation:
-                        if (_rSelect != 0)
+                        if (_srSelect != 0)
                         {
-                            return _cpu._s[_cpu._rb][_rSelect];
+                            return _cpu._s[_rb][_srSelect];
                         }
                         else
                         {
@@ -47,8 +47,10 @@ namespace Contralto.CPU
                         }
 
                     case EmulatorBusSource.LoadSLocation:
+                        // "When an S register is being loaded from M, the processor bus receives an
+                        // undefined value rather than being set to zero."
                         _loadS = true;
-                        return 0;       // TODO: technically this is an "undefined value," not zero.
+                        return 0xffff;       // TODO: technically this is an "undefined value.".
 
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled bus source {0}", bs));
@@ -136,6 +138,14 @@ namespace Contralto.CPU
                         _wrtRam = true;
                         break;
 
+                    case EmulatorF1.LoadESRB:
+                        // For now, this is always 0; we do not yet support the 3K RAM system with 8 banks of S registers.
+                        _rb = 0;
+                        Logging.Log.Write(Logging.LogType.Warning, Logging.LogComponent.EmulatorTask, "ESRB<- ({0}) not fully implemented.",
+                                    Conversion.ToOctal((_busData & 0xe) >> 1));
+                        //_rb = (ushort)((_busData & 0xe) >> 1);
+                        break;
+
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled emulator F1 {0}.", ef1));
                 }
@@ -165,6 +175,9 @@ namespace Contralto.CPU
                         //
                         // "...DNS also addresses R from (3-IR[3 - 4])..."
                         //
+
+                        // TODO: is S reg select impacted by this?
+                        //_srSelect = 
                         _rSelect = (_rSelect & 0xfffc) | ((((uint)_cpu._ir & 0x1800) >> 11) ^ 3);
                         break;
 

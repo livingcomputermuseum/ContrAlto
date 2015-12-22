@@ -28,6 +28,8 @@ namespace Contralto
             _mouse = new Mouse();
             _ethernetController = new EthernetController(this);
 
+
+
             _cpu = new AltoCPU(this);
 
             // Attach memory-mapped devices to the bus
@@ -177,7 +179,7 @@ namespace Contralto
 
         private AltoCPU _cpu;
         private MemoryBus _memBus;
-        private Contralto.Memory.Memory _mem;
+        private Memory.Memory _mem;
         private Keyboard _keyboard;
         private Mouse _mouse;
         private DiskController _diskController;

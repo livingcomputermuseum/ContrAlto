@@ -53,6 +53,7 @@ namespace Contralto.CPU
                 // 
                 _mpc = (ushort)_taskType;
                 _rdRam = false;
+                _rb = 0;
             }
 
             public virtual void BlockTask()
@@ -95,6 +96,7 @@ namespace Contralto.CPU
                 _loadR = false;
                 _loadS = false;
                 _rSelect = 0;
+                _srSelect = 0;
                 _busData = 0;
 
 
@@ -118,7 +120,7 @@ namespace Contralto.CPU
                 nextModifier = _nextModifier;
                 _nextModifier = 0;
 
-                _rSelect = instruction.RSELECT;
+                _srSelect = _rSelect = instruction.RSELECT;                
 
                 // Give tasks the chance to modify parameters early on (like RSELECT)
                 ExecuteSpecialFunction2Early(instruction);
@@ -220,7 +222,8 @@ namespace Contralto.CPU
 
                 //
                 // If there was a WRTRAM operation last cycle, we write the uCode RAM here
-                // using the results of this instruction's ALU operation.
+                // using the results of this instruction's ALU operation and the M register
+                // from the last instruction.
                 //
                 if (_wrtRam)
                 {
@@ -371,10 +374,10 @@ namespace Contralto.CPU
                     _cpu._r[_rSelect] = Shifter.Output;
                 }
 
-                // Do writeback to selected R register from M
+                // Do writeback to selected S register from M
                 if (_loadS)
                 {
-                    _cpu._s[_cpu._rb][_rSelect] = _cpu._m;
+                    _cpu._s[_rb][_srSelect] = _cpu._m;
                 }
 
                 // Load T
@@ -485,6 +488,7 @@ namespace Contralto.CPU
             protected ushort _busData;        // Data placed onto the bus (ANDed from multiple sources)
             protected ushort _nextModifier;   // Bits ORed onto the NEXT field of the current instruction
             protected uint _rSelect;        // RSELECT field from current instruction, potentially modified by task
+            protected uint _srSelect;       // RSELECT field as used by S register access (not modified in the same way as normal _rSelect).
             protected bool _loadS;          // Whether to load S from M at and of cycle
             protected bool _loadR;          // Whether to load R from shifter at end of cycle.
             protected bool _rdRam;          // Whether to load uCode RAM onto the bus during the next cycle.
@@ -497,6 +501,7 @@ namespace Contralto.CPU
             //
             protected AltoCPU _cpu;
             protected ushort _mpc;
+            protected ushort _rb;     // S register bank select
             protected TaskType _taskType;
             protected bool _wakeup;
 

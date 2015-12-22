@@ -167,10 +167,17 @@ namespace Contralto.CPU
                         break;
 
                     case DiskF2.NFER:
-                        // "NEXT <- NEXT OR (IF fatal error in latches THEN 0 ELSE 1)"
-                        // We assume success for now...
+                        // "NEXT <- NEXT OR (IF fatal error in latches THEN 0 ELSE 1)"                        
                         _nextModifier |= GetInitModifier(instruction);
-                        _nextModifier |= 0x1;
+
+                        if (true)  //!_diskController.FatalError)
+                        {
+                            _nextModifier |= 0x1;
+                        }
+                        else
+                        {
+                            Console.WriteLine("fatal disk error");
+                        }
                         break;
 
                     case DiskF2.STROBON:

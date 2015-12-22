@@ -104,7 +104,13 @@ namespace Contralto.CPU
             _ramBank = (address & 0x3000) >> 12;
             _ramSelect = (address & 0x0800) == 0;
             _lowHalfsel = (address & 0x0400) == 0;
-            _ramAddr = (address & 0x3ff);            
+            _ramAddr = (address & 0x3ff);          
+            
+            if (_ramBank != 0)
+            {
+                //throw new NotImplementedException(String.Format("Unexpected RAM BANK select of {0}", _ramBank));
+                _ramBank = 0;
+            }
         }
 
         /// <summary>
@@ -117,7 +123,8 @@ namespace Contralto.CPU
         {                        
             Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: Current Bank {0}", _microcodeBank[(int)task]);
             
-            // 2K ROM            
+            // 2K ROM                        
+            /*
             switch(_microcodeBank[(int)task])
             {
                 case MicrocodeBank.ROM0:
@@ -131,10 +138,10 @@ namespace Contralto.CPU
                 case MicrocodeBank.RAM0:
                     _microcodeBank[(int)task] = (nextAddress & 0x100) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.ROM1;
                     break;
-            }
+            }*/
 
             // for 1K ROM
-            //_microcodeBank[(int)task] = _microcodeBank[(int)task] == MicrocodeBank.ROM0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
+            _microcodeBank[(int)task] = _microcodeBank[(int)task] == MicrocodeBank.ROM0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
 
             Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: New Bank {0} for Task {1}", _microcodeBank[(int)task], task);            
         }
@@ -144,13 +151,7 @@ namespace Contralto.CPU
             if (!_ramSelect)
             {
                 throw new NotImplementedException("Read from microcode ROM not implemented.");
-            }
-
-            if (_ramBank > 0)
-            {
-                //throw new InvalidOperationException("RAM bank > 0, unexpected.");                
-                _ramBank = 0;
-            }
+            }            
 
             // pretend no ram for the moment                
             Logging.Log.Write(Logging.LogComponent.Microcode, "CRAM address for read: Bank {0}, RAM {1}, lowhalf {2} addr {3}",
@@ -178,13 +179,7 @@ namespace Contralto.CPU
             {
                 // No-op, can't write to ROM.
                 return;
-            }
-
-            if (_ramBank > 0)
-            {
-                //throw new InvalidOperationException("RAM bank > 0, unexpected.");                
-                _ramBank = 0;
-            }
+            }           
 
             Logging.Log.Write(Logging.LogComponent.Microcode, "CRAM address for write: Bank {0}, addr {1}",
                 _ramBank,                

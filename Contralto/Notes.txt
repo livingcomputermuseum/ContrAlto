@@ -80,3 +80,12 @@ Project is on backburner while working on SUPDUP; notes for myself on current st
  unsure if this is intentional... (i.e. marks a non-bootable pack)
 
 
+ Never mind -- pack was corrupted
+
+
+ 12/18/2015:
+
+ Remaining disk controller signals:
+
+ NFER		-- look at -KFER signal to determine what a "fatal error" is
+ SWRNRDY	-- llok at -SRWRDY signal to see what "ready" means

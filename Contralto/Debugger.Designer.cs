@@ -53,6 +53,8 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle23 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle24 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle25 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle26 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle27 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Debugger));
             this.Microcode = new System.Windows.Forms.GroupBox();
             this.SourceTabs = new System.Windows.Forms.TabControl();
@@ -109,6 +111,13 @@
             this.ResetButton = new System.Windows.Forms.Button();
             this.RunToNextTaskButton = new System.Windows.Forms.Button();
             this.NovaStep = new System.Windows.Forms.Button();
+            this.groupBox6 = new System.Windows.Forms.GroupBox();
+            this._reservedMemory = new System.Windows.Forms.DataGridView();
+            this.dataGridViewTextBoxColumn9 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn11 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.label3 = new System.Windows.Forms.Label();
+            this.MemoryJumpToAddress = new System.Windows.Forms.TextBox();
             this.Microcode.SuspendLayout();
             this.SourceTabs.SuspendLayout();
             this.Rom0Page.SuspendLayout();
@@ -127,6 +136,8 @@
             ((System.ComponentModel.ISupportInitialize)(this._memoryData)).BeginInit();
             this.groupBox5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._diskData)).BeginInit();
+            this.groupBox6.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this._reservedMemory)).BeginInit();
             this.SuspendLayout();
             // 
             // Microcode
@@ -149,7 +160,7 @@
             this.SourceTabs.Location = new System.Drawing.Point(6, 19);
             this.SourceTabs.Name = "SourceTabs";
             this.SourceTabs.SelectedIndex = 0;
-            this.SourceTabs.Size = new System.Drawing.Size(590, 571);
+            this.SourceTabs.Size = new System.Drawing.Size(590, 580);
             this.SourceTabs.TabIndex = 14;
             this.SourceTabs.SelectedIndexChanged += new System.EventHandler(this.OnTabChanged);
             // 
@@ -159,7 +170,7 @@
             this.Rom0Page.Location = new System.Drawing.Point(4, 22);
             this.Rom0Page.Name = "Rom0Page";
             this.Rom0Page.Padding = new System.Windows.Forms.Padding(3);
-            this.Rom0Page.Size = new System.Drawing.Size(582, 545);
+            this.Rom0Page.Size = new System.Drawing.Size(582, 554);
             this.Rom0Page.TabIndex = 0;
             this.Rom0Page.Text = "ROM0";
             this.Rom0Page.UseVisualStyleBackColor = true;
@@ -199,7 +210,7 @@
             this._rom0SourceViewer.ShowCellErrors = false;
             this._rom0SourceViewer.ShowEditingIcon = false;
             this._rom0SourceViewer.ShowRowErrors = false;
-            this._rom0SourceViewer.Size = new System.Drawing.Size(582, 545);
+            this._rom0SourceViewer.Size = new System.Drawing.Size(582, 554);
             this._rom0SourceViewer.TabIndex = 1;
             this._rom0SourceViewer.TabStop = false;
             this._rom0SourceViewer.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.SourceViewCellClick);
@@ -454,7 +465,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(11, 599);
+            this.label2.Location = new System.Drawing.Point(11, 602);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(47, 13);
             this.label2.TabIndex = 13;
@@ -462,7 +473,7 @@
             // 
             // JumpToAddress
             // 
-            this.JumpToAddress.Location = new System.Drawing.Point(59, 596);
+            this.JumpToAddress.Location = new System.Drawing.Point(64, 599);
             this.JumpToAddress.Name = "JumpToAddress";
             this.JumpToAddress.Size = new System.Drawing.Size(48, 20);
             this.JumpToAddress.TabIndex = 12;
@@ -670,7 +681,7 @@
             this.groupBox3.Size = new System.Drawing.Size(137, 344);
             this.groupBox3.TabIndex = 8;
             this.groupBox3.TabStop = false;
-            this.groupBox3.Text = "Other Registers";
+            this.groupBox3.Text = "CPU Registers";
             // 
             // _otherRegs
             // 
@@ -729,6 +740,8 @@
             // 
             // groupBox4
             // 
+            this.groupBox4.Controls.Add(this.MemoryJumpToAddress);
+            this.groupBox4.Controls.Add(this.label3);
             this.groupBox4.Controls.Add(this._memoryData);
             this.groupBox4.Location = new System.Drawing.Point(172, 634);
             this.groupBox4.Name = "groupBox4";
@@ -773,7 +786,7 @@
             this._memoryData.ShowCellToolTips = false;
             this._memoryData.ShowEditingIcon = false;
             this._memoryData.ShowRowErrors = false;
-            this._memoryData.Size = new System.Drawing.Size(279, 273);
+            this._memoryData.Size = new System.Drawing.Size(279, 257);
             this._memoryData.TabIndex = 0;
             this._memoryData.TabStop = false;
             this._memoryData.VirtualMode = true;
@@ -936,11 +949,107 @@
             this.NovaStep.UseVisualStyleBackColor = true;
             this.NovaStep.Click += new System.EventHandler(this.NovaStep_Click);
             // 
+            // groupBox6
+            // 
+            this.groupBox6.Controls.Add(this._reservedMemory);
+            this.groupBox6.Location = new System.Drawing.Point(757, 3);
+            this.groupBox6.Name = "groupBox6";
+            this.groupBox6.Size = new System.Drawing.Size(180, 975);
+            this.groupBox6.TabIndex = 3;
+            this.groupBox6.TabStop = false;
+            this.groupBox6.Text = "Reserved Memory";
+            // 
+            // _reservedMemory
+            // 
+            this._reservedMemory.AllowUserToAddRows = false;
+            this._reservedMemory.AllowUserToDeleteRows = false;
+            this._reservedMemory.AllowUserToResizeColumns = false;
+            this._reservedMemory.AllowUserToResizeRows = false;
+            dataGridViewCellStyle26.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            this._reservedMemory.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle26;
+            this._reservedMemory.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this._reservedMemory.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.dataGridViewTextBoxColumn9,
+            this.dataGridViewTextBoxColumn10,
+            this.dataGridViewTextBoxColumn11});
+            dataGridViewCellStyle27.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle27.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle27.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle27.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle27.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle27.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle27.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this._reservedMemory.DefaultCellStyle = dataGridViewCellStyle27;
+            this._reservedMemory.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
+            this._reservedMemory.Location = new System.Drawing.Point(7, 19);
+            this._reservedMemory.MultiSelect = false;
+            this._reservedMemory.Name = "_reservedMemory";
+            this._reservedMemory.ReadOnly = true;
+            this._reservedMemory.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
+            this._reservedMemory.RowHeadersVisible = false;
+            this._reservedMemory.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
+            this._reservedMemory.RowTemplate.Height = 18;
+            this._reservedMemory.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
+            this._reservedMemory.ShowCellErrors = false;
+            this._reservedMemory.ShowCellToolTips = false;
+            this._reservedMemory.ShowEditingIcon = false;
+            this._reservedMemory.ShowRowErrors = false;
+            this._reservedMemory.Size = new System.Drawing.Size(167, 950);
+            this._reservedMemory.TabIndex = 0;
+            this._reservedMemory.TabStop = false;
+            // 
+            // dataGridViewTextBoxColumn9
+            // 
+            this.dataGridViewTextBoxColumn9.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.dataGridViewTextBoxColumn9.HeaderText = "Addr";
+            this.dataGridViewTextBoxColumn9.Name = "dataGridViewTextBoxColumn9";
+            this.dataGridViewTextBoxColumn9.ReadOnly = true;
+            this.dataGridViewTextBoxColumn9.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.dataGridViewTextBoxColumn9.Width = 35;
+            // 
+            // dataGridViewTextBoxColumn10
+            // 
+            this.dataGridViewTextBoxColumn10.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.dataGridViewTextBoxColumn10.HeaderText = "Name";
+            this.dataGridViewTextBoxColumn10.Name = "dataGridViewTextBoxColumn10";
+            this.dataGridViewTextBoxColumn10.ReadOnly = true;
+            this.dataGridViewTextBoxColumn10.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.dataGridViewTextBoxColumn10.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.dataGridViewTextBoxColumn10.Width = 41;
+            // 
+            // dataGridViewTextBoxColumn11
+            // 
+            this.dataGridViewTextBoxColumn11.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.dataGridViewTextBoxColumn11.HeaderText = "Value";
+            this.dataGridViewTextBoxColumn11.Name = "dataGridViewTextBoxColumn11";
+            this.dataGridViewTextBoxColumn11.ReadOnly = true;
+            this.dataGridViewTextBoxColumn11.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.dataGridViewTextBoxColumn11.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(6, 279);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(47, 13);
+            this.label3.TabIndex = 14;
+            this.label3.Text = "Jump to:";
+            // 
+            // MemoryJumpToAddress
+            // 
+            this.MemoryJumpToAddress.Location = new System.Drawing.Point(53, 276);
+            this.MemoryJumpToAddress.Name = "MemoryJumpToAddress";
+            this.MemoryJumpToAddress.Size = new System.Drawing.Size(48, 20);
+            this.MemoryJumpToAddress.TabIndex = 15;
+            this.MemoryJumpToAddress.TabStop = false;
+            this.MemoryJumpToAddress.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnMemoryJumpAddressKeyDown);
+            // 
             // Debugger
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(750, 997);
+            this.ClientSize = new System.Drawing.Size(949, 997);
+            this.Controls.Add(this.groupBox6);
             this.Controls.Add(this.NovaStep);
             this.Controls.Add(this.RunToNextTaskButton);
             this.Controls.Add(this.ResetButton);
@@ -981,9 +1090,12 @@
             this.groupBox3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this._otherRegs)).EndInit();
             this.groupBox4.ResumeLayout(false);
+            this.groupBox4.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this._memoryData)).EndInit();
             this.groupBox5.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this._diskData)).EndInit();
+            this.groupBox6.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this._reservedMemory)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1046,5 +1158,12 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
+        private System.Windows.Forms.GroupBox groupBox6;
+        private System.Windows.Forms.DataGridView _reservedMemory;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn9;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn10;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn11;
+        private System.Windows.Forms.TextBox MemoryJumpToAddress;
+        private System.Windows.Forms.Label label3;
     }
 }

@@ -89,7 +89,7 @@
                     _display.DrawDisplayWord(scanline, wordOffset, (ushort)(dcb.whiteOnBlack ? 0x0 : 0xffff), false);
                 }
 
-                _display.Render();
+                //_display.Render();
 
                 // decrement scan line counter for this DCB, if < 0, grab next DCB.
                 dcb.scanlineCount--;

@@ -97,8 +97,7 @@ namespace Contralto.CPU
             _l = 0;
             _m = 0;            
             _ir = 0;            
-            _aluC0 = 0;
-            _rb = 0;
+            _aluC0 = 0;            
             _rmr = 0xffff;      // Start all tasks in ROM0
 
             // Reset tasks.
@@ -233,8 +232,7 @@ namespace Contralto.CPU
         
         // R and S register files and bank select
         private ushort[] _r;
-        private ushort[][] _s;
-        private ushort _rb;     // S register bank select
+        private ushort[][] _s;        
 
         // Stores the last carry from the ALU on a Load L
         private ushort _aluC0;

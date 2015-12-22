@@ -142,9 +142,49 @@ namespace Contralto.IO
             }
         }
 
+        public void Save(Stream imageStream)
+        {
+            for (int cylinder = 0; cylinder < _geometry.Cylinders; cylinder++)
+            {
+                for (int track = 0; track < _geometry.Tracks; track++)
+                {
+                    for (int sector = 0; sector < _geometry.Sectors; sector++)
+                    {
+                        byte[] header = new byte[4];        // 2 words
+                        byte[] label = new byte[16];        // 8 words
+                        byte[] data = new byte[512];        // 256 words
+
+                        //
+                        // Bitsavers images have an extra word in the header for some reason.
+                        // We will follow this 'standard' when writing out.
+                        // TODO: should support different formats ("correct" raw, Alto CopyDisk format, etc.)
+                        //
+                        byte[] dummy = new byte[2];
+                        imageStream.Write(dummy, 0, 2);
+
+                        DiabloDiskSector s = _sectors[cylinder, track, sector];
+
+                        WriteWordBuffer(imageStream, s.Header);
+                        WriteWordBuffer(imageStream, s.Label);
+                        WriteWordBuffer(imageStream, s.Data);                        
+                    }
+                }
+            }
+        }
+
         public DiabloDiskSector GetSector(int cylinder, int track, int sector)
         {
             return _sectors[cylinder, track, sector];
+        }
+
+        private void WriteWordBuffer(Stream imageStream, ushort[] buffer)
+        {
+            // TODO: this is beyond inefficient
+            for(int i=0;i<buffer.Length;i++)
+            {
+                imageStream.WriteByte((byte)buffer[i]);
+                imageStream.WriteByte((byte)(buffer[i] >> 8));
+            }
         }
 
         private void SwapBytes(byte[] data)

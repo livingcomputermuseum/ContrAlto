@@ -167,45 +167,25 @@ namespace Contralto.Display
                 displayWord = _whiteOnBlack ? _dataBuffer.Dequeue() : (ushort)~_dataBuffer.Dequeue();
             }
 
+            _display.DrawDisplayWord(_scanline, _word, displayWord, _lowRes);
+
             // Merge in cursor word:
             // Calculate X offset of current word
             int xOffset = _word * (_lowRes ? 32 : 16);
 
-            // Is cursor within this range?  (Note cursor is always 16 bits wide regardless of
-            // display mode, but may span two 16-bit display words.)
-            if ((_cursorXLatched >= xOffset && _cursorXLatched < xOffset + 16) ||
-                (_cursorXLatched + 16 >= xOffset & _cursorXLatched + 16 < xOffset + 16))
-            {                                
-                // Yes.  Merge bits in the appropriate place.
-                int shift = (_cursorXLatched - xOffset);                
-
-                // Which half of the 32-bit word the cursor will appear in are we in?
-                if (shift > 0)
-                {
-                    // Take the cursor word shifted by the current offset
-                    displayWord ^= (ushort)((_cursorRegLatched) >> shift);
-                }
-                else
-                {
-                    // Take the cursor word shifted left
-                    displayWord ^= (ushort)((_cursorRegLatched) << (-shift));
-                }
-            }
-
-            _display.DrawDisplayWord(_scanline, _word, displayWord, _lowRes);
-
             _word++;
-
-            if (_word == (_lowRes ? _scanlineWords / 4 : _scanlineWords / 2))
-            {
-                // Run MRT
-                //_system.CPU.WakeupTask(TaskType.MemoryRefresh);  
-            }
 
             if (_word >= (_lowRes ? _scanlineWords / 2 : _scanlineWords))
             {
                 // End of scanline.
-                // Move to next.                
+                // Move to next.    
+
+                // Draw cursor for this scanline first    
+                if (_cursorXLatched < 606)
+                {
+                    _display.DrawCursorWord(_scanline, _cursorXLatched, _cursorRegLatched);
+                }
+
                 _scanline += 2;                
 
                 if (_scanline > 807)
@@ -274,21 +254,17 @@ namespace Contralto.Display
         }
 
         public void LoadDDR(ushort word)
-        {
-
-            if (_dataBuffer.Count < 20)
-            {
-                _dataBuffer.Enqueue(word);
-            }
-
-            /*
+        {        
+            _dataBuffer.Enqueue(word);
+            
+            
             // Sanity check: data length should never exceed 16 words.            
-            if (_dataBuffer.Count >= 16)
-            {
-                
-                //_dataBuffer.Dequeue();
-                //_system.CPU.BlockTask(TaskType.DisplayWord);
-            } */
+            // TODO: we're allowing up to 18 before we start discarding things.
+            // This indicates that our timing is messed up somewhere...
+            if (_dataBuffer.Count > 18)
+            {                
+                _dataBuffer.Dequeue();                
+            }
         }
 
         public void LoadXPREG(ushort word)
@@ -296,32 +272,17 @@ namespace Contralto.Display
             if (!_cursorXLatch)
             {
                 _cursorXLatch = true;
-                _cursorX = (ushort)(~word);
-
-                //System.Console.WriteLine("XPREG {0}, scanline {1} word {2}", word, _scanline, _word);
+                _cursorX = (ushort)(~word);         
             }
         }
 
         public void LoadCSR(ushort word)
-        {
-            /*
-            if (_cursorReg != 0 && word == 0)
-            {
-                System.Console.WriteLine("csr disabled, scanline {0}", _scanline);
-            } */
-
+        {            
             if (!_cursorRegLatch)
             {
                 _cursorRegLatch = true;
-                _cursorReg = (ushort)word;
-
-                if (word != 0)
-                {
-                    //System.Console.WriteLine("csr {0} scanline {1}, word {2}", Conversion.ToOctal(word), _scanline, _word);
-                }
-            }
-            
-            
+                _cursorReg = (ushort)word;               
+            }                        
         }
 
         public void SETMODE(ushort word)
