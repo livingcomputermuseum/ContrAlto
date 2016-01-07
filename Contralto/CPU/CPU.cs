@@ -32,6 +32,7 @@ namespace Contralto.CPU
             _tasks[(int)TaskType.Cursor] = new CursorTask(this);
             _tasks[(int)TaskType.MemoryRefresh] = new MemoryRefreshTask(this);
             _tasks[(int)TaskType.Ethernet] = new EthernetTask(this);
+            _tasks[(int)TaskType.Parity] = new ParityTask(this);
 
             Reset();
         }

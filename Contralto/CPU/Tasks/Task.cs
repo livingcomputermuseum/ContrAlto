@@ -416,7 +416,8 @@ namespace Contralto.CPU
                 if (swMode)
                 {
                     //Console.WriteLine("SWMODE NEXT {0} Modifier {1}", Conversion.ToOctal(instruction.NEXT), Conversion.ToOctal(nextModifier));
-                    UCodeMemory.SwitchMode((ushort)(instruction.NEXT | nextModifier), _taskType);
+                    UCodeMemory.SwitchMode((ushort)(instruction.NEXT), _taskType);
+                    Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1}", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT | nextModifier));
                 }
 
                 //

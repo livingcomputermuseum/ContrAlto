@@ -80,6 +80,7 @@
     <Compile Include="CPU\ConstantMemory.cs" />
     <Compile Include="CPU\CPU.cs" />
     <Compile Include="CPU\NovaDisassembler.cs" />
+    <Compile Include="CPU\Tasks\ParityTask.cs" />
     <Compile Include="CPU\Tasks\EthernetTask.cs" />
     <Compile Include="CPU\Tasks\DisplayVerticalTask.cs" />
     <Compile Include="CPU\Tasks\DisplayHorizontalTask.cs" />

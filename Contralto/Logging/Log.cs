@@ -75,8 +75,6 @@ namespace Contralto.Logging
             }
         }
 
-
-
         private static LogComponent _components;
         private static LogType _type;
     }

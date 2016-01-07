@@ -6,10 +6,10 @@ namespace Contralto.CPU
     public enum MicrocodeBank
     {
         ROM0 = 0,
-        ROM1,
-        RAM0,
-        RAM1,
-        RAM2
+        ROM1 = 1,
+        RAM0 = 2,
+        RAM1 = 3,
+        RAM2 = 4
     }
 
     struct RomFile
@@ -123,8 +123,7 @@ namespace Contralto.CPU
         {                        
             Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: Current Bank {0}", _microcodeBank[(int)task]);
             
-            // 2K ROM                        
-            /*
+            // 2K ROM                                    
             switch(_microcodeBank[(int)task])
             {
                 case MicrocodeBank.ROM0:
@@ -138,10 +137,10 @@ namespace Contralto.CPU
                 case MicrocodeBank.RAM0:
                     _microcodeBank[(int)task] = (nextAddress & 0x100) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.ROM1;
                     break;
-            }*/
+            }
 
-            // for 1K ROM
-            _microcodeBank[(int)task] = _microcodeBank[(int)task] == MicrocodeBank.ROM0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
+            // for 1K ROM -- todo: make configurable
+            //_microcodeBank[(int)task] = _microcodeBank[(int)task] == MicrocodeBank.ROM0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
 
             Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: New Bank {0} for Task {1}", _microcodeBank[(int)task], task);            
         }
@@ -152,8 +151,7 @@ namespace Contralto.CPU
             {
                 throw new NotImplementedException("Read from microcode ROM not implemented.");
             }            
-
-            // pretend no ram for the moment                
+                         
             Logging.Log.Write(Logging.LogComponent.Microcode, "CRAM address for read: Bank {0}, RAM {1}, lowhalf {2} addr {3}",
                 _ramBank,
                 _ramSelect,
