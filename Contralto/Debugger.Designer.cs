@@ -97,6 +97,8 @@
             this.Reg = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.RegValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.MemoryJumpToAddress = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
             this._memoryData = new System.Windows.Forms.DataGridView();
             this.Bkpt = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.Address = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -116,8 +118,7 @@
             this.dataGridViewTextBoxColumn9 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn11 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.label3 = new System.Windows.Forms.Label();
-            this.MemoryJumpToAddress = new System.Windows.Forms.TextBox();
+            this.HackButton = new System.Windows.Forms.Button();
             this.Microcode.SuspendLayout();
             this.SourceTabs.SuspendLayout();
             this.Rom0Page.SuspendLayout();
@@ -270,7 +271,7 @@
             this.Rom1Page.Location = new System.Drawing.Point(4, 22);
             this.Rom1Page.Name = "Rom1Page";
             this.Rom1Page.Padding = new System.Windows.Forms.Padding(3);
-            this.Rom1Page.Size = new System.Drawing.Size(582, 545);
+            this.Rom1Page.Size = new System.Drawing.Size(582, 554);
             this.Rom1Page.TabIndex = 1;
             this.Rom1Page.Text = "ROM1";
             this.Rom1Page.UseVisualStyleBackColor = true;
@@ -369,7 +370,7 @@
             this.Rom2Page.Location = new System.Drawing.Point(4, 22);
             this.Rom2Page.Name = "Rom2Page";
             this.Rom2Page.Padding = new System.Windows.Forms.Padding(3);
-            this.Rom2Page.Size = new System.Drawing.Size(582, 545);
+            this.Rom2Page.Size = new System.Drawing.Size(582, 554);
             this.Rom2Page.TabIndex = 2;
             this.Rom2Page.Text = "RAM0";
             this.Rom2Page.UseVisualStyleBackColor = true;
@@ -750,6 +751,24 @@
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Memory";
             // 
+            // MemoryJumpToAddress
+            // 
+            this.MemoryJumpToAddress.Location = new System.Drawing.Point(53, 276);
+            this.MemoryJumpToAddress.Name = "MemoryJumpToAddress";
+            this.MemoryJumpToAddress.Size = new System.Drawing.Size(48, 20);
+            this.MemoryJumpToAddress.TabIndex = 15;
+            this.MemoryJumpToAddress.TabStop = false;
+            this.MemoryJumpToAddress.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnMemoryJumpAddressKeyDown);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(6, 279);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(47, 13);
+            this.label3.TabIndex = 14;
+            this.label3.Text = "Jump to:";
+            // 
             // _memoryData
             // 
             this._memoryData.AllowUserToAddRows = false;
@@ -1026,29 +1045,22 @@
             this.dataGridViewTextBoxColumn11.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.dataGridViewTextBoxColumn11.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
-            // label3
+            // HackButton
             // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(6, 279);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(47, 13);
-            this.label3.TabIndex = 14;
-            this.label3.Text = "Jump to:";
-            // 
-            // MemoryJumpToAddress
-            // 
-            this.MemoryJumpToAddress.Location = new System.Drawing.Point(53, 276);
-            this.MemoryJumpToAddress.Name = "MemoryJumpToAddress";
-            this.MemoryJumpToAddress.Size = new System.Drawing.Size(48, 20);
-            this.MemoryJumpToAddress.TabIndex = 15;
-            this.MemoryJumpToAddress.TabStop = false;
-            this.MemoryJumpToAddress.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnMemoryJumpAddressKeyDown);
+            this.HackButton.Location = new System.Drawing.Point(295, 955);
+            this.HackButton.Name = "HackButton";
+            this.HackButton.Size = new System.Drawing.Size(36, 23);
+            this.HackButton.TabIndex = 15;
+            this.HackButton.Text = "hack";
+            this.HackButton.UseVisualStyleBackColor = true;
+            this.HackButton.Click += new System.EventHandler(this.HackButton_Click);
             // 
             // Debugger
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(949, 997);
+            this.Controls.Add(this.HackButton);
             this.Controls.Add(this.groupBox6);
             this.Controls.Add(this.NovaStep);
             this.Controls.Add(this.RunToNextTaskButton);
@@ -1165,5 +1177,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn11;
         private System.Windows.Forms.TextBox MemoryJumpToAddress;
         private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Button HackButton;
     }
 }

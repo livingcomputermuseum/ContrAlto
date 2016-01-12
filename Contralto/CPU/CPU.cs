@@ -1,5 +1,7 @@
 ﻿using System.Timers;
 
+using Contralto.Logging;
+
 namespace Contralto.CPU
 {
     public enum TaskType
@@ -145,22 +147,30 @@ namespace Contralto.CPU
         /// </summary>
         public void SoftReset()
         {
-            // Reset tasks.
+            // Soft-Reset tasks.
             for (int i = 0; i < _tasks.Length; i++)
             {
                 if (_tasks[i] != null)
                 {
-                    _tasks[i].Reset();
+                    _tasks[i].SoftReset();
                 }
             }
 
             UCodeMemory.LoadBanksFromRMR(_rmr);
+            _rmr = 0xffff;      // Reset RMR (all tasks start in ROM0)
+          
+            // Start in Emulator
+            _currentTask = _tasks[0];
 
-            // Execute the initial task switch.
-            TaskSwitch();
-
-            _currentTask = _nextTask;
-            _nextTask = null;
+            //
+            // TODO:
+            // This is a hack of sorts, it ensures that the sector task initializes
+            // itself as soon as the Emulator task yields after the reset.  (CopyDisk is broken otherwise due to the
+            // sector task stomping over the KBLK CopyDisk sets up after the reset.  This is a race of sorts.)
+            // Unsure if there is a deeper issue here or if there are other reset semantics
+            // in play here.
+            //
+            WakeupTask(CPU.TaskType.DiskSector);            
 
             Logging.Log.Write(Logging.LogComponent.CPU, "Silent Boot; microcode banks initialized to {0}", Conversion.ToOctal(_rmr));
         }
@@ -173,7 +183,8 @@ namespace Contralto.CPU
         public void WakeupTask(TaskType task)
         {            
             if (_tasks[(int)task] != null)
-            {
+            {             
+                Log.Write(LogComponent.TaskSwitch, "Wakeup enabled for Task {0}", task);            
                 _tasks[(int)task].WakeupTask();                
             }
         }
@@ -186,7 +197,8 @@ namespace Contralto.CPU
         public void BlockTask(TaskType task)
         {
             if (_tasks[(int)task] != null)
-            {
+            {                
+                Log.Write(LogComponent.TaskSwitch, "Removed wakeup for Task {0}", task);                
                 _tasks[(int)task].BlockTask();
             }
         }
@@ -218,8 +230,15 @@ namespace Contralto.CPU
             for (int i = _tasks.Length - 1; i >= 0; i--)
             {
                 if (_tasks[i] != null && _tasks[i].Wakeup)
-                {
+                {                    
                     _nextTask = _tasks[i];
+
+                    if (_nextTask != _currentTask && _currentTask != null)
+                    {                        
+                        Log.Write(LogComponent.TaskSwitch, "TASK: Next task will be {0} (pri {1}); current task {2} (pri {3})",
+                        (TaskType)_nextTask.Priority, _nextTask.Priority,
+                        (TaskType)_currentTask.Priority, _currentTask.Priority);                        
+                    }
                     break;
                 }
             }

@@ -110,9 +110,7 @@ namespace Contralto.IO
                     // Select disk if _sendAdr is true
                     _disk = (_kAdr & 0x1);
                     _seeking = false;
-
-                    /*
-                    
+                                        
                     // Clear the NOTREADY flag depending on whether the drive is loaded or not
                     if (_drives[_disk].IsLoaded)
                     {
@@ -121,7 +119,7 @@ namespace Contralto.IO
                     else
                     {
                         _kStat |= NOTREADY;
-                    } */
+                    }
                 }
 
             }
@@ -182,7 +180,7 @@ namespace Contralto.IO
 
         public int Drive
         {
-            get { return 0; }
+            get { return _disk; }
         }
 
         public double ClocksUntilNextSector
@@ -198,7 +196,7 @@ namespace Contralto.IO
                 // This is true if the drive is:
                 //   - powered on, loaded with a disk, spun up
                 //   - not actively seeking                
-                return _drives[0].IsLoaded;
+                return _drives[_disk].IsLoaded && !_seeking;
             }
         }
 
@@ -253,7 +251,7 @@ namespace Contralto.IO
             _drives[0].Reset();
             _drives[1].Reset();            
 
-            // Create events to be reused during execution
+            // Create events to be reused during execution        
 
             // Schedule the first sector immediately.
             _sectorEvent = new Event(0, null, SectorCallback);
@@ -278,7 +276,7 @@ namespace Contralto.IO
             //
             // Next sector; move to next sector and wake up Disk Sector task.
             //            
-            _sector = (_sector + 1) % 12;
+            _sector = (_sector + 1) % 12;            
 
             _kStat = (ushort)((_kStat & 0x0fff) | (_sector << 12));
 
@@ -295,6 +293,8 @@ namespace Contralto.IO
             if ((_kStat & STROBE) == 0)
             {
                 Log.Write(LogType.Verbose, LogComponent.DiskController, "Waking up sector task for C/H/S {0}/{1}/{2}", SelectedDrive.Cylinder, SelectedDrive.Head, _sector);
+                Log.Write(LogType.Verbose, LogComponent.DiskController, "KADR is {0}", Conversion.ToOctal(_kAdr));
+                Log.Write(LogType.Verbose, LogComponent.DiskController, "KDATA is {0}", Conversion.ToOctal(_kDataWrite));                
                 _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
 
                 // Reset SECLATE                
@@ -403,7 +403,7 @@ namespace Contralto.IO
                 Log.Write(LogComponent.DiskController, "Seek failed, specified cylinder {0} is out of range.", destCylinder);
                 _seeking = false;
             }
-            else
+            else if (destCylinder != SelectedDrive.Cylinder)
             {
                 // Otherwise, start a seek.
                 _destCylinder = destCylinder;
@@ -422,6 +422,12 @@ namespace Contralto.IO
                 _system.Scheduler.Schedule(_seekEvent);
 
                 Log.Write(LogComponent.DiskController, "Seek to {0} from {1} commencing.  Will take {2} nsec.", _destCylinder, SelectedDrive.Cylinder, _seekDuration);
+            }
+            else
+            {
+                // Clear the fail bit.
+                _kStat &= (ushort)~SEEKFAIL;
+                Log.Write(LogComponent.DiskController, "Seek is a no op ({0} to {1}).", destCylinder, SelectedDrive.Cylinder);
             }
         }
 
@@ -685,7 +691,7 @@ namespace Contralto.IO
 
         // SECLATE data.
         // 8.5uS for seclate delay (approx. 50 clocks)
-        private static ulong _seclateDuration = (ulong)(85.0 * Conversion.UsecToNsec * _scale);
+        private static ulong _seclateDuration = (ulong)(20.0 * Conversion.UsecToNsec * _scale);
         private bool _seclateEnable;
         private bool _seclate;      
         private Event _seclateEvent;
@@ -698,10 +704,10 @@ namespace Contralto.IO
         private bool _debugRead;
 
         // KSTAT bitfields        
-        private readonly ushort SECLATE   = 0x10;
-        private readonly ushort NOTREADY  = 0x20;
-        private readonly ushort STROBE    = 0x40;
-        private readonly ushort SEEKFAIL  = 0x80;
+        public static readonly ushort SECLATE   = 0x10;
+        public static readonly ushort NOTREADY  = 0x20;
+        public static readonly ushort STROBE    = 0x40;
+        public static readonly ushort SEEKFAIL  = 0x80;
         
     }
 }

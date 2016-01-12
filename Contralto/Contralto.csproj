@@ -160,7 +160,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Disk\st76boot.dsk">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Disk\tdisk4.dsk">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

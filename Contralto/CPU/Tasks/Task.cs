@@ -56,6 +56,14 @@ namespace Contralto.CPU
                 _rb = 0;
             }
 
+            public virtual void SoftReset()
+            {
+                //
+                // As above but we leave all other state alone.
+                // 
+                _mpc = (ushort)_taskType;
+            }
+
             public virtual void BlockTask()
             {
                 _wakeup = false;
@@ -98,6 +106,7 @@ namespace Contralto.CPU
                 _rSelect = 0;
                 _srSelect = 0;
                 _busData = 0;
+                _softReset = false;
 
 
                 Shifter.SetMagic(false);
@@ -414,9 +423,8 @@ namespace Contralto.CPU
                 // this depends on the value of the NEXT field in this instruction
                 //
                 if (swMode)
-                {
-                    //Console.WriteLine("SWMODE NEXT {0} Modifier {1}", Conversion.ToOctal(instruction.NEXT), Conversion.ToOctal(nextModifier));
-                    UCodeMemory.SwitchMode((ushort)(instruction.NEXT), _taskType);
+                {                    
+                    UCodeMemory.SwitchMode(instruction.NEXT, _taskType);
                     Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1}", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT | nextModifier));
                 }
 
@@ -430,8 +438,12 @@ namespace Contralto.CPU
 
                 //
                 // Select next address, using the address modifier from the last instruction.
+                // (Unless a soft reset occurred during this instruction)
                 //
-                _mpc = (ushort)(instruction.NEXT | nextModifier);
+                if (!_softReset)
+                {
+                    _mpc = (ushort)(instruction.NEXT | nextModifier);
+                }
 
                 return nextTask;
             }
@@ -486,15 +498,16 @@ namespace Contralto.CPU
             //
             // TODO: maybe instead of these being shared (which feels kinda bad)
             // these could be encapsulated in an object and passed to subclass implementations?            
-            protected ushort _busData;        // Data placed onto the bus (ANDed from multiple sources)
-            protected ushort _nextModifier;   // Bits ORed onto the NEXT field of the current instruction
-            protected uint _rSelect;        // RSELECT field from current instruction, potentially modified by task
-            protected uint _srSelect;       // RSELECT field as used by S register access (not modified in the same way as normal _rSelect).
-            protected bool _loadS;          // Whether to load S from M at and of cycle
-            protected bool _loadR;          // Whether to load R from shifter at end of cycle.
-            protected bool _rdRam;          // Whether to load uCode RAM onto the bus during the next cycle.
-            protected bool _wrtRam;         // Whether to write uCode RAM from M and ALU outputs during the next cycle.
-            protected bool _swMode;         // Whether to switch uCode banks during the next cycle.
+            protected ushort _busData;          // Data placed onto the bus (ANDed from multiple sources)
+            protected ushort _nextModifier;     // Bits ORed onto the NEXT field of the current instruction
+            protected uint _rSelect;            // RSELECT field from current instruction, potentially modified by task
+            protected uint _srSelect;           // RSELECT field as used by S register access (not modified in the same way as normal _rSelect).
+            protected bool _loadS;              // Whether to load S from M at and of cycle
+            protected bool _loadR;              // Whether to load R from shifter at end of cycle.
+            protected bool _rdRam;              // Whether to load uCode RAM onto the bus during the next cycle.
+            protected bool _wrtRam;             // Whether to write uCode RAM from M and ALU outputs during the next cycle.
+            protected bool _swMode;             // Whether to switch uCode banks during the next cycle.
+            protected bool _softReset;    // Whether this instruction caused a soft reset (so MPC should not come from instruction's NEXT field)
 
 
             //

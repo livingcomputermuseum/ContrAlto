@@ -72,7 +72,7 @@ namespace Contralto.CPU
         public static void LoadBanksFromRMR(ushort rmr)
         {
             for(int i=0;i<16;i++)
-            {
+            {                
                 _microcodeBank[i] = (rmr & (1 << i)) == 0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
             }
         }

@@ -168,7 +168,7 @@ namespace Contralto.Memory
                 _memoryAddress = address;
                 _extendedMemoryReference = extendedMemoryReference;
                 _task = task;
-                _memoryCycle = 1;
+                _memoryCycle = 1;                                    
             }
         }        
 
@@ -190,6 +190,13 @@ namespace Contralto.Memory
                     case 5:
                         // Single word read
                         //Log.Write(LogType.Verbose, LogComponent.Memory, "Single-word read of {0} from {1} (cycle 5)", Conversion.ToOctal(_memoryData), Conversion.ToOctal(_memoryAddress ^ 1));
+
+                        // debug 
+                        /*
+                        if (_memoryAddress == 0xfc90 && _task != TaskType.Emulator)      // 176220 -- status word for disk
+                        {
+                            Logging.Log.Write(Logging.LogComponent.Debug, "--> Task {0} read {1} from 176220.", _task, _memoryData);
+                        } */
                         return _memoryData;                        
 
                     // ***
@@ -212,11 +219,23 @@ namespace Contralto.Memory
 
                     //Log.Write(LogType.Verbose, LogComponent.Memory, "Double-word read of {0} from {1} (cycle 6)", Conversion.ToOctal(_memoryData2), Conversion.ToOctal(_memoryAddress ^ 1));                    
                     _doubleWordMixed = false;
+                    // debug 
+                    /*
+                    if ((_memoryAddress ^ 1) == 0xfc90 && _task != TaskType.Emulator)      // 176220 -- status word for disk
+                    {
+                        Logging.Log.Write(Logging.LogComponent.Debug, "--> Task {0} read {1} from 176220.", _task, _memoryData2);
+                    } */
                     return _memoryData2;
                 }
                 else
                 {
                     _doubleWordMixed = false;
+                    // debug 
+                    /*
+                    if (_memoryAddress == 0xfc90 && _task != TaskType.Emulator)      // 176220 -- status word for disk
+                    {
+                        Logging.Log.Write(Logging.LogComponent.Debug, "--> Task {0} read {1} from 176220.", _task, _memoryData);
+                    } */
                     //Log.Write(LogType.Verbose, LogComponent.Memory, "Single-word read of {0} from {1} (post cycle 6)", Conversion.ToOctal(_memoryData), Conversion.ToOctal(_memoryAddress));
                     return _memoryData;
                 }
@@ -236,11 +255,20 @@ namespace Contralto.Memory
                         throw new InvalidOperationException("Unexpected microcode behavior -- LoadMD during incorrect memory cycle.");                        
 
                     case 3:
+
+                        // debug 
+                        if (_memoryAddress == 0xfc90 || _memoryAddress == 0xfc91 || _memoryAddress == 0x151)      // 176220 -- status word for disk
+                        {
+                            Logging.Log.Write(Logging.LogComponent.Debug, "++> Task {0} wrote {1} to {3} (was {2}).", _task, Conversion.ToOctal(data), Conversion.ToOctal(DebugReadWord(_task, _memoryAddress)), Conversion.ToOctal(_memoryAddress));
+                        }
+
                         _memoryData = data; // Only really necessary to show in debugger
                         // Start of doubleword write:
                         WriteToBus(_memoryAddress, data, _task, _extendedMemoryReference);
                         _doubleWordStore = true;
                         _doubleWordMixed = true;
+
+
 
                         /*
                         Log.Write(
@@ -262,7 +290,22 @@ namespace Contralto.Memory
                             Conversion.ToOctal(data),
                             _doubleWordStore ? Conversion.ToOctal(_memoryAddress ^ 1) : Conversion.ToOctal(_memoryAddress));
                             */
-                        WriteToBus(_doubleWordStore ? (ushort)(_memoryAddress ^ 1) : _memoryAddress, data, _task, _extendedMemoryReference);
+                        // debug                        
+                        ushort actualAddress = _doubleWordStore ? (ushort)(_memoryAddress ^ 1) : _memoryAddress;
+
+                        /*
+                        if (actualAddress == 0xfc90 || actualAddress == 0xfc91 || _memoryAddress == 0x151)      // 176220 -- status word for disk
+                        {
+                            Logging.Log.Write(Logging.LogComponent.Debug, "--> Task {0} wrote {1} to {4} (was {2}).  Extd {3}", _task, Conversion.ToOctal(data), Conversion.ToOctal(DebugReadWord(_task, actualAddress)), _extendedMemoryReference, Conversion.ToOctal(actualAddress));
+                        } */
+
+                        WriteToBus(actualAddress, data, _task, _extendedMemoryReference);
+
+                        /*
+                        if (actualAddress == 0xfc90 || actualAddress == 0xfc91 || _memoryAddress == 0x151)      // 176220 -- status word for disk
+                        {
+                            Logging.Log.Write(Logging.LogComponent.Debug, "--> Now {0}.", Conversion.ToOctal(DebugReadWord(_task, actualAddress)));
+                        } */
                         break;
                 }       
 

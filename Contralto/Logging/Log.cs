@@ -1,4 +1,7 @@
-﻿using System;
+﻿#define LOGGING_ENABLED
+
+using System;
+using System.IO;
 
 namespace Contralto.Logging
 {
@@ -21,8 +24,10 @@ namespace Contralto.Logging
         CPU = 0x200,
         EthernetController = 0x400,
         EthernetTask = 0x800,
+        TaskSwitch = 0x1000,
 
-        All = 0x7fffffff
+        Debug = 0x40000000,
+        All =   0x7fffffff
     }
 
     /// <summary>
@@ -47,10 +52,19 @@ namespace Contralto.Logging
         static Log()
         {
             // TODO: make configurable
-            _components = LogComponent.None; // LogComponent.EthernetController; // | LogComponent.Microcode | LogComponent.Memory | LogComponent.CPU;
-            _type = LogType.Normal | LogType.Warning | LogType.Error;
+            _components = LogComponent.CPU; // LogComponent.DiskController | LogComponent.DiskSectorTask | LogComponent.Debug | LogComponent.CPU; // LogComponent.EthernetController; // | LogComponent.Microcode | LogComponent.Memory | LogComponent.CPU;
+            _type = LogType.Normal | LogType.Warning | LogType.Error | LogType.Verbose;
+
+            _logStream = new StreamWriter("log.txt");
         }
 
+        public static LogComponent LogComponents
+        {
+            get { return _components; }
+            set { _components = value; }
+        }
+
+#if LOGGING_ENABLED
         /// <summary>
         /// Logs a message without specifying type/severity for terseness;
         /// will not log if Type has been set to None.
@@ -72,10 +86,28 @@ namespace Contralto.Logging
                 // My log has something to tell you...
                 // TODO: color based on type, etc.
                 Console.WriteLine(component.ToString() + ": " + message, args);
+
+                if (_logStream != null)
+                {
+                    _logStream.WriteLine(component.ToString() + ": " + message, args);
+                }
             }
         }
+#else
+        public static void Write(LogComponent component, string message, params object[] args)
+        {
+            
+        }
+
+        public static void Write(LogType type, LogComponent component, string message, params object[] args)
+        {
+
+        }
+
+#endif
 
         private static LogComponent _components;
         private static LogType _type;
+        private static StreamWriter _logStream;
     }
 }

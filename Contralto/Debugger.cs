@@ -919,6 +919,10 @@ namespace Contralto
         // Nova Debugger breakpoints; same as above
         private bool[] _novaBreakpointEnabled;
 
-
+        private void HackButton_Click(object sender, EventArgs e)
+        {            
+            Logging.Log.LogComponents |= Logging.LogComponent.TaskSwitch;
+            Logging.Log.Write(Logging.LogComponent.Debug, "***** HACK HIT ******");
+        }
     }
 }

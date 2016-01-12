@@ -105,6 +105,11 @@ namespace Contralto.CPU
                             // BOOT (soft-reset) operation.
                             // Reset the CPU using the current RMR (start tasks in RAM or ROM as specified.)
                             _cpu.SoftReset();
+
+                            // Since this is a soft reset, we don't want MPC to be taken from the NEXT
+                            // field at the end of the cycle, setting this flag causes the main Task
+                            // implementation to skip updating _mpc at the end of this instruction.
+                            _softReset = true;
                         }                        
                         else if(_busData != 0)
                         {
@@ -139,11 +144,17 @@ namespace Contralto.CPU
                         break;
 
                     case EmulatorF1.LoadESRB:
-                        // For now, this is always 0; we do not yet support the 3K RAM system with 8 banks of S registers.
-                        _rb = 0;
-                        Logging.Log.Write(Logging.LogType.Warning, Logging.LogComponent.EmulatorTask, "ESRB<- ({0}) not fully implemented.",
-                                    Conversion.ToOctal((_busData & 0xe) >> 1));
-                        //_rb = (ushort)((_busData & 0xe) >> 1);
+                        // For now, this is always 0; we do not yet support the 3K RAM system with 8 banks of S registers.                        
+                        _rb = (ushort)((_busData & 0xe) >> 1);
+
+                        if (_rb != 0)
+                        {
+                            _rb = 0;
+                            Logging.Log.Write(Logging.LogType.Warning, Logging.LogComponent.EmulatorTask, "ESRB<- ({0}) not fully implemented.",
+                                        Conversion.ToOctal((_busData & 0xe) >> 1));
+
+                            throw new NotImplementedException("ESRB<-");
+                        }
                         break;
 
                     default:

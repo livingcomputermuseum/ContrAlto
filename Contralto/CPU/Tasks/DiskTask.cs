@@ -1,4 +1,5 @@
 ﻿using Contralto.IO;
+using Contralto.Logging;
 using System;
 
 namespace Contralto.CPU
@@ -22,6 +23,8 @@ namespace Contralto.CPU
 
             protected override bool ExecuteInstruction(MicroInstruction instruction)
             {
+                // Log.Write(LogComponent.Debug, "{0}: {1}", Conversion.ToOctal(_mpc), UCodeDisassembler.DisassembleInstruction(instruction, _taskType));
+
                 bool task = base.ExecuteInstruction(instruction);
 
                 // Deal with SECLATE semantics:  If the Disk Sector task wakes up and runs before
@@ -32,13 +35,7 @@ namespace Contralto.CPU
                 {
                     // Sector task is running; clear enable for seclate signal
                     _diskController.DisableSeclate();                    
-                }
-
-                /*
-                if (_taskType == TaskType.DiskWord)
-                {
-                    _wakeup = false;
-                } */
+                }                              
 
                 return task;
             }
@@ -170,32 +167,32 @@ namespace Contralto.CPU
                         // "NEXT <- NEXT OR (IF fatal error in latches THEN 0 ELSE 1)"                        
                         _nextModifier |= GetInitModifier(instruction);
 
-                        if (true)  //!_diskController.FatalError)
+                        if (!_diskController.FatalError)
                         {
                             _nextModifier |= 0x1;
                         }
                         else
                         {
-                            Console.WriteLine("fatal disk error");
+                            Console.WriteLine("fatal disk error on disk {0}", _diskController.Drive);
                         }
                         break;
 
                     case DiskF2.STROBON:
                         // "NEXT <- NEXT OR (IF seek strobe still on THEN 1 ELSE 0)"
                         _nextModifier |= GetInitModifier(instruction);
-                        if ((_diskController.KSTAT & 0x0040) == 0x0040)
+                        if ((_diskController.KSTAT & DiskController.STROBE) != 0)
                         {
                             _nextModifier |= 0x1;
                         }
                         break;
 
                     case DiskF2.SWRNRDY:
-                        // "NEXT <- NEXT OR (IF disk not ready to accept command THEN 1 ELSE 0)
-                        // for now, always zero (not sure when this would be 1 yet)
+                        // "NEXT <- NEXT OR (IF disk not ready to accept command THEN 1 ELSE 0)                        
                         _nextModifier |= GetInitModifier(instruction);
                         if (!_diskController.Ready)
                         {
-                            _nextModifier |= 1;
+                            Console.WriteLine("disk {0} not ready", _diskController.Drive);
+                            _nextModifier |= 0x1;
                         }
                         break;
 
