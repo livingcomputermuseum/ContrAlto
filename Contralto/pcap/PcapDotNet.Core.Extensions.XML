@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>PcapDotNet.Core.Extensions</name>
+    </assembly>
+    <members>
+        <member name="T:PcapDotNet.Core.Extensions.PacketCommunicatorExtensions">
+            <summary>
+            Different extension methods for PacketCommunicator class.
+            <seealso cref="T:PcapDotNet.Core.PacketCommunicator"/>
+            </summary>
+        </member>
+        <member name="M:PcapDotNet.Core.Extensions.PacketCommunicatorExtensions.ReceivePackets(PcapDotNet.Core.PacketCommunicator,System.Int32)">
+            <summary>
+            Collect a group of packets.
+            Similar to ReceivePackets() except instead of calling a callback the packets are returned as an IEnumerable.
+            <seealso cref="M:PcapDotNet.Core.PacketCommunicator.ReceivePackets(System.Int32,PcapDotNet.Core.HandlePacket)"/>
+            <seealso cref="M:PcapDotNet.Core.PacketCommunicator.ReceiveSomePackets(System.Int32@,System.Int32,PcapDotNet.Core.HandlePacket)"/>
+            </summary>
+            <param name="communicator">The PacketCommunicator to work on</param>
+            <param name="count">Number of packets to process. A negative count causes ReceivePackets() to loop until the IEnumerable break (or until an error occurs).</param>
+            <returns>An IEnumerable of Packets to process.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if the mode is not Capture or an error occurred.</exception>
+            <remarks>
+              <para>Only the first bytes of data from the packet might be in the received packet (which won't necessarily be the entire packet; to capture the entire packet, you will have to provide a value for snapshortLength in your call to PacketDevice.Open() that is sufficiently large to get all of the packet's data - a value of 65536 should be sufficient on most if not all networks).</para>
+              <para>If a break is called on the returned Enumerable before the number of packets asked for received, the packet that was handled while breaking the enumerable may not be the last packet read. More packets might be read. This is because this method actually loops over calls to ReceiveSomePackets()</para>
+            </remarks>
+        </member>
+        <member name="M:PcapDotNet.Core.Extensions.PacketCommunicatorExtensions.ReceivePackets(PcapDotNet.Core.PacketCommunicator)">
+            <summary>
+            Collect a group of packets.
+            Similar to ReceivePackets() except instead of calling a callback the packets are returned as an IEnumerable.
+            Loops until the IEnumerable break (or until an error occurs).
+            <seealso cref="M:PcapDotNet.Core.PacketCommunicator.ReceivePackets(System.Int32,PcapDotNet.Core.HandlePacket)"/>
+            <seealso cref="M:PcapDotNet.Core.PacketCommunicator.ReceiveSomePackets(System.Int32@,System.Int32,PcapDotNet.Core.HandlePacket)"/>
+            </summary>
+            <param name="communicator">The PacketCommunicator to work on</param>
+            <returns>An IEnumerable of Packets to process.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if the mode is not Capture or an error occurred.</exception>
+            <remarks>
+              <para>Only the first bytes of data from the packet might be in the received packet (which won't necessarily be the entire packet; to capture the entire packet, you will have to provide a value for snapshortLength in your call to PacketDevice.Open() that is sufficiently large to get all of the packet's data - a value of 65536 should be sufficient on most if not all networks).</para>
+              <para>If a break is called on the returned Enumerable, the packet that was handled while breaking the enumerable may not be the last packet read. More packets might be read. This is because this method actually loops over calls to ReceiveSomePackets()</para>
+            </remarks>
+        </member>
+        <member name="T:PcapDotNet.Core.Extensions.LivePacketDeviceExtensions">
+            <summary>
+            Extension methods for LivePacketDevice class.
+            </summary>
+        </member>
+        <member name="M:PcapDotNet.Core.Extensions.LivePacketDeviceExtensions.GetGuid(PcapDotNet.Core.LivePacketDevice)">
+            <summary>
+            Returns the GUID (NetCfgInstanceId) for a <see cref="T:PcapDotNet.Core.LivePacketDevice"/> instance.
+            The GUID is parsed from the <see cref="P:PcapDotNet.Core.LivePacketDevice.Name"/> property.
+            </summary>
+            <param name="livePacketDevice">The <see cref="T:PcapDotNet.Core.LivePacketDevice"/> instance.</param>
+            <returns>The GUID (NetCfgInstanceId) of the <see cref="T:PcapDotNet.Core.LivePacketDevice"/> instance.</returns>
+            <exception cref="T:System.InvalidOperationException">When the <see cref="P:PcapDotNet.Core.LivePacketDevice.Name"/> doesn't match the expectations.</exception>
+        </member>
+        <member name="M:PcapDotNet.Core.Extensions.LivePacketDeviceExtensions.GetPnpDeviceId(PcapDotNet.Core.LivePacketDevice)">
+            <summary>
+            Returns the PNPDeviceID for a <see cref="T:PcapDotNet.Core.LivePacketDevice"/> instance.
+            The PNPDeviceID is retrieved by querying the registry.
+            </summary>
+            <param name="livePacketDevice">The <see cref="T:PcapDotNet.Core.LivePacketDevice"/> instance.</param>
+            <returns>The PNPDeviceID of the <see cref="T:PcapDotNet.Core.LivePacketDevice"/> instance.</returns>
+            <exception cref="T:System.InvalidOperationException">When the PNPDeviceID cannot be retrieved from the registry.</exception>
+        </member>
+        <member name="M:PcapDotNet.Core.Extensions.LivePacketDeviceExtensions.GetNetworkInterface(PcapDotNet.Core.LivePacketDevice)">
+            <summary>
+            Returns the network interface of the packet device.
+            The interface is found using its id.
+            If no interface is found, null is returned.
+            </summary>
+            <param name="livePacketDevice">The LivePacketDevice to look for a matching network interface for.</param>
+            <returns>The network interface found according to the given device or null if none is found.</returns>
+        </member>
+        <member name="M:PcapDotNet.Core.Extensions.LivePacketDeviceExtensions.GetMacAddress(PcapDotNet.Core.LivePacketDevice)">
+            <summary>
+            Returns the <see cref="T:PcapDotNet.Packets.Ethernet.MacAddress"/> of the network interface of the given device.
+            If no interface matches the given packet device, an exception is thrown.
+            We first look for the device using <see cref="M:System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces"/> and if that fails we look for them using WMI.
+            </summary>
+            <param name="livePacketDevice">The packet device to look for the matching interface.</param>
+            <returns>The <see cref="T:PcapDotNet.Packets.Ethernet.MacAddress"/> of the given device's matching interface.</returns>
+        </member>
+        <member name="M:PcapDotNet.Core.Extensions.LivePacketDeviceExtensions.GetMacAddressWmi(PcapDotNet.Core.LivePacketDevice)">
+            <summary>
+            Returns the <see cref="T:PcapDotNet.Packets.Ethernet.MacAddress"/> for a <see cref="T:PcapDotNet.Core.LivePacketDevice"/> instance.
+            The <see cref="T:PcapDotNet.Packets.Ethernet.MacAddress"/> is retrieved through using WMI.
+            </summary>
+            <param name="livePacketDevice">The <see cref="T:PcapDotNet.Core.LivePacketDevice"/> instance.</param>
+            <returns>The <see cref="T:PcapDotNet.Packets.Ethernet.MacAddress"/> of the <see cref="T:PcapDotNet.Core.LivePacketDevice"/> instance.</returns>
+            <exception cref="T:System.InvalidOperationException">When the <see cref="T:PcapDotNet.Packets.Ethernet.MacAddress"/> cannot be retrieved using WMI.</exception>
+        </member>
+        <member name="T:PcapDotNet.Core.Extensions.NetworkInterfaceExtensions">
+            <summary>
+            Extension methods for NetworkInterface class.
+            </summary>
+        </member>
+        <member name="M:PcapDotNet.Core.Extensions.NetworkInterfaceExtensions.GetLivePacketDevice(System.Net.NetworkInformation.NetworkInterface)">
+            <summary>
+            Returns the LivePacketDevice of the given NetworkInterface.
+            The LivePacketDevice is found using the NetworkInterface's id and the LivePacketDevice's name.
+            If no interface is found, null is returned.
+            </summary>
+            <param name="networkInterface">The NetworkInterface to look for a matching LivePacketDevice for.</param>
+            <returns>The LivePacketDevice found according to the given NetworkInterface or null if none is found.</returns>
+        </member>
+    </members>
+</doc>

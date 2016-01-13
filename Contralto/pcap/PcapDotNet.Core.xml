@@ -1,0 +1,1174 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        "PcapDotNet.Core"
+    </assembly>
+    <members>
+        <member name="M:PcapDotNet.Core.LivePacketDevice.Open(System.Int32,PcapDotNet.Core.PacketDeviceOpenAttributes,System.Int32)">
+            <summary>
+Open a generic source in order to capture / send (WinPcap only) traffic. 
+</summary>
+            <param name="snapshotLength">Length of the packet that has to be retained. For each packet received by the filter, only the first 'snapshotLength' bytes are stored in the buffer and passed to the user application. For instance, snaplen equal to 100 means that only the first 100 bytes of each packet are stored.</param>
+            <param name="attributes">Keeps several flags that can be needed for capturing packets.</param>
+            <param name="readTimeout">Read timeout in milliseconds. The read timeout is used to arrange that the read not necessarily return immediately when a packet is seen, but that it waits for some amount of time to allow more packets to arrive and to read multiple packets from the OS kernel in one operation. Not all platforms support a read timeout; on platforms that don't, the read timeout is ignored.</param>
+            <exception cref="T:System.InvalidOperationException">Thrown on failure.</exception>
+        </member>
+        <member name="P:PcapDotNet.Core.LivePacketDevice.Addresses">
+            <summary>
+List of addresses for the interface.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.LivePacketDevice.Attributes">
+            <summary>
+Interface flags. Currently the only possible flag is Loopback, that is set if the interface is a loopback interface. 
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.LivePacketDevice.Description">
+            <summary>
+if not null, a string giving a human-readable description of the device.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.LivePacketDevice.Name">
+            <summary>
+A string giving a name for the device.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.LivePacketDevice.AllLocalMachine">
+            <summary>
+Create a list of local machine network devices that can be opened with Open().
+Platform independent.
+</summary>
+            <returns>
+A readonly collection of LivePacketDevices.
+</returns>
+            <exception cref="T:System.InvalidOperationException">
+Thrown if some errors occurred. 
+An error could be due to several reasons: 
+  <list type="bullet"><item>libpcap/WinPcap was not installed on the local/remote host.</item><item>The user does not have enough privileges to list the devices.</item><item>A network problem.</item><item>other errors (not enough memory and others).</item></list></exception>
+            <remarks>
+There may be network devices that cannot be opened with Open() by the process calling AllLocalMachine, because, for example, that process might not have sufficient privileges to open them for capturing; if so, those devices will not appear on the list.
+</remarks>
+        </member>
+        <member name="T:PcapDotNet.Core.LivePacketDevice">
+            <summary>
+A live interface.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.OfflinePacketDevice.Open(System.Int32,PcapDotNet.Core.PacketDeviceOpenAttributes,System.Int32)">
+            <summary>
+Open a generic source in order to capture / send (WinPcap only) traffic. 
+</summary>
+            <param name="snapshotLength">length of the packet that has to be retained. For each packet received by the filter, only the first 'snapshotLength' bytes are stored in the buffer and passed to the user application. For instance, snaplen equal to 100 means that only the first 100 bytes of each packet are stored.</param>
+            <param name="attributes">Keeps several flags that can be needed for capturing packets.</param>
+            <param name="readTimeout">Read timeout in milliseconds. The read timeout is used to arrange that the read not necessarily return immediately when a packet is seen, but that it waits for some amount of time to allow more packets to arrive and to read multiple packets from the OS kernel in one operation. Not all platforms support a read timeout; on platforms that don't, the read timeout is ignored.</param>
+            <exception cref="T:System.InvalidOperationException">Thrown on failure.</exception>
+        </member>
+        <member name="P:PcapDotNet.Core.OfflinePacketDevice.Addresses">
+            <summary>
+List of addresses for the interface.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.OfflinePacketDevice.Attributes">
+            <summary>
+Interface flags. Currently the only possible flag is Loopback, that is set if the interface is a loopback interface. 
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.OfflinePacketDevice.Description">
+            <summary>
+if not null, a string giving a human-readable description of the device.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.OfflinePacketDevice.Name">
+            <summary>
+A string giving a name for the device.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.OfflinePacketDevice.#ctor(System.String)">
+            <summary>
+Creates a device object from a pcap file.
+The device can opened to read packets from.
+</summary>
+            <param name="fileName">The name of the pcap file.</param>
+        </member>
+        <member name="T:PcapDotNet.Core.OfflinePacketDevice">
+            <summary>
+An offline interface - a pcap file to read packets from.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.SamplingMethodNone">
+            <summary>
+No sampling has to be done on the current capture.
+In this case, no sampling algorithms are applied to the current capture. 
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.SamplingMethodFirstAfterInterval.Value">
+            <summary>
+Indicates the 'waiting time' in milliseconds before one packet got accepted. 
+In other words, if 'value = 10', the first packet is returned to the caller; the next returned one will be the first packet that arrives when 10ms have elapsed.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.SamplingMethodFirstAfterInterval.#ctor(System.TimeSpan)">
+            <summary>
+Constructs by giving an interval as TimeSpan.
+</summary>
+            <param name="interval">The time to wait between packets sampled.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">The interval is negative or larger than 2^31 milliseconds.</exception>
+        </member>
+        <member name="M:PcapDotNet.Core.SamplingMethodFirstAfterInterval.#ctor(System.Int32)">
+            <summary>
+Constructs by giving an interval in milliseconds.
+</summary>
+            <param name="intervalInMs">The number of milliseconds to wait between packets sampled.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">The given number of milliseconds is negative.</exception>
+        </member>
+        <member name="T:PcapDotNet.Core.SamplingMethodFirstAfterInterval">
+            <summary>
+This sampling method defines that we have to return 1 packet every given time-interval.
+In other words, if the interval is set to 10 milliseconds, the first packet is returned to the caller; the next returned one will be the first packet that arrives when 10ms have elapsed.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.LivePacketCommunicator.Transmit(PcapDotNet.Core.PacketSendBuffer,System.Boolean)">
+            <summary>
+Send a buffer of packets to the network.
+This function transmits the content of a queue to the wire.
+<seealso cref="M:PcapDotNet.Core.PacketCommunicator.SendPacket(PcapDotNet.Packets.Packet)" /><seealso cref="T:PcapDotNet.Core.PacketSendBuffer" /></summary>
+            <param name="sendBuffer">Contains the packets to send.</param>
+            <param name="isSync">Determines if the send operation must be synchronized: if it is true, the packets are sent respecting the timestamps, otherwise they are sent as fast as possible.</param>
+            <exception cref="T:System.InvalidOperationException">An error occurred during the send. The error can be caused by a driver/adapter problem or by an inconsistent/bogus send buffer..</exception>
+            <remarks>
+                <list type="bullet">
+                    <item>Using this function is more efficient than issuing a series of SendPacket(), because the packets are buffered in the kernel driver, so the number of context switches is reduced. Therefore, expect a better throughput when using Transmit().</item>
+                    <item>When isSync is true, the packets are synchronized in the kernel with a high precision timestamp. This requires a non-negligible amount of CPU, but allows normally to send the packets with a precision of some microseconds (depending on the accuracy of the performance counter of the machine). Such a precision cannot be reached sending the packets with SendPacket().</item>
+                </list>
+            </remarks>
+        </member>
+        <member name="P:PcapDotNet.Core.LivePacketCommunicator.TotalStatistics">
+            <summary>
+Statistics on current capture.
+The values represent packet statistics from the start of the run to the time of the call. 
+</summary>
+            <exception cref="T:System.InvalidOperationException">Thrown if there is an error or the underlying packet capture doesn't support packet statistics.</exception>
+        </member>
+        <member name="T:PcapDotNet.Core.LivePacketCommunicator">
+            <summary>
+A network device packet communicator.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketDevice.Open">
+            <summary>
+Open a generic source in order to capture / send (WinPcap only) traffic. 
+Uses maxmimum snapshotLength (65536), promiscuous mode and 1 second read timeout.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketDevice.Open(System.Int32,PcapDotNet.Core.PacketDeviceOpenAttributes,System.Int32)">
+            <summary>
+Open a generic source in order to capture / send (WinPcap only) traffic. 
+</summary>
+            <param name="snapshotLength">Length of the packet that has to be retained. For each packet received by the filter, only the first 'snapshotLength' bytes are stored in the buffer and passed to the user application. For instance, snaplen equal to 100 means that only the first 100 bytes of each packet are stored.</param>
+            <param name="attributes">Keeps several flags that can be needed for capturing packets.</param>
+            <param name="readTimeout">Read timeout in milliseconds. The read timeout is used to arrange that the read not necessarily return immediately when a packet is seen, but that it waits for some amount of time to allow more packets to arrive and to read multiple packets from the OS kernel in one operation. Not all platforms support a read timeout; on platforms that don't, the read timeout is ignored.</param>
+            <exception cref="T:System.InvalidOperationException">Thrown on failure.</exception>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketDevice.Addresses">
+            <summary>
+List of addresses for the interface.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketDevice.Attributes">
+            <summary>
+Interface flags. Currently the only possible flag is Loopback, that is set if the interface is a loopback interface. 
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketDevice.Description">
+            <summary>
+if not null, a string giving a human-readable description of the device.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketDevice.Name">
+            <summary>
+A string giving a name for the device.
+</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketDevice.DefaultSnapshotLength">
+            <summary>
+This snapshort length value should be sufficient, on most if not all networks, to capture all the data available from the packet.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.PacketDevice">
+            <summary>
+The base class of a live or offline interface.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.IPacketDevice.Open">
+            <summary>
+Open a generic source in order to capture / send (WinPcap only) traffic. 
+Uses maxmimum snapshotLength (65536), promiscuous mode and 1 second read timeout.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.IPacketDevice.Open(System.Int32,PcapDotNet.Core.PacketDeviceOpenAttributes,System.Int32)">
+            <summary>
+Open a generic source in order to capture / send (WinPcap only) traffic. 
+</summary>
+            <param name="snapshotLength">Length of the packet that has to be retained. For each packet received by the filter, only the first 'snapshotLength' bytes are stored in the buffer and passed to the user application. For instance, snaplen equal to 100 means that only the first 100 bytes of each packet are stored.</param>
+            <param name="attributes">Keeps several flags that can be needed for capturing packets.</param>
+            <param name="readTimeout">Read timeout in milliseconds. The read timeout is used to arrange that the read not necessarily return immediately when a packet is seen, but that it waits for some amount of time to allow more packets to arrive and to read multiple packets from the OS kernel in one operation. Not all platforms support a read timeout; on platforms that don't, the read timeout is ignored.</param>
+            <exception cref="T:System.InvalidOperationException">Thrown on failure.</exception>
+        </member>
+        <member name="P:PcapDotNet.Core.IPacketDevice.Addresses">
+            <summary>
+List of addresses for the interface.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.IPacketDevice.Attributes">
+            <summary>
+Interface flags. Currently the only possible flag is Loopback, that is set if the interface is a loopback interface. 
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.IPacketDevice.Description">
+            <summary>
+if not null, a string giving a human-readable description of the device.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.IPacketDevice.Name">
+            <summary>
+A string giving a name for the device.
+The name of the device is returned directly by the network card driver.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.IPacketDevice">
+            <summary>
+Represents a live or offline interface.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.DeviceAttributes">
+            <summary>
+Attributes of a device.
+</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.DeviceAttributes.Loopback">
+            <summary>
+Interface is loopback.
+</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.DeviceAttributes.None">
+            <summary>
+No attributes apply.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.IpV6SocketAddress.Address">
+            <summary>
+The ip version 6 address.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.IpV6SocketAddress">
+            <summary>
+An internet protocol version 6 address for a device.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.OfflinePacketCommunicator.Transmit(PcapDotNet.Core.PacketSendBuffer,System.Boolean)">
+            <summary>
+Transmit is not supported on offline captures.
+</summary>
+            <exception cref="T:System.InvalidOperationException">Thrown always.</exception>
+        </member>
+        <member name="P:PcapDotNet.Core.OfflinePacketCommunicator.TotalStatistics">
+            <summary>
+TotalStatistics is not supported on offline captures.
+</summary>
+            <exception cref="T:System.InvalidOperationException">Thrown always.</exception>
+        </member>
+        <member name="P:PcapDotNet.Core.SamplingMethodOneEveryCount.Value">
+            <summary>
+Indicates the number of packets (minus 1) that must be discarded before one packet got accepted. 
+In other words, if 'value = 10', the first packet is returned to the caller, while the following 9 are discarded.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.SamplingMethodOneEveryCount.#ctor(System.Int32)">
+            <summary>
+Constructs by giving a count.
+</summary>
+            <param name="count">1 packet out of count packets will be sampled (for each sampled packet, count-1 will be discarded).</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">The given count is non-positive.</exception>
+        </member>
+        <member name="T:PcapDotNet.Core.SamplingMethodOneEveryCount">
+            <summary>
+Defines that only 1 out of count packets must be returned to the user.
+In other words, if the count is set to 10, the first packet is returned to the caller, while the following 9 are discarded.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PcapLibrary.Version">
+            <summary>
+The Pcap library version.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.PcapLibrary">
+            <summary>
+This class holds methods for general pcap library functionality.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketTimestamp.MaximumPacketTimestamp">
+            <summary>
+The maximum legal timestamp to put in a packet.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketTimestamp.MinimumPacketTimestamp">
+            <summary>
+The minimum legal timestamp to put in a packet.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.Dispose">
+            <summary>
+Close the files associated with the capture and deallocates resources. 
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.OpenDump(System.String)">
+            <summary>
+Open a file to write packets.
+Called to open an offline capture for writing. The name "-" in a synonym for stdout. 
+</summary>
+            <param name="fileName">Specifies the name of the file to open.</param>
+            <returns>
+A dump file to dump packets capture by the communicator.
+</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown on failure.</exception>
+            <remarks>
+The created dump file should be disposed by the user.
+Only ISO-8859-1 characters filenames are supported.
+</remarks>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.SetFilter(System.String)">
+            <summary>
+Compile and associate a filter to a capture.
+This method actually wraps a call to CreateFilter(), SetFilter() and Dispose().
+<seealso cref="M:PcapDotNet.Core.PacketCommunicator.CreateFilter(System.String)" /><seealso cref="T:PcapDotNet.Core.BerkeleyPacketFilter" /></summary>
+            <param name="filterValue">A high level filtering expression (see <see href="http://www.winpcap.org/docs/docs_40_2/html/group__language.html">WinPcap Filtering expression syntax</see>).</param>
+            <exception cref="T:System.InvalidOperationException">Thrown on failure.</exception>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.SetFilter(PcapDotNet.Core.BerkeleyPacketFilter)">
+            <summary>
+Associate a filter to a capture.
+<seealso cref="M:PcapDotNet.Core.PacketCommunicator.CreateFilter(System.String)" /><seealso cref="T:PcapDotNet.Core.BerkeleyPacketFilter" /></summary>
+            <param name="filter">The filter to associate. Usually the result of a call to CreateFilter().</param>
+            <exception cref="T:System.InvalidOperationException">Thrown on failure.</exception>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.CreateFilter(System.String)">
+            <summary>
+Compile a packet filter according to the communicator IPv4 netmask.
+<seealso cref="M:PcapDotNet.Core.PacketCommunicator.SetFilter(PcapDotNet.Core.BerkeleyPacketFilter)" /><!--seealso cref="SetFilter(String^)"/--> todo bug in documentation
+<seealso cref="T:PcapDotNet.Core.BerkeleyPacketFilter" /></summary>
+            <param name="filterValue">A high level filtering expression (see <see href="http://www.winpcap.org/docs/docs_40_2/html/group__language.html">WinPcap Filtering expression syntax</see>)</param>
+            <returns>
+The compiled filter that can be applied on the communicator.
+</returns>
+            <exception cref="T:System.InvalidOperationException">An error occurred.</exception>
+            <remarks>
+The created filter should be disposed by the user.
+</remarks>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.Transmit(PcapDotNet.Core.PacketSendBuffer,System.Boolean)">
+            <summary>
+Send a buffer of packets to the network.
+This function transmits the content of a queue to the wire.
+<seealso cref="M:PcapDotNet.Core.PacketCommunicator.SendPacket(PcapDotNet.Packets.Packet)" /><seealso cref="T:PcapDotNet.Core.PacketSendBuffer" /></summary>
+            <param name="sendBuffer">Contains the packets to send.</param>
+            <param name="isSync">Determines if the send operation must be synchronized: if it is true, the packets are sent respecting the timestamps, otherwise they are sent as fast as possible.</param>
+            <exception cref="T:System.InvalidOperationException">Trying to transmit to an offline device or an error occurred during the send. The error can be caused by a driver/adapter problem or by an inconsistent/bogus send buffer.</exception>
+            <remarks>
+                <list type="bullet">
+                    <item>Using this function is more efficient than issuing a series of SendPacket(), because the packets are buffered in the kernel driver, so the number of context switches is reduced. Therefore, expect a better throughput when using Transmit().</item>
+                    <item>When isSync is true, the packets are synchronized in the kernel with a high precision timestamp. This requires a non-negligible amount of CPU, but allows normally to send the packets with a precision of some microseconds (depending on the accuracy of the performance counter of the machine). Such a precision cannot be reached sending the packets with SendPacket().</item>
+                </list>
+            </remarks>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.SendPacket(PcapDotNet.Packets.Packet)">
+            <summary>
+Send a raw packet.
+This function allows to send a raw packet to the network.
+<seealso cref="M:PcapDotNet.Core.PacketCommunicator.Transmit(PcapDotNet.Core.PacketSendBuffer,System.Boolean)" /></summary>
+            <param name="packet">The packet to send (including the various protocol headers). The MAC CRC doesn't need to be included, because it is transparently calculated and added by the network interface driver.</param>
+            <exception cref="T:System.InvalidOperationException">The packet wasn't successfully sent.</exception>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.Break">
+            <summary>
+Set a flag that will force ReceiveSomePackets(), ReceivePackets() or ReceiveStatistics() to return rather than looping.
+They will return the number of packets/statistics that have been processed so far, with return value BreakLoop.
+<seealso cref="M:PcapDotNet.Core.PacketCommunicator.ReceiveSomePackets(System.Int32@,System.Int32,PcapDotNet.Core.HandlePacket)" /><seealso cref="M:PcapDotNet.Core.PacketCommunicator.ReceivePackets(System.Int32,PcapDotNet.Core.HandlePacket)" /><seealso cref="M:PcapDotNet.Core.PacketCommunicator.ReceiveStatistics(System.Int32,PcapDotNet.Core.HandleStatistics)" /></summary>
+            <remarks>
+                <list type="bullet">
+                    <item>This routine is safe to use inside a signal handler on UNIX or a console control handler on Windows, as it merely sets a flag that is checked within the loop.</item>
+                    <item>The flag is checked in loops reading packets from the OS - a signal by itself will not necessarily terminate those loops - as well as in loops processing a set of packets/statistics returned by the OS.</item>
+                    <item>Note that if you are catching signals on UNIX systems that support restarting system calls after a signal, and calling Break() in the signal handler, you must specify, when catching those signals, that system calls should NOT be restarted by that signal. Otherwise, if the signal interrupted a call reading packets in a live capture, when your signal handler returns after calling Break(), the call will be restarted, and the loop will not terminate until more packets arrive and the call completes.</item>
+                    <item>ReceivePacket() will, on some platforms, loop reading packets from the OS; that loop will not necessarily be terminated by a signal, so Break() should be used to terminate packet processing even if ReceivePacket() is being used.</item>
+                    <item>Break() does not guarantee that no further packets/statistics will be processed by ReceiveSomePackets(), ReceivePackets() or ReceiveStatistics() after it is called; at most one more packet might be processed.</item>
+                    <item>If BreakLoop is returned from ReceiveSomePackets(), ReceivePackets() or ReceiveStatistics(), the flag is cleared, so a subsequent call will resume reading packets. If a different return value is returned, the flag is not cleared, so a subsequent call will return BreakLoop and clear the flag.</item>
+                </list>
+            </remarks>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.ReceiveStatistics(System.Int32,PcapDotNet.Core.HandleStatistics)">
+            <summary>
+Collect a group of statistics every readTimeout given in LivePacketDevice.Open().
+<seealso cref="M:PcapDotNet.Core.PacketCommunicator.Break" /></summary>
+            <param name="count">Number of statistics to process. A negative count causes ReceiveStatistics() to loop forever (or at least until an error occurs).</param>
+            <param name="callback">Specifies a routine to be called with one argument: the statistics received.</param>
+            <returns>
+                <list type="table">
+                    <listheader>
+                        <term>Return value</term>
+                        <description>description</description>
+                    </listheader>
+                    <item>
+                        <term>Ok</term>
+                        <description>Count is exhausted</description>
+                    </item>
+                    <item>
+                        <term>BreakLoop</term>
+                        <description>Indicates that the loop terminated due to a call to Break() before count statistics were processed.</description>
+                    </item>
+                </list>
+            </returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if the mode is not Statistics or an error occurred.</exception>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.ReceiveStatistics(PcapDotNet.Core.PacketSampleStatistics@)">
+            <summary>
+Receives a single statistics data on packets from an interface instead of receiving the packets.
+The statistics can be received in the resolution set by readTimeout when calling LivePacketDevice.Open().
+</summary>
+            <param name="statistics">The received statistics if it was read without problems. null otherwise.</param>
+            <returns>
+                <list type="table">
+                    <listheader>
+                        <term>Return value</term>
+                        <description>description</description>
+                    </listheader>
+                    <item>
+                        <term>Ok</term>
+                        <description>The statistics has been read without problems. In statistics mode the readTimeout is always used and it never runs on offline captures so Ok is the only valid result.</description>
+                    </item>
+                </list>
+            </returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if the mode is not Statistics or an error occurred.</exception>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.ReceivePackets(System.Int32,PcapDotNet.Core.HandlePacket)">
+            <summary>
+Collect a group of packets.
+Similar to ReceiveSomePackets() except it keeps reading packets until count packets are processed or an error occurs. It does not return when live read timeouts occur.
+<seealso cref="M:PcapDotNet.Core.PacketCommunicator.ReceivePacket(PcapDotNet.Packets.Packet@)" /><seealso cref="M:PcapDotNet.Core.PacketCommunicator.ReceiveSomePackets(System.Int32@,System.Int32,PcapDotNet.Core.HandlePacket)" /><seealso cref="M:PcapDotNet.Core.PacketCommunicator.Break" /></summary>
+            <param name="count">Number of packets to process. A negative count causes ReceivePackets() to loop forever (or at least until an error occurs).</param>
+            <param name="callback">Specifies a routine to be called with one argument: the packet received.</param>
+            <returns>
+                <list type="table">
+                    <listheader>
+                        <term>Return value</term>
+                        <description>description</description>
+                    </listheader>
+                    <item>
+                        <term>Ok</term>
+                        <description>Count is exhausted</description>
+                    </item>
+                    <item>
+                        <term>Eof</term>
+                        <description>Count wasn't exhausted and EOF was reached reading from an offline capture.</description>
+                    </item>
+                    <item>
+                        <term>BreakLoop</term>
+                        <description>Indicates that the loop terminated due to a call to Break() before count packets were processed.</description>
+                    </item>
+                </list>
+            </returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if the mode is not Capture or an error occurred.</exception>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.ReceiveSomePackets(System.Int32@,System.Int32,PcapDotNet.Core.HandlePacket)">
+            <summary>
+Collect a group of packets.
+Used to collect and process packets. 
+<seealso cref="M:PcapDotNet.Core.PacketCommunicator.ReceivePacket(PcapDotNet.Packets.Packet@)" /><seealso cref="M:PcapDotNet.Core.PacketCommunicator.ReceivePackets(System.Int32,PcapDotNet.Core.HandlePacket)" /><seealso cref="M:PcapDotNet.Core.PacketCommunicator.Break" /></summary>
+            <param name="maxPackets">
+                <para>
+  Specifies the maximum number of packets to process before returning.
+  This is not a minimum number; when reading a live capture, only one bufferful of packets is read at a time, so fewer than maxPackets packets may be processed.
+  </para>
+                <para>A maxPackets of -1 processes all the packets received in one buffer when reading a live capture, or all the packets in the file when reading an offline capture.</para>
+            </param>
+            <param name="callback">Specifies a routine to be called with one argument: the packet received.</param>
+            <param name="countGot">
+                <para>The number of packets read is returned.</para>
+                <para>0 is returned if no packets were read from a live capture (if, for example, they were discarded because they didn't pass the packet filter, or if, on platforms that support a read timeout that starts before any packets arrive, the timeout expires before any packets arrive, or if the communicator is in non-blocking mode and no packets were available to be read) or if no more packets are available in an offline capture.</para>
+            </param>
+            <returns>
+                <list type="table">
+                    <listheader>
+                        <term>Return value</term>
+                        <description>description</description>
+                    </listheader>
+                    <item>
+                        <term>Ok</term>
+                        <description>countGot packets has been read without problems. This includes the case where a read timeout occurred and the case the communicator is in non-blocking mode and no packets were available</description>
+                    </item>
+                    <item>
+                        <term>Eof</term>
+                        <description>EOF was reached reading from an offline capture.</description>
+                    </item>
+                    <item>
+                        <term>BreakLoop</term>
+                        <description>Indicates that the loop terminated due to a call to Break() before any packets were processed.</description>
+                    </item>
+                </list>
+            </returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if the mode is not Capture or an error occurred.</exception>
+            <remarks>
+                <para>Only the first bytes of data from the packet might be in the received packet (which won't necessarily be the entire packet; to capture the entire packet, you will have to provide a value for snapshortLength in your call to PacketDevice.Open() that is sufficiently large to get all of the packet's data - a value of 65536 should be sufficient on most if not all networks).</para>
+                <para>When reading a live capture, ReceiveSomePackets() will not necessarily return when the read times out; on some platforms, the read timeout isn't supported, and, on other platforms, the timer doesn't start until at least one packet arrives. This means that the read timeout should NOT be used in, for example, an interactive application, to allow the packet capture loop to ``poll'' for user input periodically, as there's no guarantee that ReceiveSomePackets() will return after the timeout expires.</para>
+            </remarks>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.ReceivePacket(PcapDotNet.Packets.Packet@)">
+            <summary>
+Read a packet from an interface or from an offline capture.
+This function is used to retrieve the next available packet, bypassing the callback method traditionally provided.
+The method fills the packet parameter with the next captured packet.
+<seealso cref="M:PcapDotNet.Core.PacketCommunicator.ReceiveSomePackets(System.Int32@,System.Int32,PcapDotNet.Core.HandlePacket)" /><seealso cref="M:PcapDotNet.Core.PacketCommunicator.ReceivePackets(System.Int32,PcapDotNet.Core.HandlePacket)" /></summary>
+            <param name="packet">The received packet if it was read without problems. null otherwise.</param>
+            <returns>
+                <list type="table">
+                    <listheader>
+                        <term>Return value</term>
+                        <description>description</description>
+                    </listheader>
+                    <item>
+                        <term>Ok</term>
+                        <description>The packet has been read without problems.</description>
+                    </item>
+                    <item>
+                        <term>Timeout</term>
+                        <description>The timeout set with LivePacketDevice.Open() has elapsed. In this case the packet out parameter will be null.</description>
+                    </item>
+                    <item>
+                        <term>Eof</term>
+                        <description>EOF was reached reading from an offline capture. In this case the packet out parameter will be null.</description>
+                    </item>
+                </list>
+            </returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if the mode is not Capture or an error occurred.</exception>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.SetSamplingMethod(PcapDotNet.Core.SamplingMethod)">
+            <summary>
+Define a sampling method for packet capture.
+This function allows applying a sampling method to the packet capture process. 
+The mtthod will be applied as soon as the capture starts.
+</summary>
+            <remarks>
+Warning: Sampling parameters cannot be changed when a capture is active. These parameters must be applied before starting the capture. If they are applied when the capture is in progress, the new settings are ignored.
+Warning: Sampling works only when capturing data on Win32 or reading from a file. It has not been implemented on other platforms. Sampling works on remote machines provided that the probe (i.e. the capturing device) is a Win32 workstation. 
+</remarks>
+            <param name="method">The sampling method to be applied</param>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.SetKernelMinimumBytesToCopy(System.Int32)">
+            <summary>
+Set the minumum amount of data received by the kernel in a single call.
+Changes the minimum amount of data in the kernel buffer that causes a read from the application to return (unless the timeout expires).
+If the value of size is large, the kernel is forced to wait the arrival of several packets before copying the data to the user. 
+This guarantees a low number of system calls, i.e. low processor usage, and is a good setting for applications like packet-sniffers and protocol analyzers.
+Vice versa, in presence of a small value for this variable, the kernel will copy the packets as soon as the application is ready to receive them.
+This is useful for real time applications that need the best responsiveness from the kernel.
+</summary>
+            <param name="size">minimum number of bytes to copy</param>
+            <exception cref="T:System.InvalidOperationException">Thrown on failure.</exception>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketCommunicator.SetKernelBufferSize(System.Int32)">
+            <summary>
+Set the size of the kernel buffer associated with an adapter.
+If an old buffer was already created with a previous call to SetKernelBufferSize(), it is deleted and its content is discarded.
+LivePacketDevice.Open() creates a 1 MByte buffer by default.
+<!--seealso cref="LivePacketDevice::Open"/--></summary>
+            <param name="size">the size of the buffer in bytes</param>
+            <exception cref="T:System.InvalidOperationException">Thrown on failure.</exception>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketCommunicator.NonBlocking">
+            <summary>
+Switch between blocking and nonblocking mode.
+Puts a live communicator into "non-blocking" mode, or takes it out of "non-blocking" mode.
+In "non-blocking" mode, an attempt to read from the communicator with ReceiveSomePackets will, if no packets are currently available to be read, return immediately rather than blocking waiting for packets to arrive.
+ReceivePacket and ReceivePackets will not work in "non-blocking" mode.
+<seealso cref="M:PcapDotNet.Core.PacketCommunicator.ReceiveSomePackets(System.Int32@,System.Int32,PcapDotNet.Core.HandlePacket)" /></summary>
+            <exception cref="T:System.InvalidOperationException">Thrown if there is an error.</exception>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketCommunicator.Mode">
+            <summary>
+The working mode of the interface.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketCommunicator.TotalStatistics">
+            <summary>
+Statistics on current capture.
+The values represent packet statistics from the start of the run to the time of the call. 
+Supported only on live captures, not on offline. No statistics are stored in offline, so no statistics are available when reading from an offline device.
+</summary>
+            <exception cref="T:System.InvalidOperationException">Thrown if there is an error or the underlying packet capture doesn't support packet statistics.</exception>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketCommunicator.FileMinorVersion">
+            <summary>
+The minor version number of the pcap library used to write the file.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketCommunicator.FileMajorVersion">
+            <summary>
+The major version number of the pcap library used to write the file.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketCommunicator.IsFileSystemByteOrder">
+            <summary>
+True if the current file uses a different byte order than the current system. 
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketCommunicator.IpV4Netmask">
+            <summary>
+The IPv4 netmask of the network on which packets are being captured; useful for filters when checking for IPv4 broadcast addresses in the filter program. If the netmask of the network on which packets are being captured isn't known to the program, or if packets are being captured on the Linux "any" pseudo-interface that can capture on more than one network, the value will be null and a filter that tests for IPv4 broadcast addreses won't be done correctly, but all other tests in the filter program will be OK.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketCommunicator.SnapshotLength">
+            <summary>
+The dimension of the packet portion (in bytes) that is delivered to the application. 
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketCommunicator.SupportedDataLinks">
+            <summary>
+List of the supported data link types of the interface associated with the packet communicator.
+This property is currently unsupported to avoid memory leakage until a bug fix will be released in winpcap.
+</summary>
+            <exception cref="T:System.InvalidOperationException">Thrown on failure.</exception>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketCommunicator.DataLink">
+            <summary>
+The link layer of an adapter.
+</summary>
+            <exception cref="T:System.InvalidOperationException">Thrown when setting the datalink fails.</exception>
+        </member>
+        <member name="T:PcapDotNet.Core.PacketCommunicator">
+            <summary>
+Used to receive and send packets accross the network or to read and write packets to a pcap file.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.SamplingMethod">
+            <summary>
+This is the base sampling method class.
+Every sampling method is defined by a method and an optional value, both for internal usage.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.PacketCommunicatorReceiveResult">
+            <summary>
+The different return values when receiving from a packet communicator.
+</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketCommunicatorReceiveResult.None">
+            <summary>This return value should never be returned</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketCommunicatorReceiveResult.BreakLoop">
+            <summary>The loop has been broken by a call to Break() before all the requested packets could be read.</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketCommunicatorReceiveResult.Eof">
+            <summary>EOF was reached reading from an offline capture.</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketCommunicatorReceiveResult.Timeout">
+            <summary>The timeout set with Open() has elapsed when trying to read packets.</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketCommunicatorReceiveResult.Ok">
+            <summary>The packets/statistics have been read without problems.</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.PacketCommunicatorMode">
+            <summary>
+Working modes for packet communicator.
+</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketCommunicatorMode.KernelDump">
+            <summary>Kernel dump working mode.</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketCommunicatorMode.KernelMonitor">
+            <summary>Kernel monitoring mode. </summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketCommunicatorMode.Statistics">
+            <summary>Statistical working mode.</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketCommunicatorMode.Capture">
+            <summary>Capture working mode.</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketSendBuffer.Dispose">
+            <summary>
+Deletes a send buffer and frees all the memory associated with it.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketSendBuffer.Enqueue(PcapDotNet.Packets.Packet)">
+            <summary>
+Adds a raw packet at the end of the send buffer.
+'Raw packet' means that the sending application will have to include the protocol headers, since every packet is sent to the network 'as is'. The CRC of the packets needs not to be calculated, because it will be transparently added by the network interface.
+</summary>
+            <param name="packet">The packet to be added to the buffer</param>
+            <exception cref="T:System.InvalidOperationException">Thrown on failure.</exception>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketSendBuffer.#ctor(System.UInt32)">
+            <summary>
+This function allocates a send buffer, i.e. a buffer containing a set of raw packets that will be transimtted on the network with PacketCommunicator.Transmit().
+</summary>
+            <param name="capacity">The size, in bytes, of the buffer, therefore it determines the maximum amount of data that the buffer will contain.</param>
+        </member>
+        <member name="T:PcapDotNet.Core.PacketSendBuffer">
+            <summary>
+Represents a buffer of packets to be sent.
+Note that transmitting a send buffer is much more efficient than performing a series of Send(), because the send buffer is buffered at kernel level drastically decreasing the number of context switches.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketTotalStatistics.PacketsCaptured">
+            <summary>
+Win32 specific. Number of packets captured, i.e number of packets that are accepted by the filter, that find place in the kernel buffer and therefore that actually reach the application.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketTotalStatistics.PacketsDroppedByInterface">
+            <summary>
+Number of packets dropped by the interface.
+Not yet supported.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketTotalStatistics.PacketsDroppedByDriver">
+            <summary>
+Number of packets dropped by the driver.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketTotalStatistics.PacketsReceived">
+            <summary>
+Number of packets transited on the network.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.PacketTotalStatistics">
+            <summary>
+Statistics on capture from the start of the run. 
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketSampleStatistics.AcceptedBytes">
+            <summary>
+The number of bytes received during the last interval.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketSampleStatistics.AcceptedPackets">
+            <summary>
+The number of packets received during the last interval.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketSampleStatistics.Timestamp">
+            <summary>
+The time the statistics was received.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.PacketSampleStatistics">
+            <summary>
+Represents a statistics value when running in statistics mode.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.PacketDeviceOpenAttributes">
+            <summary>
+Flags to use when openning a device to send and receive packets.
+</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketDeviceOpenAttributes.MaximumResponsiveness">
+            <summary>
+This flag configures the adapter for maximum responsiveness.
+In presence of a large value for nbytes, WinPcap waits for the arrival of several packets before copying the data to the user.
+This guarantees a low number of system calls, i.e. lower processor usage, i.e. better performance, which is good for applications like sniffers.
+If the user sets this flag, the capture driver will copy the packets as soon as the application is ready to receive them.
+This is suggested for real time applications (like, for example, a bridge) that need the best responsiveness. 
+</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketDeviceOpenAttributes.NoCaptureLocal">
+            <summary>
+Defines if the local adapter will capture its own generated traffic.
+This flag tells the underlying capture driver to drop the packets that were sent by itself.
+This is useful when building applications like bridges, that should ignore the traffic they just sent. 
+Note that this flag applies to the specific PacketCommunicator opened with it only.
+</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketDeviceOpenAttributes.NoCaptureRemote">
+            <summary>
+Defines if the remote probe will capture its own generated traffic.
+In case the remote probe uses the same interface to capture traffic and to send data back to the caller,
+the captured traffic includes the RPCAP traffic as well.
+If this flag is turned on, the RPCAP traffic is excluded from the capture,
+so that the trace returned back to the collector does not include this traffic. 
+</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketDeviceOpenAttributes.DataTransferUdpRemote">
+            <summary>
+Defines if the data trasfer (in case of a remote capture) has to be done with UDP protocol.
+Use this flag if you want a UDP data connection, don't use it if you want a TCP data connection; control connection is always TCP-based.
+A UDP connection is much lighter, but it does not guarantee that all the captured packets arrive to the client workstation.
+Moreover, it could be harmful in case of network congestion.
+This flag is meaningless if the source is not a remote interface. In that case, it is simply ignored. 
+</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketDeviceOpenAttributes.Promiscuous">
+            <summary>
+Defines if the adapter has to go in promiscuous mode.
+Note that even if this parameter is false, the interface could well be in promiscuous mode for some other reason
+(for example because another capture process with promiscuous mode enabled is currently using that interface).
+On on Linux systems with 2.2 or later kernels (that have the "any" device), this flag does not work on the "any" device;
+if an argument of "any" is supplied, the 'promisc' flag is ignored. 
+</summary>
+        </member>
+        <member name="F:PcapDotNet.Core.PacketDeviceOpenAttributes.None">
+            <summary>
+No flags.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketDumpFile.Dispose">
+            <summary>
+Closes a savefile.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PacketDumpFile.Position">
+            <summary>
+Return the file position for a "savefile".
+Returns the current file position for the "savefile", representing the number of bytes written by PacketCommunicator.OpenDump() and Dump().
+</summary>
+            <exception cref="T:System.InvalidOperationException">Thrown on error.</exception>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketDumpFile.Flush">
+            <summary>
+Flushes the output buffer to the ``savefile,'' so that any packets written with Dump() but not yet written to the ``savefile'' will be written.
+</summary>
+            <exception cref="T:System.InvalidOperationException">Thrown on error.</exception>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketDumpFile.Dump(PcapDotNet.Packets.Packet)">
+            <summary>
+Save a packet to disk.
+Outputs a packet to the "savefile" opened with PacketCommunicator.OpenDump().
+</summary>
+            <param name="packet">The packet to write to disk.</param>
+        </member>
+        <member name="M:PcapDotNet.Core.PacketDumpFile.Dump(System.String,PcapDotNet.Core.PcapDataLink,System.Int32,System.Collections.Generic.IEnumerable`1{PcapDotNet.Packets.Packet})">
+            <summary>
+Creates a dump file and saves the given packets to disk.
+This method is useful when you've got packets to save but no device.
+</summary>
+            <param name="fileName">The name of the dump file.</param>
+            <param name="dataLink">The data link of the packets saved globally in the dump file.</param>
+            <param name="snapshotLength">The dimension of the packet portion (in bytes) that is used when writing the packets. 65536 guarantees that the whole packet will be captured on all the link layers.</param>
+            <param name="packets">The packets to save to the dump file.</param>
+        </member>
+        <member name="T:PcapDotNet.Core.PacketDumpFile">
+            <summary>
+A file to write packets.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PcapDataLink.Description">
+            <summary>
+The description of the datalink.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PcapDataLink.Name">
+            <summary>
+The name of the datalink.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PcapDataLink.Value">
+            <summary>
+The pcap value of the datalink.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.PcapDataLink.Kind">
+            <summary>
+The kind of the datalink.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.PcapDataLink.#ctor(System.String)">
+            <summary>
+Create the datalink its name.
+</summary>
+            <param name="name">The name of the pcap datalink.</param>
+        </member>
+        <member name="M:PcapDotNet.Core.PcapDataLink.#ctor(System.Int32)">
+            <summary>
+Create the datalink from an int value (pcap value).
+</summary>
+            <param name="value">The pcap value of the datalink.</param>
+        </member>
+        <member name="M:PcapDotNet.Core.PcapDataLink.#ctor(PcapDotNet.Packets.DataLinkKind)">
+            <summary>
+Create the datalink from one of the well defined datalink kinds.
+</summary>
+            <param name="kind">The kind of datalink to create.</param>
+        </member>
+        <member name="T:PcapDotNet.Core.PcapDataLink">
+            <summary>
+A packet communicator datalink.
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.BerkeleyPacketFilter.Dispose">
+            <summary>
+Free a filter.
+Used to free up allocated memory when that BPF program is no longer needed, for example after it has been made the filter program for a packet communicator by a call to PacketCommunicator.SetFilter().
+</summary>
+        </member>
+        <member name="M:PcapDotNet.Core.BerkeleyPacketFilter.Test(PcapDotNet.Packets.Packet)">
+            <summary>
+Returns if a given filter applies to an offline packet.
+This method is used to apply a filter to a packet that is currently in memory. 
+This process does not need to open an adapter; we need just to create the proper filter (by settings parameters like the snapshot length, or the link-layer type) by means of the Pcap.
+The current API of libpcap does not allow to receive a packet and to filter the packet after it has been received. However, this can be useful in case you want to filter packets in the application, instead of into the receiving process. This function allows you to do the job.
+</summary>
+            <param name="packet">The packet that has to be filtered.</param>
+            <returns>
+True iff the given packet satisfies the filter.
+</returns>
+        </member>
+        <member name="M:PcapDotNet.Core.BerkeleyPacketFilter.Test(System.Int32@,PcapDotNet.Packets.Packet)">
+            <summary>
+Returns if a given filter applies to an offline packet.
+This method is used to apply a filter to a packet that is currently in memory. 
+This process does not need to open an adapter; we need just to create the proper filter (by settings parameters like the snapshot length, or the link-layer type) by means of the Pcap.
+The current API of libpcap does not allow to receive a packet and to filter the packet after it has been received. However, this can be useful in case you want to filter packets in the application, instead of into the receiving process. This function allows you to do the job.
+</summary>
+            <param name="snapshotLength">The length of the bytes that are currently available into the packet if the packet satisfies the filter, 0 otherwise.</param>
+            <param name="packet">The packet that has to be filtered.</param>
+            <returns>
+True iff the given packet satisfies the filter.
+</returns>
+        </member>
+        <member name="M:PcapDotNet.Core.BerkeleyPacketFilter.#ctor(System.String,System.Int32,PcapDotNet.Packets.DataLinkKind)">
+            <summary>
+Compile a packet filter without the need of opening an adapter. 
+This constructor converts a high level filtering expression (see <see href="http://www.winpcap.org/docs/docs_40_2/html/group__language.html">WinPcap Filtering expression syntax</see>) in a program that can be interpreted by the kernel-level filtering engine. 
+Assumes the netmask of the network on which packets are being captured isn't known to the program, or that packets are being captured on the Linux "any" pseudo-interface that can capture on more than one network.
+Tests for IPv4 broadcast addreses won't be done correctly, but all other tests in the filter program will be OK.
+</summary>
+            <param name="filterValue">A high level filtering expression (see <see href="http://www.winpcap.org/docs/docs_40_2/html/group__language.html">WinPcap Filtering expression syntax</see>)</param>
+            <param name="snapshotLength">Length of the packet that has to be retained of the communicator this filter will be applied on.</param>
+            <param name="kind">The link layer of an adapter that this filter will apply upon.</param>
+            <exception cref="T:System.ArgumentException">Indicates an error. Probably caused by bad syntax.</exception>
+            <remarks>
+If the purpose of this filter is to apply it on a communicator and not to test packets in memory, it would be simpler to call to PacketCommunicator.CreateFilter() or to directly call PacketCommunicator.SetFilter().
+</remarks>
+        </member>
+        <member name="M:PcapDotNet.Core.BerkeleyPacketFilter.#ctor(System.String,System.Int32,PcapDotNet.Packets.DataLinkKind,PcapDotNet.Core.IpV4SocketAddress)">
+            <summary>
+Compile a packet filter without the need of opening an adapter. 
+This constructor converts a high level filtering expression (see <see href="http://www.winpcap.org/docs/docs_40_2/html/group__language.html">WinPcap Filtering expression syntax</see>) in a program that can be interpreted by the kernel-level filtering engine. 
+</summary>
+            <param name="filterValue">A high level filtering expression (see <see href="http://www.winpcap.org/docs/docs_40_2/html/group__language.html">WinPcap Filtering expression syntax</see>)</param>
+            <param name="snapshotLength">Length of the packet that has to be retained of the communicator this filter will be applied on.</param>
+            <param name="kind">The link layer of an adapter that this filter will apply upon.</param>
+            <param name="netmask">Specifies the IPv4 netmask of the network on which packets are being captured; it is used only when checking for IPv4 broadcast addresses in the filter program. If the netmask of the network on which packets are being captured isn't known to the program, or if packets are being captured on the Linux "any" pseudo-interface that can capture on more than one network, null can be supplied; tests for IPv4 broadcast addreses won't be done correctly, but all other tests in the filter program will be OK.</param>
+            <exception cref="T:System.ArgumentException">Indicates an error. Probably caused by bad syntax.</exception>
+            <remarks>
+If the purpose of this filter is to apply it on a communicator and not to test packets in memory, it would be simpler to call to PacketCommunicator.CreateFilter() or to directly call PacketCommunicator.SetFilter().
+</remarks>
+        </member>
+        <member name="T:PcapDotNet.Core.BerkeleyPacketFilter">
+            <summary>
+A packet filter, converting a high level filtering expression (see <see href="http://www.winpcap.org/docs/docs_40_2/html/group__language.html">WinPcap Filtering expression syntax</see>) in a program that can be interpreted by the kernel-level filtering engine. 
+The user must dispose instances of this class to deallocate resources.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.IpV4SocketAddress.Address">
+            <summary>
+The ip version 4 address.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.IpV4SocketAddress">
+            <summary>
+An internet protocol version 4 address for a device.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.DeviceAddress.Destination">
+            <summary>
+if not null, the destination address corresponding to the address in Address; may be null if the interface isn't a point-to-point interface 
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.DeviceAddress.Broadcast">
+            <summary>
+if not null, the broadcast address corresponding to the address in Address; may be null if the interface doesn't support broadcasts.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.DeviceAddress.Netmask">
+            <summary>
+if not null, the netmask corresponding to the address in Address. 
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.DeviceAddress.Address">
+            <summary>
+The Device Address.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.DeviceAddress">
+            <summary>
+Representation of an interface address.
+</summary>
+        </member>
+        <member name="P:PcapDotNet.Core.SocketAddress.Family">
+            <summary>
+Family (type) of the socket address.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.SocketAddress">
+            <summary>
+The base of all device addresses.
+Contains the family (type) of the address.
+</summary>
+        </member>
+        <member name="T:PcapDotNet.Core.SocketAddressFamily">
+            <summary>
+The type of socket address for a device address.
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Bluetooth">
+            <summary>
+Bluetooth RFCOMM/L2CAP protocols
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.NetworkDesigners">
+            <summary>
+Network Designers OSI &amp; gateway
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Irda">
+            <summary>
+IrDA
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Ieee12844">
+            <summary>
+IEEE 1284.4 WG AF
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Cluster">
+            <summary>
+Microsoft Wolfpack
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Internet6">
+            <summary>
+Internetwork Version 6
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Atm">
+            <summary>
+Native ATM Services
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Ban">
+            <summary>
+Banyan
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Unknown1">
+            <summary>
+Somebody is using this!
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Firefox">
+            <summary>
+Protocols from Firefox
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.VoiceView">
+            <summary>
+VoiceView
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.NetBios">
+            <summary>
+NetBios-style addresses
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.AppleTalk">
+            <summary>
+AppleTalk
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.HyperChannel">
+            <summary>
+NSC Hyperchannel
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Lat">
+            <summary>
+LAT
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.DirectDataLinkInterface">
+            <summary>
+Direct data link interface
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.DECnet">
+            <summary>
+DECnet
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Sna">
+            <summary>
+IBM SNA
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Ccitt">
+            <summary>
+CCITT protocols, X.25 etc
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Datakit">
+            <summary>
+datakit protocols
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.EuropeanComputerManufactures">
+            <summary>
+european computer manufacturers
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Osi">
+            <summary>
+OSI is ISO
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Iso">
+            <summary>
+ISO protocols
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Ipx">
+            <summary>
+IPX protocols: IPX, SPX, etc.
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.NS">
+            <summary>
+XEROX NS protocols
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Chaos">
+            <summary>
+mit CHAOS protocols
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Pup">
+            <summary>
+pup protocols: e.g. BSP
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.ImpLink">
+            <summary>
+arpanet imp addresses
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Internet">
+            <summary>
+internetwork: UDP, TCP, etc.
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Unix">
+            <summary>
+local to host (pipes, portals)
+</summary>
+        </member>
+        <member name="F:&lt;unknown type&gt;.Unspecified">
+            <summary>
+unspecified
+</summary>
+        </member>
+    </members>
+</doc>
