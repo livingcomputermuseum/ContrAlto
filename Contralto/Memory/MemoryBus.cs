@@ -257,10 +257,11 @@ namespace Contralto.Memory
                     case 3:
 
                         // debug 
+                        /*
                         if (_memoryAddress == 0xfc90 || _memoryAddress == 0xfc91 || _memoryAddress == 0x151)      // 176220 -- status word for disk
                         {
                             Logging.Log.Write(Logging.LogComponent.Debug, "++> Task {0} wrote {1} to {3} (was {2}).", _task, Conversion.ToOctal(data), Conversion.ToOctal(DebugReadWord(_task, _memoryAddress)), Conversion.ToOctal(_memoryAddress));
-                        }
+                        }*/
 
                         _memoryData = data; // Only really necessary to show in debugger
                         // Start of doubleword write:

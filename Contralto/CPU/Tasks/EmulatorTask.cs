@@ -117,7 +117,7 @@ namespace Contralto.CPU
                             // Dispatch to the appropriate device.
                             // The Ethernet controller is the only common device that is documented
                             // to have used STARTF, so we'll just go there directly; if other
-                            // hardware is discovered we'll put together a more flexible dispatch.
+                            // hardware is discovered to be worth emulating we'll put together a more flexible dispatch.
                             //
                             if (_busData < 4)
                             {
@@ -186,9 +186,6 @@ namespace Contralto.CPU
                         //
                         // "...DNS also addresses R from (3-IR[3 - 4])..."
                         //
-
-                        // TODO: is S reg select impacted by this?
-                        //_srSelect = 
                         _rSelect = (_rSelect & 0xfffc) | ((((uint)_cpu._ir & 0x1800) >> 11) ^ 3);
                         break;
 

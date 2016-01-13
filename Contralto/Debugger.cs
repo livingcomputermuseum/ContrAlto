@@ -25,7 +25,7 @@ namespace Contralto
         {
             _system = system;
             _controller = controller;
-            _microcodeBreakpointEnabled = new bool[1024];
+            _microcodeBreakpointEnabled = new bool[3,1024];
             _novaBreakpointEnabled = new bool[65536];
 
             _controller.StepCallback += OnExecutionStep;
@@ -143,22 +143,24 @@ namespace Contralto
 
             //
             // Select active tab based on current UCode bank
-            switch (UCodeMemory.Bank)
+            MicrocodeBank bank = UCodeMemory.GetBank(_system.CPU.CurrentTask.TaskType);
+
+            switch (bank)
             {
                 case MicrocodeBank.ROM0:
-                    SourceTabs.TabIndex = 0;
+                    SourceTabs.SelectedIndex = 0;
                     break;
 
                 case MicrocodeBank.ROM1:
-                    SourceTabs.TabIndex = 1;
+                    SourceTabs.SelectedIndex = 1;
                     break;
 
                 case MicrocodeBank.RAM0:
-                    SourceTabs.TabIndex = 2;
+                    SourceTabs.SelectedIndex = 2;
                     break;
             }            
 
-            RefreshMicrocodeDisassembly();
+            RefreshMicrocodeDisassembly(_system.CPU.CurrentTask.MPC);
 
             // Highlight the nova memory location corresponding to the emulator PC.
             // TODO: this should be configurable
@@ -197,25 +199,23 @@ namespace Contralto
             this.BringToFront();        
         }
 
-        private void RefreshMicrocodeDisassembly()
+        private void RefreshMicrocodeDisassembly(ushort address)
         {
             // Update non-ROM code listings, depending on the currently active tab
             switch (SourceTabs.SelectedIndex)
             {
                 case 0:
                     // Find the right source line and highlight it.
-                    HighlightMicrocodeSourceLine(_rom0SourceViewer, _system.CPU.CurrentTask.MPC);
+                    HighlightMicrocodeSourceLine(_rom0SourceViewer, address);
                     break;
 
-                case 1:
-                    SourceTabs.TabIndex = 1;                    
-                    HighlightMicrocodeSourceLine(_rom1SourceViewer, _system.CPU.CurrentTask.MPC);
+                case 1:                                
+                    HighlightMicrocodeSourceLine(_rom1SourceViewer, address);
                     break;
 
-                case 2:
-                    SourceTabs.TabIndex = 2;
-                    RefreshMicrocodeDisassembly(MicrocodeBank.RAM0);
-                    HighlightMicrocodeSourceLine(_ram0SourceViewer, _system.CPU.CurrentTask.MPC);
+                case 2:                    
+                    UpdateMicrocodeDisassembly(MicrocodeBank.RAM0);
+                    HighlightMicrocodeSourceLine(_ram0SourceViewer, address);
                     break;
             }
         }
@@ -272,21 +272,60 @@ namespace Contralto
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void SourceViewCellClick(object sender, DataGridViewCellEventArgs e)
+        private void Rom0SourceViewCellClick(object sender, DataGridViewCellEventArgs e)
+        {            
+            // Check for breakpoint column click.
+            if (e.ColumnIndex == 0)
+            {
+                SetBreakpointFromCellClick(MicrocodeBank.ROM0, e.RowIndex);
+            }
+        }     
+
+        private void Rom1SourceViewCellClick(object sender, DataGridViewCellEventArgs e)
         {
             // Check for breakpoint column click.
             if (e.ColumnIndex == 0)
             {
-                // See if this is a source line, if so check/uncheck the box
-                // and set/unset a breakpoint for the line
-                if (_rom0SourceViewer.Rows[e.RowIndex].Tag != null)
-                {
-                    bool value = (bool)_rom0SourceViewer.Rows[e.RowIndex].Cells[0].Value;
-                    _rom0SourceViewer.Rows[e.RowIndex].Cells[0].Value = !value;
+                SetBreakpointFromCellClick(MicrocodeBank.ROM1, e.RowIndex);
+            }
+        }
 
-                    ModifyMicrocodeBreakpoint((UInt16)_rom0SourceViewer.Rows[e.RowIndex].Tag, !value);
-                }
+        private void Ram0SourceViewCellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Check for breakpoint column click.
+            if (e.ColumnIndex == 0)
+            {
+                SetBreakpointFromCellClick(MicrocodeBank.RAM0, e.RowIndex);
+            }
+        }
 
+        private void SetBreakpointFromCellClick(MicrocodeBank bank, int index)
+        {
+            DataGridView view = null;
+
+            switch(bank)
+            {
+                case MicrocodeBank.ROM0:
+                    view = _rom0SourceViewer;
+                    break;
+
+                case MicrocodeBank.ROM1:
+                    view = _rom1SourceViewer;
+                    break;
+
+                case MicrocodeBank.RAM0:
+                    view = _ram0SourceViewer;
+                    break;
+            }
+
+            // See if this is a source line, if so check/uncheck the box
+            // and set/unset a breakpoint for the line
+            if (view.Rows[index].Tag != null)
+            {
+                bool value = (bool)view.Rows[index].Cells[0].Value;
+                view.Rows[index].Cells[0].Value = !value;
+
+                ModifyMicrocodeBreakpoint(bank, (UInt16)view.Rows[index].Tag, !value);
             }
         }
 
@@ -303,7 +342,7 @@ namespace Contralto
             }
         }
 
-        private void RefreshMicrocodeDisassembly(MicrocodeBank bank)
+        private void UpdateMicrocodeDisassembly(MicrocodeBank bank)
         {
             DataGridView view = null;
             uint[] uCode = null;
@@ -414,9 +453,9 @@ namespace Contralto
 
         }
 
-        private void ModifyMicrocodeBreakpoint(UInt16 address, bool set)
+        private void ModifyMicrocodeBreakpoint(MicrocodeBank bank, UInt16 address, bool set)
         {
-            _microcodeBreakpointEnabled[address] = set;
+            _microcodeBreakpointEnabled[(int)bank,address] = set;
         }
 
         private bool GetNovaBreakpoint(UInt16 address)
@@ -629,7 +668,7 @@ namespace Contralto
 
         private void OnTabChanged(object sender, EventArgs e)
         {
-            RefreshMicrocodeDisassembly();
+            RefreshMicrocodeDisassembly(_system.CPU.CurrentTask.MPC);
         }
 
         private void Debugger_Load(object sender, EventArgs e)
@@ -647,7 +686,7 @@ namespace Contralto
                     UInt16 address = Convert.ToUInt16(JumpToAddress.Text, 8);
 
                     // find the source address that matches this, if any.
-                    HighlightMicrocodeSourceLine(_rom0SourceViewer, address);
+                    RefreshMicrocodeDisassembly(address);                    
                 }
                 catch
                 {
@@ -768,7 +807,7 @@ namespace Contralto
                 case ExecutionType.NextNovaInstruction:
                     // See if we need to stop here
                     if (_execAbort ||                                               // The Stop button was hit
-                        _microcodeBreakpointEnabled[_system.CPU.CurrentTask.MPC] || // A microcode breakpoint was hit
+                        _microcodeBreakpointEnabled[(int)UCodeMemory.GetBank(_system.CPU.CurrentTask.TaskType),_system.CPU.CurrentTask.MPC] || // A microcode breakpoint was hit
                         (_execType == ExecutionType.NextTask &&
                             _system.CPU.NextTask != null &&
                             _system.CPU.NextTask != _system.CPU.CurrentTask) ||     // The next task was switched to                    
@@ -914,7 +953,7 @@ namespace Contralto
 
         // Microcode Debugger breakpoints; one entry per address since we only need
         // to worry about a 10 bit address space, this is fast and uses little memory.
-        private bool[] _microcodeBreakpointEnabled;
+        private bool[,] _microcodeBreakpointEnabled;
 
         // Nova Debugger breakpoints; same as above
         private bool[] _novaBreakpointEnabled;

@@ -2,6 +2,7 @@
 using Contralto.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,6 +22,8 @@ namespace Contralto.IO
             Reset();
 
             _fifoWakeupEvent = new Event(_fifoTransmitDuration, null, FIFOCallback);
+
+            _hostEthernet = new HostEthernet(null);
         }
 
         public void Reset()
@@ -208,7 +211,9 @@ namespace Contralto.IO
             
             Log.Write(LogComponent.EthernetController, "Sending {0} words from fifo.", _fifo.Count);
 
-            // TODO: actually transmit data in FIFO rather than bit-bucketing it.
+            // Copy FIFO to host ethernet output buffer
+            _fifo.CopyTo(_outputData, _outputIndex);
+            _outputIndex += _fifo.Count;
             _fifo.Clear();
 
             if (!end)
@@ -224,6 +229,10 @@ namespace Contralto.IO
 
                 // Wakeup at end of transmission.  ("OUTGONE Post wakeup.")
                 _system.CPU.WakeupTask(TaskType.Ethernet);
+
+                // And actually tell the host ethernet interface to send the data.
+                _hostEthernet.Send(_outputData, _outputIndex);
+                _outputIndex = 0;
             }       
         }
 
@@ -231,6 +240,32 @@ namespace Contralto.IO
         {
             // TODO: pull next packet off host ethernet interface that's destined for the Alto, and start the
             // process of putting into the FIFO and generating wakeups for the microcode.
+            _receiverWaiting = true;
+        }
+
+        /// <summary>
+        /// Invoked when the host ethernet interface receives a packet destined for us.
+        /// TODO: determine the best behavior here; we could queue up a number of packets and let
+        /// the emulated interface pull them off one by one, or we could only save one packet and discard
+        /// any that arrive while the emulated interface is processing the current one.
+        /// 
+        /// The latter is probably more faithful to the intent, but the former might be more useful on
+        /// busy Ethernets (though the bottom-level filter implemented by HostEthernet might take care
+        /// of that already.)
+        /// 
+        /// For now, we just accept one at a time.
+        /// </summary>
+        /// <param name="data"></param>
+        private void OnHostPacketReceived(MemoryStream data)
+        {
+            if (_incomingPacket == null)
+            {
+                _incomingPacket = data;
+            }
+            else
+            {
+                // Drop.
+            }
         }
 
         private Queue<ushort> _fifo;
@@ -252,6 +287,16 @@ namespace Contralto.IO
         // FIFO scheduling
         private ulong _fifoTransmitDuration = 87075;       // ~87000 nsec to transmit 16 words at 3mbit, assuming no collision
         private Event _fifoWakeupEvent;
+
+        // The actual connection to a real Ethernet device on the host
+        HostEthernet _hostEthernet;
+
+        // Buffer to hold outgoing data to the host ethernet
+        ushort[] _outputData;
+        int _outputIndex;
+
+        // Incoming data
+        MemoryStream _incomingPacket;
 
         private AltoSystem _system;
     }

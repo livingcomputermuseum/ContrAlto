@@ -27,6 +27,11 @@ namespace Contralto.CPU
                 get { return (int)_taskType; }
             }
 
+            public TaskType TaskType
+            {
+                get { return _taskType; }
+            }
+
             public bool Wakeup
             {
                 get { return _wakeup; }

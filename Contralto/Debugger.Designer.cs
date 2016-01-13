@@ -214,7 +214,7 @@
             this._rom0SourceViewer.Size = new System.Drawing.Size(582, 554);
             this._rom0SourceViewer.TabIndex = 1;
             this._rom0SourceViewer.TabStop = false;
-            this._rom0SourceViewer.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.SourceViewCellClick);
+            this._rom0SourceViewer.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.Rom0SourceViewCellClick);
             // 
             // Breakpoint
             // 
@@ -314,6 +314,7 @@
             this._rom1SourceViewer.Size = new System.Drawing.Size(582, 545);
             this._rom1SourceViewer.TabIndex = 2;
             this._rom1SourceViewer.TabStop = false;
+            this._rom1SourceViewer.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.Rom1SourceViewCellClick);
             // 
             // dataGridViewCheckBoxColumn1
             // 
@@ -413,6 +414,7 @@
             this._ram0SourceViewer.Size = new System.Drawing.Size(582, 545);
             this._ram0SourceViewer.TabIndex = 2;
             this._ram0SourceViewer.TabStop = false;
+            this._ram0SourceViewer.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.Ram0SourceViewCellClick);
             // 
             // dataGridViewCheckBoxColumn2
             // 

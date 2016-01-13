@@ -93,10 +93,9 @@ namespace Contralto.CPU
             get { return _uCodeRam; }
         }
 
-        public static MicrocodeBank Bank
-        {
-            // Just return the Bank for the Emulator task for now
-            get { return _microcodeBank[(int)TaskType.Emulator]; }
+        public static MicrocodeBank GetBank(TaskType task)
+        {            
+            return _microcodeBank[(int)task];
         }
 
         public static void LoadControlRAMAddress(ushort address)

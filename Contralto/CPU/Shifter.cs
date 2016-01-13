@@ -185,6 +185,12 @@ namespace Contralto.CPU
                         int c = (_output & 0x1) << 15;
                         _output = (ushort)((_output >> 1) | c);
                     }
+
+                    if (_dns)
+                    {
+                        // Should never happen
+                        throw new InvalidOperationException("DNS on Rotate Right, not possible.");
+                    }
                     break;
 
                 default:

@@ -38,12 +38,12 @@ namespace Contralto.CPU
                         break;
 
                     case BusSource.LoadR:
-                        source = "0 ";
+                        source = "L ";
                         loadR = true;
                         break;
 
                     case BusSource.None:
-                        source = "177777 ";                           
+                        source = "177777(no source) ";                           
                         break;
 
                     case BusSource.TaskSpecific1:
@@ -289,7 +289,7 @@ namespace Contralto.CPU
 
                 default:
                     loadS = false;
-                    return String.Format("BS{0}", Conversion.ToOctal((int)instruction.BS));
+                    return String.Format("BS {0}", Conversion.ToOctal((int)instruction.BS));
             }
         }
 
@@ -301,7 +301,7 @@ namespace Contralto.CPU
                     return DisassembleEmulatorSpecialFunction1(instruction);                    
 
                 default:
-                    return String.Format("F1{0}", Conversion.ToOctal((int)instruction.F1));
+                    return String.Format("F1 {0}", Conversion.ToOctal((int)instruction.F1));
             }
         }
 
@@ -313,7 +313,7 @@ namespace Contralto.CPU
                     return DisassembleEmulatorSpecialFunction2(instruction);                    
 
                 default:
-                    return String.Format("F2{0}", Conversion.ToOctal((int)instruction.F2));
+                    return String.Format("F2 {0}", Conversion.ToOctal((int)instruction.F2));
             }
         }
 
@@ -367,7 +367,7 @@ namespace Contralto.CPU
                     return "STARTF ";
 
                 default:
-                    return String.Format("F1{0}", Conversion.ToOctal((int)ef1));
+                    return String.Format("F1 {0}", Conversion.ToOctal((int)ef1));
             }
 
         }
@@ -400,7 +400,7 @@ namespace Contralto.CPU
                     return "IDISP ";
 
                 default:
-                    return String.Format("F2{0}", Conversion.ToOctal((int)ef2));
+                    return String.Format("F2 {0}", Conversion.ToOctal((int)ef2));
             }
         }
     }

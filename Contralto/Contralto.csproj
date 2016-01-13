@@ -52,6 +52,18 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PcapDotNet.Base">
+      <HintPath>pcap\PcapDotNet.Base.dll</HintPath>
+    </Reference>
+    <Reference Include="PcapDotNet.Core">
+      <HintPath>pcap\PcapDotNet.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="PcapDotNet.Core.Extensions">
+      <HintPath>pcap\PcapDotNet.Core.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="PcapDotNet.Packets">
+      <HintPath>pcap\PcapDotNet.Packets.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -108,6 +120,7 @@
     <Compile Include="IO\DiskController.cs" />
     <Compile Include="IO\DiabloPack.cs" />
     <Compile Include="IO\EthernetController.cs" />
+    <Compile Include="IO\HostEthernet.cs" />
     <Compile Include="IO\Keyboard.cs" />
     <Compile Include="IO\Mouse.cs" />
     <Compile Include="Logging\Log.cs" />
