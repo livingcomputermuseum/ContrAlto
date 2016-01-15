@@ -28,7 +28,7 @@ namespace Contralto.CPU
                     // The resulting [Countdown] wakeup is cleared when the Ether task next runs.                        
                     _ethernetController.CountdownWakeup = false;
                     _wakeup = false;
-                }                                      
+                }                           
 
                 return base.ExecuteInstruction(instruction);
             }            
@@ -49,15 +49,26 @@ namespace Contralto.CPU
                 }
             }
 
+            protected override void ExecuteSpecialFunction1Early(MicroInstruction instruction)
+            {
+                EthernetF1 ef1 = (EthernetF1)instruction.F1;
+                switch (ef1)
+                {
+                    case EthernetF1.EILFCT:
+                        // Early: Input Look Function. Gates the contents of the FIFO to BUS[0-15] but does
+                        // not increment the read pointer.
+                        _busData &= _ethernetController.ReadInputFifo(true /* do not increment read pointer */);
+                        break;
+                }
+            }
+
             protected override void ExecuteSpecialFunction1(MicroInstruction instruction)
             {
                 EthernetF1 ef1 = (EthernetF1)instruction.F1;
                 switch(ef1)
                 {
                     case EthernetF1.EILFCT:
-                        // Input Look Function. Gates the contents of the FIFO to BUS[0-15] but does
-                        // not increment the read pointer.
-                        _busData &= _ethernetController.ReadInputFifo(true /* do not increment read pointer */);
+                        // Nothing; handled in Early handler.
                         break;
 
                     case EthernetF1.EPFCT:
@@ -106,7 +117,7 @@ namespace Contralto.CPU
                         break;
 
                     case EthernetF2.ERBFCT:
-                        // Reset Branch Funct ion. This command dispatch function merges the ICMD
+                        // Reset Branch Function. This command dispatch function merges the ICMD
                         // and OCMD flip flops, into NEXT[6-7]. These flip flops are the means of
                         // communication between the emulator task and the Ethernet task. The
                         // emulator task sets them from BUS[14-15] with the STARTF function, causing
@@ -148,7 +159,7 @@ namespace Contralto.CPU
                         // empty.
                         if (!_ethernetController.FIFOEmpty)
                         {
-                            Log.Write(LogComponent.EthernetController, "ECBFCT: FIFO empty");
+                            Log.Write(LogComponent.EthernetController, "ECBFCT: FIFO not empty");
                             _nextModifier |= 0x4;
                         }
                         break;

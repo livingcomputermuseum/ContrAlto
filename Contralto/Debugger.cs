@@ -589,7 +589,7 @@ namespace Contralto
                             break;
 
                         case "EN":
-                            Task = TaskType.Emulator;
+                            Task = TaskType.Ethernet;
                             break;
 
                         case "MR":

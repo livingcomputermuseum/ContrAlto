@@ -214,6 +214,10 @@ namespace Contralto
             // TODO: invoke the debugger when an error is hit
             //OnDebuggerShowClick(null, null);
             SystemStatusLabel.Text = _systemErrorText;
+
+            Console.WriteLine("Execution error: {0} - {1}", e.Message, e.StackTrace);
+
+            System.Diagnostics.Debugger.Break();
         }
 
         //
@@ -367,7 +371,7 @@ namespace Contralto
         protected override bool ProcessKeyEventArgs(ref Message m)                 
         {
             // Grab the scancode from the message
-            int scanCode = ((int)m.LParam >> 16) & 0x1ff;
+            int scanCode = (int)((m.LParam.ToInt64() >> 16) & 0x1ff);
             bool down = false;
 
             const int WM_KEYDOWN = 0x100;

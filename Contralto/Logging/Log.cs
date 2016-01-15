@@ -25,6 +25,7 @@ namespace Contralto.Logging
         EthernetController = 0x400,
         EthernetTask = 0x800,
         TaskSwitch = 0x1000,
+        HostEthernet = 0x2000,
 
         Debug = 0x40000000,
         All =   0x7fffffff
@@ -52,7 +53,7 @@ namespace Contralto.Logging
         static Log()
         {
             // TODO: make configurable
-            _components = LogComponent.CPU; // LogComponent.DiskController | LogComponent.DiskSectorTask | LogComponent.Debug | LogComponent.CPU; // LogComponent.EthernetController; // | LogComponent.Microcode | LogComponent.Memory | LogComponent.CPU;
+            _components = LogComponent.HostEthernet | LogComponent.EthernetController; // LogComponent.DiskController | LogComponent.DiskSectorTask | LogComponent.Debug | LogComponent.CPU; // LogComponent.EthernetController; // | LogComponent.Microcode | LogComponent.Memory | LogComponent.CPU;
             _type = LogType.Normal | LogType.Warning | LogType.Error | LogType.Verbose;
 
             _logStream = new StreamWriter("log.txt");

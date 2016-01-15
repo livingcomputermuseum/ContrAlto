@@ -10,6 +10,8 @@ using PcapDotNet.Core.Extensions;
 using PcapDotNet.Packets;
 using PcapDotNet.Packets.Ethernet;
 using System.IO;
+using Contralto.Logging;
+using System.Threading;
 
 namespace Contralto.IO
 {
@@ -55,12 +57,29 @@ namespace Contralto.IO
             AttachInterface(iface);           
         }
 
+        public HostEthernet(string name)
+        {
+            // Find the specified device by name
+            List<EthernetInterface> interfaces = EthernetInterface.EnumerateDevices();
+
+            foreach (EthernetInterface i in interfaces)
+            {
+                if (name == i.Name)
+                {
+                    AttachInterface(i);
+                    return;
+                }
+            }
+
+            throw new InvalidOperationException("Specified ethernet interface does not exist.");
+        }
+
         public void RegisterReceiveCallback(ReceivePacketDelegate callback)
         {
             _callback = callback;
 
             // Now that we have a callback we can start receiving stuff.
-            Open(false /* not promiscuous */, int.MaxValue);
+            Open(true /* promiscuous */, int.MaxValue);
             BeginReceive();
         }
 
@@ -78,16 +97,36 @@ namespace Contralto.IO
                 throw new InvalidOperationException("Raw packet data must contain at least two bytes for addressing.");                
             }
 
+            
+            //
+            // Outgoing packet contains 2 extra words (4 bytes):
+            // - prepended packet length (one word)
+            // - appended checksum (one word)
+            byte[] packetBytes = new byte[length * 2 + 4];
+
+            //
+            // First two bytes include the length of the 3mbit packet (including checksum); since 10mbit packets have a minimum length of 46 
+            // bytes, and 3mbit packets have no minimum length this is necessary so the receiver can pull out the 
+            // correct amount of data.
+            //
+            packetBytes[0] = (byte)(length + 1);
+            packetBytes[1] = (byte)((length + 1) >> 8);
+
             //
             // Do this annoying dance to stuff the ushorts into bytes because this is C#.
             //
-            byte[] packetBytes = new byte[length * 2];
-
             for (int i = 0; i < length; i++)
             {
-                packetBytes[i * 2] = (byte)(packet[i] >> 8);
-                packetBytes[i * 2 + 1] = (byte)packet[i];
+                packetBytes[i * 2 + 2] = (byte)(packet[i]);
+                packetBytes[i * 2 + 3] = (byte)(packet[i] >> 8);
             }
+
+            //
+            // Append the checksum.
+            // TODO: actually calculate it.
+            // 
+            packetBytes[length * 2 + 2] = 0xbe;
+            packetBytes[length * 2 + 3] = 0xef;
 
             //
             // Grab the source and destination host addresses from the packet we're sending
@@ -95,6 +134,11 @@ namespace Contralto.IO
             //
             byte destinationHost = packetBytes[0];
             byte sourceHost = packetBytes[1];
+
+            Log.Write(LogComponent.HostEthernet, "Sending packet; source {0} destination {1}, length {2} words.",
+                Conversion.ToOctal(sourceHost),
+                Conversion.ToOctal(destinationHost),
+                length);
 
             MacAddress destinationMac = new MacAddress((UInt48)(_10mbitMACPrefix | destinationHost));
             MacAddress sourceMac = new MacAddress((UInt48)(_10mbitMACPrefix | sourceHost));
@@ -115,7 +159,9 @@ namespace Contralto.IO
             PacketBuilder builder = new PacketBuilder(ethernetLayer, payloadLayer);
 
             // Send it over the 'net!
-            _communicator.SendPacket(builder.Build(DateTime.Now));           
+            _communicator.SendPacket(builder.Build(DateTime.Now));
+
+            Log.Write(LogComponent.HostEthernet, "Encapsulated 3mbit packet sent.");
         }
 
         private void ReceiveCallback(Packet p)
@@ -126,10 +172,11 @@ namespace Contralto.IO
             if ((int)p.Ethernet.EtherType == _3mbitFrameType &&
                 (p.Ethernet.Destination.ToValue() & 0xffffffffff00) == _10mbitMACPrefix )
             {
+                Log.Write(LogComponent.HostEthernet, "Received encapsulated 3mbit packet.");
                 _callback(p.Ethernet.Payload.ToMemoryStream());                
             }
             else
-            {
+            {                
                 // Not for us, discard the packet.                
             }
         }
@@ -152,11 +199,18 @@ namespace Contralto.IO
             {
                 throw new InvalidOperationException("Requested interface not found.");
             }
+
+            Log.Write(LogComponent.HostEthernet, "Attached to host interface {0}", iface.Name);
         }
 
         private void Open(bool promiscuous, int timeout)
         {
-            _communicator = _interface.Open(0xffff, promiscuous ? PacketDeviceOpenAttributes.Promiscuous : PacketDeviceOpenAttributes.None, timeout);
+            _communicator = _interface.Open(65536, promiscuous ? PacketDeviceOpenAttributes.Promiscuous | PacketDeviceOpenAttributes.NoCaptureLocal : PacketDeviceOpenAttributes.NoCaptureLocal, timeout);
+
+            // Set this to 1 so we'll get packets as soon as they arrive, no buffering.
+            _communicator.SetKernelMinimumBytesToCopy(1);
+
+            Log.Write(LogComponent.HostEthernet, "Host interface opened and receiving packets.");
         }
 
         /// <summary>
@@ -164,12 +218,27 @@ namespace Contralto.IO
         /// </summary>
         private void BeginReceive()
         {
-            _communicator.ReceivePackets(-1, ReceiveCallback);
+            // Kick off receive thread.   
+            _receiveThread = new Thread(ReceiveThread);
+            _receiveThread.Start();            
         }        
+
+        private void ReceiveThread()
+        {
+            // Just call ReceivePackets, that's it.  This will never return.
+            // (probably need to make this more elegant so we can tear down the thread
+            // properly.)
+            Log.Write(LogComponent.HostEthernet, "Receiver thread started.");
+            _communicator.ReceivePackets(-1, ReceiveCallback);
+        }
 
         private LivePacketDevice _interface;
         private PacketCommunicator _communicator;
         private ReceivePacketDelegate _callback;
+
+
+        // Thread used for receive
+        private Thread _receiveThread;
 
         private const int _3mbitFrameType = 0xbeef;     // easy to identify, ostensibly unused by anything of any import
 

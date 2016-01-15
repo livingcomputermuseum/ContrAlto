@@ -15,25 +15,36 @@ namespace Contralto.IO
         {
             _system = system;
 
-            // TODO: make this configurable
-            _ethernetAddress = 0x22;
+            _receiverLock = new System.Threading.ReaderWriterLockSlim();
 
             _fifo = new Queue<ushort>();
             Reset();
 
-            _fifoWakeupEvent = new Event(_fifoTransmitDuration, null, FIFOCallback);
+            _fifoTransmitWakeupEvent = new Event(_fifoTransmitDuration, null, OutputFifoCallback);
+            _fifoReceiveWakeupEvent = new Event(_fifoReceiveDuration, null, InputFifoCallback);           
 
-            _hostEthernet = new HostEthernet(null);
+            // Attach real Ethernet device if user has specified one, otherwise leave unattached; output data
+            // will go into a bit-bucket.
+            if (!String.IsNullOrEmpty(Configuration.HostEthernetInterfaceName))
+            {
+                _hostEthernet = new HostEthernet(Configuration.HostEthernetInterfaceName);
+                _hostEthernet.RegisterReceiveCallback(OnHostPacketReceived);                
+            }
+
+            // More words than the Alto will ever send.
+            _outputData = new ushort[4096];
         }
 
         public void Reset()
-        {            
-            ResetInterface();
+        {
+            _pollEvent = null;
+
+            ResetInterface();            
         }
 
         public byte Address
         {
-            get { return _ethernetAddress; }
+            get { return Configuration.HostAddress; }
         }
 
         /// <summary>
@@ -82,13 +93,14 @@ namespace Contralto.IO
 
         public void ResetInterface()
         {
+            _receiverLock.EnterWriteLock();
             // Latch status before resetting
             _status = (ushort)(
                        (0xffc0) |                        // bits always set                 
                        (_dataLate ? 0x00 : 0x20) |
                        (_collision ? 0x00 : 0x10) |
                        (_crcBad ? 0x00 : 0x08) |
-                       ((~_ioCmd & 0x3) << 1) |
+                       ((~0 & 0x3) << 1) |              // TODO: we're clearing the IOCMD bits here early -- validate why this works.
                        (_incomplete ? 0x00 : 0x01));
 
             _ioCmd = 0;
@@ -99,13 +111,18 @@ namespace Contralto.IO
             _crcBad = false;
             _incomplete = false;
             _fifo.Clear();
-
+            _incomingPacket = null;
+            _incomingPacketLength = 0;
+            _inGone = false;
+            //_packetReady = false;
+            
             if (_system.CPU != null)
             {
                 _system.CPU.BlockTask(TaskType.Ethernet);
             }
 
             Log.Write(LogComponent.EthernetController, "Interface reset.");
+            _receiverLock.ExitWriteLock();
         }
 
         public ushort ReadInputFifo(bool lookOnly)
@@ -116,14 +133,42 @@ namespace Contralto.IO
                 return 0;
             }
 
+            ushort read = 0;
+
             if (lookOnly)
             {
-                return _fifo.Peek();
+                Log.Write(LogComponent.EthernetController, "Peek into FIFO, returning {0} (length {1})", Conversion.ToOctal(_fifo.Peek()), _fifo.Count);
+                read = _fifo.Peek();
             }
             else
             {
-                return _fifo.Dequeue();
-            }            
+                read = _fifo.Dequeue();
+                Log.Write(LogComponent.EthernetController, "Read from FIFO, returning {0} (length now {1})", Conversion.ToOctal(read), _fifo.Count);
+
+                if (_fifo.Count < 2)
+                {                                        
+                    if (_inGone)
+                    {
+                        //
+                        // Receiver is done and we're down to the last word (the checksum)
+                        // which never gets pulled from the FIFO.
+                        // clear IBUSY to indicate to the microcode that we've finished.
+                        //
+                        _iBusy = false;
+                        _system.CPU.WakeupTask(TaskType.Ethernet);
+                    }
+                    else
+                    {
+                        //
+                        // Still more data, but we block the Ethernet task until it is put
+                        // into the FIFO.
+                        //
+                        _system.CPU.BlockTask(TaskType.Ethernet);
+                    }
+                }                
+            }
+
+            return read;
         }
 
         public void WriteOutputFifo(ushort data)
@@ -137,7 +182,7 @@ namespace Contralto.IO
             _fifo.Enqueue(data);
 
             // If the FIFO is full, start transmitting and clear Wakeups            
-            if (_fifo.Count == 16)
+            if (_fifo.Count == 15)
             {
                 if (_oBusy)
                 {
@@ -192,12 +237,12 @@ namespace Contralto.IO
         private void TransmitFIFO(bool end)
         {
             // Schedule a callback to pick up the data and shuffle it out the host interface.
-            _fifoWakeupEvent.Context = end;
-            _fifoWakeupEvent.TimestampNsec = _fifoTransmitDuration;
-            _system.Scheduler.Schedule(_fifoWakeupEvent);
+            _fifoTransmitWakeupEvent.Context = end;
+            _fifoTransmitWakeupEvent.TimestampNsec = _fifoTransmitDuration;
+            _system.Scheduler.Schedule(_fifoTransmitWakeupEvent);
         }
 
-        private void FIFOCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void OutputFifoCallback(ulong timeNsec, ulong skewNsec, object context)
         {
             bool end = (bool)context;
             
@@ -205,7 +250,7 @@ namespace Contralto.IO
             {
                 // If OBUSY is no longer set then the interface was reset before
                 // we got to run; abandon this operation.                
-                Log.Write(LogComponent.EthernetController, "FIFO callback after reset, abandoning.");                
+                Log.Write(LogComponent.EthernetController, "FIFO callback after reset, abandoning output.");                
                 return;
             }
             
@@ -231,25 +276,63 @@ namespace Contralto.IO
                 _system.CPU.WakeupTask(TaskType.Ethernet);
 
                 // And actually tell the host ethernet interface to send the data.
-                _hostEthernet.Send(_outputData, _outputIndex);
+                if (_hostEthernet != null)
+                {
+                    _hostEthernet.Send(_outputData, _outputIndex);
+                }                
+                
                 _outputIndex = 0;
             }       
         }
 
         private void InitializeReceiver()
         {
-            // TODO: pull next packet off host ethernet interface that's destined for the Alto, and start the
-            // process of putting into the FIFO and generating wakeups for the microcode.
-            _receiverWaiting = true;
+            // " Sets the IBusy flip flop in the interface..."
+            // "...restarting the receiver... causes [the controller] to ignore the current packet and hunt
+            //  for the beginning of the next packet."
+
+            //
+            // So, two things:
+            //  1) Cancel any pending input packets
+            //  2) Start listening for more packets if we weren't already doing so.
+            //
+            _receiverLock.EnterWriteLock();
+            if (_iBusy)
+            {
+                Log.Write(LogComponent.EthernetController, "Receiver initializing, dropping current activity.");
+                _system.Scheduler.CancelEvent(_fifoReceiveWakeupEvent);
+                _incomingPacket = null;
+                _incomingPacketLength = 0;                
+            }
+
+            _iBusy = true;
+            _receiverLock.ExitWriteLock();
+
+            _system.CPU.BlockTask(TaskType.Ethernet);
+
+            Log.Write(LogComponent.EthernetController, "Receiver initialized.");
+
+            //
+            // TODO:
+            // This hack is ugly and it wants to die.  Ethernet packets come in asynchronously from another thread.
+            // The scheduler is not thread-safe (and making it so incurs a serious performance penalty) so the receiver
+            // thread cannot post an event to wake up the rcv FIFO.  Instead we poll periodically and start processing
+            // new packets if one has arrived.
+            //
+            if (_pollEvent == null)
+            {
+                _pollEvent = new Event(_pollPeriod, null, PacketPoll);
+                _system.Scheduler.Schedule(_pollEvent);
+            }
         }
 
         /// <summary>
         /// Invoked when the host ethernet interface receives a packet destined for us.
-        /// TODO: determine the best behavior here; we could queue up a number of packets and let
+        /// TODO: determine the best behavior here; we could queue up a number of incoming packets and let
         /// the emulated interface pull them off one by one, or we could only save one packet and discard
         /// any that arrive while the emulated interface is processing the current one.
         /// 
-        /// The latter is probably more faithful to the intent, but the former might be more useful on
+        /// The latter is probably more faithful to the original intent, but the former might be more useful on
         /// busy Ethernets (though the bottom-level filter implemented by HostEthernet might take care
         /// of that already.)
         /// 
@@ -258,14 +341,138 @@ namespace Contralto.IO
         /// <param name="data"></param>
         private void OnHostPacketReceived(MemoryStream data)
         {
-            if (_incomingPacket == null)
+            _receiverLock.EnterWriteLock();
+            _packetReady = true;
+            _nextPacket = data;
+            _receiverLock.ExitWriteLock();            
+        }
+
+        private void PacketPoll(ulong timeNsec, ulong skewNsec, object context)
+        {            
+            _receiverLock.EnterUpgradeableReadLock();
+            if (_packetReady)
             {
-                _incomingPacket = data;
+                // Schedule the next word of data.                
+                Console.WriteLine("**** hack *****");
+
+                if (_iBusy && _incomingPacket == null)
+                {
+                    _incomingPacket = _nextPacket;                    
+
+                    // Read the packet length (in words) (first word of the packet).  Convert to bytes.
+                    //
+                    _incomingPacketLength = ((_incomingPacket.ReadByte()) | (_incomingPacket.ReadByte() << 8)) * 2;
+
+                    // Sanity check:
+                    if (_incomingPacketLength > _incomingPacket.Length - 2)
+                    {
+                        throw new InvalidOperationException("Invalid 3mbit packet length header.");
+                    }
+
+                    Log.Write(LogComponent.EthernetController, "Accepting incoming packet (length {0}).", _incomingPacketLength);
+
+                    // From uCode:
+                    // "Interface will generate a data wakeup when the first word of the next
+                    // "packet arrives, ignoring any packet currently passing."
+                    //
+                    // Read the first word, place it in the fifo and wake up the ethernet task.
+                    //
+                    //ushort nextWord = (ushort)((_incomingPacket.ReadByte()) | (_incomingPacket.ReadByte() << 8));
+                    //_fifo.Enqueue(nextWord);
+                    //_incomingPacketLength -= 2;
+                    //_system.CPU.WakeupTask(TaskType.Ethernet);
+
+                    // Wake up the FIFO
+                    _fifoReceiveWakeupEvent.TimestampNsec = _fifoReceiveDuration;
+                    _system.Scheduler.Schedule(_fifoReceiveWakeupEvent);                    
+                }
+                else
+                {
+                    // Drop, we're either already busy with a packet or we're not listening right now.
+                    Log.Write(LogComponent.EthernetController, "Dropping incoming packet; controller is currently busy or not active (ibusy {0}, packet {1})", _iBusy, _incomingPacket != null);
+                }
+
+                _receiverLock.EnterWriteLock();
+                _packetReady = false;
+                _nextPacket = null;
+                _receiverLock.ExitWriteLock();
+            }
+            _receiverLock.ExitUpgradeableReadLock();
+
+            // Do it again.
+            _pollEvent.TimestampNsec = _pollPeriod;
+            _system.Scheduler.Schedule(_pollEvent);            
+        }
+
+        private void InputFifoCallback(ulong timeNsec, ulong skewNsec, object context)
+        {
+            _receiverLock.EnterUpgradeableReadLock();
+            if (!_iBusy || _inGone)
+            {
+                // If IBUSY is no longer set then the interface was reset before
+                // we got to run; abandon this operation.                
+                Log.Write(LogComponent.EthernetController, "FIFO callback after reset, abandoning input.");
+                _incomingPacket = null;
+                _incomingPacketLength = 0;
+                _receiverLock.ExitUpgradeableReadLock();                
+                return;
+            }   
+            
+            if (_fifo.Count >= 16)
+            {
+                _fifoReceiveWakeupEvent.TimestampNsec = _fifoReceiveDuration - skewNsec;
+                _system.Scheduler.Schedule(_fifoReceiveWakeupEvent);
+
+                Log.Write(LogComponent.EthernetController, "Input FIFO full? Scheduling next wakeup.");
+                _receiverLock.ExitUpgradeableReadLock();
+                return;
+            }
+
+            Log.Write(LogComponent.EthernetController, "Processing word from input packet ({0} bytes left in input, {1} words in FIFO.)", _incomingPacketLength, _fifo.Count);
+
+            if (_incomingPacketLength >= 2)
+            {
+                // Stuff 1 word into the FIFO, if we run out of data to send then we clear _iBusy.                
+                ushort nextWord = (ushort)((_incomingPacket.ReadByte()) | (_incomingPacket.ReadByte() << 8));
+                _fifo.Enqueue(nextWord);
+
+                _incomingPacketLength -= 2;
+            }
+            else if (_incomingPacketLength == 1)
+            {
+                // should never happen
+                throw new InvalidOperationException("Packet length not multiple of 2 on receive.");
+            }            
+
+            // All out of data?  Finish the receive operation.
+            if (_incomingPacketLength == 0)
+            {
+                _receiverLock.EnterWriteLock();
+                _inGone = true;
+                _incomingPacket = null;
+                _receiverLock.ExitWriteLock();
+
+                // Wakeup for end of data.
+                _system.CPU.WakeupTask(TaskType.Ethernet);
+
+                Log.Write(LogComponent.EthernetController, "Receive complete.");
             }
             else
             {
-                // Drop.
+                // Schedule the next wakeup.                
+                _fifoReceiveWakeupEvent.TimestampNsec = _fifoReceiveDuration - skewNsec;
+                _system.Scheduler.Schedule(_fifoReceiveWakeupEvent);                
+
+                Log.Write(LogComponent.EthernetController, "Scheduling next wakeup.");
             }
+
+            // Wake up the Ethernet task to process this data   
+            if (_fifo.Count >= 2)
+            {
+                _system.CPU.WakeupTask(TaskType.Ethernet);
+            }
+
+            _receiverLock.ExitUpgradeableReadLock();
         }
 
         private Queue<ushort> _fifo;
@@ -277,16 +484,27 @@ namespace Contralto.IO
         private bool _crcBad;
         private bool _incomplete;
         private ushort _status;
-
-        private byte _ethernetAddress;
+                
         private bool _countdownWakeup;        
 
         private bool _oBusy;
-        private bool _iBusy;        
+        private bool _iBusy;
+        private bool _inGone;
 
         // FIFO scheduling
+
+        // Transmit:
         private ulong _fifoTransmitDuration = 87075;       // ~87000 nsec to transmit 16 words at 3mbit, assuming no collision
-        private Event _fifoWakeupEvent;
+        private Event _fifoTransmitWakeupEvent;
+
+        // Receive:
+        private ulong _fifoReceiveDuration = 5400;       // ~5400 nsec to receive 1 word at 3mbit
+        private Event _fifoReceiveWakeupEvent;
+
+        // Polling (hack)
+        private ulong _pollPeriod = 23000;
+        private Event _pollEvent;
+        private bool _packetReady;
 
         // The actual connection to a real Ethernet device on the host
         HostEthernet _hostEthernet;
@@ -295,8 +513,11 @@ namespace Contralto.IO
         ushort[] _outputData;
         int _outputIndex;
 
-        // Incoming data
-        MemoryStream _incomingPacket;
+        // Incoming data and locking
+        private MemoryStream _incomingPacket;
+        private MemoryStream _nextPacket;
+        private int _incomingPacketLength;
+        private System.Threading.ReaderWriterLockSlim _receiverLock;
 
         private AltoSystem _system;
     }

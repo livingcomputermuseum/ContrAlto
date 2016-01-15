@@ -227,7 +227,7 @@ namespace Contralto.CPU
 
                 //
                 // Let F1s that need to modify bus data before the ALU runs do their thing
-                // (this is just used by the emulator RSNF...)
+                // (this is used by the emulator RSNF and Ethernet EILFCT)
                 //
                 ExecuteSpecialFunction1Early(instruction);
 
