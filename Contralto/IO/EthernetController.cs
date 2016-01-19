@@ -33,6 +33,8 @@ namespace Contralto.IO
 
             // More words than the Alto will ever send.
             _outputData = new ushort[4096];
+
+            _nextPackets = new Queue<MemoryStream>();
         }
 
         public void Reset()
@@ -115,7 +117,9 @@ namespace Contralto.IO
             _incomingPacketLength = 0;
             _inGone = false;
             //_packetReady = false;
-            
+
+            _system.Scheduler.CancelEvent(_fifoReceiveWakeupEvent);
+
             if (_system.CPU != null)
             {
                 _system.CPU.BlockTask(TaskType.Ethernet);
@@ -341,23 +345,20 @@ namespace Contralto.IO
         /// <param name="data"></param>
         private void OnHostPacketReceived(MemoryStream data)
         {
-            _receiverLock.EnterWriteLock();
-            _packetReady = true;
-            _nextPacket = data;
+            _receiverLock.EnterWriteLock();            
+            _nextPackets.Enqueue(data);
             _receiverLock.ExitWriteLock();            
         }
 
         private void PacketPoll(ulong timeNsec, ulong skewNsec, object context)
         {            
             _receiverLock.EnterUpgradeableReadLock();
-            if (_packetReady)
+            if (_nextPackets.Count > 0)
             {
-                // Schedule the next word of data.                
-                Console.WriteLine("**** hack *****");
-
+                // Schedule the next word of data.                                
                 if (_iBusy && _incomingPacket == null)
                 {
-                    _incomingPacket = _nextPacket;                    
+                    _incomingPacket = _nextPackets.Dequeue();                    
 
                     // Read the packet length (in words) (first word of the packet).  Convert to bytes.
                     //
@@ -369,7 +370,9 @@ namespace Contralto.IO
                         throw new InvalidOperationException("Invalid 3mbit packet length header.");
                     }
 
-                    Log.Write(LogComponent.EthernetController, "Accepting incoming packet (length {0}).", _incomingPacketLength);
+                    Log.Write(LogComponent.EthernetPacket, "Accepting incoming packet (length {0}).", _incomingPacketLength);
+
+                    LogPacket(_incomingPacketLength, _incomingPacket);
 
                     // From uCode:
                     // "Interface will generate a data wakeup when the first word of the next
@@ -386,16 +389,16 @@ namespace Contralto.IO
                     _fifoReceiveWakeupEvent.TimestampNsec = _fifoReceiveDuration;
                     _system.Scheduler.Schedule(_fifoReceiveWakeupEvent);                    
                 }
-                else
+                else if (!_iBusy)
                 {
-                    // Drop, we're either already busy with a packet or we're not listening right now.
-                    Log.Write(LogComponent.EthernetController, "Dropping incoming packet; controller is currently busy or not active (ibusy {0}, packet {1})", _iBusy, _incomingPacket != null);
-                }
+                    // Drop, the receiver is not active.
+                    Log.Write(LogComponent.EthernetPacket, "Dropping incoming packet; controller is currently not active.");
 
-                _receiverLock.EnterWriteLock();
-                _packetReady = false;
-                _nextPacket = null;
-                _receiverLock.ExitWriteLock();
+                    MemoryStream discPacket = _nextPackets.Dequeue();
+                    int discPacketLength = ((discPacket.ReadByte()) | (discPacket.ReadByte() << 8)) * 2;
+                    LogPacket(discPacketLength, discPacket);
+                                       
+                }                
             }
             _receiverLock.ExitUpgradeableReadLock();
 
@@ -414,6 +417,7 @@ namespace Contralto.IO
                 Log.Write(LogComponent.EthernetController, "FIFO callback after reset, abandoning input.");
                 _incomingPacket = null;
                 _incomingPacketLength = 0;
+                _inGone = false;
                 _receiverLock.ExitUpgradeableReadLock();                
                 return;
             }   
@@ -475,6 +479,17 @@ namespace Contralto.IO
             _receiverLock.ExitUpgradeableReadLock();
         }
 
+        private void LogPacket(int length, MemoryStream packet)
+        {
+            Log.Write(LogComponent.EthernetPacket,
+                "  - Packet src {0}, dest {1}, length {2}",
+                packet.ReadByte(), packet.ReadByte(), length);
+
+
+            // Return to top of packet
+            packet.Position = 2;
+        }
+
         private Queue<ushort> _fifo;
 
         // Bits in Status register
@@ -502,7 +517,7 @@ namespace Contralto.IO
         private Event _fifoReceiveWakeupEvent;
 
         // Polling (hack)
-        private ulong _pollPeriod = 23000;
+        private ulong _pollPeriod = 10000;
         private Event _pollEvent;
         private bool _packetReady;
 
@@ -514,8 +529,8 @@ namespace Contralto.IO
         int _outputIndex;
 
         // Incoming data and locking
-        private MemoryStream _incomingPacket;
-        private MemoryStream _nextPacket;
+        private MemoryStream _incomingPacket;        
+        private Queue<MemoryStream> _nextPackets;
         private int _incomingPacketLength;
         private System.Threading.ReaderWriterLockSlim _receiverLock;
 

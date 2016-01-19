@@ -132,8 +132,8 @@ namespace Contralto.IO
             // Grab the source and destination host addresses from the packet we're sending
             // and build 10mbit versions.
             //
-            byte destinationHost = packetBytes[0];
-            byte sourceHost = packetBytes[1];
+            byte destinationHost = packetBytes[3];
+            byte sourceHost = packetBytes[2];
 
             Log.Write(LogComponent.HostEthernet, "Sending packet; source {0} destination {1}, length {2} words.",
                 Conversion.ToOctal(sourceHost),
@@ -141,7 +141,7 @@ namespace Contralto.IO
                 length);
 
             MacAddress destinationMac = new MacAddress((UInt48)(_10mbitMACPrefix | destinationHost));
-            MacAddress sourceMac = new MacAddress((UInt48)(_10mbitMACPrefix | sourceHost));
+            MacAddress sourceMac = new MacAddress((UInt48)(_10mbitMACPrefix | Configuration.HostAddress));
 
             // Build the outgoing packet; place the source/dest addresses, type field and the raw data.                
             EthernetLayer ethernetLayer = new EthernetLayer
@@ -170,7 +170,8 @@ namespace Contralto.IO
             // Filter out packets intended for the emulator, forward them on, drop everything else.
             //
             if ((int)p.Ethernet.EtherType == _3mbitFrameType &&
-                (p.Ethernet.Destination.ToValue() & 0xffffffffff00) == _10mbitMACPrefix )
+                (p.Ethernet.Destination.ToValue() & 0xffffffffff00) == _10mbitMACPrefix &&
+                (p.Ethernet.Source.ToValue() & 0xff) != Configuration.HostAddress)      // drop packets sent by ourselves                
             {
                 Log.Write(LogComponent.HostEthernet, "Received encapsulated 3mbit packet.");
                 _callback(p.Ethernet.Payload.ToMemoryStream());                
@@ -205,7 +206,7 @@ namespace Contralto.IO
 
         private void Open(bool promiscuous, int timeout)
         {
-            _communicator = _interface.Open(65536, promiscuous ? PacketDeviceOpenAttributes.Promiscuous | PacketDeviceOpenAttributes.NoCaptureLocal : PacketDeviceOpenAttributes.NoCaptureLocal, timeout);
+            _communicator = _interface.Open(65536, promiscuous ? PacketDeviceOpenAttributes.MaximumResponsiveness | PacketDeviceOpenAttributes.Promiscuous : PacketDeviceOpenAttributes.MaximumResponsiveness, timeout);            
 
             // Set this to 1 so we'll get packets as soon as they arrive, no buffering.
             _communicator.SetKernelMinimumBytesToCopy(1);
