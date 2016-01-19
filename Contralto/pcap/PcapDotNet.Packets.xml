@@ -439,13 +439,6 @@
             Obsoleted.
             </summary>
         </member>
-        <member name="F:PcapDotNet.Packets.IpV4.IpV4OptionType.MaximumTransmissionUnitReply">
-            <summary>
-            MTU Reply.
-            RFCs 1063, 1191.
-            Obsoleted.
-            </summary>
-        </member>
         <member name="F:PcapDotNet.Packets.IpV4.IpV4OptionType.QuickStart">
             <summary>
             Quick Start (QS). RFC 4782.  
@@ -472,12 +465,6 @@
             <summary>
             Loose Source Routing.
             Used to route the internet datagram based on information supplied by the source.
-            </summary>
-        </member>
-        <member name="F:PcapDotNet.Packets.IpV4.IpV4OptionType.CommercialSecurity">
-            <summary>
-            http://tools.ietf.org/html/draft-ietf-cipso-ipsecurity
-            CIPSO  - Commercial Security.
             </summary>
         </member>
         <member name="F:PcapDotNet.Packets.IpV4.IpV4OptionType.StrictSourceRouting">
@@ -12448,7 +12435,7 @@
         </member>
         <member name="F:PcapDotNet.Packets.Icmp.IcmpMessageType.ParameterProblem">
             <summary>
-            RFCs 792, 4884.
+            RFC 792.
             
             <para>
             If the gateway or host processing a datagram finds a problem with the header parameters such that it cannot complete processing the datagram it must discard the datagram.  
@@ -12957,18 +12944,9 @@
         </member>
         <member name="M:PcapDotNet.Packets.Dns.DnsOptionUpdateLease.#ctor(System.Int32)">
             <summary>
-            Builds an instance from a least value.
+            Builds 
             </summary>
-            <param name="lease">
-            Indicating the lease life, in seconds, desired by the client.
-            In Update Responses, this field contains the actual lease granted by the server.
-            Note that the lease granted by the server may be less than, greater than, or equal to the value requested by the client.
-            To reduce network and server load, a minimum lease of 30 minutes (1800 seconds) is recommended.
-            Note that leases are expected to be sufficiently long as to make timer discrepancies (due to transmission latency, etc.)
-            between a client and server negligible.
-            Clients that expect the updated records to be relatively static may request appropriately longer leases.
-            Servers may grant relatively longer or shorter leases to reduce network traffic due to refreshes, or reduce stale data, respectively.
-            </param>
+            <param name="lease"></param>
         </member>
         <member name="P:PcapDotNet.Packets.Dns.DnsOptionUpdateLease.Lease">
             <summary>
@@ -13047,86 +13025,6 @@
             </summary>
         </member>
         <member name="P:PcapDotNet.Packets.Dns.DnsOptionLongLivedQuery.DataLength">
-            <summary>
-            The number of bytes the option data takes.
-            </summary>
-        </member>
-        <member name="T:PcapDotNet.Packets.Dns.DnsOptionClientSubnet">
-            <summary>
-            https://tools.ietf.org/html/draft-ietf-dnsop-edns-client-subnet
-            <pre>
-            +-----+----------------+---------------+
-            | bit | 0-7            | 8-15          |
-            +-----+----------------+---------------+
-            | 0   | FAMILY                         |
-            +-----+----------------+---------------+
-            | 16  | SOURCE NETMASK | SCOPE NETMASK |
-            +-----+----------------+---------------+
-            | 32  | ADDRESS                        |
-            | ... |                                |
-            +-----+--------------------------------+
-            </pre>
-            </summary>
-        </member>
-        <member name="F:PcapDotNet.Packets.Dns.DnsOptionClientSubnet.MinimumDataLength">
-            <summary>
-            The minimum number of bytes this option data can take.
-            </summary>
-        </member>
-        <member name="M:PcapDotNet.Packets.Dns.DnsOptionClientSubnet.#ctor(PcapDotNet.Packets.AddressFamily,System.Byte,System.Byte,PcapDotNet.Packets.DataSegment)">
-            <summary>
-            Create a DNS Client Subnet option from family, source netmask, scope netmask and address fields.
-            </summary>
-            <param name="family">Indicates the family of the address contained in the option.</param>
-            <param name="sourceNetmask">
-            Representing the length of the netmask pertaining to the query.
-            In replies, it mirrors the same value as in the requests.
-            It can be set to 0 to disable client-based lookups, in which case the Address field must be absent.
-            </param>
-            <param name="scopeNetmask">
-            Representing the length of the netmask pertaining to the reply.
-            In requests, it should be set to the longest cacheable length supported by the Intermediate Nameserver.
-            In requests it may be set to 0 to have the Authoritative Nameserver treat the longest cacheable length as the SourceNetmask length.
-            In responses, this field is set by the Authoritative Nameserver to indicate the coverage of the response.
-            It might or might not match SourceNetmask; it could be shorter or longer.
-            </param>
-            <param name="address">
-            Contains either an IPv4 or IPv6 address, depending on Family, truncated in the request to the number of bits indicated by the Source Netmask field,
-            with bits set to 0 to pad up to the end of the last octet used. (This need not be as many octets as a complete address would take.)
-            In the reply, if the ScopeNetmask of the request was 0 then Address must contain the same octets as in the request.
-            Otherwise, the bits for Address will be significant through the maximum of the SouceNetmask or ScopeNetmask, and 0 filled to the end of an octet.
-            </param>
-        </member>
-        <member name="P:PcapDotNet.Packets.Dns.DnsOptionClientSubnet.Family">
-            <summary>
-            Indicates the family of the address contained in the option.
-            </summary>
-        </member>
-        <member name="P:PcapDotNet.Packets.Dns.DnsOptionClientSubnet.SourceNetmask">
-            <summary>
-            Representing the length of the netmask pertaining to the query.
-            In replies, it mirrors the same value as in the requests.
-            It can be set to 0 to disable client-based lookups, in which case the Address field must be absent.
-            </summary>
-        </member>
-        <member name="P:PcapDotNet.Packets.Dns.DnsOptionClientSubnet.ScopeNetmask">
-            <summary>
-            Representing the length of the netmask pertaining to the reply.
-            In requests, it should be set to the longest cacheable length supported by the Intermediate Nameserver.
-            In requests it may be set to 0 to have the Authoritative Nameserver treat the longest cacheable length as the SourceNetmask length.
-            In responses, this field is set by the Authoritative Nameserver to indicate the coverage of the response.
-            It might or might not match SourceNetmask; it could be shorter or longer.
-            </summary>
-        </member>
-        <member name="P:PcapDotNet.Packets.Dns.DnsOptionClientSubnet.Address">
-            <summary>
-            Contains either an IPv4 or IPv6 address, depending on Family, truncated in the request to the number of bits indicated by the Source Netmask field,
-            with bits set to 0 to pad up to the end of the last octet used. (This need not be as many octets as a complete address would take.)
-            In the reply, if the ScopeNetmask of the request was 0 then Address must contain the same octets as in the request.
-            Otherwise, the bits for Address will be significant through the maximum of the SouceNetmask or ScopeNetmask, and 0 filled to the end of an octet.
-            </summary>
-        </member>
-        <member name="P:PcapDotNet.Packets.Dns.DnsOptionClientSubnet.DataLength">
             <summary>
             The number of bytes the option data takes.
             </summary>
@@ -16523,11 +16421,6 @@
             <summary>
             RFC 5001.
             NSID.
-            </summary>
-        </member>
-        <member name="F:PcapDotNet.Packets.Dns.DnsOptionCode.ClientSubnet">
-            <summary>
-            https://tools.ietf.org/html/draft-ietf-dnsop-edns-client-subnet
             </summary>
         </member>
         <member name="T:PcapDotNet.Packets.Dns.DnsGatewayNone">
@@ -23731,21 +23624,10 @@
             RFC 792.
             </summary>
         </member>
-        <member name="F:PcapDotNet.Packets.Icmp.IcmpParameterProblemLayer.OriginalDatagramLengthMaxValue">
-            <summary>
-            The maximum value that OriginalDatagramLength can take.
-            </summary>
-        </member>
         <member name="P:PcapDotNet.Packets.Icmp.IcmpParameterProblemLayer.Pointer">
             <summary>
             The pointer identifies the octet of the original datagram's header where the error was detected (it may be in the middle of an option).  
             For example, 1 indicates something is wrong with the Type of Service, and (if there are options present) 20 indicates something is wrong with the type code of the first option.
-            </summary>
-        </member>
-        <member name="P:PcapDotNet.Packets.Icmp.IcmpParameterProblemLayer.OriginalDatagramLength">
-            <summary>
-            Length of the padded "original datagram".
-            Must divide by 4 and cannot exceed OriginalDatagramLengthMaxValue.
             </summary>
         </member>
         <member name="P:PcapDotNet.Packets.Icmp.IcmpParameterProblemLayer.MessageType">
@@ -26345,19 +26227,19 @@
         </member>
         <member name="T:PcapDotNet.Packets.Icmp.IcmpParameterProblemDatagram">
             <summary>
-            RFCs 792, 4884.
+            RFC 792.
             <pre>
-            +-----+---------+--------+----------+
-            | Bit | 0-7     | 8-15   | 16-31    |
-            +-----+---------+--------+----------+
-            | 0   | Type    | Code   | Checksum |
-            +-----+---------+--------+----------+
-            | 32  | Pointer | Length | unused   |
-            +-----+---------+-------------------+
-            | 64  | Internet Header             |
-            |     | + leading octets of         |
-            |     | original datagram           |
-            +-----+-----------------------------+
+            +-----+---------+------+-----------+
+            | Bit | 0-7     | 8-15 | 16-31     |
+            +-----+---------+------+-----------+
+            | 0   | Type    | Code | Checksum  |
+            +-----+---------+------+-----------+
+            | 32  | Pointer | unused           |
+            +-----+---------+------------------+
+            | 64  | Internet Header            |
+            |     | + 64 bits of               |
+            |     | Original Data Datagram     |
+            +-----+----------------------------+
             </pre>
             </summary>
         </member>
@@ -26377,12 +26259,6 @@
             <summary>
             The pointer identifies the octet of the original datagram's header where the error was detected (it may be in the middle of an option).  
             For example, 1 indicates something is wrong with the Type of Service, and (if there are options present) 20 indicates something is wrong with the type code of the first option.
-            </summary>
-        </member>
-        <member name="P:PcapDotNet.Packets.Icmp.IcmpParameterProblemDatagram.OriginalDatagramLength">
-            <summary>
-            Length of the padded "original datagram".
-            Must divide by 4 and cannot exceed OriginalDatagramLengthMaxValue.
             </summary>
         </member>
         <member name="T:PcapDotNet.Packets.Http.HttpVersion">
@@ -27611,12 +27487,6 @@
             The public key value.
             </summary>
         </member>
-        <member name="P:PcapDotNet.Packets.Dns.DnsResourceDataKey.KeyTag">
-            <summary>
-            Used in other records to efficiently select between multiple keys which may be applicable and thus check that a public key about to be used for the
-            computationally expensive effort to check the signature is possibly valid.
-            </summary>
-        </member>
         <member name="T:PcapDotNet.Packets.Dns.DnsResourceDataDnsKey">
             <summary>
             RFCs 3757, 4034, 5011.
@@ -27716,12 +27586,6 @@
             <summary>
             The public key material.
             The format depends on the algorithm of the key being stored.
-            </summary>
-        </member>
-        <member name="P:PcapDotNet.Packets.Dns.DnsResourceDataDnsKey.KeyTag">
-            <summary>
-            Used in other records to efficiently select between multiple keys which may be applicable and thus check that a public key about to be used for the
-            computationally expensive effort to check the signature is possibly valid.
             </summary>
         </member>
         <member name="T:PcapDotNet.Packets.Arp.ArpOperation">

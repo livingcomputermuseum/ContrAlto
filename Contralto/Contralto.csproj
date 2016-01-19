@@ -72,16 +72,20 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="PcapDotNet.Base">
+    <Reference Include="PcapDotNet.Base, Version=1.0.2.21699, Culture=neutral, PublicKeyToken=4b6f3e583145a652, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>pcap\PcapDotNet.Base.dll</HintPath>
     </Reference>
-    <Reference Include="PcapDotNet.Core">
+    <Reference Include="PcapDotNet.Core, Version=1.0.2.21711, Culture=neutral, PublicKeyToken=4b6f3e583145a652, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>pcap\PcapDotNet.Core.dll</HintPath>
     </Reference>
-    <Reference Include="PcapDotNet.Core.Extensions">
+    <Reference Include="PcapDotNet.Core.Extensions, Version=1.0.2.21712, Culture=neutral, PublicKeyToken=4b6f3e583145a652, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>pcap\PcapDotNet.Core.Extensions.dll</HintPath>
     </Reference>
-    <Reference Include="PcapDotNet.Packets">
+    <Reference Include="PcapDotNet.Packets, Version=1.0.2.21701, Culture=neutral, PublicKeyToken=4b6f3e583145a652, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>pcap\PcapDotNet.Packets.dll</HintPath>
     </Reference>
     <Reference Include="System" />

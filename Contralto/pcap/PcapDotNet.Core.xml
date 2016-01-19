@@ -723,7 +723,6 @@ Win32 specific. Number of packets captured, i.e number of packets that are accep
         <member name="P:PcapDotNet.Core.PacketTotalStatistics.PacketsDroppedByInterface">
             <summary>
 Number of packets dropped by the interface.
-Not yet supported.
 </summary>
         </member>
         <member name="P:PcapDotNet.Core.PacketTotalStatistics.PacketsDroppedByDriver">

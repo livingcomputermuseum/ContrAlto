@@ -21,7 +21,7 @@ namespace Contralto.IO
             Reset();
 
             _fifoTransmitWakeupEvent = new Event(_fifoTransmitDuration, null, OutputFifoCallback);
-            _fifoReceiveWakeupEvent = new Event(_fifoReceiveDuration, null, InputFifoCallback);           
+            
 
             // Attach real Ethernet device if user has specified one, otherwise leave unattached; output data
             // will go into a bit-bucket.
@@ -39,7 +39,7 @@ namespace Contralto.IO
 
         public void Reset()
         {
-            _pollEvent = null;
+            _inputPollEvent = null;
 
             ResetInterface();            
         }
@@ -94,8 +94,7 @@ namespace Contralto.IO
         }
 
         public void ResetInterface()
-        {
-            _receiverLock.EnterWriteLock();
+        {            
             // Latch status before resetting
             _status = (ushort)(
                        (0xffc0) |                        // bits always set                 
@@ -116,9 +115,7 @@ namespace Contralto.IO
             _incomingPacket = null;
             _incomingPacketLength = 0;
             _inGone = false;
-            //_packetReady = false;
-
-            _system.Scheduler.CancelEvent(_fifoReceiveWakeupEvent);
+            _inputState = InputState.ReceiverOff;            
 
             if (_system.CPU != null)
             {
@@ -126,7 +123,13 @@ namespace Contralto.IO
             }
 
             Log.Write(LogComponent.EthernetController, "Interface reset.");
-            _receiverLock.ExitWriteLock();
+         
+            if (_inputPollEvent == null)
+            {
+                // Kick off the input poll event which will run forever.
+                _inputPollEvent = new Event(_inputPollPeriod, null, InputHandler);
+                _system.Scheduler.Schedule(_inputPollEvent);
+            }
         }
 
         public ushort ReadInputFifo(bool lookOnly)
@@ -297,187 +300,161 @@ namespace Contralto.IO
 
             //
             // So, two things:
-            //  1) Cancel any pending input packets
+            //  1) Cancel any pending input packet
             //  2) Start listening for more packets if we weren't already doing so.
-            //
-            _receiverLock.EnterWriteLock();
+            //            
             if (_iBusy)
             {
-                Log.Write(LogComponent.EthernetController, "Receiver initializing, dropping current activity.");
-                _system.Scheduler.CancelEvent(_fifoReceiveWakeupEvent);
+                Log.Write(LogComponent.EthernetController, "Receiver initializing, dropping current activity.");                
                 _incomingPacket = null;
                 _incomingPacketLength = 0;                
             }
 
-            _iBusy = true;
-            _receiverLock.ExitWriteLock();
+            _inputState = InputState.ReceiverWaiting;
+            _iBusy = true;            
 
             _system.CPU.BlockTask(TaskType.Ethernet);
 
-            Log.Write(LogComponent.EthernetController, "Receiver initialized.");
-
-            //
-            // TODO:
-            // This hack is ugly and it wants to die.  Ethernet packets come in asynchronously from another thread.
-            // The scheduler is not thread-safe (and making it so incurs a serious performance penalty) so the receiver
-            // thread cannot post an event to wake up the rcv FIFO.  Instead we poll periodically and start processing
-            // new packets if one has arrived.
-            //
-            if (_pollEvent == null)
-            {
-                _pollEvent = new Event(_pollPeriod, null, PacketPoll);
-                _system.Scheduler.Schedule(_pollEvent);
-            }
+            Log.Write(LogComponent.EthernetController, "Receiver initialized.");            
         }
 
         /// <summary>
         /// Invoked when the host ethernet interface receives a packet destined for us.
-        /// TODO: determine the best behavior here; we could queue up a number of incoming packets and let
-        /// the emulated interface pull them off one by one, or we could only save one packet and discard
-        /// any that arrive while the emulated interface is processing the current one.
+        /// NOTE: This runs on the PCap receiver thread (see HostEthernet), not the main emulator thread.
+        ///       Any access to emulator structures must be properly protected.
         /// 
-        /// The latter is probably more faithful to the original intent, but the former might be more useful on
-        /// busy Ethernets (though the bottom-level filter implemented by HostEthernet might take care
-        /// of that already.)
+        /// Due to the nature of the "ethernet" we're simulating, there will never be any collisions or corruption and
+        /// everything is completely asynchronous with regard to all receivers, as such it's completely possible
+        /// for packets to be received by the host interface when the emulated interface is already sending/receiving
+        /// a 3mbit packet (something that could never happen in reality).  There is no reasonable way to change this behavior
+        /// without having a distributed synchronization across emulator processes to more accurately simulate the behavior
+        /// of a real ethernet, and that seems like complete overkill (and gets even more complicated if we end up using transports
+        /// other than raw Ethernet in the future.)
         /// 
-        /// For now, we just accept one at a time.
+        /// To compensate for this somewhat, we queue up received packets (to an upper limit of 32), these will either be consumed or discarded
+        /// by InputHandler (which runs periodically on the emulator thread) depending on the current state of the interface.
+        /// This reduces the number of dropped packets and seems to work fairly well.
+        /// 
         /// </summary>
         /// <param name="data"></param>
         private void OnHostPacketReceived(MemoryStream data)
         {
-            _receiverLock.EnterWriteLock();            
-            _nextPackets.Enqueue(data);
-            _receiverLock.ExitWriteLock();            
-        }
-
-        private void PacketPoll(ulong timeNsec, ulong skewNsec, object context)
-        {            
-            _receiverLock.EnterUpgradeableReadLock();
-            if (_nextPackets.Count > 0)
+            _receiverLock.EnterWriteLock();
+            if (_nextPackets.Count < _maxQueuedPackets)
             {
-                // Schedule the next word of data.                                
-                if (_iBusy && _incomingPacket == null)
-                {
-                    _incomingPacket = _nextPackets.Dequeue();                    
-
-                    // Read the packet length (in words) (first word of the packet).  Convert to bytes.
-                    //
-                    _incomingPacketLength = ((_incomingPacket.ReadByte()) | (_incomingPacket.ReadByte() << 8)) * 2;
-
-                    // Sanity check:
-                    if (_incomingPacketLength > _incomingPacket.Length - 2)
-                    {
-                        throw new InvalidOperationException("Invalid 3mbit packet length header.");
-                    }
-
-                    Log.Write(LogComponent.EthernetPacket, "Accepting incoming packet (length {0}).", _incomingPacketLength);
-
-                    LogPacket(_incomingPacketLength, _incomingPacket);
-
-                    // From uCode:
-                    // "Interface will generate a data wakeup when the first word of the next
-                    // "packet arrives, ignoring any packet currently passing."
-                    //
-                    // Read the first word, place it in the fifo and wake up the ethernet task.
-                    //
-                    //ushort nextWord = (ushort)((_incomingPacket.ReadByte()) | (_incomingPacket.ReadByte() << 8));
-                    //_fifo.Enqueue(nextWord);
-                    //_incomingPacketLength -= 2;
-                    //_system.CPU.WakeupTask(TaskType.Ethernet);
-
-                    // Wake up the FIFO
-                    _fifoReceiveWakeupEvent.TimestampNsec = _fifoReceiveDuration;
-                    _system.Scheduler.Schedule(_fifoReceiveWakeupEvent);                    
-                }
-                else if (!_iBusy)
-                {
-                    // Drop, the receiver is not active.
-                    Log.Write(LogComponent.EthernetPacket, "Dropping incoming packet; controller is currently not active.");
-
-                    MemoryStream discPacket = _nextPackets.Dequeue();
-                    int discPacketLength = ((discPacket.ReadByte()) | (discPacket.ReadByte() << 8)) * 2;
-                    LogPacket(discPacketLength, discPacket);
-                                       
-                }                
-            }
-            _receiverLock.ExitUpgradeableReadLock();
-
-            // Do it again.
-            _pollEvent.TimestampNsec = _pollPeriod;
-            _system.Scheduler.Schedule(_pollEvent);            
-        }
-
-        private void InputFifoCallback(ulong timeNsec, ulong skewNsec, object context)
-        {
-            _receiverLock.EnterUpgradeableReadLock();
-            if (!_iBusy || _inGone)
-            {
-                // If IBUSY is no longer set then the interface was reset before
-                // we got to run; abandon this operation.                
-                Log.Write(LogComponent.EthernetController, "FIFO callback after reset, abandoning input.");
-                _incomingPacket = null;
-                _incomingPacketLength = 0;
-                _inGone = false;
-                _receiverLock.ExitUpgradeableReadLock();                
-                return;
-            }   
-            
-            if (_fifo.Count >= 16)
-            {
-                _fifoReceiveWakeupEvent.TimestampNsec = _fifoReceiveDuration - skewNsec;
-                _system.Scheduler.Schedule(_fifoReceiveWakeupEvent);
-
-                Log.Write(LogComponent.EthernetController, "Input FIFO full? Scheduling next wakeup.");
-                _receiverLock.ExitUpgradeableReadLock();
-                return;
-            }
-
-            Log.Write(LogComponent.EthernetController, "Processing word from input packet ({0} bytes left in input, {1} words in FIFO.)", _incomingPacketLength, _fifo.Count);
-
-            if (_incomingPacketLength >= 2)
-            {
-                // Stuff 1 word into the FIFO, if we run out of data to send then we clear _iBusy.                
-                ushort nextWord = (ushort)((_incomingPacket.ReadByte()) | (_incomingPacket.ReadByte() << 8));
-                _fifo.Enqueue(nextWord);
-
-                _incomingPacketLength -= 2;
-            }
-            else if (_incomingPacketLength == 1)
-            {
-                // should never happen
-                throw new InvalidOperationException("Packet length not multiple of 2 on receive.");
-            }            
-
-            // All out of data?  Finish the receive operation.
-            if (_incomingPacketLength == 0)
-            {
-                _receiverLock.EnterWriteLock();
-                _inGone = true;
-                _incomingPacket = null;
-                _receiverLock.ExitWriteLock();
-
-                // Wakeup for end of data.
-                _system.CPU.WakeupTask(TaskType.Ethernet);
-
-                Log.Write(LogComponent.EthernetController, "Receive complete.");
+                _nextPackets.Enqueue(data);
             }
             else
             {
-                // Schedule the next wakeup.                
-                _fifoReceiveWakeupEvent.TimestampNsec = _fifoReceiveDuration - skewNsec;
-                _system.Scheduler.Schedule(_fifoReceiveWakeupEvent);                
-
-                Log.Write(LogComponent.EthernetController, "Scheduling next wakeup.");
+                Log.Write(LogType.Error, LogComponent.EthernetPacket, "Packet queue has reached its limit of {0} packets, dropping incoming packet.", _maxQueuedPackets);
             }
 
-            // Wake up the Ethernet task to process this data   
-            if (_fifo.Count >= 2)
-            {
-                _system.CPU.WakeupTask(TaskType.Ethernet);
-            }
-
-            _receiverLock.ExitUpgradeableReadLock();
+            _receiverLock.ExitWriteLock();            
         }
+
+        private void InputHandler(ulong timeNsec, ulong skewNsec, object context)
+        {
+            switch(_inputState)
+            {
+                case InputState.ReceiverOff:
+                    // Receiver is off, if we have any incoming packets, drop the first.
+                    _receiverLock.EnterReadLock();
+
+                    if (_nextPackets.Count > 0)
+                    {
+                        _nextPackets.Dequeue();
+                        Log.Write(LogComponent.EthernetPacket, "Receiver is off, dropped incoming packet from packet queue.");
+                    }
+                    _receiverLock.ExitReadLock();
+                    break;
+
+                case InputState.ReceiverWaiting:
+                    // Receiver is on, waiting for a new packet.  If we have one now, start an
+                    // input operation.
+                    _receiverLock.EnterReadLock();
+                    if (_nextPackets.Count > 0)
+                    {
+                        _incomingPacket = _nextPackets.Dequeue();
+
+                        // Read the packet length (in words) (first word of the packet).  Convert to bytes.
+                        //
+                        _incomingPacketLength = ((_incomingPacket.ReadByte()) | (_incomingPacket.ReadByte() << 8)) * 2;
+
+                        // Sanity check:
+                        if (_incomingPacketLength > _incomingPacket.Length - 2 &&
+                            (_incomingPacketLength % 2) == 0)
+                        {
+                            throw new InvalidOperationException("Invalid 3mbit packet length header.");
+                        }
+
+                        Log.Write(LogComponent.EthernetPacket, "Accepting incoming packet (length {0}).", _incomingPacketLength);
+
+                        //LogPacket(_incomingPacketLength, _incomingPacket);
+
+                        // Move to the Receiving state.
+                        _inputState = InputState.Receiving;
+                    }                    
+                    _receiverLock.ExitReadLock();
+                    break;
+
+                case InputState.Receiving:
+                    Log.Write(LogComponent.EthernetController, "Processing word from input packet ({0} bytes left in input, {1} words in FIFO.)", _incomingPacketLength, _fifo.Count);
+
+                    if (_fifo.Count >= 16)
+                    {
+                        // This shouldn't happen.
+                        Log.Write(LogComponent.EthernetController, "Input FIFO full, Scheduling next wakeup. No words added to the FIFO.");
+                        _receiverLock.ExitUpgradeableReadLock();
+                        break;
+                    }                    
+
+                    if (_incomingPacketLength >= 2)
+                    {
+                        // Stuff 1 word into the FIFO, if we run out of data to send then we clear _iBusy further down.       
+                        ushort nextWord = (ushort)((_incomingPacket.ReadByte()) | (_incomingPacket.ReadByte() << 8));
+                        _fifo.Enqueue(nextWord);
+
+                        _incomingPacketLength -= 2;
+                    }
+                    else if (_incomingPacketLength == 1)
+                    {
+                        // Should never happen.
+                        throw new InvalidOperationException("Packet length not multiple of 2 on receive.");
+                    }
+
+                    // All out of data?  Finish the receive operation.
+                    if (_incomingPacketLength == 0)
+                    {                        
+                        _inGone = true;
+                        _incomingPacket = null;
+
+                        _inputState = InputState.ReceiverDone;                     
+
+                        // Wakeup Ethernet task for end of data.
+                        _system.CPU.WakeupTask(TaskType.Ethernet);
+
+                        Log.Write(LogComponent.EthernetController, "Receive complete.");
+                    }                   
+
+                    // Wake up the Ethernet task to process data if we have
+                    // more than two words in the FIFO.
+                    if (_fifo.Count >= 2)
+                    {
+                        _system.CPU.WakeupTask(TaskType.Ethernet);
+                    }
+
+                    break;
+
+                case InputState.ReceiverDone:
+                    // Nothing, we just wait in this state for the receiver to be reset by the microcode.
+                    break;
+
+            }
+
+            // Schedule the next wakeup.                
+            _inputPollEvent.TimestampNsec = _inputPollPeriod - skewNsec;
+            _system.Scheduler.Schedule(_inputPollEvent);            
+        }        
 
         private void LogPacket(int length, MemoryStream packet)
         {
@@ -513,13 +490,21 @@ namespace Contralto.IO
         private Event _fifoTransmitWakeupEvent;
 
         // Receive:
-        private ulong _fifoReceiveDuration = 5400;       // ~5400 nsec to receive 1 word at 3mbit
-        private Event _fifoReceiveWakeupEvent;
+        private ulong _inputPollPeriod = 5400;       // ~5400 nsec to receive 1 word at 3mbit
+        private Event _inputPollEvent;
 
-        // Polling (hack)
-        private ulong _pollPeriod = 10000;
-        private Event _pollEvent;
-        private bool _packetReady;
+        // Input states
+        private enum InputState
+        {
+            ReceiverOff = 0,
+            ReceiverWaiting,
+            Receiving,
+            ReceiverDone,
+        }
+
+        private InputState _inputState;
+
+        private const int _maxQueuedPackets = 32;
 
         // The actual connection to a real Ethernet device on the host
         HostEthernet _hostEthernet;
