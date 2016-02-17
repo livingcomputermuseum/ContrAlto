@@ -28,8 +28,6 @@ namespace Contralto
             _mouse = new Mouse();
             _ethernetController = new EthernetController(this);
 
-
-
             _cpu = new AltoCPU(this);
 
             // Attach memory-mapped devices to the bus
@@ -67,7 +65,10 @@ namespace Contralto
             _cpu.Reset();
             _ethernetController.Reset();
 
-            UCodeMemory.Reset();  
+            UCodeMemory.Reset();
+
+            // Force the boot keys on reset.
+            PressBootKeys();
         }
 
         /// <summary>
@@ -119,6 +120,18 @@ namespace Contralto
 
             _diskController.Drives[drive].UnloadPack();
         }
+
+        public void PressBootKeys()
+        {
+            //
+            // Press bootkeys if the user has specified a boot combination.
+            //
+            if (Configuration.EthernetBootEnabled)
+            {
+                _keyboard.PressBootKeys(Configuration.EthernetBootFile, true);
+            }
+        }
+
 
         public AltoCPU CPU
         {
@@ -172,7 +185,7 @@ namespace Contralto
     
         private void T_Elapsed(object sender, ElapsedEventArgs e)
         {
-            System.Console.WriteLine("{0} CPU clocks/sec %{1}. {2} fields/sec", _clocks, ((double)_clocks / 5882353.0) * 100.0, _displayController.Fields);
+            //System.Console.WriteLine("{0} CPU clocks/sec %{1}. {2} fields/sec", _clocks, ((double)_clocks / 5882353.0) * 100.0, _displayController.Fields);
             _clocks = 0;
             _displayController.Fields = 0;
         }

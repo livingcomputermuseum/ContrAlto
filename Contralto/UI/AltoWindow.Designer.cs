@@ -52,6 +52,7 @@
             this.CaptureStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.SystemStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.DiskStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.SystemEthernetBootMenu = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.DisplayBox)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.StatusLine.SuspendLayout();
@@ -92,7 +93,7 @@
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(92, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.OnFileExitClick);
             // 
@@ -103,6 +104,7 @@
             this.SystemResetMenuItem,
             this.drive0ToolStripMenuItem,
             this.drive1ToolStripMenuItem,
+            this.SystemEthernetBootMenu,
             this.optionsToolStripMenuItem,
             this.SystemShowDebuggerMenuItem});
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
@@ -174,14 +176,14 @@
             // loadToolStripMenuItem
             // 
             this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
-            this.loadToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
+            this.loadToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.loadToolStripMenuItem.Text = "Load...";
             this.loadToolStripMenuItem.Click += new System.EventHandler(this.OnSystemDrive1LoadClick);
             // 
             // unloadToolStripMenuItem
             // 
             this.unloadToolStripMenuItem.Name = "unloadToolStripMenuItem";
-            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
+            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.unloadToolStripMenuItem.Text = "Unload...";
             this.unloadToolStripMenuItem.Click += new System.EventHandler(this.OnSystemDrive1UnloadClick);
             // 
@@ -189,7 +191,7 @@
             // 
             this.Drive1ImageName.Enabled = false;
             this.Drive1ImageName.Name = "Drive1ImageName";
-            this.Drive1ImageName.Size = new System.Drawing.Size(134, 22);
+            this.Drive1ImageName.Size = new System.Drawing.Size(152, 22);
             this.Drive1ImageName.Text = "Image Name";
             // 
             // optionsToolStripMenuItem
@@ -219,7 +221,7 @@
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.aboutToolStripMenuItem.Text = "About";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.OnHelpAboutClick);
             // 
@@ -253,6 +255,13 @@
             this.DiskStatusLabel.Name = "DiskStatusLabel";
             this.DiskStatusLabel.Size = new System.Drawing.Size(82, 17);
             this.DiskStatusLabel.Text = "DiskStatusLabel";
+            // 
+            // SystemEthernetBootMenu
+            // 
+            this.SystemEthernetBootMenu.Name = "SystemEthernetBootMenu";
+            this.SystemEthernetBootMenu.Size = new System.Drawing.Size(210, 22);
+            this.SystemEthernetBootMenu.Text = "Ethernet Boot...";
+            this.SystemEthernetBootMenu.Click += new System.EventHandler(this.OnEthernetBootClicked);
             // 
             // AltoWindow
             // 
@@ -310,5 +319,6 @@
         private System.Windows.Forms.ToolStripMenuItem Drive1ImageName;
         private System.Windows.Forms.ToolStripStatusLabel SystemStatusLabel;
         private System.Windows.Forms.ToolStripStatusLabel DiskStatusLabel;
+        private System.Windows.Forms.ToolStripMenuItem SystemEthernetBootMenu;
     }
 }

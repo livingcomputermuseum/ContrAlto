@@ -54,7 +54,7 @@ namespace Contralto.IO
     {
         public HostEthernet(EthernetInterface iface)
         {
-            AttachInterface(iface);           
+            AttachInterface(iface);
         }
 
         public HostEthernet(string name)
@@ -94,23 +94,22 @@ namespace Contralto.IO
             // Sanity check.
             if (length < 1)
             {
-                throw new InvalidOperationException("Raw packet data must contain at least two bytes for addressing.");                
+                throw new InvalidOperationException("Raw packet data must contain at least two bytes for addressing.");
             }
 
-            
-            //
-            // Outgoing packet contains 2 extra words (4 bytes):
-            // - prepended packet length (one word)
-            // - appended checksum (one word)
-            byte[] packetBytes = new byte[length * 2 + 4];
 
             //
-            // First two bytes include the length of the 3mbit packet (including checksum); since 10mbit packets have a minimum length of 46 
+            // Outgoing packet contains 1 extra word (2 bytes) containing
+            // the prepended packet length (one word)            
+            byte[] packetBytes = new byte[length * 2 + 2];
+
+            //
+            // First two bytes include the length of the 3mbit packet; since 10mbit packets have a minimum length of 46 
             // bytes, and 3mbit packets have no minimum length this is necessary so the receiver can pull out the 
             // correct amount of data.
             //
-            packetBytes[0] = (byte)(length + 1);
-            packetBytes[1] = (byte)((length + 1) >> 8);
+            packetBytes[0] = (byte)(length);
+            packetBytes[1] = (byte)((length) >> 8);
 
             //
             // Do this annoying dance to stuff the ushorts into bytes because this is C#.
@@ -120,13 +119,6 @@ namespace Contralto.IO
                 packetBytes[i * 2 + 2] = (byte)(packet[i]);
                 packetBytes[i * 2 + 3] = (byte)(packet[i] >> 8);
             }
-
-            //
-            // Append the checksum.
-            // TODO: actually calculate it.
-            // 
-            packetBytes[length * 2 + 2] = 0xbe;
-            packetBytes[length * 2 + 3] = 0xef;
 
             //
             // Grab the source and destination host addresses from the packet we're sending
@@ -140,7 +132,7 @@ namespace Contralto.IO
                 Conversion.ToOctal(destinationHost),
                 length);
 
-            MacAddress destinationMac = new MacAddress((UInt48)(_10mbitMACPrefix | destinationHost));
+            MacAddress destinationMac = Get10mbitDestinationMacFrom3mbit(destinationHost);
             MacAddress sourceMac = new MacAddress((UInt48)(_10mbitMACPrefix | Configuration.HostAddress));
 
             // Build the outgoing packet; place the source/dest addresses, type field and the raw data.                
@@ -169,15 +161,16 @@ namespace Contralto.IO
             //
             // Filter out packets intended for the emulator, forward them on, drop everything else.
             //
-            if ((int)p.Ethernet.EtherType == _3mbitFrameType &&
-                (p.Ethernet.Destination.ToValue() & 0xffffffffff00) == _10mbitMACPrefix &&
-                (p.Ethernet.Source.ToValue() & 0xff) != Configuration.HostAddress)      // drop packets sent by ourselves                
+            if ((int)p.Ethernet.EtherType == _3mbitFrameType &&                                                 // encapsulated 3mbit frames
+                ((p.Ethernet.Destination.ToValue() & 0xffffffffff00) == _10mbitMACPrefix ||                     //  addressed to any emulator OR
+                 p.Ethernet.Destination.ToValue() == _10mbitBroadcast) &&                                       //  broadcast
+                (p.Ethernet.Source.ToValue() != (UInt48)(_10mbitMACPrefix | Configuration.HostAddress)))        //  and not sent by this emulator                
             {
                 Log.Write(LogComponent.HostEthernet, "Received encapsulated 3mbit packet.");
-                _callback(p.Ethernet.Payload.ToMemoryStream());                
+                _callback(p.Ethernet.Payload.ToMemoryStream());
             }
             else
-            {                
+            {
                 // Not for us, discard the packet.                
             }
         }
@@ -206,7 +199,7 @@ namespace Contralto.IO
 
         private void Open(bool promiscuous, int timeout)
         {
-            _communicator = _interface.Open(65536, promiscuous ? PacketDeviceOpenAttributes.MaximumResponsiveness | PacketDeviceOpenAttributes.Promiscuous : PacketDeviceOpenAttributes.MaximumResponsiveness, timeout);            
+            _communicator = _interface.Open(65536, promiscuous ? PacketDeviceOpenAttributes.MaximumResponsiveness | PacketDeviceOpenAttributes.Promiscuous : PacketDeviceOpenAttributes.MaximumResponsiveness, timeout);
 
             // Set this to 1 so we'll get packets as soon as they arrive, no buffering.
             _communicator.SetKernelMinimumBytesToCopy(1);
@@ -221,8 +214,8 @@ namespace Contralto.IO
         {
             // Kick off receive thread.   
             _receiveThread = new Thread(ReceiveThread);
-            _receiveThread.Start();            
-        }        
+            _receiveThread.Start();
+        }
 
         private void ReceiveThread()
         {
@@ -233,6 +226,35 @@ namespace Contralto.IO
             _communicator.ReceivePackets(-1, ReceiveCallback);
         }
 
+        private MacAddress Get10mbitDestinationMacFrom3mbit(byte destinationHost)
+        {
+            MacAddress destinationMac;
+            
+            if (destinationHost == _3mbitBroadcast)
+            {
+                // 3mbit broadcast gets translated to 10mbit broadcast
+                destinationMac = new MacAddress(_10mbitBroadcast);
+            }
+            else
+            {
+                // Check addressing table for external (non emulator) addresses;
+                // otherwise just address other emulators
+                // TODO: implement table.  Currently hardcoded address 1 to test IFS on dev machine
+                //
+                if (destinationHost == 1)
+                {
+                    destinationMac = new MacAddress((UInt48)(_ifsTestMAC));
+                }
+                else
+                {
+                    destinationMac = new MacAddress((UInt48)(_10mbitMACPrefix | destinationHost));       // emulator destination address
+                }
+            
+            }            
+
+            return destinationMac;
+        }    
+
         private LivePacketDevice _interface;
         private PacketCommunicator _communicator;
         private ReceivePacketDelegate _callback;
@@ -241,13 +263,19 @@ namespace Contralto.IO
         // Thread used for receive
         private Thread _receiveThread;
 
-        private const int _3mbitFrameType = 0xbeef;     // easy to identify, ostensibly unused by anything of any import
+        private const int _3mbitFrameType = 0xbeef;     // easy to identify, ostensibly unused by anything of any import        
 
         /// <summary>
         /// On output, these bytes are prepended to the Alto's 3mbit (1 byte) address to form a full
         /// 6 byte Ethernet MAC.
         /// On input, ethernet frames are checked for this prefix
         /// </summary>
-        private UInt48 _10mbitMACPrefix = 0x0000aa010200;  // 00-00-AA is the old Xerox vendor code, used just to be cute.        
+        private UInt48 _10mbitMACPrefix = 0x0000aa010200;  // 00-00-AA is the Xerox vendor code, used just to be cute.  
+
+        private UInt48 _10mbitBroadcast = (UInt48)0xffffffffffff;
+        private const int _3mbitBroadcast = 0;
+
+        // Temporary; to be replaced with an external address mapping table
+        private UInt48 _ifsTestMAC = (UInt48)0x001060b88e3e;
     }   
 }

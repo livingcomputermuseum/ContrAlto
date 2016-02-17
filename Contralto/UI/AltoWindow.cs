@@ -135,6 +135,17 @@ namespace Contralto
             Drive1ImageName.Text = _noImageLoadedText;
         }
 
+        private void OnEthernetBootClicked(object sender, EventArgs e)
+        {
+            EthernetBootWindow bootWindow = new EthernetBootWindow();
+            bootWindow.ShowDialog();
+
+            //
+            // Apply settings to system.
+            //
+            _system.PressBootKeys();
+        }
+
         private void OnHelpAboutClick(object sender, EventArgs e)
         {
             AboutBox about = new AboutBox();
@@ -618,7 +629,7 @@ namespace Contralto
         private void InitKeymap()
         {
             _keyMap = new Dictionary<Keys, AltoKey>();
-
+            
             _keyMap.Add(Keys.A, AltoKey.A);
             _keyMap.Add(Keys.B, AltoKey.B);
             _keyMap.Add(Keys.C, AltoKey.C);
@@ -659,6 +670,7 @@ namespace Contralto
             _keyMap.Add(Keys.OemPeriod, AltoKey.Period);
             _keyMap.Add(Keys.Oemcomma, AltoKey.Comma);
             _keyMap.Add(Keys.OemQuotes, AltoKey.Quote);
+            _keyMap.Add(Keys.Oem5, AltoKey.BSlash);
             _keyMap.Add(Keys.OemBackslash, AltoKey.BSlash);
             _keyMap.Add(Keys.OemQuestion, AltoKey.FSlash);
             _keyMap.Add(Keys.Oemplus, AltoKey.Plus);

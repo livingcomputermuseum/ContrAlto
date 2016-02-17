@@ -99,17 +99,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AboutBox.cs">
+    <Compile Include="UI\AboutBox.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="AboutBox.Designer.cs">
+    <Compile Include="UI\AboutBox.Designer.cs">
       <DependentUpon>AboutBox.cs</DependentUpon>
     </Compile>
     <Compile Include="AltoSystem.cs" />
-    <Compile Include="AltoWindow.cs">
+    <Compile Include="UI\AltoWindow.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="AltoWindow.Designer.cs">
+    <Compile Include="UI\AltoWindow.Designer.cs">
       <DependentUpon>AltoWindow.cs</DependentUpon>
     </Compile>
     <Compile Include="Configuration.cs" />
@@ -131,15 +131,21 @@
     <Compile Include="CPU\Shifter.cs" />
     <Compile Include="CPU\Tasks\Task.cs" />
     <Compile Include="CPU\UCodeMemory.cs" />
-    <Compile Include="Debugger.cs">
+    <Compile Include="UI\Debugger.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Debugger.Designer.cs">
+    <Compile Include="UI\Debugger.Designer.cs">
       <DependentUpon>Debugger.cs</DependentUpon>
     </Compile>
     <Compile Include="Display\FakeDisplayController.cs" />
     <Compile Include="Display\DisplayController.cs" />
     <Compile Include="Display\IAltoDisplay.cs" />
+    <Compile Include="UI\EthernetBootWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\EthernetBootWindow.Designer.cs">
+      <DependentUpon>EthernetBootWindow.cs</DependentUpon>
+    </Compile>
     <Compile Include="IClockable.cs" />
     <Compile Include="IO\DiabloDrive.cs" />
     <Compile Include="IO\DiskController.cs" />
@@ -165,6 +171,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Disassembly\MesaROM.mu">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Disk\allgames.dsk">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Disk\bcpl.dsk">
@@ -199,6 +208,9 @@
     </None>
     <None Include="Disk\st76boot.dsk">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Disk\st76new.dsk">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Disk\tdisk4.dsk">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -322,53 +334,32 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="AboutBox.resx">
+    <EmbeddedResource Include="UI\AboutBox.resx">
       <DependentUpon>AboutBox.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="AltoWindow.resx">
+    <EmbeddedResource Include="UI\AltoWindow.resx">
       <DependentUpon>AltoWindow.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Debugger.resx">
+    <EmbeddedResource Include="UI\Debugger.resx">
       <DependentUpon>Debugger.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\EthernetBootWindow.resx">
+      <DependentUpon>EthernetBootWindow.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="pcap\PcapDotNet.Base.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="pcap\PcapDotNet.Base.pdb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="pcap\PcapDotNet.Base.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="pcap\PcapDotNet.Core.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="pcap\PcapDotNet.Core.Extensions.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="pcap\PcapDotNet.Core.Extensions.pdb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="pcap\PcapDotNet.Core.Extensions.XML">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="pcap\PcapDotNet.Core.pdb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="pcap\PcapDotNet.Core.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="pcap\PcapDotNet.Packets.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="pcap\PcapDotNet.Packets.pdb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="pcap\PcapDotNet.Packets.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Content Include="pcap\PcapDotNet.Base.dll" />
+    <Content Include="pcap\PcapDotNet.Base.pdb" />
+    <Content Include="pcap\PcapDotNet.Base.xml" />
+    <Content Include="pcap\PcapDotNet.Core.dll" />
+    <Content Include="pcap\PcapDotNet.Core.Extensions.dll" />
+    <Content Include="pcap\PcapDotNet.Core.Extensions.pdb" />
+    <Content Include="pcap\PcapDotNet.Core.Extensions.XML" />
+    <Content Include="pcap\PcapDotNet.Core.pdb" />
+    <Content Include="pcap\PcapDotNet.Core.xml" />
+    <Content Include="pcap\PcapDotNet.Packets.dll" />
+    <Content Include="pcap\PcapDotNet.Packets.pdb" />
+    <Content Include="pcap\PcapDotNet.Packets.xml" />
     <EmbeddedResource Include="Alto.ico" />
     <Content Include="Notes.txt" />
   </ItemGroup>

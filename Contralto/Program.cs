@@ -12,6 +12,9 @@ namespace Contralto
         {
             // Handle command-line args
             PrintHerald();
+            // See if WinPCap is installed and working
+            TestPCap();
+
             ParseCommandLine(args);
            
 
@@ -31,13 +34,6 @@ namespace Contralto
 
             mainWindow.AttachSystem(system);
             
-            /*
-            Debugger d = new Debugger(system);
-            system.AttachDisplay(d);
-            d.LoadSourceCode(MicrocodeBank.ROM0, "Disassembly\\altoIIcode3.mu");
-            d.LoadSourceCode(MicrocodeBank.ROM1, "Disassembly\\MesaROM.mu");
-            d.ShowDialog();                       
-            */
             mainWindow.ShowDialog();
 
 
@@ -80,7 +76,14 @@ namespace Contralto
                     case "-hostinterface":
                         if (index < args.Length)
                         {
-                            Configuration.HostEthernetInterfaceName = args[index++];
+                            if (!Configuration.HostEthernetAvailable)
+                            {
+                                Console.WriteLine("Ethernet functionality is disabled, host interface cannot be specified.");
+                            }
+                            else
+                            {
+                                Configuration.HostEthernetInterfaceName = args[index++];
+                            }
                         }
                         else
                         {
@@ -89,11 +92,18 @@ namespace Contralto
                         break;
 
                     case "-listinterfaces":
-                        List<EthernetInterface> interfaces = EthernetInterface.EnumerateDevices();
-
-                        foreach (EthernetInterface i in interfaces)
+                        if (!Configuration.HostEthernetAvailable)
                         {
-                            Console.WriteLine("Name: '{0}'\n  Description: '{1}'\n  MAC '{2}'", i.Name, i.Description, i.MacAddress);
+                            Console.WriteLine("Ethernet functionality is disabled, interfaces cannot be enumerated.");
+                        }
+                        else
+                        {
+                            List<EthernetInterface> interfaces = EthernetInterface.EnumerateDevices();
+
+                            foreach (EthernetInterface i in interfaces)
+                            {
+                                Console.WriteLine("Name: '{0}'\n  Description: '{1}'\n  MAC '{2}'", i.Name, i.Description, i.MacAddress);
+                            }
                         }
                         break;
 
@@ -126,6 +136,25 @@ namespace Contralto
         {
             // TODO: make more useful.
             Console.WriteLine("Something is wrong, try again.");
+        }
+
+        private static void TestPCap()
+        {
+            // Just try enumerating interfaces, if this fails for any reason we assume
+            // PCap is not properly installed.
+            try
+            {
+                List<EthernetInterface> interfaces = EthernetInterface.EnumerateDevices();
+                Configuration.HostEthernetAvailable = true;
+            }
+            catch
+            {
+                Console.WriteLine("WARNING: WinPCAP does not appear to be properly installed.");
+                Console.WriteLine("         Ethernet functionality is disabled.");
+                Console.WriteLine("         Please install WinPCAP from: http://www.winpcap.org/");
+
+                Configuration.HostEthernetAvailable = false;
+            }
         }
     }
 }

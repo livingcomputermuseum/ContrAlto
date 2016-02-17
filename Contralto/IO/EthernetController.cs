@@ -283,6 +283,8 @@ namespace Contralto.IO
                 _system.CPU.WakeupTask(TaskType.Ethernet);
 
                 // And actually tell the host ethernet interface to send the data.
+                // NOTE: We do not append a checksum to the outgoing 3mbit packet.  See comments on the
+                // receiving end for an explanation.
                 if (_hostEthernet != null)
                 {
                     _hostEthernet.Send(_outputData, _outputIndex);
@@ -352,6 +354,15 @@ namespace Contralto.IO
             _receiverLock.ExitWriteLock();            
         }
 
+        /// <summary>
+        /// Runs the input state machine.  This runs periodically (as scheduled by the Scheduler) and:
+        ///   1) Drops incoming packets if the interface is off
+        ///   2) Pulls incoming packets from the queue if the interface is active
+        ///   3) Reads words from incoming packets into the controller's FIFO        
+        /// </summary>
+        /// <param name="timeNsec"></param>
+        /// <param name="skewNsec"></param>
+        /// <param name="context"></param>
         private void InputHandler(ulong timeNsec, ulong skewNsec, object context)
         {
             switch(_inputState)
@@ -376,15 +387,25 @@ namespace Contralto.IO
                     {
                         _incomingPacket = _nextPackets.Dequeue();
 
-                        // Read the packet length (in words) (first word of the packet).  Convert to bytes.
+                        //
+                        // Read the packet length (in words) (first word of the packet as provided by the sending emulator).  Convert to bytes.
                         //
                         _incomingPacketLength = ((_incomingPacket.ReadByte()) | (_incomingPacket.ReadByte() << 8)) * 2;
 
+                        // Add one word to the count for the checksum.
+                        // NOTE: This is not provided by the sending emulator and is not computed here either.
+                        // The microcode does not use it and any corrupted packets will be dealt with transparently by the host interface,
+                        // not the emulator.
+                        // We add the word to the count because the microcode expects to read it in from the input FIFO, it is then dropped.
+                        //
+                        _incomingPacketLength += 2;                        
+
                         // Sanity check:
-                        if (_incomingPacketLength > _incomingPacket.Length - 2 &&
-                            (_incomingPacketLength % 2) == 0)
+                        if (_incomingPacketLength > _incomingPacket.Length ||
+                            (_incomingPacketLength % 2) != 0)
                         {
-                            throw new InvalidOperationException("Invalid 3mbit packet length header.");
+                            throw new InvalidOperationException(
+                                String.Format("Invalid 3mbit packet length header ({0} vs {1}.", _incomingPacketLength, _incomingPacket.Length));
                         }
 
                         Log.Write(LogComponent.EthernetPacket, "Accepting incoming packet (length {0}).", _incomingPacketLength);
@@ -403,8 +424,7 @@ namespace Contralto.IO
                     if (_fifo.Count >= 16)
                     {
                         // This shouldn't happen.
-                        Log.Write(LogComponent.EthernetController, "Input FIFO full, Scheduling next wakeup. No words added to the FIFO.");
-                        _receiverLock.ExitUpgradeableReadLock();
+                        Log.Write(LogComponent.EthernetController, "Input FIFO full, Scheduling next wakeup. No words added to the FIFO.");                        
                         break;
                     }                    
 

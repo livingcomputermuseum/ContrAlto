@@ -84,21 +84,22 @@ namespace Contralto.IO
         public ushort Bitmask;
     }
 
-
     /// <summary>
-    /// Currently just a stub indicating that no keys are being pressed.
+    /// Implements the Alto's keyboard and its encodings.  It also provides 
+    /// functionality for automatically pressing boot address key combinations.
     /// </summary>
     public class Keyboard : IMemoryMappedDevice
     {
         public Keyboard()
         {
             InitMap();
-            Reset();
+            Reset();            
         }
 
         public void Reset()
         {
             _keyWords = new ushort[4];
+            _bootKeysPressed = false;
         }
 
         public ushort Read(int address, TaskType task, bool extendedMemoryReference)
@@ -114,6 +115,14 @@ namespace Contralto.IO
 
         public void KeyDown(AltoKey key)
         {
+            //
+            // If we had been holding boot keys, release them now that a real user is pressing a key.
+            if (_bootKeysPressed)
+            {
+                Reset();
+                _bootKeysPressed = false;
+            }
+
             AltoKeyBit bits = _keyMap[key];
             _keyWords[bits.Word] |= _keyMap[key].Bitmask;
         }
@@ -124,11 +133,29 @@ namespace Contralto.IO
             _keyWords[bits.Word] &= (ushort)~_keyMap[key].Bitmask;
         }
 
+        public void PressBootKeys(ushort bootAddress, bool netBoot)
+        {                       
+            for (int i = 0; i < 16; i++)
+            {
+                if ((bootAddress & (0x8000 >> i)) != 0)
+                {
+                    KeyDown(_bootKeys[i]);
+                }
+            }
+
+            if (netBoot)
+            {
+                // BS is held for netbooting
+                KeyDown(AltoKey.BS);
+            }
+
+            _bootKeysPressed = true;
+        }        
+
         public MemoryRange[] Addresses
         {
             get { return _addresses; }
         }
-
 
         private readonly MemoryRange[] _addresses =
         {
@@ -207,5 +234,16 @@ namespace Contralto.IO
         private ushort[] _keyWords;
 
         private Dictionary<AltoKey, AltoKeyBit> _keyMap;
+
+        /// <summary>
+        /// The keys used to specify a 16-bit boot address, from MSB to LSB
+        /// </summary>
+        private AltoKey[] _bootKeys = new AltoKey[]
+        {
+            AltoKey.D3, AltoKey.D2, AltoKey.W, AltoKey.Q, AltoKey.S, AltoKey.A, AltoKey.D9, AltoKey.I,
+            AltoKey.X, AltoKey.O, AltoKey.L, AltoKey.Comma, AltoKey.Quote, AltoKey.RBracket, AltoKey.BlankMiddle, AltoKey.BlankTop
+        };       
+
+        private bool _bootKeysPressed;        
     }
 }
