@@ -43,6 +43,17 @@ namespace Contralto.CPU
             }
 
             /// <summary>
+            /// Indicates whether a task switch just happened.  TASK instructions behave differently on the
+            /// first instruction after a switch.  This is not documented, but observed on the real hardware.
+            /// (See the implementation of the Task SF for more details.)
+            /// </summary>
+            public bool FirstInstructionAfterSwitch
+            {
+                get { return _firstInstructionAfterSwitch; }
+                set { _firstInstructionAfterSwitch = value; }
+            }
+
+            /// <summary>
             /// Indicates whether the current uInstruction asserts BLOCK.
             /// Used by hardware for various tasks.
             /// </summary>
@@ -59,6 +70,7 @@ namespace Contralto.CPU
                 _mpc = (ushort)_taskType;
                 _rdRam = false;
                 _rb = 0;
+                _firstInstructionAfterSwitch = false;
             }
 
             public virtual void SoftReset()
@@ -273,7 +285,16 @@ namespace Contralto.CPU
                         break;
 
                     case SpecialFunction1.Task:
-                        nextTask = true;            // Yield to other more important tasks
+                        //
+                        // If the first uOp executed after a task switch contains a TASK F1, it does not take effect.
+                        // This is observed on the real hardware, and does not appear to be documented.
+                        // It also doensn't appear to affect the execution of the standard Alto uCode in any significant
+                        // way, but is included here for correctness.
+                        //
+                        //if (!_firstInstructionAfterSwitch)
+                        {
+                            nextTask = true;            // Yield to other more important tasks
+                        }
                         break;
 
                     case SpecialFunction1.Block:
@@ -430,7 +451,7 @@ namespace Contralto.CPU
                 if (swMode)
                 {                    
                     UCodeMemory.SwitchMode(instruction.NEXT, _taskType);
-                    Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1}", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT | nextModifier));
+                    Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1}", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT));
                 }
 
                 //
@@ -450,6 +471,7 @@ namespace Contralto.CPU
                     _mpc = (ushort)(instruction.NEXT | nextModifier);
                 }
 
+                _firstInstructionAfterSwitch = false;
                 return nextTask;
             }
 
@@ -523,6 +545,7 @@ namespace Contralto.CPU
             protected ushort _rb;     // S register bank select
             protected TaskType _taskType;
             protected bool _wakeup;
+            protected bool _firstInstructionAfterSwitch;
 
             protected bool _block;
 

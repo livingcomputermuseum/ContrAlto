@@ -172,7 +172,7 @@ namespace Contralto.CPU
             //
             WakeupTask(CPU.TaskType.DiskSector);            
 
-            Logging.Log.Write(Logging.LogComponent.CPU, "Silent Boot; microcode banks initialized to {0}", Conversion.ToOctal(_rmr));
+            Log.Write(Logging.LogComponent.CPU, "Silent Boot; microcode banks initialized to {0}", Conversion.ToOctal(_rmr));
         }
 
         /// <summary>
@@ -232,13 +232,15 @@ namespace Contralto.CPU
                 if (_tasks[i] != null && _tasks[i].Wakeup)
                 {                    
                     _nextTask = _tasks[i];
+                    _nextTask.FirstInstructionAfterSwitch = true;
 
+                    /*
                     if (_nextTask != _currentTask && _currentTask != null)
                     {                        
                         Log.Write(LogComponent.TaskSwitch, "TASK: Next task will be {0} (pri {1}); current task {2} (pri {3})",
                         (TaskType)_nextTask.Priority, _nextTask.Priority,
                         (TaskType)_currentTask.Priority, _currentTask.Priority);                        
-                    }
+                    } */
                     break;
                 }
             }

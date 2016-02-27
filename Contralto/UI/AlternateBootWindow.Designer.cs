@@ -1,6 +1,6 @@
 ﻿namespace Contralto
 {
-    partial class EthernetBootWindow
+    partial class AlternateBootOptions
     {
         /// <summary>
         /// Required designer variable.
@@ -99,16 +99,16 @@
             this.CancelButton.UseVisualStyleBackColor = true;
             this.CancelButton.Click += new System.EventHandler(this.CancelButton_Click);
             // 
-            // EthernetBootWindow
+            // AlternateBootOptions
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(413, 130);
+            this.ClientSize = new System.Drawing.Size(403, 128);
             this.Controls.Add(this.CancelButton);
             this.Controls.Add(this.OKButton);
             this.Controls.Add(this.BootFileGroup);
             this.Controls.Add(this.EthernetBootEnabled);
-            this.Name = "EthernetBootWindow";
+            this.Name = "AlternateBootOptions";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;

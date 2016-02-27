@@ -47,7 +47,7 @@ namespace Contralto
             t.AutoReset = true;
             t.Interval = 1000;
             t.Elapsed += T_Elapsed;
-            t.Start();       
+            //t.Start();       
         }
 
         public void Reset()
@@ -78,6 +78,11 @@ namespace Contralto
         public void AttachDisplay(IAltoDisplay d)
         {
             _displayController.AttachDisplay(d);           
+        }
+
+        public void DetachDisplay()
+        {
+            _displayController.DetachDisplay();
         }
 
         public void SingleStep()
@@ -128,7 +133,7 @@ namespace Contralto
             //
             if (Configuration.EthernetBootEnabled)
             {
-                _keyboard.PressBootKeys(Configuration.EthernetBootFile, true);
+                _keyboard.PressBootKeys(Configuration.BootAddress, true);
             }
         }
 
@@ -172,20 +177,10 @@ namespace Contralto
         {
             get { return _scheduler; }
         }
-
-        /// <summary>
-        /// Time (in msec) for one system clock
-        /// </summary>
-        ///
-        public static double ClockInterval
-        {
-            get { return 0.00017; } // appx 170nsec, TODO: more accurate value?
-        }
-
     
         private void T_Elapsed(object sender, ElapsedEventArgs e)
         {
-            //System.Console.WriteLine("{0} CPU clocks/sec %{1}. {2} fields/sec", _clocks, ((double)_clocks / 5882353.0) * 100.0, _displayController.Fields);
+            System.Console.WriteLine("{0} CPU clocks/sec %{1}. {2} fields/sec", _clocks, ((double)_clocks / 5882353.0) * 100.0, _displayController.Fields);
             _clocks = 0;
             _displayController.Fields = 0;
         }

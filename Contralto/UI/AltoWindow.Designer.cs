@@ -44,6 +44,8 @@
             this.loadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.Drive1ImageName = new System.Windows.Forms.ToolStripMenuItem();
+            this.enableAlternateBootToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.SystemEthernetBootMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SystemShowDebuggerMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -52,7 +54,6 @@
             this.CaptureStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.SystemStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.DiskStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            this.SystemEthernetBootMenu = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.DisplayBox)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.StatusLine.SuspendLayout();
@@ -93,7 +94,7 @@
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(92, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.OnFileExitClick);
             // 
@@ -104,6 +105,7 @@
             this.SystemResetMenuItem,
             this.drive0ToolStripMenuItem,
             this.drive1ToolStripMenuItem,
+            this.enableAlternateBootToolStripMenuItem,
             this.SystemEthernetBootMenu,
             this.optionsToolStripMenuItem,
             this.SystemShowDebuggerMenuItem});
@@ -176,14 +178,14 @@
             // loadToolStripMenuItem
             // 
             this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
-            this.loadToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.loadToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
             this.loadToolStripMenuItem.Text = "Load...";
             this.loadToolStripMenuItem.Click += new System.EventHandler(this.OnSystemDrive1LoadClick);
             // 
             // unloadToolStripMenuItem
             // 
             this.unloadToolStripMenuItem.Name = "unloadToolStripMenuItem";
-            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
             this.unloadToolStripMenuItem.Text = "Unload...";
             this.unloadToolStripMenuItem.Click += new System.EventHandler(this.OnSystemDrive1UnloadClick);
             // 
@@ -191,15 +193,28 @@
             // 
             this.Drive1ImageName.Enabled = false;
             this.Drive1ImageName.Name = "Drive1ImageName";
-            this.Drive1ImageName.Size = new System.Drawing.Size(152, 22);
+            this.Drive1ImageName.Size = new System.Drawing.Size(134, 22);
             this.Drive1ImageName.Text = "Image Name";
+            // 
+            // enableAlternateBootToolStripMenuItem
+            // 
+            this.enableAlternateBootToolStripMenuItem.Name = "enableAlternateBootToolStripMenuItem";
+            this.enableAlternateBootToolStripMenuItem.Size = new System.Drawing.Size(210, 22);
+            this.enableAlternateBootToolStripMenuItem.Text = "Enable Alternate Boot";
+            // 
+            // SystemEthernetBootMenu
+            // 
+            this.SystemEthernetBootMenu.Name = "SystemEthernetBootMenu";
+            this.SystemEthernetBootMenu.Size = new System.Drawing.Size(210, 22);
+            this.SystemEthernetBootMenu.Text = "Alternate Boot Options...";
+            this.SystemEthernetBootMenu.Click += new System.EventHandler(this.OnAlternateBootOptionsClicked);
             // 
             // optionsToolStripMenuItem
             // 
-            this.optionsToolStripMenuItem.Enabled = false;
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(210, 22);
             this.optionsToolStripMenuItem.Text = "Options...";
+            this.optionsToolStripMenuItem.Click += new System.EventHandler(this.OnSystemOptionsClick);
             // 
             // SystemShowDebuggerMenuItem
             // 
@@ -221,7 +236,7 @@
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
             this.aboutToolStripMenuItem.Text = "About";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.OnHelpAboutClick);
             // 
@@ -255,13 +270,6 @@
             this.DiskStatusLabel.Name = "DiskStatusLabel";
             this.DiskStatusLabel.Size = new System.Drawing.Size(82, 17);
             this.DiskStatusLabel.Text = "DiskStatusLabel";
-            // 
-            // SystemEthernetBootMenu
-            // 
-            this.SystemEthernetBootMenu.Name = "SystemEthernetBootMenu";
-            this.SystemEthernetBootMenu.Size = new System.Drawing.Size(210, 22);
-            this.SystemEthernetBootMenu.Text = "Ethernet Boot...";
-            this.SystemEthernetBootMenu.Click += new System.EventHandler(this.OnEthernetBootClicked);
             // 
             // AltoWindow
             // 
@@ -320,5 +328,6 @@
         private System.Windows.Forms.ToolStripStatusLabel SystemStatusLabel;
         private System.Windows.Forms.ToolStripStatusLabel DiskStatusLabel;
         private System.Windows.Forms.ToolStripMenuItem SystemEthernetBootMenu;
+        private System.Windows.Forms.ToolStripMenuItem enableAlternateBootToolStripMenuItem;
     }
 }

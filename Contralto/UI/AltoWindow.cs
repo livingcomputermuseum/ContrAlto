@@ -1,17 +1,12 @@
 ﻿using Contralto.CPU;
 using Contralto.Display;
 using Contralto.IO;
+using Contralto.UI;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Contralto
@@ -29,10 +24,17 @@ namespace Contralto
             _displayBuffer = new Bitmap(608, 808, PixelFormat.Format1bppIndexed);
             DisplayBox.Image = _displayBuffer;
 
+            _lastBuffer = _currentBuffer = _displayData0;
+            _frame = 0;
+
+            _frameTimer = new FrameTimer(60.0);
+
             ReleaseMouse();
 
             SystemStatusLabel.Text = _systemStoppedText;
             DiskStatusLabel.Text = String.Empty;
+
+            this.DoubleBuffered = true;            
         }
 
         public void AttachSystem(AltoSystem system)
@@ -135,15 +137,21 @@ namespace Contralto
             Drive1ImageName.Text = _noImageLoadedText;
         }
 
-        private void OnEthernetBootClicked(object sender, EventArgs e)
+        private void OnAlternateBootOptionsClicked(object sender, EventArgs e)
         {
-            EthernetBootWindow bootWindow = new EthernetBootWindow();
+            AlternateBootOptions bootWindow = new AlternateBootOptions();
             bootWindow.ShowDialog();
 
             //
             // Apply settings to system.
             //
             _system.PressBootKeys();
+        }
+
+        private void OnSystemOptionsClick(object sender, EventArgs e)
+        {
+            SystemOptions optionsWindow = new SystemOptions();
+            optionsWindow.ShowDialog();            
         }
 
         private void OnHelpAboutClick(object sender, EventArgs e)
@@ -185,14 +193,21 @@ namespace Contralto
         private void OnFileExitClick(object sender, EventArgs e)
         {
             _controller.StopExecution();
-            this.Close();
+            this.Close();           
         }
 
         private void OnAltoWindowClosed(object sender, FormClosedEventArgs e)
         {
+            // Halt the system and detach our display            
+            _controller.StopExecution();
+            _system.DetachDisplay();
+
             // Commit loaded packs back to disk
             CommitDiskPack(0);
-            CommitDiskPack(1);           
+            CommitDiskPack(1);
+
+            this.Dispose();
+            Application.Exit();
         }
 
         private string ShowImageLoadDialog(int drive)
@@ -259,7 +274,28 @@ namespace Contralto
 
         public void Render()
         {
-            BeginInvoke(new DisplayDelegate(RefreshDisplayBox));
+            _frame++;
+
+            // Wait for the next frame
+            _frameTimer.WaitForFrame();
+
+            if (Configuration.InterlaceDisplay)
+            {
+                // Flip the back-buffer
+                if ((_frame % 2) == 0)
+                {
+                    _currentBuffer = _displayData0;
+                    _lastBuffer = _displayData1;
+                }
+                else
+                {
+                    _currentBuffer = _displayData1;
+                    _lastBuffer = _displayData0;
+                }
+            }
+
+            // Asynchronously render this frame.
+            BeginInvoke(new DisplayDelegate(RefreshDisplayBox));            
         }
 
         private void RefreshDisplayBox()
@@ -268,13 +304,16 @@ namespace Contralto
             BitmapData data = _displayBuffer.LockBits(_displayRect, ImageLockMode.WriteOnly, PixelFormat.Format1bppIndexed);
 
             IntPtr ptr = data.Scan0;
-            System.Runtime.InteropServices.Marshal.Copy(_displayData, 0, ptr, _displayData.Length - 4);
+            System.Runtime.InteropServices.Marshal.Copy(_lastBuffer, 0, ptr, _lastBuffer.Length - 4);
 
             _displayBuffer.UnlockBits(data);
-            DisplayBox.Refresh();            
+            DisplayBox.Refresh();
 
-            // If you want interlacing to be more visible:
-            //Array.Clear(_displayData, 0, _displayData.Length);
+            // Clear the buffer if we're displaying in fakey-"interlaced" mode.
+            if (Configuration.InterlaceDisplay)
+            {
+                Array.Clear(_lastBuffer, 0, _lastBuffer.Length);
+            }
         }
 
         /// <summary>
@@ -292,29 +331,29 @@ namespace Contralto
                 // Low resolution; double up pixels.
                 int address = scanline * 76 + wordOffset * 4;
 
-                if (address > _displayData.Length)
+                if (address > _currentBuffer.Length)
                 {
                     throw new InvalidOperationException("Display word address is out of bounds.");
                 }
 
                 UInt32 stretched = StretchWord(word);
 
-                _displayData[address] = (byte)(stretched >> 24);
-                _displayData[address + 1] = (byte)(stretched >> 16);
-                _displayData[address + 2] = (byte)(stretched >> 8);
-                _displayData[address + 3] = (byte)(stretched);
+                _currentBuffer[address] = (byte)(stretched >> 24);
+                _currentBuffer[address + 1] = (byte)(stretched >> 16);
+                _currentBuffer[address + 2] = (byte)(stretched >> 8);
+                _currentBuffer[address + 3] = (byte)(stretched);
             }
             else
             {
                 int address = scanline * 76 + wordOffset * 2;
 
-                if (address > _displayData.Length)
+                if (address > _currentBuffer.Length)
                 {
                     throw new InvalidOperationException("Display word address is out of bounds.");
                 }
 
-                _displayData[address] = (byte)(word >> 8);
-                _displayData[address + 1] = (byte)(word);
+                _currentBuffer[address] = (byte)(word >> 8);
+                _currentBuffer[address + 1] = (byte)(word);
             }
         }
 
@@ -333,19 +372,19 @@ namespace Contralto
             // Grab the 32 bits straddling the cursor from the display buffer
             // so we can merge the 16 cursor bits in.
             //
-            UInt32 displayWord = (UInt32)((_displayData[address] << 24) |
-                                        (_displayData[address + 1] << 16) |
-                                        (_displayData[address + 2] << 8) |
-                                        _displayData[address + 3]);
+            UInt32 displayWord = (UInt32)((_currentBuffer[address] << 24) |
+                                        (_currentBuffer[address + 1] << 16) |
+                                        (_currentBuffer[address + 2] << 8) |
+                                        _currentBuffer[address + 3]);
 
             UInt32 longcursorWord = (UInt32)(cursorWord << 16);
 
             displayWord ^= (longcursorWord >> (xOffset % 8));
 
-            _displayData[address] = (byte)(displayWord >> 24);
-            _displayData[address + 1] = (byte)(displayWord >> 16);
-            _displayData[address + 2] = (byte)(displayWord >> 8);
-            _displayData[address + 3] = (byte)(displayWord);
+            _currentBuffer[address] = (byte)(displayWord >> 24);
+            _currentBuffer[address + 1] = (byte)(displayWord >> 16);
+            _currentBuffer[address + 2] = (byte)(displayWord >> 8);
+            _currentBuffer[address + 3] = (byte)(displayWord);
         }
 
         /// <summary>
@@ -696,10 +735,18 @@ namespace Contralto
         
         // Display related data.
         // Note: display is actually 606 pixels wide, but that's not an even multiple of 8, so we round up.
-        private byte[] _displayData = new byte[808 * 76 + 4];       // + 4 to make cursor display logic simpler.
+        // Two backbuffers and references to the current / last buffer for rendering
+        private byte[] _displayData0 = new byte[808 * 76 + 4];       // + 4 to make cursor display logic simpler.
+        private byte[] _displayData1 = new byte[808 * 76 + 4];       // + 4 to make cursor display logic simpler.
+        private byte[] _currentBuffer;
+        private byte[] _lastBuffer;
+        private int _frame;
         private Bitmap _displayBuffer;
         private Rectangle _displayRect = new Rectangle(0, 0, 608, 808);
         private delegate void DisplayDelegate();
+
+        // Speed throttling
+        FrameTimer _frameTimer;
 
         // Input related data
 
@@ -724,7 +771,6 @@ namespace Contralto
         private const string _systemStoppedText = "Alto Stopped.";
         private const string _systemRunningText = "Alto Running.";
         private const string _systemErrorText = "Alto Stopped due to error.  See Debugger.";
-
 
     }
 }

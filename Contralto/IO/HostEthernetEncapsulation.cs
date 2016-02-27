@@ -18,11 +18,10 @@ namespace Contralto.IO
 
     public struct EthernetInterface
     {
-        public EthernetInterface(string name, string description, MacAddress macAddress)
+        public EthernetInterface(string name, string description)
         {
             Name = name;
-            Description = description;
-            MacAddress = macAddress;
+            Description = description;            
         }
 
         public static List<EthernetInterface> EnumerateDevices()
@@ -31,33 +30,35 @@ namespace Contralto.IO
 
             foreach (LivePacketDevice device in LivePacketDevice.AllLocalMachine)
             {
-                interfaces.Add(new EthernetInterface(device.Name, device.Description, device.GetMacAddress()));
+                interfaces.Add(new EthernetInterface(device.Name, device.Description));
             }
 
             return interfaces;
         }
 
-        public string Name;
-        public string Description;
-        public MacAddress MacAddress;
-    }
+        public override string ToString()
+        {
+            return Description;
+        }
 
-    public delegate void ReceivePacketDelegate(MemoryStream data);
+        public string Name;
+        public string Description;        
+    }    
 
     /// <summary>
     /// Implements the logic for encapsulating a 3mbit ethernet packet into a 10mb packet and sending it over an actual
-    /// interface controlled by the host operating system.
+    /// ethernet interface controlled by the host operating system.
     /// 
     /// This uses PCap.NET to do the dirty work.
     /// </summary>
-    public class HostEthernet
+    public class HostEthernetEncapsulation : IPacketEncapsulation
     {
-        public HostEthernet(EthernetInterface iface)
+        public HostEthernetEncapsulation(EthernetInterface iface)
         {
             AttachInterface(iface);
         }
 
-        public HostEthernet(string name)
+        public HostEthernetEncapsulation(string name)
         {
             // Find the specified device by name
             List<EthernetInterface> interfaces = EthernetInterface.EnumerateDevices();
@@ -71,7 +72,7 @@ namespace Contralto.IO
                 }
             }
 
-            throw new InvalidOperationException("Specified ethernet interface does not exist.");
+            throw new InvalidOperationException("Specified ethernet interface does not exist or is not compatible with WinPCAP.");
         }
 
         public void RegisterReceiveCallback(ReceivePacketDelegate callback)
@@ -127,7 +128,7 @@ namespace Contralto.IO
             byte destinationHost = packetBytes[3];
             byte sourceHost = packetBytes[2];
 
-            Log.Write(LogComponent.HostEthernet, "Sending packet; source {0} destination {1}, length {2} words.",
+            Log.Write(LogComponent.HostNetworkInterface, "Sending packet; source {0} destination {1}, length {2} words.",
                 Conversion.ToOctal(sourceHost),
                 Conversion.ToOctal(destinationHost),
                 length);
@@ -153,7 +154,7 @@ namespace Contralto.IO
             // Send it over the 'net!
             _communicator.SendPacket(builder.Build(DateTime.Now));
 
-            Log.Write(LogComponent.HostEthernet, "Encapsulated 3mbit packet sent.");
+            Log.Write(LogComponent.HostNetworkInterface, "Encapsulated 3mbit packet sent.");
         }
 
         private void ReceiveCallback(Packet p)
@@ -166,7 +167,7 @@ namespace Contralto.IO
                  p.Ethernet.Destination.ToValue() == _10mbitBroadcast) &&                                       //  broadcast
                 (p.Ethernet.Source.ToValue() != (UInt48)(_10mbitMACPrefix | Configuration.HostAddress)))        //  and not sent by this emulator                
             {
-                Log.Write(LogComponent.HostEthernet, "Received encapsulated 3mbit packet.");
+                Log.Write(LogComponent.HostNetworkInterface, "Received encapsulated 3mbit packet.");
                 _callback(p.Ethernet.Payload.ToMemoryStream());
             }
             else
@@ -182,7 +183,7 @@ namespace Contralto.IO
             // Find the specified device by name
             foreach (LivePacketDevice device in LivePacketDevice.AllLocalMachine)
             {
-                if (device.Name == iface.Name && device.GetMacAddress() == iface.MacAddress)
+                if (device.Description == iface.Name)
                 {
                     _interface = device;
                     break;
@@ -194,7 +195,7 @@ namespace Contralto.IO
                 throw new InvalidOperationException("Requested interface not found.");
             }
 
-            Log.Write(LogComponent.HostEthernet, "Attached to host interface {0}", iface.Name);
+            Log.Write(LogComponent.HostNetworkInterface, "Attached to host interface {0}", iface.Name);
         }
 
         private void Open(bool promiscuous, int timeout)
@@ -204,7 +205,7 @@ namespace Contralto.IO
             // Set this to 1 so we'll get packets as soon as they arrive, no buffering.
             _communicator.SetKernelMinimumBytesToCopy(1);
 
-            Log.Write(LogComponent.HostEthernet, "Host interface opened and receiving packets.");
+            Log.Write(LogComponent.HostNetworkInterface, "Host interface opened and receiving packets.");
         }
 
         /// <summary>
@@ -222,7 +223,7 @@ namespace Contralto.IO
             // Just call ReceivePackets, that's it.  This will never return.
             // (probably need to make this more elegant so we can tear down the thread
             // properly.)
-            Log.Write(LogComponent.HostEthernet, "Receiver thread started.");
+            Log.Write(LogComponent.HostNetworkInterface, "Receiver thread started.");
             _communicator.ReceivePackets(-1, ReceiveCallback);
         }
 

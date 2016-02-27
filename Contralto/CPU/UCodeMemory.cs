@@ -40,17 +40,14 @@ namespace Contralto.CPU
 
         private static void Init()
         {     
-            //       
-            // TODO: this is currently configured for a 2K ROM machine
-            // (1K RAM, 2K ROM).  This should be configurable.
-            //
-            // 1 bank of microcode RAM
-            _uCodeRam = new UInt32[1024];
+            //                               
+            // Max 3 banks of microcode RAM            
+            _uCodeRam = new UInt32[1024 * 3];
             LoadMicrocode(_uCodeRoms);
 
             //
-            // Cache 3k of instructions: 2K ROM, 1K RAM.
-            _decodeCache = new MicroInstruction[1024 * 3];
+            // Cache 5k of instructions: max 2K ROM, 3K RAM.
+            _decodeCache = new MicroInstruction[1024 * 5];
 
             // Precache ROM
             CacheMicrocodeROM();
@@ -103,12 +100,22 @@ namespace Contralto.CPU
             _ramBank = (address & 0x3000) >> 12;
             _ramSelect = (address & 0x0800) == 0;
             _lowHalfsel = (address & 0x0400) == 0;
-            _ramAddr = (address & 0x3ff);          
-            
-            if (_ramBank != 0)
+            _ramAddr = (address & 0x3ff);
+
+            // Clip RAM bank into range, it's always 0 unless we have a 3K uCode RAM system
+            switch (Configuration.SystemType)
             {
-                //throw new NotImplementedException(String.Format("Unexpected RAM BANK select of {0}", _ramBank));
-                _ramBank = 0;
+                case SystemType.OneKRom:
+                case SystemType.TwoKRom:
+                    _ramBank = 0;
+                    break;
+                case SystemType.ThreeKRam:
+                    if (_ramBank > 3)
+                    {
+                        // TODO: clip or not.
+                        throw new InvalidOperationException(String.Format("Unexpected RAM bank value of {0}.", _ramBank));
+                    }
+                    break;            
             }
         }
 
@@ -121,25 +128,34 @@ namespace Contralto.CPU
         public static void SwitchMode(ushort nextAddress, TaskType task)
         {                        
             Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: Current Bank {0}", _microcodeBank[(int)task]);
-            
-            // 2K ROM                                    
-            switch(_microcodeBank[(int)task])
+
+            switch (Configuration.SystemType)
             {
-                case MicrocodeBank.ROM0:
-                    _microcodeBank[(int)task] = (nextAddress & 0x100) == 0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM1;
+                case SystemType.OneKRom:
+                    _microcodeBank[(int)task] = _microcodeBank[(int)task] == MicrocodeBank.ROM0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
                     break;
 
-                case MicrocodeBank.ROM1:
-                    _microcodeBank[(int)task] = (nextAddress & 0x100) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.RAM0;
+                case SystemType.TwoKRom:
+                    switch (_microcodeBank[(int)task])
+                    {
+                        case MicrocodeBank.ROM0:
+                            _microcodeBank[(int)task] = (nextAddress & 0x100) == 0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM1;
+                            break;
+
+                        case MicrocodeBank.ROM1:
+                            _microcodeBank[(int)task] = (nextAddress & 0x100) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.RAM0;
+                            break;
+
+                        case MicrocodeBank.RAM0:
+                            _microcodeBank[(int)task] = (nextAddress & 0x100) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.ROM1;
+                            break;
+                    }
                     break;
 
-                case MicrocodeBank.RAM0:
-                    _microcodeBank[(int)task] = (nextAddress & 0x100) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.ROM1;
+                case SystemType.ThreeKRam:
+                    throw new NotImplementedException("3K uCode RAM not yet implemented.");
                     break;
             }
-
-            // for 1K ROM -- todo: make configurable
-            //_microcodeBank[(int)task] = _microcodeBank[(int)task] == MicrocodeBank.ROM0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
 
             Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: New Bank {0} for Task {1}", _microcodeBank[(int)task], task);            
         }

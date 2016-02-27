@@ -10,9 +10,9 @@ using System.Windows.Forms;
 
 namespace Contralto
 {
-    public partial class EthernetBootWindow : Form
+    public partial class AlternateBootOptions : Form
     {
-        public EthernetBootWindow()
+        public AlternateBootOptions()
         {
             InitializeComponent();
 
@@ -20,7 +20,7 @@ namespace Contralto
 
             BootFileGroup.Enabled = EthernetBootEnabled.Checked = Configuration.EthernetBootEnabled;
 
-            SelectBootFile(Configuration.EthernetBootFile);
+            SelectBootFile(Configuration.BootAddress);
 
         }
 
@@ -79,7 +79,7 @@ namespace Contralto
                 _selectedBoot = ((BootFileEntry)BootFileComboBox.SelectedItem).FileNumber;
             }
 
-            Configuration.EthernetBootFile = _selectedBoot;
+            Configuration.BootAddress = _selectedBoot;
             Configuration.EthernetBootEnabled = _bootEnabled;
 
             this.Close();

@@ -21,6 +21,11 @@ namespace Contralto.Display
             _display = display;
         }
 
+        public void DetachDisplay()
+        {
+            _display = null;
+        }
+
         public int Fields
         {
             get { return _fields; }
@@ -160,6 +165,11 @@ namespace Contralto.Display
 
         private void WordCallback(ulong timeNsec, ulong skewNsec, object context)
         {
+            if (_display == null)
+            {
+                return;
+            }
+
             // Dequeue a word (if available) and draw it to the screen.
             ushort displayWord = (ushort)(_whiteOnBlack ? 0 : 0xffff);
             if (_dataBuffer.Count > 0)

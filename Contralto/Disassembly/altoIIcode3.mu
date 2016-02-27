@@ -1102,7 +1102,7 @@ EM1036>	AC1<- L, :LOADX;
 
 ;SIO - 61004 - Put AC0 on the bus, issue STARTF to get device attention,
 ;Read Host address from Ethernet interface into AC0.
-EM104> SIO:	L<- AC0, STARTF;
+EM0104> SIO:	L<- AC0, STARTF;
 EM1037>	T<- 77777;		***X21 sets AC0[0] to 0
 EM1040>	L<- RSNF AND T;
 EM1041> LTOAC0:	AC0<- L, TASK, :TOSTART;

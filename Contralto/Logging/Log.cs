@@ -25,8 +25,9 @@ namespace Contralto.Logging
         EthernetController = 0x400,
         EthernetTask = 0x800,
         TaskSwitch = 0x1000,
-        HostEthernet = 0x2000,
+        HostNetworkInterface = 0x2000,
         EthernetPacket = 0x4000,
+        Configuration = 0x8000,
 
         Debug = 0x40000000,
         All =   0x7fffffff

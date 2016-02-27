@@ -25,10 +25,21 @@ namespace Contralto.IO
 
             // Attach real Ethernet device if user has specified one, otherwise leave unattached; output data
             // will go into a bit-bucket.
-            if (!String.IsNullOrEmpty(Configuration.HostEthernetInterfaceName))
+            switch(Configuration.HostPacketInterfaceType)
             {
-                _hostEthernet = new HostEthernet(Configuration.HostEthernetInterfaceName);
-                _hostEthernet.RegisterReceiveCallback(OnHostPacketReceived);                
+                case PacketInterfaceType.UDPEncapsulation:
+                    _hostInterface = new UDPEncapsulation(Configuration.HostPacketInterfaceName);
+                    _hostInterface.RegisterReceiveCallback(OnHostPacketReceived);
+                    break;
+
+                case PacketInterfaceType.EthernetEncapsulation:
+                    _hostInterface = new HostEthernetEncapsulation(Configuration.HostPacketInterfaceName);
+                    _hostInterface.RegisterReceiveCallback(OnHostPacketReceived);
+                    break;
+
+                default:
+                    _hostInterface = null;
+                    break;
             }
 
             // More words than the Alto will ever send.
@@ -285,9 +296,9 @@ namespace Contralto.IO
                 // And actually tell the host ethernet interface to send the data.
                 // NOTE: We do not append a checksum to the outgoing 3mbit packet.  See comments on the
                 // receiving end for an explanation.
-                if (_hostEthernet != null)
+                if (_hostInterface != null)
                 {
-                    _hostEthernet.Send(_outputData, _outputIndex);
+                    _hostInterface.Send(_outputData, _outputIndex);
                 }                
                 
                 _outputIndex = 0;
@@ -526,8 +537,8 @@ namespace Contralto.IO
 
         private const int _maxQueuedPackets = 32;
 
-        // The actual connection to a real Ethernet device on the host
-        HostEthernet _hostEthernet;
+        // The actual connection to a real network device of some sort on the host
+        IPacketEncapsulation _hostInterface;
 
         // Buffer to hold outgoing data to the host ethernet
         ushort[] _outputData;
