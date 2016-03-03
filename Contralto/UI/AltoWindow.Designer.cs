@@ -44,7 +44,7 @@
             this.loadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.Drive1ImageName = new System.Windows.Forms.ToolStripMenuItem();
-            this.enableAlternateBootToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.AlternateBootToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SystemEthernetBootMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SystemShowDebuggerMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -88,7 +88,7 @@
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(35, 20);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "File";
             // 
             // exitToolStripMenuItem
@@ -105,12 +105,12 @@
             this.SystemResetMenuItem,
             this.drive0ToolStripMenuItem,
             this.drive1ToolStripMenuItem,
-            this.enableAlternateBootToolStripMenuItem,
+            this.AlternateBootToolStripMenuItem,
             this.SystemEthernetBootMenu,
             this.optionsToolStripMenuItem,
             this.SystemShowDebuggerMenuItem});
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
+            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(57, 20);
             this.settingsToolStripMenuItem.Text = "System";
             // 
             // SystemStartMenuItem
@@ -118,7 +118,7 @@
             this.SystemStartMenuItem.Name = "SystemStartMenuItem";
             this.SystemStartMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
             | System.Windows.Forms.Keys.S)));
-            this.SystemStartMenuItem.Size = new System.Drawing.Size(210, 22);
+            this.SystemStartMenuItem.Size = new System.Drawing.Size(223, 22);
             this.SystemStartMenuItem.Text = "Start";
             this.SystemStartMenuItem.Click += new System.EventHandler(this.OnSystemStartMenuClick);
             // 
@@ -128,7 +128,7 @@
             this.SystemResetMenuItem.Name = "SystemResetMenuItem";
             this.SystemResetMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
             | System.Windows.Forms.Keys.R)));
-            this.SystemResetMenuItem.Size = new System.Drawing.Size(210, 22);
+            this.SystemResetMenuItem.Size = new System.Drawing.Size(223, 22);
             this.SystemResetMenuItem.Text = "Reset";
             this.SystemResetMenuItem.Click += new System.EventHandler(this.OnSystemResetMenuClick);
             // 
@@ -139,7 +139,7 @@
             this.unloadToolStripMenuItem1,
             this.Drive0ImageName});
             this.drive0ToolStripMenuItem.Name = "drive0ToolStripMenuItem";
-            this.drive0ToolStripMenuItem.Size = new System.Drawing.Size(210, 22);
+            this.drive0ToolStripMenuItem.Size = new System.Drawing.Size(223, 22);
             this.drive0ToolStripMenuItem.Text = "Drive 0";
             // 
             // loadToolStripMenuItem1
@@ -147,14 +147,14 @@
             this.loadToolStripMenuItem1.Name = "loadToolStripMenuItem1";
             this.loadToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
             | System.Windows.Forms.Keys.L)));
-            this.loadToolStripMenuItem1.Size = new System.Drawing.Size(167, 22);
+            this.loadToolStripMenuItem1.Size = new System.Drawing.Size(172, 22);
             this.loadToolStripMenuItem1.Text = "Load...";
             this.loadToolStripMenuItem1.Click += new System.EventHandler(this.OnSystemDrive0LoadClick);
             // 
             // unloadToolStripMenuItem1
             // 
             this.unloadToolStripMenuItem1.Name = "unloadToolStripMenuItem1";
-            this.unloadToolStripMenuItem1.Size = new System.Drawing.Size(167, 22);
+            this.unloadToolStripMenuItem1.Size = new System.Drawing.Size(172, 22);
             this.unloadToolStripMenuItem1.Text = "Unload...";
             this.unloadToolStripMenuItem1.Click += new System.EventHandler(this.OnSystemDrive0UnloadClick);
             // 
@@ -162,7 +162,7 @@
             // 
             this.Drive0ImageName.Enabled = false;
             this.Drive0ImageName.Name = "Drive0ImageName";
-            this.Drive0ImageName.Size = new System.Drawing.Size(167, 22);
+            this.Drive0ImageName.Size = new System.Drawing.Size(172, 22);
             this.Drive0ImageName.Text = "Image Name";
             // 
             // drive1ToolStripMenuItem
@@ -172,20 +172,20 @@
             this.unloadToolStripMenuItem,
             this.Drive1ImageName});
             this.drive1ToolStripMenuItem.Name = "drive1ToolStripMenuItem";
-            this.drive1ToolStripMenuItem.Size = new System.Drawing.Size(210, 22);
+            this.drive1ToolStripMenuItem.Size = new System.Drawing.Size(223, 22);
             this.drive1ToolStripMenuItem.Text = "Drive 1";
             // 
             // loadToolStripMenuItem
             // 
             this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
-            this.loadToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
+            this.loadToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
             this.loadToolStripMenuItem.Text = "Load...";
             this.loadToolStripMenuItem.Click += new System.EventHandler(this.OnSystemDrive1LoadClick);
             // 
             // unloadToolStripMenuItem
             // 
             this.unloadToolStripMenuItem.Name = "unloadToolStripMenuItem";
-            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
+            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
             this.unloadToolStripMenuItem.Text = "Unload...";
             this.unloadToolStripMenuItem.Click += new System.EventHandler(this.OnSystemDrive1UnloadClick);
             // 
@@ -193,27 +193,28 @@
             // 
             this.Drive1ImageName.Enabled = false;
             this.Drive1ImageName.Name = "Drive1ImageName";
-            this.Drive1ImageName.Size = new System.Drawing.Size(134, 22);
+            this.Drive1ImageName.Size = new System.Drawing.Size(142, 22);
             this.Drive1ImageName.Text = "Image Name";
             // 
-            // enableAlternateBootToolStripMenuItem
+            // AlternateBootToolStripMenuItem
             // 
-            this.enableAlternateBootToolStripMenuItem.Name = "enableAlternateBootToolStripMenuItem";
-            this.enableAlternateBootToolStripMenuItem.Size = new System.Drawing.Size(210, 22);
-            this.enableAlternateBootToolStripMenuItem.Text = "Enable Alternate Boot";
+            this.AlternateBootToolStripMenuItem.Name = "AlternateBootToolStripMenuItem";
+            this.AlternateBootToolStripMenuItem.Size = new System.Drawing.Size(223, 22);
+            this.AlternateBootToolStripMenuItem.Text = "Start with Alternate Boot";
+            this.AlternateBootToolStripMenuItem.Click += new System.EventHandler(this.OnStartWithAlternateBootClicked);
             // 
             // SystemEthernetBootMenu
             // 
             this.SystemEthernetBootMenu.Name = "SystemEthernetBootMenu";
-            this.SystemEthernetBootMenu.Size = new System.Drawing.Size(210, 22);
+            this.SystemEthernetBootMenu.Size = new System.Drawing.Size(223, 22);
             this.SystemEthernetBootMenu.Text = "Alternate Boot Options...";
             this.SystemEthernetBootMenu.Click += new System.EventHandler(this.OnAlternateBootOptionsClicked);
             // 
             // optionsToolStripMenuItem
             // 
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(210, 22);
-            this.optionsToolStripMenuItem.Text = "Options...";
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(223, 22);
+            this.optionsToolStripMenuItem.Text = "System Configuration...";
             this.optionsToolStripMenuItem.Click += new System.EventHandler(this.OnSystemOptionsClick);
             // 
             // SystemShowDebuggerMenuItem
@@ -221,7 +222,7 @@
             this.SystemShowDebuggerMenuItem.Name = "SystemShowDebuggerMenuItem";
             this.SystemShowDebuggerMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
             | System.Windows.Forms.Keys.D)));
-            this.SystemShowDebuggerMenuItem.Size = new System.Drawing.Size(210, 22);
+            this.SystemShowDebuggerMenuItem.Size = new System.Drawing.Size(223, 22);
             this.SystemShowDebuggerMenuItem.Text = "Show Debugger";
             this.SystemShowDebuggerMenuItem.Click += new System.EventHandler(this.OnDebuggerShowClick);
             // 
@@ -230,13 +231,13 @@
             this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.aboutToolStripMenuItem});
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(40, 20);
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.helpToolStripMenuItem.Text = "Help";
             // 
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
             this.aboutToolStripMenuItem.Text = "About";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.OnHelpAboutClick);
             // 
@@ -256,19 +257,19 @@
             // CaptureStatusLabel
             // 
             this.CaptureStatusLabel.Name = "CaptureStatusLabel";
-            this.CaptureStatusLabel.Size = new System.Drawing.Size(102, 17);
+            this.CaptureStatusLabel.Size = new System.Drawing.Size(109, 17);
             this.CaptureStatusLabel.Text = "CaptureStatusLabel";
             // 
             // SystemStatusLabel
             // 
             this.SystemStatusLabel.Name = "SystemStatusLabel";
-            this.SystemStatusLabel.Size = new System.Drawing.Size(98, 17);
+            this.SystemStatusLabel.Size = new System.Drawing.Size(105, 17);
             this.SystemStatusLabel.Text = "SystemStatusLabel";
             // 
             // DiskStatusLabel
             // 
             this.DiskStatusLabel.Name = "DiskStatusLabel";
-            this.DiskStatusLabel.Size = new System.Drawing.Size(82, 17);
+            this.DiskStatusLabel.Size = new System.Drawing.Size(89, 17);
             this.DiskStatusLabel.Text = "DiskStatusLabel";
             // 
             // AltoWindow
@@ -328,6 +329,6 @@
         private System.Windows.Forms.ToolStripStatusLabel SystemStatusLabel;
         private System.Windows.Forms.ToolStripStatusLabel DiskStatusLabel;
         private System.Windows.Forms.ToolStripMenuItem SystemEthernetBootMenu;
-        private System.Windows.Forms.ToolStripMenuItem enableAlternateBootToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem AlternateBootToolStripMenuItem;
     }
 }

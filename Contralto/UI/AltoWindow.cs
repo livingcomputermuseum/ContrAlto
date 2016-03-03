@@ -47,8 +47,8 @@ namespace Contralto
             _controller.ErrorCallback += OnExecutionError;
 
             // Update disk image UI info
-            Drive0ImageName.Text = _system.DiskController.Drives[0].IsLoaded ? System.IO.Path.GetFileName(_system.DiskController.Drives[0].Pack.PackName) : _noImageLoadedText;
-            Drive1ImageName.Text = _system.DiskController.Drives[1].IsLoaded ? System.IO.Path.GetFileName(_system.DiskController.Drives[1].Pack.PackName) : _noImageLoadedText;
+            Drive0ImageName.Text = _system.DiskController.Drives[0].IsLoaded ? Path.GetFileName(_system.DiskController.Drives[0].Pack.PackName) : _noImageLoadedText;
+            Drive1ImageName.Text = _system.DiskController.Drives[1].IsLoaded ? Path.GetFileName(_system.DiskController.Drives[1].Pack.PackName) : _noImageLoadedText;
         }
 
         /// <summary>
@@ -58,21 +58,25 @@ namespace Contralto
         /// <param name="e"></param>
         private void OnSystemStartMenuClick(object sender, EventArgs e)
         {
-            // Disable "Start" menu item
-            SystemStartMenuItem.Enabled = false;
+            StartSystem(AlternateBootType.None);
+        }        
 
-            // Enable "Reset" menu item
-            SystemResetMenuItem.Enabled = true;
+        private void OnStartWithAlternateBootClicked(object sender, EventArgs e)
+        {
+            if (_controller.IsRunning)
+            {
+                _controller.Reset(Configuration.AlternateBootType);
+            }
+            else
+            {
+                StartSystem(Configuration.AlternateBootType);                
+            }
 
-            _controller.StartExecution();
-
-            SystemStatusLabel.Text = _systemRunningText;
-
-    }
+        }
 
         private void OnSystemResetMenuClick(object sender, EventArgs e)
         {
-            _controller.Reset();
+            _controller.Reset(AlternateBootType.None);
         }
 
         private void OnSystemDrive0LoadClick(object sender, EventArgs e)
@@ -90,6 +94,7 @@ namespace Contralto
                 CommitDiskPack(0);
                 _system.LoadDrive(0, path);
                 Drive0ImageName.Text = System.IO.Path.GetFileName(path);
+                Configuration.Drive0Image = path;
             }
             catch(Exception ex)
             {
@@ -104,6 +109,7 @@ namespace Contralto
             CommitDiskPack(0);
             _system.UnloadDrive(0);
             Drive0ImageName.Text = _noImageLoadedText;
+            Configuration.Drive0Image = String.Empty;
         }
 
         private void OnSystemDrive1LoadClick(object sender, EventArgs e)
@@ -121,6 +127,7 @@ namespace Contralto
                 CommitDiskPack(1);
                 _system.LoadDrive(1, path);
                 Drive1ImageName.Text = System.IO.Path.GetFileName(path);
+                Configuration.Drive1Image = path;
             }
             catch (Exception ex)
             {
@@ -135,17 +142,13 @@ namespace Contralto
             CommitDiskPack(1);
             _system.UnloadDrive(1);
             Drive1ImageName.Text = _noImageLoadedText;
+            Configuration.Drive1Image = String.Empty;
         }
 
         private void OnAlternateBootOptionsClicked(object sender, EventArgs e)
         {
             AlternateBootOptions bootWindow = new AlternateBootOptions();
-            bootWindow.ShowDialog();
-
-            //
-            // Apply settings to system.
-            //
-            _system.PressBootKeys();
+            bootWindow.ShowDialog();    
         }
 
         private void OnSystemOptionsClick(object sender, EventArgs e)
@@ -205,6 +208,9 @@ namespace Contralto
             // Commit loaded packs back to disk
             CommitDiskPack(0);
             CommitDiskPack(1);
+
+            // Commit current configuration to disk
+            Configuration.WriteConfiguration();
 
             this.Dispose();
             Application.Exit();
@@ -266,6 +272,19 @@ namespace Contralto
                     }
                 }                
             }
+        }
+
+        private void StartSystem(AlternateBootType bootType)
+        {
+            // Disable "Start" menu item
+            SystemStartMenuItem.Enabled = false;
+
+            // Enable "Reset" menu item
+            SystemResetMenuItem.Enabled = true;
+
+            _controller.StartExecution(bootType);
+
+            SystemStatusLabel.Text = _systemRunningText;
         }
 
         //

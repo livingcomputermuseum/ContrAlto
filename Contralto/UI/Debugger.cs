@@ -718,7 +718,7 @@ namespace Contralto
         {
             _execType = ExecutionType.Step;
             SetExecutionState(ExecutionState.SingleStep);
-            _controller.StartExecution();                        
+            _controller.StartExecution(AlternateBootType.None);                        
         }
 
         private void OnAutoStepButtonClicked(object sender, EventArgs e)
@@ -729,7 +729,7 @@ namespace Contralto
             //
             _execType = ExecutionType.Auto;
             SetExecutionState(ExecutionState.AutoStep);
-            _controller.StartExecution();
+            _controller.StartExecution(AlternateBootType.None);
         }
 
         private void RunButton_Click(object sender, EventArgs e)
@@ -740,14 +740,14 @@ namespace Contralto
             //                  
             _execType = ExecutionType.Normal;
             SetExecutionState(ExecutionState.Running);
-            _controller.StartExecution();         
+            _controller.StartExecution(AlternateBootType.None);         
         }
 
         private void RunToNextTaskButton_Click(object sender, EventArgs e)
         {            
             _execType = ExecutionType.NextTask;
             SetExecutionState(ExecutionState.Running);
-            _controller.StartExecution();
+            _controller.StartExecution(AlternateBootType.None);
         }
 
         /// <summary>
@@ -762,7 +762,7 @@ namespace Contralto
         {
             _execType = ExecutionType.NextNovaInstruction;
             SetExecutionState(ExecutionState.Running);
-            _controller.StartExecution();
+            _controller.StartExecution(AlternateBootType.None);
             
         }
 
@@ -775,7 +775,7 @@ namespace Contralto
 
         private void ResetButton_Click(object sender, EventArgs e)
         {
-            _controller.Reset();            
+            _controller.Reset(AlternateBootType.None);            
             Refresh();
         }    
         

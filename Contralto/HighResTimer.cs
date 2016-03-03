@@ -62,7 +62,7 @@ namespace Contralto
         public static extern bool DeleteTimerQueue(IntPtr hTimerQueue, IntPtr hCompletionEvent);
 
         [DllImport("kernel32.dll", EntryPoint = "CreateTimerQueueTimer")]
-        public static extern bool CreateTimerQueueTimer(out IntPtr phNewTimer, IntPtr hTimerQueue, IntPtr Callback, IntPtr Parameter, UInt32 DueTime, UInt32 Period, ulong Flags);
+        public static extern bool CreateTimerQueueTimer(out IntPtr phNewTimer, IntPtr hTimerQueue, IntPtr Callback, IntPtr Parameter, UInt32 DueTime, UInt32 Period, uint Flags);
 
         [DllImport("kernel32.dll", EntryPoint = "ChangeTimerQueueTimer")]
         public static extern bool ChangeTimerQueueTimer(IntPtr hTimerQueue, IntPtr hTimer, UInt32 DueTime, UInt32 Period);

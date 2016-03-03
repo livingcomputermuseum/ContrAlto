@@ -65,10 +65,7 @@ namespace Contralto
             _cpu.Reset();
             _ethernetController.Reset();
 
-            UCodeMemory.Reset();
-
-            // Force the boot keys on reset.
-            PressBootKeys();
+            UCodeMemory.Reset();            
         }
 
         /// <summary>
@@ -126,17 +123,19 @@ namespace Contralto
             _diskController.Drives[drive].UnloadPack();
         }
 
-        public void PressBootKeys()
+        public void PressBootKeys(AlternateBootType bootType)
         {
-            //
-            // Press bootkeys if the user has specified a boot combination.
-            //
-            if (Configuration.EthernetBootEnabled)
+            switch(bootType)
             {
-                _keyboard.PressBootKeys(Configuration.BootAddress, true);
+                case AlternateBootType.Disk:
+                    _keyboard.PressBootKeys(Configuration.BootAddress, false);
+                    break;
+
+                case AlternateBootType.Ethernet:
+                    _keyboard.PressBootKeys(Configuration.BootFile, true);
+                    break;
             }
         }
-
 
         public AltoCPU CPU
         {

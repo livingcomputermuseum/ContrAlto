@@ -23,9 +23,10 @@ namespace Contralto
 
         }        
 
-        public void StartExecution()
+        public void StartExecution(AlternateBootType bootType)
         {
             StartAltoExecutionThread();
+            _system.PressBootKeys(bootType);
         }
 
         public void StopExecution()
@@ -39,7 +40,7 @@ namespace Contralto
             }
         }
 
-        public void Reset()
+        public void Reset(AlternateBootType bootType)
         {
             bool running = IsRunning;
 
@@ -47,13 +48,13 @@ namespace Contralto
             {
                 StopExecution();
             }
-            _system.Reset();
+            _system.Reset();            
+            _system.PressBootKeys(bootType);            
 
             if (running)
             {
-                StartExecution();
+                StartExecution(AlternateBootType.None);
             }
-
         }       
 
         public bool IsRunning

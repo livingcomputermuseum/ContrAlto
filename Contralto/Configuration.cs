@@ -41,6 +41,18 @@ namespace Contralto
         /// Encapsulate frames inside UDP datagrams on the host interface.
         /// </summary>
         UDPEncapsulation,
+
+        /// <summary>
+        /// No encapsulation; sent packets are dropped on the floor and no packets are received.
+        /// </summary>
+        None,
+    }
+
+    public enum AlternateBootType
+    {
+        None,
+        Disk,
+        Ethernet,
     }
 
     /// <summary>
@@ -53,8 +65,9 @@ namespace Contralto
             // Initialize things to defaults.            
             HostAddress = 0x22;
 
-            EthernetBootEnabled = false;
+            AlternateBootType = AlternateBootType.Disk;
             BootAddress = 0;
+            BootFile = 0;
 
             SystemType = SystemType.TwoKRom;
 
@@ -98,17 +111,22 @@ namespace Contralto
         /// <summary>
         /// The type of interface to use to host networking.
         /// </summary>
-        public static PacketInterfaceType HostPacketInterfaceType;
+        public static PacketInterfaceType HostPacketInterfaceType;        
 
         /// <summary>
-        /// Whether to enable Ethernet boot at reset
+        /// The type of Alternate Boot to apply
         /// </summary>
-        public static bool EthernetBootEnabled;
+        public static AlternateBootType AlternateBootType;
 
         /// <summary>
-        /// The address/file to boot at reset
+        /// The address to boot at reset for a disk alternate boot
         /// </summary>
         public static ushort BootAddress;
+
+        /// <summary>
+        /// The file to boot at reset for an ethernet alternate boot
+        /// </summary>
+        public static ushort BootFile;
 
         /// <summary>
         /// Whether to render the display "interlaced" or not.
@@ -140,7 +158,7 @@ namespace Contralto
                     while (!configStream.EndOfStream)
                     {
                         lineNumber++;
-                        string line = configStream.ReadLine().ToLowerInvariant().Trim();
+                        string line = configStream.ReadLine().Trim();
 
                         if (string.IsNullOrEmpty(line))
                         {
@@ -161,7 +179,7 @@ namespace Contralto
 
                         try
                         {
-                            switch (parameter)
+                            switch (parameter.ToLowerInvariant())
                             {
                                 case "drive0image":
                                     Drive0Image = value;
@@ -187,12 +205,16 @@ namespace Contralto
                                     HostPacketInterfaceType = (PacketInterfaceType)Enum.Parse(typeof(PacketInterfaceType), value, true);
                                     break;
 
-                                case "ethernetbootenabled":
-                                    EthernetBootEnabled = bool.Parse(value);
+                                case "alternateboottype":
+                                    AlternateBootType = (AlternateBootType)Enum.Parse(typeof(AlternateBootType), value, true);
                                     break;
 
                                 case "bootaddress":
                                     BootAddress = Convert.ToUInt16(value, 8);
+                                    break;
+
+                                case "bootfile":
+                                    BootFile = Convert.ToUInt16(value, 8);
                                     break;
 
                                 case "interlacedisplay":
@@ -251,8 +273,9 @@ namespace Contralto
                     }
 
                     configStream.WriteLine("HostPacketInterfaceType {0}", HostPacketInterfaceType);
-                    configStream.WriteLine("EthernetBootEnabled {0}", EthernetBootEnabled);
+                    configStream.WriteLine("AlternateBootType {0}", AlternateBootType);
                     configStream.WriteLine("BootAddress {0}", Conversion.ToOctal(BootAddress));
+                    configStream.WriteLine("BootFile {0}", Conversion.ToOctal(BootFile));
                     configStream.WriteLine("InterlaceDisplay {0}", InterlaceDisplay);
                     configStream.WriteLine("ThrottleSpeed {0}", ThrottleSpeed);
                 }

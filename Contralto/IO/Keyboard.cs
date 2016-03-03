@@ -119,8 +119,7 @@ namespace Contralto.IO
             // If we had been holding boot keys, release them now that a real user is pressing a key.
             if (_bootKeysPressed)
             {
-                Reset();
-                _bootKeysPressed = false;
+                Reset();                
             }
 
             AltoKeyBit bits = _keyMap[key];

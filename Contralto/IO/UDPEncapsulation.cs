@@ -21,6 +21,8 @@ namespace Contralto.IO
             {
                 _udpClient = new UdpClient(_udpPort, AddressFamily.InterNetwork);
                 _udpClient.EnableBroadcast = true;
+                _udpClient.Client.Blocking = true;
+                _udpClient.Client.MulticastLoopback = false;
 
                 //
                 // Grab the broadcast address for the interface so that we know what broadcast address to use
@@ -31,7 +33,7 @@ namespace Contralto.IO
                 IPInterfaceProperties props = null;
                 foreach(NetworkInterface nic in nics)
                 {
-                    if (nic.Description.ToLowerInvariant() == interfaceName.ToLowerInvariant())
+                    if (nic.Description == interfaceName)
                     {
                         props = nic.GetIPProperties();
                         break;
@@ -49,7 +51,8 @@ namespace Contralto.IO
                     // go with it.
                     if (unicast.Address.AddressFamily == AddressFamily.InterNetwork)
                     {
-                        _broadcastEndpoint = new IPEndPoint(GetBroadcastAddress(unicast.Address, unicast.IPv4Mask), _udpPort);
+                        _thisIPAddress = unicast.Address;
+                        _broadcastEndpoint = new IPEndPoint(GetBroadcastAddress(_thisIPAddress, unicast.IPv4Mask), _udpPort);
                         break;
                     }
                 }
@@ -173,8 +176,12 @@ namespace Contralto.IO
 
                 // TODO: sanitize data before handing it off.
 
-                Log.Write(LogComponent.HostNetworkInterface, "Received UDP-encapsulated 3mbit packet.");
-                _callback(new System.IO.MemoryStream(data));
+                // Drop our own UDP packets.
+                if (!groupEndPoint.Address.Equals(_thisIPAddress))
+                {
+                    Log.Write(LogComponent.HostNetworkInterface, "Received UDP-encapsulated 3mbit packet.");
+                    _callback(new System.IO.MemoryStream(data));
+                }
             }
         }
 
@@ -204,5 +211,7 @@ namespace Contralto.IO
         private UdpClient _udpClient;
         private IPEndPoint _broadcastEndpoint;
 
+        // The IP address (unicast address) of the interface we're using to send UDP datagrams.
+        private IPAddress _thisIPAddress;
     }   
 }

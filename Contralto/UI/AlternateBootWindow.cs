@@ -14,16 +14,22 @@ namespace Contralto
     {
         public AlternateBootOptions()
         {
-            InitializeComponent();
-
+            InitializeComponent();            
+                        
             LoadBootEntries();
 
-            BootFileGroup.Enabled = EthernetBootEnabled.Checked = Configuration.EthernetBootEnabled;
+            if (Configuration.AlternateBootType == AlternateBootType.Disk)
+            {
+                DiskBootRadioButton.Checked = true;
+            }
+            else
+            {
+                EthernetBootRadioButton.Checked = true;
+            }
 
-            SelectBootFile(Configuration.BootAddress);
-
-        }
-
+            SetBootAddress(Configuration.BootAddress);
+            SelectBootFile(Configuration.BootFile);
+        }        
 
         private void LoadBootEntries()
         {
@@ -55,18 +61,33 @@ namespace Contralto
             }
         }       
 
+        private void SetBootAddress(ushort address)
+        {
+            DiskBootAddressTextBox.Text = Conversion.ToOctal(address);
+        }
+
         private void BootFileComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            _selectedBoot = ((BootFileEntry)BootFileComboBox.SelectedItem).FileNumber;
-        }
+            _selectedBootFile = ((BootFileEntry)BootFileComboBox.SelectedItem).FileNumber;
+        }        
 
         private void OKButton_Click(object sender, EventArgs e)
         {
+            try
+            {
+                _selectedBootAddress = Convert.ToUInt16(DiskBootAddressTextBox.Text, 8);
+            }
+            catch
+            {
+                MessageBox.Show("The disk boot address must be an octal value between 0 and 177777.");
+                return;
+            }            
+
             if (BootFileComboBox.SelectedItem == null)
             {
                 try
                 {
-                    _selectedBoot = Convert.ToUInt16(BootFileComboBox.Text, 8);
+                    _selectedBootFile = Convert.ToUInt16(BootFileComboBox.Text, 8);
                 }
                 catch
                 {
@@ -76,11 +97,20 @@ namespace Contralto
             }
             else
             {
-                _selectedBoot = ((BootFileEntry)BootFileComboBox.SelectedItem).FileNumber;
+                _selectedBootFile = ((BootFileEntry)BootFileComboBox.SelectedItem).FileNumber;
             }
+            
+            Configuration.BootAddress = _selectedBootAddress;
+            Configuration.BootFile = _selectedBootFile;
 
-            Configuration.BootAddress = _selectedBoot;
-            Configuration.EthernetBootEnabled = _bootEnabled;
+            if (DiskBootRadioButton.Checked)
+            {            
+                Configuration.AlternateBootType = AlternateBootType.Disk;
+            }
+            else
+            {                               
+                Configuration.AlternateBootType = AlternateBootType.Ethernet;
+            }
 
             this.Close();
         }
@@ -88,12 +118,7 @@ namespace Contralto
         private void CancelButton_Click(object sender, EventArgs e)
         {
             this.Close();
-        }
-
-        private void OnCheckChanged(object sender, EventArgs e)
-        {
-            BootFileGroup.Enabled = _bootEnabled = EthernetBootEnabled.Checked;
-        }
+        }      
 
         private BootFileEntry[] _bootEntries = new BootFileEntry[]
         {
@@ -118,8 +143,8 @@ namespace Contralto
 
        
 
-        private ushort _selectedBoot;
-        private bool _bootEnabled;
+        private ushort _selectedBootFile;
+        private ushort _selectedBootAddress;
 
     }
 

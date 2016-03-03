@@ -54,55 +54,82 @@ namespace Contralto.UI
             {
                 // If PCAP isn't installed, the RAW Ethernet option is not available.           
                 RawEthernetRadioButton.Enabled = false;
-                UDPRadioButton.Checked = true;
-            }
-            else
-            {
-                if (Configuration.HostPacketInterfaceType == PacketInterfaceType.UDPEncapsulation)
-                {
-                    UDPRadioButton.Checked = true;
-                }
-                else
-                {
-                    RawEthernetRadioButton.Checked = true;
-                }
-            }
 
-            PopulateNetworkAdapterList(UDPRadioButton.Checked);                       
+                // Ensure the option isn't set in the configuration.
+                if (Configuration.HostPacketInterfaceType == PacketInterfaceType.EthernetEncapsulation)
+                {
+                    Configuration.HostPacketInterfaceType = PacketInterfaceType.None;
+                }
+            }
+            
+            switch(Configuration.HostPacketInterfaceType)
+            {
+                case PacketInterfaceType.UDPEncapsulation:
+                    UDPRadioButton.Checked = true;
+                    break;
+
+                case PacketInterfaceType.EthernetEncapsulation:
+                    RawEthernetRadioButton.Checked = true;
+                    break;
+
+                case PacketInterfaceType.None:
+                    NoEncapsulationRadioButton.Checked = true;
+                    break;
+            }                                                    
+
+            PopulateNetworkAdapterList(Configuration.HostPacketInterfaceType);                       
         }
 
-        private void PopulateNetworkAdapterList(bool udpEncapsulation)
+        private void PopulateNetworkAdapterList(PacketInterfaceType encapType)
         {
             //
             // Populate the list with the interfaces available on the machine, for the
             // type of encapsulation being used.
-            //            
+            //                        
+            HostInterfaceGroupBox.Enabled = encapType != PacketInterfaceType.None;
+
             EthernetInterfaceListBox.Items.Clear();
 
-            NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
-
+            
             // Add the "Use no interface" option
             EthernetInterfaceListBox.Items.Add(
                 new EthernetInterface("None", "No network adapter"));
 
-            foreach (NetworkInterface iface in interfaces)
+            
+            switch (encapType)
             {
                 // For UDP we show all interfaces that support IPV4, for Raw Ethernet we show only Ethernet interfaces.
-                if (udpEncapsulation)
-                {
-                    if (iface.Supports(NetworkInterfaceComponent.IPv4))
+                case PacketInterfaceType.UDPEncapsulation:
                     {
-                        EthernetInterfaceListBox.Items.Add(new EthernetInterface(iface.Name, iface.Description));
+                        NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
+
+                        foreach (NetworkInterface iface in interfaces)
+                        {
+                            if (iface.Supports(NetworkInterfaceComponent.IPv4))
+                            {
+                                EthernetInterfaceListBox.Items.Add(new EthernetInterface(iface.Name, iface.Description));
+                            }
+                        }
                     }
-                }
-                else 
-                {
-                    if (iface.NetworkInterfaceType == NetworkInterfaceType.Ethernet)
+                    break;
+
+                // Add all interfaces that PCAP knows about.
+                case PacketInterfaceType.EthernetEncapsulation:
                     {
-                        EthernetInterfaceListBox.Items.Add(new EthernetInterface(iface.Name, iface.Description));
-                    }
-                }
-            }
+                        List<EthernetInterface> ifaces = EthernetInterface.EnumerateDevices();
+
+                        foreach (EthernetInterface iface in ifaces)
+                        {
+                            EthernetInterfaceListBox.Items.Add(iface);
+                        }
+                    }                    
+                    break;
+
+                case PacketInterfaceType.None:
+                    // Add nothing.
+                    break;
+            }            
+            
 
             //
             // Select the one that is already selected (if any)
@@ -115,7 +142,7 @@ namespace Contralto.UI
                 {
                     EthernetInterface iface = (EthernetInterface)EthernetInterfaceListBox.Items[i];
 
-                    if (iface.Description.ToLowerInvariant() == Configuration.HostPacketInterfaceName.ToLowerInvariant())
+                    if (iface.Description == Configuration.HostPacketInterfaceName)
                     {
                         EthernetInterfaceListBox.SelectedIndex = i;
                         break;
@@ -146,12 +173,16 @@ namespace Contralto.UI
             {
                 _selectedInterfaceType = PacketInterfaceType.UDPEncapsulation;
             }
-            else
+            else if (RawEthernetRadioButton.Checked)
             {
                 _selectedInterfaceType = PacketInterfaceType.EthernetEncapsulation;
             }
+            else
+            {
+                _selectedInterfaceType = PacketInterfaceType.None;
+            }
 
-            PopulateNetworkAdapterList(UDPRadioButton.Checked);
+            PopulateNetworkAdapterList(_selectedInterfaceType);
         }
 
         private void OKButton_Click(object sender, EventArgs e)
@@ -180,14 +211,14 @@ namespace Contralto.UI
             //
             // First warn the user of changes that require a restart.
             //
-            if (Configuration.HostPacketInterfaceName.ToLowerInvariant() != iface.Description.ToLowerInvariant() ||
+            if (Configuration.HostPacketInterfaceName != iface.Description ||
                 Configuration.HostPacketInterfaceType != _selectedInterfaceType ||
                 Configuration.SystemType != _selectedSystemType)
             {
                 MessageBox.Show("Changes to CPU or Ethernet configuration will not take effect until ContrAlto is restarted.");
             }
 
-            //System
+            // System
             Configuration.SystemType = _selectedSystemType;
 
             // Ethernet
@@ -197,9 +228,7 @@ namespace Contralto.UI
 
             // Display
             Configuration.InterlaceDisplay = InterlaceDisplayCheckBox.Checked;
-            Configuration.ThrottleSpeed = ThrottleSpeedCheckBox.Checked;
-
-            Configuration.WriteConfiguration();
+            Configuration.ThrottleSpeed = ThrottleSpeedCheckBox.Checked;            
 
             this.Close();
 

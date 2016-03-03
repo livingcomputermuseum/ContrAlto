@@ -48,6 +48,7 @@
             this.InterlaceDisplayCheckBox = new System.Windows.Forms.CheckBox();
             this.OKButton = new System.Windows.Forms.Button();
             this.CancelButton = new System.Windows.Forms.Button();
+            this.NoEncapsulationRadioButton = new System.Windows.Forms.RadioButton();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
@@ -142,6 +143,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.NoEncapsulationRadioButton);
             this.groupBox1.Controls.Add(this.RawEthernetRadioButton);
             this.groupBox1.Controls.Add(this.UDPRadioButton);
             this.groupBox1.Location = new System.Drawing.Point(10, 30);
@@ -154,7 +156,7 @@
             // RawEthernetRadioButton
             // 
             this.RawEthernetRadioButton.AutoSize = true;
-            this.RawEthernetRadioButton.Location = new System.Drawing.Point(77, 16);
+            this.RawEthernetRadioButton.Location = new System.Drawing.Point(63, 16);
             this.RawEthernetRadioButton.Name = "RawEthernetRadioButton";
             this.RawEthernetRadioButton.Size = new System.Drawing.Size(186, 17);
             this.RawEthernetRadioButton.TabIndex = 1;
@@ -271,6 +273,17 @@
             this.CancelButton.UseVisualStyleBackColor = true;
             this.CancelButton.Click += new System.EventHandler(this.CancelButton_Click);
             // 
+            // NoEncapsulation
+            // 
+            this.NoEncapsulationRadioButton.AutoSize = true;
+            this.NoEncapsulationRadioButton.Location = new System.Drawing.Point(255, 16);
+            this.NoEncapsulationRadioButton.Name = "NoEncapsulation";
+            this.NoEncapsulationRadioButton.Size = new System.Drawing.Size(51, 17);
+            this.NoEncapsulationRadioButton.TabIndex = 2;
+            this.NoEncapsulationRadioButton.TabStop = true;
+            this.NoEncapsulationRadioButton.Text = "None";
+            this.NoEncapsulationRadioButton.UseVisualStyleBackColor = true;
+            // 
             // SystemOptions
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -320,5 +333,6 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.RadioButton RawEthernetRadioButton;
         private System.Windows.Forms.RadioButton UDPRadioButton;
+        private System.Windows.Forms.RadioButton NoEncapsulationRadioButton;
     }
 }

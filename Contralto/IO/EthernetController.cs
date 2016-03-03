@@ -21,25 +21,32 @@ namespace Contralto.IO
             Reset();
 
             _fifoTransmitWakeupEvent = new Event(_fifoTransmitDuration, null, OutputFifoCallback);
-            
+
 
             // Attach real Ethernet device if user has specified one, otherwise leave unattached; output data
             // will go into a bit-bucket.
-            switch(Configuration.HostPacketInterfaceType)
+            try
             {
-                case PacketInterfaceType.UDPEncapsulation:
-                    _hostInterface = new UDPEncapsulation(Configuration.HostPacketInterfaceName);
-                    _hostInterface.RegisterReceiveCallback(OnHostPacketReceived);
-                    break;
+                switch (Configuration.HostPacketInterfaceType)
+                {
+                    case PacketInterfaceType.UDPEncapsulation:
+                        _hostInterface = new UDPEncapsulation(Configuration.HostPacketInterfaceName);
+                        _hostInterface.RegisterReceiveCallback(OnHostPacketReceived);
+                        break;
 
-                case PacketInterfaceType.EthernetEncapsulation:
-                    _hostInterface = new HostEthernetEncapsulation(Configuration.HostPacketInterfaceName);
-                    _hostInterface.RegisterReceiveCallback(OnHostPacketReceived);
-                    break;
+                    case PacketInterfaceType.EthernetEncapsulation:
+                        _hostInterface = new HostEthernetEncapsulation(Configuration.HostPacketInterfaceName);
+                        _hostInterface.RegisterReceiveCallback(OnHostPacketReceived);
+                        break;
 
-                default:
-                    _hostInterface = null;
-                    break;
+                    default:
+                        _hostInterface = null;
+                        break;
+                }
+            }
+            catch
+            {
+                _hostInterface = null;
             }
 
             // More words than the Alto will ever send.
@@ -359,7 +366,9 @@ namespace Contralto.IO
             }
             else
             {
-                Log.Write(LogType.Error, LogComponent.EthernetPacket, "Packet queue has reached its limit of {0} packets, dropping incoming packet.", _maxQueuedPackets);
+                Log.Write(LogType.Error, LogComponent.EthernetPacket, "Input packet queue has reached its limit of {0} packets, dropping oldest packet.", _maxQueuedPackets);
+                _nextPackets.Dequeue();
+                _nextPackets.Enqueue(data);
             }
 
             _receiverLock.ExitWriteLock();            
@@ -367,7 +376,7 @@ namespace Contralto.IO
 
         /// <summary>
         /// Runs the input state machine.  This runs periodically (as scheduled by the Scheduler) and:
-        ///   1) Drops incoming packets if the interface is off
+        ///   1) Ignores incoming packets if the receiver is off.
         ///   2) Pulls incoming packets from the queue if the interface is active
         ///   3) Reads words from incoming packets into the controller's FIFO        
         /// </summary>
@@ -379,13 +388,16 @@ namespace Contralto.IO
             switch(_inputState)
             {
                 case InputState.ReceiverOff:
-                    // Receiver is off, if we have any incoming packets, drop the first.
+                    // Receiver is off, if we have any incoming packets, they are ignored.
+                    // TODO: would it make sense to expire really old packets (say more than a couple of seconds old)
+                    // so that the receiver doesn't pick up ancient history the next time it runs?
+                    // We already cycle out packets as new ones come in, so this would only be an issue on very quiet networks.
+                    // (And even then I don't know if it's really an issue.)
                     _receiverLock.EnterReadLock();
 
                     if (_nextPackets.Count > 0)
                     {
-                        _nextPackets.Dequeue();
-                        Log.Write(LogComponent.EthernetPacket, "Receiver is off, dropped incoming packet from packet queue.");
+                        Log.Write(LogComponent.EthernetPacket, "Receiver is off, ignoring incoming packet from packet queue.");
                     }
                     _receiverLock.ExitReadLock();
                     break;
