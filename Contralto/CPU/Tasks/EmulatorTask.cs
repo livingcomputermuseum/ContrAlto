@@ -143,18 +143,14 @@ namespace Contralto.CPU
                         _wrtRam = true;
                         break;
 
-                    case EmulatorF1.LoadESRB:
-                        // For now, this is always 0; we do not yet support the 3K RAM system with 8 banks of S registers.                        
+                    case EmulatorF1.LoadESRB:                        
                         _rb = (ushort)((_busData & 0xe) >> 1);
 
-                        if (_rb != 0)
+                        if (_rb != 0 && Configuration.SystemType != SystemType.ThreeKRam)
                         {
-                            _rb = 0;
-                            Logging.Log.Write(Logging.LogType.Warning, Logging.LogComponent.EmulatorTask, "ESRB<- ({0}) not fully implemented.",
-                                        Conversion.ToOctal((_busData & 0xe) >> 1));
-
-                            throw new NotImplementedException("ESRB<-");
-                        }
+                            // Force bank 0 for machines with only 1K RAM.
+                            _rb = 0;                            
+                        }                        
                         break;
 
                     default:

@@ -109,11 +109,10 @@ namespace Contralto.CPU
                 case SystemType.TwoKRom:
                     _ramBank = 0;
                     break;
-                case SystemType.ThreeKRam:
-                    if (_ramBank > 3)
+                case SystemType.ThreeKRam:                    
+                    if (_ramBank > 2)
                     {
-                        // TODO: clip or not.
-                        throw new InvalidOperationException(String.Format("Unexpected RAM bank value of {0}.", _ramBank));
+                        _ramBank = 2;
                     }
                     break;            
             }
@@ -152,8 +151,49 @@ namespace Contralto.CPU
                     }
                     break;
 
-                case SystemType.ThreeKRam:
-                    throw new NotImplementedException("3K uCode RAM not yet implemented.");
+                case SystemType.ThreeKRam:                    
+                    if ((nextAddress & 0x100) == 0)
+                    {
+                        switch(_microcodeBank[(int)task])
+                        {
+                            case MicrocodeBank.ROM0:
+                                _microcodeBank[(int)task] = (nextAddress & 0x80) == 0 ? MicrocodeBank.RAM0 : MicrocodeBank.RAM2;
+                                break;
+
+                            case MicrocodeBank.RAM0:
+                                _microcodeBank[(int)task] = (nextAddress & 0x80) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.RAM2;
+                                break;
+
+                            case MicrocodeBank.RAM1:
+                                _microcodeBank[(int)task] = (nextAddress & 0x80) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.RAM2;
+                                break;
+
+                            case MicrocodeBank.RAM2:
+                                _microcodeBank[(int)task] = (nextAddress & 0x80) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.RAM1;
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        switch (_microcodeBank[(int)task])
+                        {
+                            case MicrocodeBank.ROM0:
+                                _microcodeBank[(int)task] = (nextAddress & 0x80) == 0 ? MicrocodeBank.RAM1 : MicrocodeBank.RAM0;
+                                break;
+
+                            case MicrocodeBank.RAM0:
+                                _microcodeBank[(int)task] = (nextAddress & 0x80) == 0 ? MicrocodeBank.RAM1 : MicrocodeBank.RAM1;
+                                break;
+
+                            case MicrocodeBank.RAM1:
+                                _microcodeBank[(int)task] = (nextAddress & 0x80) == 0 ? MicrocodeBank.RAM0 : MicrocodeBank.RAM0;
+                                break;
+
+                            case MicrocodeBank.RAM2:
+                                _microcodeBank[(int)task] = (nextAddress & 0x80) == 0 ? MicrocodeBank.RAM0 : MicrocodeBank.RAM0;
+                                break;
+                        }
+                    }                    
                     break;
             }
 

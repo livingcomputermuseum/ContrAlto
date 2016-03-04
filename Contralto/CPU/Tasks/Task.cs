@@ -446,12 +446,13 @@ namespace Contralto.CPU
 
                 //
                 // Switch banks if the last instruction had an SWMODE F1;
-                // this depends on the value of the NEXT field in this instruction
+                // this depends on the value of the NEXT field in this instruction.
+                // (And apparently the modifier applied to NEXT in this instruction -- MADTEST expects this.)
                 //
                 if (swMode)
                 {                    
-                    UCodeMemory.SwitchMode(instruction.NEXT, _taskType);
-                    Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1}", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT));
+                    UCodeMemory.SwitchMode((ushort)(instruction.NEXT | nextModifier), _taskType);
+                    Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1}", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT | nextModifier));
                 }
 
                 //

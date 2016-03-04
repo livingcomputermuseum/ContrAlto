@@ -416,7 +416,7 @@ namespace Contralto.IO
                 _seeking = true;
 
                 // And figure out how long this will take.
-                _seekDuration = (ulong)(CalculateSeekTime() / (ulong)(Math.Abs(_destCylinder - SelectedDrive.Cylinder) + 1));
+                _seekDuration = 0; // (ulong)(CalculateSeekTime() / (ulong)(Math.Abs(_destCylinder - SelectedDrive.Cylinder) + 1));
 
                 _seekEvent.TimestampNsec = _seekDuration;
                 _system.Scheduler.Schedule(_seekEvent);

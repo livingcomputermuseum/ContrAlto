@@ -133,21 +133,12 @@ namespace Contralto.IO
                 packetBytes[i * 2 + 3] = (byte)(packet[i] >> 8);
             }
 
-            //
-            // Grab the source and destination host addresses from the packet we're sending
-            // and build 10mbit versions.
-            //
-            byte destinationHost = packetBytes[3];
-            byte sourceHost = packetBytes[2];
-
-            Log.Write(LogComponent.HostNetworkInterface, "Sending packet; source {0} destination {1}, length {2} words.",
-                Conversion.ToOctal(sourceHost),
-                Conversion.ToOctal(destinationHost),
+            Log.Write(LogType.Verbose, LogComponent.HostNetworkInterface, "Sending packet via UDP; source {0} destination {1}, length {2} words.",
+                Conversion.ToOctal(packetBytes[2]),
+                Conversion.ToOctal(packetBytes[3]),
                 length);
 
             _udpClient.Send(packetBytes, packetBytes.Length, _broadcastEndpoint);            
-
-            Log.Write(LogComponent.HostNetworkInterface, "Encapsulated 3mbit packet sent via UDP.");
         }
 
         /// <summary>
@@ -167,8 +158,7 @@ namespace Contralto.IO
             // properly.)
             Log.Write(LogComponent.HostNetworkInterface, "UDP Receiver thread started.");
             
-            IPEndPoint groupEndPoint = new IPEndPoint(IPAddress.Any, _udpPort);
-            //return;
+            IPEndPoint groupEndPoint = new IPEndPoint(IPAddress.Any, _udpPort);            
 
             while (true)
             {                
