@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Contralto.Logging;
+using System;
 
 namespace Contralto.CPU
 {
@@ -50,7 +51,7 @@ namespace Contralto.CPU
                         // "When an S register is being loaded from M, the processor bus receives an
                         // undefined value rather than being set to zero."
                         _loadS = true;
-                        return 0xffff;       // TODO: technically this is an "undefined value.".
+                        return 0xffff;       // Technically this is an "undefined value," we're defining it as -1.
 
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled bus source {0}", bs));
@@ -125,7 +126,7 @@ namespace Contralto.CPU
                             }
                             else
                             {
-                                Logging.Log.Write(Logging.LogType.Warning, Logging.LogComponent.EmulatorTask, "STARTF for non-Ethernet device (code {0})",
+                                Log.Write(Logging.LogType.Warning, Logging.LogComponent.EmulatorTask, "STARTF for non-Ethernet device (code {0})",
                                     Conversion.ToOctal(_busData));                                
                             }
                         }
@@ -198,8 +199,7 @@ namespace Contralto.CPU
                         _cpu._ir = _busData;
 
                         // "IR<- also merges bus bits 0, 5, 6 and 7 into NEXT[6-9] which does a first level
-                        // instruction dispatch."
-                        // TODO: is this an AND or an OR operation?  (how is the "merge" done?)
+                        // instruction dispatch."                        
                         // Assuming for now this is an OR operation like everything else that modifies NEXT.
                         _nextModifier = (ushort)(((_busData & 0x8000) >> 12) | ((_busData & 0x0700) >> 8));
 
@@ -302,8 +302,7 @@ namespace Contralto.CPU
                         break;
 
                     case EmulatorF2.BUSODD:
-                        // "...merges BUS[15] into NEXT[9]."
-                        // TODO: is this an AND or an OR?
+                        // "...merges BUS[15] into NEXT[9]."                        
                         _nextModifier |= (ushort)(_busData & 0x1);
                         break;
 
@@ -450,7 +449,7 @@ namespace Contralto.CPU
             // particular, if IR[12] is true, CARRY will not change.  DNS also addresses R from (3-IR[3 - 4]), causes a store
             // into R unless IR[12] is set, and sets the SKIP flip flop if appropriate(see section 3.1).  The emulator
             // microcode increments PC by 1 at the beginning of the next emulated instruction if SKIP is set, using
-            // BUS+SKIP(ALUF= 13B).  IR_ clears SKIP."
+            // BUS+SKIP(ALUF= 13B).  IR<- clears SKIP."
             //
             // NB: _skip is in the encapsulating AltoCPU class to make it easier to reference since the ALU needs to know about it.
             private int _carry;

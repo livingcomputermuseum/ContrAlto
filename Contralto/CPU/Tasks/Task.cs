@@ -1,6 +1,7 @@
 ﻿using System;
 
 using Contralto.Memory;
+using Contralto.Logging;
 
 namespace Contralto.CPU
 {
@@ -92,16 +93,12 @@ namespace Contralto.CPU
             }
 
             public bool ExecuteNext()
-            {
-                // TODO: cache microinstructions (or pre-decode them) to save consing all these up every time.
+            {                
                 MicroInstruction instruction = UCodeMemory.GetInstruction(_mpc, _taskType);
 
                 // Grab BLOCK bit so that other tasks / hardware can look at it
                 _block = instruction.F1 == SpecialFunction1.Block;
-               
-                //Console.WriteLine("R5:{0},R6:{1},IR:{2} - {3}:{4}", OctalHelpers.ToOctal(_cpu._r[5]), OctalHelpers.ToOctal(_cpu._r[6]), OctalHelpers.ToOctal(_cpu._ir), OctalHelpers.ToOctal(_mpc), UCodeDisassembler.DisassembleInstruction(instruction, _taskType));
-
-
+             
                 return ExecuteInstruction(instruction);
             }
 
@@ -452,7 +449,7 @@ namespace Contralto.CPU
                 if (swMode)
                 {                    
                     UCodeMemory.SwitchMode((ushort)(instruction.NEXT | nextModifier), _taskType);
-                    Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1}", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT | nextModifier));
+                    Log.Write(Logging.LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1}", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT | nextModifier));
                 }
 
                 //

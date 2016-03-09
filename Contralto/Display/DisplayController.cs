@@ -95,6 +95,8 @@ namespace Contralto.Display
 
             _vblankScanlineCount = 0;
 
+            _dataBuffer.Clear();
+
             // Schedule wakeup for first scanline of vblank
             _verticalBlankScanlineWakeup.TimestampNsec = _verticalBlankScanlineDuration;
             _system.Scheduler.Schedule(_verticalBlankScanlineWakeup);            
@@ -265,8 +267,7 @@ namespace Contralto.Display
 
         public void LoadDDR(ushort word)
         {        
-            _dataBuffer.Enqueue(word);
-            
+            _dataBuffer.Enqueue(word);            
             
             // Sanity check: data length should never exceed 16 words.            
             // TODO: we're allowing up to 18 before we start discarding things.

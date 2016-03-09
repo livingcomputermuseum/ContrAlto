@@ -13,6 +13,7 @@ using System.Threading;
 using System.Drawing.Imaging;
 using Contralto.IO;
 using Contralto.Display;
+using Contralto.Logging;
 
 namespace Contralto
 {
@@ -805,6 +806,25 @@ namespace Contralto
                 case ExecutionType.Normal:                    
                 case ExecutionType.NextTask:
                 case ExecutionType.NextNovaInstruction:
+
+                    // For debugging floating point microcode:
+                    if (_system.CPU.CurrentTask.MPC == 0x10)                     // MPC is 20(octal) meaning a new Nova instruction.
+                    {
+                        if (_lastFPInstruction == 0)
+                        {
+                            // check for new floating instruction
+                            FloatDebugPre(_system.MemoryBus.DebugReadWord(TaskType.Emulator, _system.CPU.R[6]));
+                        }
+                        else
+                        {
+                            // last instruction was a floating point instruction, check the result
+                            FloatDebugPost();
+
+                            // And see if this new one is also a floating point instruction...
+                            FloatDebugPre(_system.MemoryBus.DebugReadWord(TaskType.Emulator, _system.CPU.R[6]));
+                        }
+                    }
+
                     // See if we need to stop here
                     if (_execAbort ||                                               // The Stop button was hit
                         _microcodeBreakpointEnabled[(int)UCodeMemory.GetBank(_system.CPU.CurrentTask.TaskType),_system.CPU.CurrentTask.MPC] || // A microcode breakpoint was hit
@@ -835,7 +855,371 @@ namespace Contralto
             return false;
         }
 
-       
+        // vars for float debug
+        ushort _lastFPInstruction;
+        ushort _ac0;
+        ushort _ac1;
+        ushort _ac2;
+        ushort _ac3;
+        ushort _fpRegAddr;
+        ushort _fpRegCount;
+
+        /// <summary>
+        /// Temporary, for debugging floating point ucode issues
+        /// </summary>
+        /// <param name="instruction"></param>
+        private void FloatDebugPre(ushort instruction)
+        {
+            _lastFPInstruction = 0;
+            // Float instructions are from 70001-70022 octal
+            if (instruction >= 0x7000 && instruction <= 0x7012)
+            {
+                // Save instruction
+                _lastFPInstruction = instruction;
+
+                // Save ACs
+                _ac0 = _system.CPU.R[3];
+                _ac1 = _system.CPU.R[2];
+                _ac2 = _system.CPU.R[1];
+                _ac3 = _system.CPU.R[0];
+
+                Console.Write("FP: ");
+                switch (instruction)
+                {
+                    case 0x7000:
+                        Console.WriteLine("FPSetup");
+
+                        _fpRegAddr = _system.CPU.R[3];
+                        _fpRegCount = _system.MemoryBus.DebugReadWord(TaskType.Emulator, _fpRegAddr);
+
+                        Console.WriteLine(" FP register address {0}, count {1}", Conversion.ToOctal(_fpRegAddr), _fpRegCount);
+
+                        break;
+
+                    case 0x7001:
+                        Console.WriteLine("FML {0},{1} ({2},{3})", _ac0, _ac1, GetFloat(_ac0), GetFloat(_ac1));                        
+                        break;
+
+                    case 0x7002:                        
+                        Console.WriteLine("FDV {0},{1} ({2},{3})", _ac0, _ac1, GetFloat(_ac0), GetFloat(_ac1));                        
+                        break;
+
+                    case 0x7003:                        
+                        Console.WriteLine("FAD {0},{1} ({2},{3})", _ac0, _ac1, GetFloat(_ac0), GetFloat(_ac1));                        
+                        break;
+
+                    case 0x7004:
+                        Console.WriteLine("FSB {0},{1} ({2},{3})", _ac0, _ac1, GetFloat(_ac0), GetFloat(_ac1));                        
+                        break;
+
+                    case 0x7005:
+                        Console.WriteLine("FLD {0},{1} (src {2})", _ac0, _ac1, GetFloat(_ac1));                        
+                        break;
+
+                    case 0x7006:
+                        Console.WriteLine("FLDV {0},{1} (src {2})", _ac0, _ac1, GetFloatFromInternalFormat(_ac1));                        
+                        break;
+
+                    case 0x7007:
+                        Console.WriteLine("FSTV {0},{1} (src {2})", _ac0, _ac1, GetFloat(_ac0));
+                        break;
+
+                    case 0x7008:
+                        Console.WriteLine("FLDI {0},{1}", _ac0, Conversion.ToOctal(_ac1));
+                        break;
+
+                    case 0x7009:
+                        Console.WriteLine("FTR {0} ({1})", _ac0, GetFloat(_ac0));                        
+                        break;
+
+                    case 0x700a:
+                        Console.WriteLine("FNEG {0} ({1})", _ac0, GetFloat(_ac0));                        
+                        break;
+
+                    case 0x700b:
+                        Console.WriteLine("FSN {0} ({1})", _ac0, GetFloat(_ac0));
+                        break;
+
+                    case 0x700c:
+                        Console.WriteLine("FCM {0} ({1})", _ac0, GetFloat(_ac0));
+                        break;
+
+                    case 0x700d:
+                        Console.WriteLine("FST");
+                        break;
+
+                    case 0x700e:
+                        Console.WriteLine("FLDDP");
+                        break;
+
+                    case 0x700f:
+                        Console.WriteLine("FSTDP");
+                        break;
+
+                    case 0x7010:
+                        Console.WriteLine("DPAD");
+                        break;
+
+                    case 0x7011:
+                        Console.WriteLine("DPSB");
+                        break;
+
+                    case 0x7012:
+                        Console.WriteLine("FEXP {0},{1} ({2})", _ac0, _ac1, GetFloat(_ac0));
+                        break;
+                }
+
+                /*
+                Console.WriteLine(" AC0={0} AC1={1} AC2={2} AC3={3}",
+                    Conversion.ToOctal(_ac0),
+                    Conversion.ToOctal(_ac1),
+                    Conversion.ToOctal(_ac2),
+                    Conversion.ToOctal(_ac3)); */
+            }            
+        }
+
+        private void FloatDebugPost()
+        {
+
+            Console.Write("Post: ");
+            switch (_lastFPInstruction)
+            {
+                case 0x7000:
+                    Console.WriteLine("FPSetup done.");
+                    break;
+
+                case 0x7001:
+                    Console.WriteLine("Result {0}", GetFloat(_ac0));
+                    break;
+
+                case 0x7002:
+                    Console.WriteLine("Result {0}", GetFloat(_ac0));
+                    break;
+
+                case 0x7003:
+                    Console.WriteLine("Result {0}", GetFloat(_ac0));
+                    break;
+
+                case 0x7004:
+                    Console.WriteLine("Result {0}", GetFloat(_ac0));
+                    break;
+
+                case 0x7005:
+                    Console.WriteLine("Loaded {0}", GetFloat(_ac0));
+                    break;
+
+                case 0x7006:
+                    Console.WriteLine("Loaded {0}", GetFloat(_ac0));
+                    break;
+
+                case 0x7007:
+                    Console.WriteLine("FSTV done.");
+                    break;
+
+                case 0x7008:
+                    Console.WriteLine("Loaded {0}", GetFloat(_ac0));
+                    break;
+
+                case 0x7009:
+                    Console.WriteLine("Result {0}", GetFloat(_ac0));
+                    break;
+
+                case 0x700a:
+                    Console.WriteLine("Result {0}", GetFloat(_ac0));
+                    break;
+
+                case 0x700b:
+                    Console.WriteLine("Result {0}", _ac3);
+                    break;
+
+                case 0x700c:
+                    Console.WriteLine("Result {0}", _ac3);
+                    break;
+
+                case 0x700d:
+                    Console.WriteLine("FST done.");
+                    break;
+
+                case 0x700e:
+                    Console.WriteLine("FLDDP done.");
+                    break;
+
+                case 0x700f:
+                    Console.WriteLine("FSTDP done.");
+                    break;
+
+                case 0x7010:
+                    Console.WriteLine("DPAD done.");
+                    break;
+
+                case 0x7011:
+                    Console.WriteLine("DPSB done.");
+                    break;
+
+                case 0x7012:
+                    Console.WriteLine("Result {0}", GetFloat(_ac0));
+                    break;
+
+                default:
+                    throw new InvalidOperationException("Unexpected op for post.");
+            }
+
+            _lastFPInstruction = 0;
+        }
+
+        private double GetFloat(ushort arg)
+        {
+            // If arg is less than the number of registers, it's assumed
+            // to be a register; otherwise an address
+            if (arg < _fpRegCount)
+            {
+                return GetFloatFromUcode(arg);
+            }
+            else
+            {
+                return GetFloatFromPackedFormat(arg);
+            }
+        }
+
+        /// <summary>
+        /// Gets a float from memory in "packed" format
+        /// </summary>
+        /// <param name="addr"></param>
+        /// <returns></returns>
+        private double GetFloatFromPackedFormat(ushort addr)
+        {
+            //
+            // Packed format is only two words:
+            // structure FP: [
+            //   sign bit 1     //1 if negative.
+            //   expon bit 8    //excess 128 format (complemented if number <0)
+            //   mantissa1 bit 7 //High order 7 bits of mantissa
+            //   mantissa2 bit 16 //Low order 16 bits of mantissa
+            //   ]
+            //
+            uint packedWord = 
+                (uint)(_system.MemoryBus.DebugReadWord(TaskType.Emulator, addr) << 16) |
+                (uint)(_system.MemoryBus.DebugReadWord(TaskType.Emulator, (ushort)(addr + 1)));
+
+            double sign = (packedWord &   0x80000000) != 0 ? -1.0 : 1.0;
+            uint exponent = (packedWord & 0x7f800000) >> 23;
+            uint mantissa = (packedWord & 0x007fffff);
+
+            double val = 0.0;
+            for (int i = 0; i < 23; i++)
+            {
+                double bit = (mantissa & (0x00400000 >> i)) != 0 ? 1.0 : 0.0;
+
+                val += (bit * (1.0 / Math.Pow(2.0, (double)i)));
+            }
+
+            double adjustedExponent = exponent - 128.0;
+
+            val = sign * (val) * Math.Pow(2.0, adjustedExponent);
+
+            Console.WriteLine("packed: {0}", val);
+
+            return val;
+
+        }
+
+        /// <summary>
+        /// Gets the float value for register, from alto code
+        /// </summary>
+        /// <param name="reg"></param>
+        /// <returns></returns>
+        private double GetFloatFromInternalFormat(ushort addr)
+        {
+
+            // Internal format is 4 words long:
+            //  Word 0: sign
+            //  Word 1: exponent
+            //  Word 2-3: mantissa
+            //            
+            
+            double sign = (_system.MemoryBus.DebugReadWord(TaskType.Emulator, addr)) != 0 ? -1.0 : 1.0;
+            int exponent = (int)(short)(_system.MemoryBus.DebugReadWord(TaskType.Emulator, (ushort)(addr + 1)));
+            uint mantissa =
+                (uint)(_system.MemoryBus.DebugReadWord(TaskType.Emulator, (ushort)(addr + 2)) << 16) |
+                (uint)(_system.MemoryBus.DebugReadWord(TaskType.Emulator, (ushort)(addr + 3)));
+
+            double val = 0.0;
+            for (int i = 0; i < 32; i++)
+            {
+                double bit = (mantissa & (0x80000000 >> i)) != 0 ? 1.0 : 0.0;
+
+                val += (bit * (1.0 / Math.Pow(2.0, (double)i)));
+            }                        
+
+            val = sign * (val) * Math.Pow(2.0, exponent - 1);
+
+            if (double.IsInfinity(val) || double.IsNaN(val))
+            {
+                Console.WriteLine(" ERROR: sign {0} exp {1} mantissa {2:x} value {3}",
+                    sign,
+                    exponent,
+                    mantissa,
+                    val);
+            }
+
+            return val;
+        }
+
+        /// <summary>
+        /// Gets the float value for register, from ucode store
+        /// </summary>
+        /// <param name="reg"></param>
+        /// <returns></returns>
+        private double GetFloatFromUcode(ushort reg)
+        {
+
+            // Internal format is 4 words long:
+            //  Word 0: sign
+            //  Word 1: exponent
+            //  Word 2-3: mantissa
+            //
+            // In current ucode, each word is staggered across the FP buffer space rather than being in linear order to prevent having to do multiplies.
+            // For FP register N of M total registers starting at offset O:
+            // Word 0 is at O + N + 1
+            // Word 1 is at O + N + M + 1
+            // Word 2 is at O + N + 2*M + 1
+            // Word 3 is at O + N + 3*M + 1            
+            ushort oreg = reg;
+
+
+            reg += _fpRegAddr;
+            reg++;
+
+            //Console.WriteLine("reg base {0}, num {1} addr {2}", _fpRegAddr, oreg, Conversion.ToOctal(reg));
+
+            // reg is now an address; read things in...
+            double sign = (_system.MemoryBus.DebugReadWord(TaskType.Emulator, reg)) != 0 ? -1.0 : 1.0;
+            int exponent = (int)(short)(_system.MemoryBus.DebugReadWord(TaskType.Emulator, (ushort)(reg + _fpRegCount)));
+            uint mantissa =
+                (uint)(_system.MemoryBus.DebugReadWord(TaskType.Emulator, (ushort)(reg + 2 * _fpRegCount)) << 16) |
+                (uint)(_system.MemoryBus.DebugReadWord(TaskType.Emulator, (ushort)(reg + 3 * _fpRegCount)));
+
+            double val = 0.0;
+            for (int i = 0; i < 32; i++)
+            {
+                double bit = (mantissa & (0x80000000 >> i)) != 0 ? 1.0 : 0.0;
+
+                val += (bit * (1.0 / Math.Pow(2.0, (double)i)));                
+            }
+
+            val = sign * (val) * Math.Pow(2.0, exponent - 1);
+
+            if (double.IsInfinity(val) || double.IsNaN(val))
+            {
+                Console.WriteLine(" ERROR: sign {0} exp {1} mantissa {2:x} value {3}",
+                    sign,
+                    exponent,
+                    mantissa,
+                    val);
+            }
+
+            return val;
+        }
 
         private void SetExecutionState(ExecutionState state)
         {
@@ -961,7 +1345,7 @@ namespace Contralto
         private void HackButton_Click(object sender, EventArgs e)
         {            
             Logging.Log.LogComponents |= Logging.LogComponent.TaskSwitch;
-            Logging.Log.Write(Logging.LogComponent.Debug, "***** HACK HIT ******");
+            Log.Write(Logging.LogComponent.Debug, "***** HACK HIT ******");
         }
     }
 }

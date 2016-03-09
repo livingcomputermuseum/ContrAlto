@@ -296,7 +296,10 @@ namespace Contralto
             _frame++;
 
             // Wait for the next frame
-            _frameTimer.WaitForFrame();
+            if (Configuration.ThrottleSpeed)
+            {
+                _frameTimer.WaitForFrame();
+            }
 
             if (Configuration.InterlaceDisplay)
             {

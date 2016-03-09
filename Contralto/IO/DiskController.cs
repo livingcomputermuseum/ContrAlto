@@ -19,8 +19,7 @@ namespace Contralto.IO
             Reset();
         }
 
-        /// <summary>
-        /// TODO: this is messy; the read and write sides of KDATA are distinct hardware.
+        /// <summary>        
         /// According to docs, on a Write, eventually it appears on the Read side during an actual write to the disk
         /// but not right away.  
         /// </summary>
@@ -341,7 +340,7 @@ namespace Contralto.IO
             if (_seclateEnable)
             {
                 _seclate = true;                
-                _kStat |= SECLATE;       // TODO: move to constant field!
+                _kStat |= SECLATE;
                 Log.Write(LogComponent.DiskSectorTask, "SECLATE for sector {0}.", _sector);
             }
         }
@@ -476,7 +475,7 @@ namespace Contralto.IO
             //
             // If the clock is enabled OR the WFFO bit is set (go ahead and run the bit clock)
             // and we weren't late reading this sector,  then we will wake up the word task 
-            // and read in the data if transfers are not inhibited.  TODO: this should only happen on reads.
+            // and read in the data if transfers are not inhibited.
             //
             if (!_seclate && (_wffo || _diskBitCounterEnable))
             {
@@ -525,7 +524,7 @@ namespace Contralto.IO
             // If the WFFO bit is cleared (wait for the sync word to be read) 
             // then we check the word for a "1" (the sync word) to enable
             // the clock.  This occurs late in the cycle so that the NEXT word
-            // (not the sync word) is actually read.  TODO: this should only happen on reads.
+            // (not the sync word) is actually read.
             //
             if (!IsWrite() && !_wffo && diskWord.Data == 1)
             {

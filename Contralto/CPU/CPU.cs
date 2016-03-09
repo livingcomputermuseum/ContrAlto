@@ -126,15 +126,12 @@ namespace Contralto.CPU
                 // Invoke the task switch, this will take effect after
                 // the NEXT instruction, not this one.
                 TaskSwitch();
-            }
-            else
+            }            
+            else if (_nextTask != null)
             {
-                // If we have a new task, switch to it now.
-                if (_nextTask != null)
-                {
-                    _currentTask = _nextTask;
-                    _nextTask = null;
-                }
+                // If we have a new task, switch to it now.                                
+                _currentTask = _nextTask;
+                _nextTask = null;
             }
         }
 
@@ -172,7 +169,7 @@ namespace Contralto.CPU
             //
             WakeupTask(CPU.TaskType.DiskSector);            
 
-            Log.Write(Logging.LogComponent.CPU, "Silent Boot; microcode banks initialized to {0}", Conversion.ToOctal(_rmr));
+            Log.Write(LogComponent.CPU, "Silent Boot; microcode banks initialized to {0}", Conversion.ToOctal(_rmr));
         }
 
         /// <summary>

@@ -159,22 +159,24 @@ namespace Contralto.CPU
                     }
                     break;
 
-                case ShifterOp.RotateLeft:
-                    // TODO: optimize, this is stupid
-                    _output = input;
-                    for (int i = 0; i < _count; i++)
-                    {
-                        int c = (_output & 0x8000) >> 15;
-                        _output = (ushort)((_output << 1) | c);
-                    }
-
+                case ShifterOp.RotateLeft:                    
                     if (_dns)
                     {
                         //
                         // "Swap the 8-bit halves of the 16-bit result.  The carry is not affected."
                         //
                         _output = (ushort)(((input & 0xff00) >> 8) | ((input & 0x00ff) << 8));
-                    }                    
+                    }    
+                    else
+                    {
+                        // TODO: optimize, this is stupid
+                        _output = input;
+                        for (int i = 0; i < _count; i++)
+                        {
+                            int c = (_output & 0x8000) >> 15;
+                            _output = (ushort)((_output << 1) | c);
+                        }
+                    }                
                     break;
 
                 case ShifterOp.RotateRight:

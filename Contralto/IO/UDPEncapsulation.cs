@@ -163,8 +163,15 @@ namespace Contralto.IO
             while (true)
             {                
                 byte[] data = _udpClient.Receive(ref groupEndPoint);
-
-                // TODO: sanitize data before handing it off.
+                
+                //
+                // Sanitize the data (at least make sure the length is valid):
+                //
+                if (data.Length < 4)
+                {
+                    Log.Write(LogType.Verbose, LogComponent.HostNetworkInterface, "Invalid packet: Packet is fewer than 2 words long, dropping.");
+                    continue;
+                }                
 
                 // Drop our own UDP packets.
                 if (!groupEndPoint.Address.Equals(_thisIPAddress))

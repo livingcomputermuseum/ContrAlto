@@ -225,8 +225,7 @@ namespace Contralto.IO
 
         /// <summary>
         /// Commits modified sector data back to the emulated disk.
-        /// Intended to be called at the end of the sector / beginning of the next.
-        /// TODO: we should modify this so that checksums are persisted, possibly...
+        /// Intended to be called at the end of the sector / beginning of the next.        
         /// </summary>
         private void CommitSector()
         {

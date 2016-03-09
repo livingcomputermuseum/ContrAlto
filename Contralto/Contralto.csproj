@@ -179,6 +179,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="ClassDiagram1.cd" />
+    <None Include="ClassDiagram2.cd" />
     <None Include="Disassembly\altocode24.mu" />
     <None Include="App.config" />
     <None Include="Disassembly\altoIIcode3.mu">

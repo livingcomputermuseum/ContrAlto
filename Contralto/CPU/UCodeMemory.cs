@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Contralto.Logging;
+using System;
 using System.IO;
 
 namespace Contralto.CPU
@@ -126,7 +127,7 @@ namespace Contralto.CPU
         /// <param name="nextAddress"></param>
         public static void SwitchMode(ushort nextAddress, TaskType task)
         {                        
-            Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: Current Bank {0}", _microcodeBank[(int)task]);
+            Log.Write(Logging.LogComponent.Microcode, "SWMODE: Current Bank {0}", _microcodeBank[(int)task]);
 
             switch (Configuration.SystemType)
             {
@@ -197,7 +198,7 @@ namespace Contralto.CPU
                     break;
             }
 
-            Logging.Log.Write(Logging.LogComponent.Microcode, "SWMODE: New Bank {0} for Task {1}", _microcodeBank[(int)task], task);            
+            Log.Write(Logging.LogComponent.Microcode, "SWMODE: New Bank {0} for Task {1}", _microcodeBank[(int)task], task);            
         }
 
         public static ushort ReadRAM()
@@ -207,7 +208,7 @@ namespace Contralto.CPU
                 throw new NotImplementedException("Read from microcode ROM not implemented.");
             }            
                          
-            Logging.Log.Write(Logging.LogComponent.Microcode, "CRAM address for read: Bank {0}, RAM {1}, lowhalf {2} addr {3}",
+            Log.Write(Logging.LogComponent.Microcode, "CRAM address for read: Bank {0}, RAM {1}, lowhalf {2} addr {3}",
                 _ramBank,
                 _ramSelect,
                 _lowHalfsel,
@@ -219,7 +220,7 @@ namespace Contralto.CPU
             // (See table in section 8.3 of HWRef.)
             ushort halfWord = (ushort)(_lowHalfsel ? data : (data >> 16));
 
-            Logging.Log.Write(Logging.LogComponent.Microcode, "CRAM data read: {0}-{1}",
+            Log.Write(Logging.LogComponent.Microcode, "CRAM data read: {0}-{1}",
                 _lowHalfsel ? "low" : "high",
                 Conversion.ToOctal(halfWord));
 
@@ -234,11 +235,11 @@ namespace Contralto.CPU
                 return;
             }           
 
-            Logging.Log.Write(Logging.LogComponent.Microcode, "CRAM address for write: Bank {0}, addr {1}",
+            Log.Write(Logging.LogComponent.Microcode, "CRAM address for write: Bank {0}, addr {1}",
                 _ramBank,                
                 Conversion.ToOctal(_ramAddr));
 
-            Logging.Log.Write(Logging.LogComponent.Microcode, "CRAM write of low {0}, high {1}",                
+            Log.Write(Logging.LogComponent.Microcode, "CRAM write of low {0}, high {1}",                
                 Conversion.ToOctal(low),
                 Conversion.ToOctal(high));
 
@@ -337,8 +338,6 @@ namespace Contralto.CPU
         {
             UInt32 instructionWord = _uCodeRam[address];
             _decodeCache[2048 + address] = new MicroInstruction(instructionWord);
-
-            //Console.WriteLine(_decodeCache[2048 + address]);
         }
 
         private static RomFile[] _uCodeRoms =
