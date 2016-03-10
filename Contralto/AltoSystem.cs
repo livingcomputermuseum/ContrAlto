@@ -47,7 +47,7 @@ namespace Contralto
             t.AutoReset = true;
             t.Interval = 1000;
             t.Elapsed += T_Elapsed;
-            //t.Start();       
+            t.Start();       
         }
 
         public void Reset()

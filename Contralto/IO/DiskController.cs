@@ -609,7 +609,8 @@ namespace Contralto.IO
             // From the Hardware Manual, pg 43:
             // "Seek time (approx.):  15 + 8.6 * sqrt(dt)  (msec)
             //
-            double seekTimeMsec = 15.0 + 8.6 * Math.Sqrt(dt);
+            //double seekTimeMsec = 15.0 + 8.6 * Math.Sqrt(dt);
+            double seekTimeMsec = 1.0;      // why not just have this be fast for now.
 
             return (ulong)(seekTimeMsec * Conversion.MsecToNsec);
         }

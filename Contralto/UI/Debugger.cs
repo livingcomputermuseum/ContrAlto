@@ -808,6 +808,7 @@ namespace Contralto
                 case ExecutionType.NextNovaInstruction:
 
                     // For debugging floating point microcode:
+#if FLOAT_DEBUG
                     if (_system.CPU.CurrentTask.MPC == 0x10)                     // MPC is 20(octal) meaning a new Nova instruction.
                     {
                         if (_lastFPInstruction == 0)
@@ -823,7 +824,8 @@ namespace Contralto
                             // And see if this new one is also a floating point instruction...
                             FloatDebugPre(_system.MemoryBus.DebugReadWord(TaskType.Emulator, _system.CPU.R[6]));
                         }
-                    }
+                    } 
+#endif
 
                     // See if we need to stop here
                     if (_execAbort ||                                               // The Stop button was hit
@@ -855,6 +857,7 @@ namespace Contralto
             return false;
         }
 
+#if FLOAT_DEBUG
         // vars for float debug
         ushort _lastFPInstruction;
         ushort _ac0;
@@ -863,6 +866,8 @@ namespace Contralto
         ushort _ac3;
         ushort _fpRegAddr;
         ushort _fpRegCount;
+
+        int _fpInstructionCount;
 
         /// <summary>
         /// Temporary, for debugging floating point ucode issues
@@ -874,6 +879,8 @@ namespace Contralto
             // Float instructions are from 70001-70022 octal
             if (instruction >= 0x7000 && instruction <= 0x7012)
             {
+                _fpInstructionCount++;
+
                 // Save instruction
                 _lastFPInstruction = instruction;
 
@@ -883,7 +890,7 @@ namespace Contralto
                 _ac2 = _system.CPU.R[1];
                 _ac3 = _system.CPU.R[0];
 
-                Console.Write("FP: ");
+                Console.Write("{0}:FP: ", _fpInstructionCount);
                 switch (instruction)
                 {
                     case 0x7000:
@@ -967,7 +974,7 @@ namespace Contralto
                     case 0x7012:
                         Console.WriteLine("FEXP {0},{1} ({2})", _ac0, _ac1, GetFloat(_ac0));
                         break;
-                }
+                }                
 
                 /*
                 Console.WriteLine(" AC0={0} AC1={1} AC2={2} AC3={3}",
@@ -979,9 +986,9 @@ namespace Contralto
         }
 
         private void FloatDebugPost()
-        {
+        {            
 
-            Console.Write("Post: ");
+            Console.Write("{0}:Post: ", _fpInstructionCount);
             switch (_lastFPInstruction)
             {
                 case 0x7000:
@@ -1142,23 +1149,24 @@ namespace Contralto
             uint mantissa =
                 (uint)(_system.MemoryBus.DebugReadWord(TaskType.Emulator, (ushort)(addr + 2)) << 16) |
                 (uint)(_system.MemoryBus.DebugReadWord(TaskType.Emulator, (ushort)(addr + 3)));
-
-            double val = 0.0;
+            
+            double valMantissa = 0.0;
             for (int i = 0; i < 32; i++)
             {
                 double bit = (mantissa & (0x80000000 >> i)) != 0 ? 1.0 : 0.0;
 
-                val += (bit * (1.0 / Math.Pow(2.0, (double)i)));
+                valMantissa += (bit * (1.0 / Math.Pow(2.0, (double)i)));
             }                        
 
-            val = sign * (val) * Math.Pow(2.0, exponent - 1);
+            double val = sign * (valMantissa) * Math.Pow(2.0, exponent - 1);
 
-            if (double.IsInfinity(val) || double.IsNaN(val))
+            //if (double.IsInfinity(val) || double.IsNaN(val))
             {
-                Console.WriteLine(" ERROR: sign {0} exp {1} mantissa {2:x} value {3}",
+                Console.WriteLine(" Vec: sign {0} exp {1} mantissa {2:x} ({3}) value {4}",
                     sign,
                     exponent,
                     mantissa,
+                    valMantissa,
                     val);
             }
 
@@ -1199,28 +1207,29 @@ namespace Contralto
                 (uint)(_system.MemoryBus.DebugReadWord(TaskType.Emulator, (ushort)(reg + 2 * _fpRegCount)) << 16) |
                 (uint)(_system.MemoryBus.DebugReadWord(TaskType.Emulator, (ushort)(reg + 3 * _fpRegCount)));
 
-            double val = 0.0;
+            double valMantissa = 0.0;
             for (int i = 0; i < 32; i++)
             {
                 double bit = (mantissa & (0x80000000 >> i)) != 0 ? 1.0 : 0.0;
 
-                val += (bit * (1.0 / Math.Pow(2.0, (double)i)));                
+                valMantissa += (bit * (1.0 / Math.Pow(2.0, (double)i)));                
             }
 
-            val = sign * (val) * Math.Pow(2.0, exponent - 1);
+            double val = sign * (valMantissa) * Math.Pow(2.0, exponent - 1);
 
-            if (double.IsInfinity(val) || double.IsNaN(val))
+            //if (double.IsInfinity(val) || double.IsNaN(val))
             {
-                Console.WriteLine(" ERROR: sign {0} exp {1} mantissa {2:x} value {3}",
+                Console.WriteLine(" UCode: sign {0} exp {1} mantissa {2:x} ({3}) value {4}",
                     sign,
                     exponent,
                     mantissa,
+                    valMantissa,
                     val);
             }
 
             return val;
         }
-
+#endif
         private void SetExecutionState(ExecutionState state)
         {
             _execState = state;
@@ -1343,8 +1352,8 @@ namespace Contralto
         private bool[] _novaBreakpointEnabled;
 
         private void HackButton_Click(object sender, EventArgs e)
-        {            
-            Logging.Log.LogComponents |= Logging.LogComponent.TaskSwitch;
+        {
+            //_system.CPU.HAX = true;
             Log.Write(Logging.LogComponent.Debug, "***** HACK HIT ******");
         }
     }

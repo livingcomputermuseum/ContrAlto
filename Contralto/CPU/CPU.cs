@@ -121,18 +121,28 @@ namespace Contralto.CPU
 
         public void Clock()
         {
-            if (_currentTask.ExecuteNext())
+            switch (_currentTask.ExecuteNext())
             {
-                // Invoke the task switch, this will take effect after
-                // the NEXT instruction, not this one.
-                TaskSwitch();
+                case InstructionCompletion.TaskSwitch:
+                    // Invoke the task switch, this will take effect after
+                    // the NEXT instruction completes, not this one.
+                    TaskSwitch();
+                    break;
+
+                case InstructionCompletion.Normal:
+                    if (_nextTask != null)
+                    {
+                        // If we have a new task, switch to it now.                                
+                        _currentTask = _nextTask;
+                        _nextTask = null;
+                    }
+                    break;
+
+                case InstructionCompletion.MemoryWait:
+                    // We were waiting for memory on this cycle, we do nothing
+                    // (no task switch even if one is pending) in this case.                    
+                    break;
             }            
-            else if (_nextTask != null)
-            {
-                // If we have a new task, switch to it now.                                
-                _currentTask = _nextTask;
-                _nextTask = null;
-            }
         }
 
         /// <summary>

@@ -7,6 +7,13 @@ namespace Contralto.CPU
 {
     public partial class AltoCPU
     {
+        public enum InstructionCompletion
+        {
+            Normal,
+            TaskSwitch,
+            MemoryWait,
+        }
+
         // Task:
         // Base task class: provides implementation for non-task-specific microcode execution and
         // state.  Task subclasses implement and execute Task-specific behavior and are called into
@@ -92,7 +99,7 @@ namespace Contralto.CPU
                 _wakeup = true;
             }
 
-            public bool ExecuteNext()
+            public InstructionCompletion ExecuteNext()
             {                
                 MicroInstruction instruction = UCodeMemory.GetInstruction(_mpc, _taskType);
 
@@ -108,9 +115,9 @@ namespace Contralto.CPU
             /// provide their own overrides.
             /// </summary>
             /// <returns>True if a task switch has been requested by a TASK instruction, false otherwise.</returns>
-            protected virtual bool ExecuteInstruction(MicroInstruction instruction)
+            protected virtual InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
             {
-                bool nextTask = false;
+                InstructionCompletion completion = InstructionCompletion.Normal;
                 bool swMode = false;
                 bool block = false;       
                 ushort aluData;
@@ -135,7 +142,7 @@ namespace Contralto.CPU
                     if (!_cpu._system.MemoryBus.Ready(instruction.MemoryOperation))
                     {
                         // Suspend operation for this cycle.
-                        return false;
+                        return InstructionCompletion.MemoryWait;
                     }
                 }
 
@@ -290,7 +297,8 @@ namespace Contralto.CPU
                         //
                         //if (!_firstInstructionAfterSwitch)
                         {
-                            nextTask = true;            // Yield to other more important tasks
+                            // Yield to other more important tasks
+                            completion = InstructionCompletion.TaskSwitch;            
                         }
                         break;
 
@@ -430,7 +438,12 @@ namespace Contralto.CPU
                 if (instruction.LoadL)
                 {
                     _cpu._l = aluData;
-                    _cpu._m = aluData;
+
+                    // Only RAM-related tasks can modify M.  (Currently only the Emulator.)
+                    if (_taskType == TaskType.Emulator)
+                    {
+                        _cpu._m = aluData;
+                    }
 
                     // Save ALUC0 for use in the next ALUCY special function.
                     _cpu._aluC0 = (ushort)ALU.Carry;
@@ -470,7 +483,7 @@ namespace Contralto.CPU
                 }
 
                 _firstInstructionAfterSwitch = false;
-                return nextTask;
+                return completion;
             }
 
             protected virtual ushort GetBusSource(int bs)

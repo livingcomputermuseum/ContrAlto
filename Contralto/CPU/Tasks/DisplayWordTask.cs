@@ -19,7 +19,7 @@ namespace Contralto.CPU
                 _displayController = _cpu._system.DisplayController;
             }
 
-            protected override bool ExecuteInstruction(MicroInstruction instruction)
+            protected override InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
             {
                 // We remove our wakeup only if there isn't a wakeup being generated for us by the
                 // display controller.

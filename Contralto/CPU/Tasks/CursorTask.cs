@@ -15,7 +15,7 @@ namespace Contralto.CPU
                 _wakeup = false;
             }
 
-            protected override bool ExecuteInstruction(MicroInstruction instruction)
+            protected override InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
             {
                 // We put ourselves back to sleep immediately once we've started running
                 _wakeup = false;

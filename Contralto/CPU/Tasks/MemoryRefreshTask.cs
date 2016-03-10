@@ -14,7 +14,7 @@
                 _wakeup = false;
             }
 
-            protected override bool ExecuteInstruction(MicroInstruction instruction)
+            protected override InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
             {
                 //
                 // Based on readings of the MRT microcode, the MRT keeps its wakeup

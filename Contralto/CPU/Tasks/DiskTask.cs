@@ -21,11 +21,11 @@ namespace Contralto.CPU
                 _diskController = _cpu._system.DiskController;
             }
 
-            protected override bool ExecuteInstruction(MicroInstruction instruction)
+            protected override InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
             {
                 // Log.Write(LogComponent.Debug, "{0}: {1}", Conversion.ToOctal(_mpc), UCodeDisassembler.DisassembleInstruction(instruction, _taskType));
 
-                bool task = base.ExecuteInstruction(instruction);
+                InstructionCompletion completion = base.ExecuteInstruction(instruction);
 
                 // Deal with SECLATE semantics:  If the Disk Sector task wakes up and runs before
                 // the Disk Controller hits the SECLATE trigger time, then SECLATE remains false.
@@ -37,7 +37,7 @@ namespace Contralto.CPU
                     _diskController.DisableSeclate();                    
                 }                              
 
-                return task;
+                return completion;
             }
 
             protected override ushort GetBusSource(int bs)

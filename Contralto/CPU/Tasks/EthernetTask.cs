@@ -19,7 +19,7 @@ namespace Contralto.CPU
                 _ethernetController = _cpu._system.EthernetController;
             }
 
-            protected override bool ExecuteInstruction(MicroInstruction instruction)
+            protected override InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
             {                
                 // The Ethernet task only remains awake if there are pending data wakeups                
                 if (_ethernetController.CountdownWakeup)
