@@ -386,7 +386,7 @@ namespace Contralto
         /// <param name="scanline">The scanline (Y)</param>
         /// <param name="xOffset">X offset (in pixels)</param>
         /// <param name="cursorWord">The word to be drawn</param>
-        public void DrawCursorWord(int scanline, int xOffset, ushort cursorWord)
+        public void DrawCursorWord(int scanline, int xOffset, bool whiteOnBlack, ushort cursorWord)
         {
             int address = scanline * 76 + xOffset / 8;
 
@@ -399,9 +399,17 @@ namespace Contralto
                                         (_currentBuffer[address + 2] << 8) |
                                         _currentBuffer[address + 3]);
 
-            UInt32 longcursorWord = (UInt32)(cursorWord << 16);
+            // Slide the cursor word to the proper X position
+            UInt32 adjustedCursorWord = (UInt32)(cursorWord << (16 - (xOffset % 8)));
 
-            displayWord ^= (longcursorWord >> (xOffset % 8));
+            if (!whiteOnBlack)
+            {
+                displayWord &= ~adjustedCursorWord;
+            }
+            else
+            {
+                displayWord |= adjustedCursorWord;
+            }
 
             _currentBuffer[address] = (byte)(displayWord >> 24);
             _currentBuffer[address + 1] = (byte)(displayWord >> 16);

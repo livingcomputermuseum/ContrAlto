@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Id="CE5F3D08-3BD6-4BDF-9C64-0C2B852B899C" Name="ContrAlto" Language="1033" Version="1.0.0.0" Manufacturer="Living Computer Museum" UpgradeCode="38d6b09f-6e7b-4854-844a-5d4ab707a357">
+		<Package Id="*" InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+    <Media Id="1" Cabinet="ContrAlto.cab" EmbedCab="yes"/>
+
+		<Feature Id="ProductFeature" Title="ContrAlto" Level="1">
+			<ComponentGroupRef Id="ProductComponents" />
+      <ComponentGroupRef Id="MicrocodeComponents" />
+      <ComponentGroupRef Id="DiskComponents" />
+      <ComponentGroupRef Id="CodeComponents" /> 
+      <ComponentRef Id="ProgramMenuDir" />
+		</Feature>
+  
+    <Icon Id="ContrAlto.exe" SourceFile="$(var.Contralto.TargetPath)"/>
+	</Product>
+
+	<Fragment>
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFilesFolder">
+        <Directory Id="LCM" Name="Living Computer Museum">
+				  <Directory Id="INSTALLFOLDER" Name="Contralto">
+            <Directory Id="ROMFOLDER" Name="ROM"/>
+            <Directory Id="DISKFOLDER" Name="Disk"/>
+            <Directory Id="DISASSEMBLYFOLDER" Name="Disassembly"/>
+          </Directory>
+        </Directory>
+			</Directory>
+      <Directory Id="ProgramMenuFolder" Name="Programs">
+          <Directory Id="ProgramMenuDir" Name="ContrAlto">
+              <Component Id="ProgramMenuDir" Guid="007ADB59-BCE4-43CB-9AEC-DD5962136A7D">
+                  <RemoveFolder Id="ProgramMenuDir" On="uninstall"/>
+                  <RegistryValue Root="HKCU" Key="Software\Living Computer Museum\ContrAlto" Type="string" Value="" KeyPath="yes" />
+              </Component>
+          </Directory>
+      </Directory>
+		</Directory>    
+	</Fragment>
+
+	<Fragment>
+		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+			<!-- Main Contralto EXE and dependencies-->
+      <Component Id="ContraltoExecutable" Guid="0AF4F077-3858-4CEA-A3CD-CF8585F98AAA">        
+        <File Id="exe" Name="ContrAlto.exe" Source="$(var.Contralto.TargetPath)" KeyPath="yes"/>
+        
+        <Shortcut Id="shortcut" Directory="ProgramMenuDir" Name="ContrAlto" 
+            WorkingDirectory="INSTALLFOLDER" Icon="ContrAlto.exe" IconIndex="0" Advertise="yes" />
+        
+        <!-- PCAP libs -->
+        <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Base.dll"/>
+        <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Core.dll"/>
+        <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Core.Extensions.dll"/>
+        <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Packets.dll"/>
+      </Component>            
+		</ComponentGroup>
+    
+    <ComponentGroup Id="MicrocodeComponents" Directory="ROMFOLDER">
+      <!-- Microcode and other ROM files -->
+      <Component Id="Microcode" Guid="74E9E780-8D35-40D0-92EB-05B399D06EB6" KeyPath="yes">
+        <File Id="u52" Name="u52" Source="$(var.Contralto.TargetDir)\ROM\u52"/>      
+        <File Id="u53" Name="u53" Source="$(var.Contralto.TargetDir)\ROM\u53"/>      
+        <File Id="u54" Name="u54" Source="$(var.Contralto.TargetDir)\ROM\u54"/>      
+        <File Id="u55" Name="u55" Source="$(var.Contralto.TargetDir)\ROM\u55"/>      
+        <File Id="u60" Name="u60" Source="$(var.Contralto.TargetDir)\ROM\u60"/>      
+        <File Id="u61" Name="u61" Source="$(var.Contralto.TargetDir)\ROM\u61"/>      
+        <File Id="u62" Name="u62" Source="$(var.Contralto.TargetDir)\ROM\u62"/>      
+        <File Id="u63" Name="u63" Source="$(var.Contralto.TargetDir)\ROM\u63"/>      
+        <File Id="u64" Name="u64" Source="$(var.Contralto.TargetDir)\ROM\u64"/>      
+        <File Id="u65" Name="u65" Source="$(var.Contralto.TargetDir)\ROM\u65"/>      
+        <File Id="u70" Name="u70" Source="$(var.Contralto.TargetDir)\ROM\u70"/>      
+        <File Id="u71" Name="u71" Source="$(var.Contralto.TargetDir)\ROM\u71"/>      
+        <File Id="u72" Name="u72" Source="$(var.Contralto.TargetDir)\ROM\u72"/>      
+        <File Id="u73" Name="u73" Source="$(var.Contralto.TargetDir)\ROM\u73"/>      
+        <File Id="u74" Name="u74" Source="$(var.Contralto.TargetDir)\ROM\u74"/>      
+        <File Id="u75" Name="u75" Source="$(var.Contralto.TargetDir)\ROM\u75"/>      
+          
+        <File Id="c0" Name="C0" Source="$(var.Contralto.TargetDir)\ROM\C0"/>    
+        <File Id="c1" Name="C1" Source="$(var.Contralto.TargetDir)\ROM\C1"/>      
+        <File Id="c2" Name="C2" Source="$(var.Contralto.TargetDir)\ROM\C2"/>      
+        <File Id="c3" Name="C3" Source="$(var.Contralto.TargetDir)\ROM\C3"/>
+      
+        <File Id="Twokctl" Name="2kctl.u3" Source="$(var.Contralto.TargetDir)\ROM\2kctl.u3"/>
+      </Component>
+    </ComponentGroup>
+    
+    <ComponentGroup Id="DiskComponents" Directory="DISKFOLDER">
+      <!-- Disk Images -->
+      <Component Id="DiskImages" Guid="A0977605-CD44-462D-80A0-A6347D87B700" KeyPath="yes">
+        <File Id="allgames" Name="AllGames.dsk" Source="$(var.Contralto.TargetDir)\Disk\allgames.dsk"/>      
+        <File Id="bcpl" Name="Bcpl.dsk" Source="$(var.Contralto.TargetDir)\Disk\bcpl.dsk"/>      
+        <File Id="diag" Name="Diag.dsk" Source="$(var.Contralto.TargetDir)\Disk\diag.dsk"/>      
+        <File Id="nonprog" Name="NonProg.dsk" Source="$(var.Contralto.TargetDir)\Disk\nonprog.dsk"/>      
+        <File Id="st76" Name="ST76.dsk" Source="$(var.Contralto.TargetDir)\Disk\st76.dsk"/>      
+        <File Id="st80" Name="ST80.dsk" Source="$(var.Contralto.TargetDir)\Disk\st80.dsk"/>      
+        <File Id="xmsmall" Name="XmSmall.dsk" Source="$(var.Contralto.TargetDir)\Disk\xmsmall.dsk"/>
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="CodeComponents" Directory="DISASSEMBLYFOLDER">
+      <!-- Annotated disassemblies -->
+      <Component Id="Disassembly" Guid="F4530D99-D8C5-45C4-A64F-EEE15F473933" KeyPath="yes">
+        <File Id="altoIIcode" Name="altoIIcode3.mu" Source="$(var.Contralto.TargetDir)\Disassembly\altoIIcode3.mu"/>      
+        <File Id="MesaROM" Name="MesaROM.mu" Source="$(var.Contralto.TargetDir)\Disassembly\MesaROM.mu"/>
+      </Component>
+    </ComponentGroup>
+	</Fragment>
+</Wix>

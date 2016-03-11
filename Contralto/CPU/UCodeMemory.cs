@@ -126,8 +126,9 @@ namespace Contralto.CPU
         /// </summary>
         /// <param name="nextAddress"></param>
         public static void SwitchMode(ushort nextAddress, TaskType task)
-        {                        
-            Log.Write(Logging.LogComponent.Microcode, "SWMODE: Current Bank {0}", _microcodeBank[(int)task]);
+        {
+
+            // Log.Write(Logging.LogComponent.Microcode, "SWMODE: Current Bank {0}", _microcodeBank[(int)task]);
 
             switch (Configuration.SystemType)
             {
@@ -198,7 +199,7 @@ namespace Contralto.CPU
                     break;
             }
 
-            Log.Write(Logging.LogComponent.Microcode, "SWMODE: New Bank {0} for Task {1}", _microcodeBank[(int)task], task);            
+            // Log.Write(Logging.LogComponent.Microcode, "SWMODE: New Bank {0} for Task {1}", _microcodeBank[(int)task], task);            
         }
 
         public static ushort ReadRAM()

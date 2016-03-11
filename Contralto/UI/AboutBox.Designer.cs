@@ -44,22 +44,22 @@
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(74, 13);
             this.label1.TabIndex = 0;
-            this.label1.Text = "ContrAlto v0.1";
+            this.label1.Text = "ContrAlto v0.2";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(45, 68);
+            this.label2.Location = new System.Drawing.Point(45, 45);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(168, 13);
             this.label2.TabIndex = 1;
-            this.label2.Text = "(c) 2015 Living Computer Museum";
+            this.label2.Text = "(c) 2016 Living Computer Museum";
             this.label2.Click += new System.EventHandler(this.label2_Click);
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(68, 43);
+            this.label3.Location = new System.Drawing.Point(68, 32);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(109, 13);
             this.label3.TabIndex = 2;
@@ -86,7 +86,7 @@
             // linkLabel1
             // 
             this.linkLabel1.AutoSize = true;
-            this.linkLabel1.Location = new System.Drawing.Point(45, 123);
+            this.linkLabel1.Location = new System.Drawing.Point(45, 112);
             this.linkLabel1.Name = "linkLabel1";
             this.linkLabel1.Size = new System.Drawing.Size(168, 13);
             this.linkLabel1.TabIndex = 5;

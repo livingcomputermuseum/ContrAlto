@@ -24,7 +24,7 @@ namespace Contralto.Display
         /// <param name="wordOffset"></param>
         /// <param name="dataWord"></param>
         /// <param name="lowRes"></param>
-        void DrawCursorWord(int scanline, int xOffset, ushort cursorWord);
+        void DrawCursorWord(int scanline, int xOffset, bool whiteOnBlack, ushort cursorWord);
 
         /// <summary>
         /// Causes the display to be rendered

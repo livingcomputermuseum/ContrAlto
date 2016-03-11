@@ -79,6 +79,9 @@ namespace Contralto.CPU
                 _rdRam = false;
                 _rb = 0;
                 _firstInstructionAfterSwitch = false;
+
+                _swMode = false;
+                _wrtRam = false;
             }
 
             public virtual void SoftReset()
@@ -545,7 +548,7 @@ namespace Contralto.CPU
             protected bool _rdRam;              // Whether to load uCode RAM onto the bus during the next cycle.
             protected bool _wrtRam;             // Whether to write uCode RAM from M and ALU outputs during the next cycle.
             protected bool _swMode;             // Whether to switch uCode banks during the next cycle.
-            protected bool _softReset;    // Whether this instruction caused a soft reset (so MPC should not come from instruction's NEXT field)
+            protected bool _softReset;          // Whether this instruction caused a soft reset (so MPC should not come from instruction's NEXT field)
 
 
             //

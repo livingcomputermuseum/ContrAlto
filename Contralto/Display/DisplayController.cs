@@ -48,7 +48,7 @@ namespace Contralto.Display
         {
             get
             {
-                return _dataBuffer.Count >= 16;
+                return _dataBuffer.Count >= 14;
             }
         }
 
@@ -89,11 +89,20 @@ namespace Contralto.Display
             _system.CPU.BlockTask(TaskType.DisplayHorizontal);
             _system.CPU.BlockTask(TaskType.DisplayWord);
 
+            // TODO: this eliminates the garbage on the top two lines of the screen.  We are likely
+            // not stopping the Word task at the right point at the end of the field, leading to it reading
+            // garbage for the first word(s) or so of the next field...
+            // OR: we need more time at the start of the scanline before rendering starts...
+            // Fix this right!
+            _system.CPU.Tasks[(int)TaskType.DisplayWord].Reset();
+
+
             _fields++;
 
             _scanline = _evenField ? 0 : 1;
 
             _vblankScanlineCount = 0;
+            
 
             _dataBuffer.Clear();
 
@@ -125,7 +134,7 @@ namespace Contralto.Display
                 _dataBuffer.Clear();
 
                 _dwtBlocked = false;
-                _dhtBlocked = false;
+                _dhtBlocked = false;              
 
                 // Run CURT
                 _system.CPU.WakeupTask(TaskType.Cursor);
@@ -158,10 +167,12 @@ namespace Contralto.Display
             {
                 _cursorXLatched = _cursorX;
                 _cursorXLatch = false;
-            }
+            }       
 
-            // Schedule immediate wakeup for first word on this scanline
-            _wordWakeup.TimestampNsec = 0;
+            // Schedule wakeup for first word on this scanline
+            // TODO: the delay below is chosen to reduce flicker on first scanline;
+            // investigate.
+            _wordWakeup.TimestampNsec = _wordDuration * 3;
             _system.Scheduler.Schedule(_wordWakeup);
         }
 
@@ -195,12 +206,12 @@ namespace Contralto.Display
                 // Draw cursor for this scanline first    
                 if (_cursorXLatched < 606)
                 {
-                    _display.DrawCursorWord(_scanline, _cursorXLatched, _cursorRegLatched);
+                    _display.DrawCursorWord(_scanline, _cursorXLatched, _whiteOnBlack, _cursorRegLatched);
                 }
 
                 _scanline += 2;                
 
-                if (_scanline > 807)
+                if (_scanline >= 808)
                 {
                     // Done with field.                    
 
@@ -224,13 +235,13 @@ namespace Contralto.Display
                     _dwtBlocked = false;
                     _dataBuffer.Clear();
 
-                    // Deal with SWMODE latches for the scanline we're about to draw
+                    // Deal with SWMODE latches for the scanline we're about to draw                    
                     if (_swModeLatch)
                     {
                         _lowRes = _lowResLatch;
                         _whiteOnBlack = _whiteOnBlackLatch;
                         _swModeLatch = false;
-                    }                    
+                    }
 
                 }
             }
@@ -270,9 +281,7 @@ namespace Contralto.Display
             _dataBuffer.Enqueue(word);            
             
             // Sanity check: data length should never exceed 16 words.            
-            // TODO: we're allowing up to 18 before we start discarding things.
-            // This indicates that our timing is messed up somewhere...
-            if (_dataBuffer.Count > 18)
+            if (_dataBuffer.Count > 16)
             {                
                 _dataBuffer.Dequeue();                
             }
@@ -298,13 +307,10 @@ namespace Contralto.Display
 
         public void SETMODE(ushort word)
         {
-            // These take effect at the beginning of the next scanline.
-            if (!_swModeLatch)
-            {
-                _lowResLatch = (word & 0x8000) != 0;
-                _whiteOnBlackLatch = (word & 0x4000) != 0;
-                _swModeLatch = true;
-            }
+            // These take effect at the beginning of the next scanline.            
+            _lowResLatch = (word & 0x8000) != 0;
+            _whiteOnBlackLatch = (word & 0x4000) != 0;
+            _swModeLatch = true;            
         }
 
         public bool EVENFIELD
