@@ -191,7 +191,7 @@ namespace Contralto.CPU
         {            
             if (_tasks[(int)task] != null)
             {             
-                Log.Write(LogComponent.TaskSwitch, "Wakeup enabled for Task {0}", task);            
+               // Log.Write(LogComponent.TaskSwitch, "Wakeup enabled for Task {0}", task);            
                 _tasks[(int)task].WakeupTask();                
             }
         }
@@ -205,7 +205,7 @@ namespace Contralto.CPU
         {
             if (_tasks[(int)task] != null)
             {                
-                Log.Write(LogComponent.TaskSwitch, "Removed wakeup for Task {0}", task);                
+                // Log.Write(LogComponent.TaskSwitch, "Removed wakeup for Task {0}", task);                
                 _tasks[(int)task].BlockTask();
             }
         }
@@ -239,7 +239,7 @@ namespace Contralto.CPU
                 if (_tasks[i] != null && _tasks[i].Wakeup)
                 {                    
                     _nextTask = _tasks[i];
-                    _nextTask.FirstInstructionAfterSwitch = true;
+                    _nextTask.FirstInstructionAfterSwitch = true;                   
 
                     /*
                     if (_nextTask != _currentTask && _currentTask != null)

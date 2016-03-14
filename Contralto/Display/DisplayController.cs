@@ -8,7 +8,7 @@ namespace Contralto.Display
     /// as it scans across the screen.  It implements the logic of the display's sync generator
     /// and wakes up the DVT and DHT tasks as necessary during a display field.
     /// </summary>
-    public class DisplayController : IClockable
+    public class DisplayController
     {
         public DisplayController(AltoSystem system)
         {
@@ -35,13 +35,21 @@ namespace Contralto.Display
         public bool DWTBLOCK
         {
             get { return _dwtBlocked; }
-            set { _dwtBlocked = value; }
+            set
+            {
+                _dwtBlocked = value;
+                CheckWordWakeup();
+            }
         }
 
         public bool DHTBLOCK
         {
             get { return _dhtBlocked; }
-            set { _dhtBlocked = value; }
+            set
+            {
+                _dhtBlocked = value;
+                CheckWordWakeup();
+            }
         }
 
         public bool FIFOFULL
@@ -59,6 +67,12 @@ namespace Contralto.Display
             _word = 0;
             _dwtBlocked = true;
             _dhtBlocked = false;
+            _dataBuffer.Clear();
+
+            if (_system.CPU != null)
+            {
+                CheckWordWakeup();
+            }
 
             _whiteOnBlack = _whiteOnBlackLatch = false;            
             _lowRes = _lowResLatch = false;
@@ -133,8 +147,8 @@ namespace Contralto.Display
 
                 _dataBuffer.Clear();
 
-                _dwtBlocked = false;
-                _dhtBlocked = false;              
+                DWTBLOCK = false;
+                DHTBLOCK = false;              
 
                 // Run CURT
                 _system.CPU.WakeupTask(TaskType.Cursor);
@@ -188,6 +202,7 @@ namespace Contralto.Display
             if (_dataBuffer.Count > 0)
             {                
                 displayWord = _whiteOnBlack ? _dataBuffer.Dequeue() : (ushort)~_dataBuffer.Dequeue();
+                CheckWordWakeup();
             }
 
             _display.DrawDisplayWord(_scanline, _word, displayWord, _lowRes);
@@ -232,7 +247,7 @@ namespace Contralto.Display
                     // Schedule HBlank wakeup for end of next HBlank                    
                     _horizontalWakeup.TimestampNsec = _horizontalBlankDuration - skewNsec;
                     _system.Scheduler.Schedule(_horizontalWakeup);
-                    _dwtBlocked = false;
+                    DWTBLOCK = false;
                     _dataBuffer.Clear();
 
                     // Deal with SWMODE latches for the scanline we're about to draw                    
@@ -261,21 +276,28 @@ namespace Contralto.Display
             }
         }
 
-        public void Clock()
-        {            
-            //
-            // "If the DWT has not executed a BLOCK, if DHT is not blocked, and if the
-            //  buffer is not full, DWT wakeups are generated."
-            //
-            // TODO: move this logic elsewhere so it doesn't have to be polled.
-            if (_dataBuffer.Count < 16 &&                
-                !_dhtBlocked &&
-                !_dwtBlocked)
-            {                
+        private void CheckWordWakeup()
+        {
+            if (FIFOFULL ||
+                DHTBLOCK ||
+                DWTBLOCK)
+            {
+                // If the fifo is full or either the horizontal or word tasks have blocked,
+                // the word task must be blocked.
+                _system.CPU.BlockTask(TaskType.DisplayWord);
+            }
+            else if (!FIFOFULL &&
+                !DHTBLOCK &&
+                !DWTBLOCK)
+            {
+                //
+                // "If the DWT has not executed a BLOCK, if DHT is not blocked, and if the
+                //  buffer is not full, DWT wakeups are generated."
+                //
                 _system.CPU.WakeupTask(TaskType.DisplayWord);
-            }                       
+            }
         }
-
+       
         public void LoadDDR(ushort word)
         {        
             _dataBuffer.Enqueue(word);            
@@ -285,6 +307,8 @@ namespace Contralto.Display
             {                
                 _dataBuffer.Dequeue();                
             }
+
+            CheckWordWakeup();
         }
 
         public void LoadXPREG(ushort word)

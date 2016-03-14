@@ -14,6 +14,7 @@
                 _wakeup = false;
             }
 
+            /*
             protected override InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
             {
                 //
@@ -22,7 +23,7 @@
                 // "; This version assumes MRTACT is cleared by BLOCK, not MAR<- R37"
                 //
                 return base.ExecuteInstruction(instruction);
-            }
+            }*/
         }
     }
 }

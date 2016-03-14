@@ -86,6 +86,9 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Alto.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="PcapDotNet.Base, Version=1.0.2.21699, Culture=neutral, PublicKeyToken=4b6f3e583145a652, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -194,8 +197,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ClassDiagram1.cd" />
-    <None Include="ClassDiagram2.cd" />
     <None Include="Disassembly\altocode24.mu" />
     <None Include="App.config" />
     <None Include="Disassembly\altoIIcode3.mu">
@@ -401,8 +402,10 @@
     <Content Include="pcap\PcapDotNet.Packets.dll" />
     <Content Include="pcap\PcapDotNet.Packets.pdb" />
     <Content Include="pcap\PcapDotNet.Packets.xml" />
-    <Content Include="readme.txt" />
-    <EmbeddedResource Include="Alto.ico" />
+    <Content Include="readme.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Resource Include="Alto.ico" />
     <Content Include="Notes.txt" />
   </ItemGroup>
   <ItemGroup>

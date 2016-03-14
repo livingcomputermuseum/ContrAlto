@@ -754,12 +754,13 @@ namespace Contralto
             _keyMap.Add(Keys.F1, AltoKey.BlankTop);
             _keyMap.Add(Keys.F2, AltoKey.BlankMiddle);
             _keyMap.Add(Keys.F3, AltoKey.BlankBottom);
+            _keyMap.Add(Keys.F4, AltoKey.Lock);
             _keyMap.Add(Keys.Back, AltoKey.BS);
             _keyMap.Add(Keys.Tab, AltoKey.TAB);
             _keyMap.Add(Keys.OemSemicolon, AltoKey.Semicolon);
             _keyMap.Add(Keys.OemOpenBrackets, AltoKey.LBracket);
             _keyMap.Add(Keys.OemCloseBrackets, AltoKey.RBracket);
-            _keyMap.Add(Keys.Down, AltoKey.LF);
+            _keyMap.Add(Keys.Down, AltoKey.LF);            
         }
         
         

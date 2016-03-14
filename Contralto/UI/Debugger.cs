@@ -826,8 +826,13 @@ namespace Contralto
                         }
                     } 
 #endif
+                    if (_system.CPU.CurrentTask.MPC == 0x10)                     // MPC is 20(octal) meaning a new Nova instruction.
+                    {
+                        // count nova instructions (for profiling)
+                        _system._novaInst++;
+                    }
 
-                    // See if we need to stop here
+                        // See if we need to stop here
                     if (_execAbort ||                                               // The Stop button was hit
                         _microcodeBreakpointEnabled[(int)UCodeMemory.GetBank(_system.CPU.CurrentTask.TaskType),_system.CPU.CurrentTask.MPC] || // A microcode breakpoint was hit
                         (_execType == ExecutionType.NextTask &&

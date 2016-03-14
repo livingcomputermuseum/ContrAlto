@@ -1,10 +1,11 @@
 ﻿Readme.txt for Contralto v0.1:
 
 1. Introduction and Overview
-----------------------------
+============================
 
-ContrAlto purports to be a faithful emulation of the Xerox Alto series of 
+ContrAlto aspires to be a faithful emulation of the Xerox Alto II series of 
 pioneering graphical workstations developed at Xerox PARC in 1973. 
+
 
 1.1 What's Emulated
 -------------------
@@ -21,8 +22,9 @@ ContrAlto currently emulates the following Alto hardware:
 At this time, ContrAlto does not support more exotic hardware such as Diablo 44
 and Trident disks, the Orbit printer interface, or the keyset input device.
 
+
 2.0 Requirements
-----------------
+================
 
 ContrAlto will run on any Windows PC running Windows XP or later, with version
 2.0 or later of the .NET Framework installed.  .NET should be present by default
@@ -34,9 +36,14 @@ it will also run under Mono (http://www.mono-project.com/) on Unix and MacOS,
 however this usage is not as well tested -- please file bugs if you find them 
 (see Section 7 for details).
 
+A three-button mouse is essential for using most Alto software.  On most mice,
+the "mousewheel" can be clicked to provide the third (middle) button.  Laptops
+with trackpads may have configuration options to simulate three buttons but
+will likely be clumsy to use.
+
 
 3.0 Getting Started
--------------------
+===================
 
 To launch ContrAlto, simply click on the shortcut created by the installer
 on your Start Menu (or Start Screen, depending on your Windows version.)  Two
@@ -63,19 +70,127 @@ on the display window to start interacting with it using the keyboard and mouse
 (and if you need your mouse back for other things, press either "Alt" key on
 your keyboard.)
 
+
 3.1 Using the Alto
-------------------
+==================
 
 3.1.1 The Basics
 ----------------
 
-3.1.2 Reading Materials
------------------------
+3.1.1.1 Mouse
+-------------
+
+ContrAlto uses your computer's mouse to simulate the one the Alto uses.  
+In order to accurately simulate the mouse, ContrAlto must "capture" the real 
+mouse, which effectively makes your system's mouse exclusive to the ContrAlto 
+window.  (If you've ever used virtualization software like VMWare, VirtualBox, 
+Virtual PC, or Parallels, you may be familiar with this behavior.)  
+
+Clicking on the ContrAlto display window will cause ContrAlto to capture the
+mouse.  Once the mouse has been captured, any mouse movements will be reflected
+by the Alto's mouse cursor.  While ContrAlto has control of the mouse, you will 
+not be able to use the mouse for other programs running on your PC.  To release 
+ContrAlto's control, press either "Alt" key on your keyboard.  Mouse movements
+will return to normal, and you will not be able to control the Alto's mouse
+until you click on the ContrAlto display window again.
+
+The Alto mouse is a three-button mouse.  Alto mouse buttons are mapped as you
+would expect.  If you have a real three-button mouse then this is completely
+straightforward.  If you have a two button mouse with a "mousewheel" then
+a mousewheel click maps to a click of the Alto's middle mouse button.
+
+If you have a trackpad or other pointing device, using the middle mouse button 
+may be more complicated.  See what configuration options your operating system 
+and/or drivers provides you for mapping mouse buttons.
 
 
+3.1.1.2 Keyboard
+----------------
+
+ContrAlto emulates the 61-key Alto II keyboard.  The vast majority of keys
+(the alphanumerics and punctuation) work as you would expect them to, but the
+Alto has a few special keys, which are described below:
+
+Alto Key       PC Key
+--------       ----------
+LF             Down Arrow
+BS             Backspace
+Blank-Bottom   F3
+Blank-Middle   F2
+Blank-Top      F1
+<- (arrow)     Left Arrow
+DEL            Del
+LOCK           F4
+
+
+3.1.1.3 Disk Packs
+------------------
+
+A real Alto uses large 14" disk packs for disk storage, each containing
+approximately 2.5 megabytes of data.  ContrAlto uses files, referred to as
+"disk images" or just "images" that contain a bit-for-bit copy of these original
+packs.  These are a lot easier to use with a modern PC.
+
+Disk images can be loaded and unloaded via the "System->Drive 0" and 
+System->Drive 1" menus.  
+
+If you modify the contents of a loaded disk (for example creating new files or
+deleting existing ones) the changes will be written back out to the disk image
+when a new image is loaded or when ContrAlto exits.  For this reason it may be
+a good idea to make backups of packs from time to time (just like on the real
+machine.)
+
+
+3.1.1.4 Startup, Reset and Shutdown
+-----------------------------------
+
+The system can be started at any time by using the "System->Start" menu, though
+in general having a pack image loaded first is a good idea.  Similarly, the
+"Start->Reset" menu will reset the Alto.
+
+You can shut down the Alto by closing the ContrAlto window; this will commit
+disk changes made to the currently loaded disks back to the disk image files.
+However, you will want to be sure the software running on the Alto is ready
+to be shutdown first, or else you may lose work or corrupt your disk.
+
+
+3.1.2 Additional Reading Materials
+----------------------------------
+
+The Bitsavers Alto archive at http://http://bitsavers.org/pdf/xerox/alto is an 
+excellent repository of original Alto documentation, here are a few documents to 
+get you started:
+
+- The "Alto User's Handbook" is indispensable and contains an overview of the 
+  Alto Executive (the OS "shell"), Bravo (great-granddaddy of Microsoft Word) 
+  and other utilities.  
+  http://bitsavers.org/pdf/xerox/alto/Alto_Users_Handbook_Sep79.pdf
+  
+- "Alto Subsystems" documents many of the common Alto programs and tools
+  ("Subsystems" in Alto parlance) in detail.  
+  http://bitsavers.org/pdf/xerox/alto/AltoSubsystems_Oct79.pdf
+
+- "Alto Operating System Reference Manual" is useful if you are going to do
+  any programming for the Alto.
+  http://bitsavers.org/pdf/xerox/alto/AltoSWRef.part1.pdf
+  http://bitsavers.org/pdf/xerox/alto/AltoSWRef.part2.pdf
+
+- "BCPL Reference Manual" is definitely required if you are going to do any
+  programming on the Alto (in BCPL, anyway...)
+  http://bitsavers.org/pdf/xerox/alto/bcpl/AltoBCPLdoc.pdf
+
+- "Bravo Course Outline" is a tutorial that will show you how to use the Bravo
+  editor.
+  http://bitsavers.org/pdf/xerox/alto/BravoCourse.pdf
+
+- The "Alto Hardware Manual" is fun to read through if you're planning on
+  writing an Alto emulator of your own.  If you're into that sort of thing.
+  http://bitsavers.org/pdf/xerox/alto/AltoHWRef.part1.pdf
+  http://bitsavers.org/pdf/xerox/alto/AltoHWRef.part2.pdf
+ 
 
 4.0 Configuration
------------------
+=================
 
 4.1 CPU
 -------
@@ -89,8 +204,13 @@ your keyboard.)
 -----------
 
 
+4.4 Alternate ("keyboard") Boots
+--------------------------------
+
+
+
 5.0 Debugger
-------------
+============
 
 ContrAlto contains a fairly capable debugger window that can be invoked via
 the "System->Show Debugger" menu (or Ctrl+Alt+D) at any time.  When the debugger
@@ -100,6 +220,7 @@ microcode addresses or Nova instruction addresses.
 
 Usage of the debugger is mostly straightforward but it is intended for "expert"
 users only and still has many rough edges.
+
 
 5.1 The Controls
 ----------------
@@ -145,12 +266,14 @@ to make it easy to differentiate.
 
 ROM1 contains the listing for the Mesa microcode ROMs.
 
+
 5.3 Memory Pane
 ---------------
 
 The pane near the lower-left (labeled "Memory") shows a view into the main
 memory of the Alto, providing address/data and an automated disassembly of Alto
 (Nova) instructions.
+
 
 5.4 Breakpoints
 ---------------
@@ -160,6 +283,7 @@ in the "B" column next to the instruction.  Unchecking the box will remove the
 breakpoint.
 
 Nova code breakpoints will only work if the standard Nova microcode is running.
+
 
 5.5 Everything Else
 -------------------
@@ -185,9 +309,9 @@ Reserved Memory:
 
          
 6.0 Known Issues
-----------------
+================
 
 
 7.0 Reporting Bugs
-------------------
+==================
 

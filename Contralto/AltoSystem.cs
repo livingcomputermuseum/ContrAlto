@@ -21,7 +21,7 @@ namespace Contralto
             _scheduler = new Scheduler();
             
             _memBus = new MemoryBus();
-            _mem = new Memory.Memory();
+            _mem = new Memory.Memory();            
             _keyboard = new Keyboard();
             _diskController = new DiskController(this);
             _displayController = new DisplayController(this);
@@ -30,6 +30,7 @@ namespace Contralto
 
             _cpu = new AltoCPU(this);
 
+
             // Attach memory-mapped devices to the bus
             _memBus.AddDevice(_mem);
             _memBus.AddDevice(_keyboard);
@@ -37,8 +38,7 @@ namespace Contralto
 
             // Register devices that need clocks
             _clockableDevices = new List<IClockable>();            
-            _clockableDevices.Add(_memBus);            
-            _clockableDevices.Add(_displayController);            
+            _clockableDevices.Add(_memBus);                    
             _clockableDevices.Add(_cpu);
 
             Reset();
@@ -176,11 +176,15 @@ namespace Contralto
         {
             get { return _scheduler; }
         }
+
+        public int _novaInst;
     
         private void T_Elapsed(object sender, ElapsedEventArgs e)
         {
             System.Console.WriteLine("{0} CPU clocks/sec %{1}. {2} fields/sec", _clocks, ((double)_clocks / 5882353.0) * 100.0, _displayController.Fields);
+            System.Console.WriteLine("{0} nova instructions/sec.", _novaInst);
             _clocks = 0;
+            _novaInst = 0;
             _displayController.Fields = 0;
         }
 

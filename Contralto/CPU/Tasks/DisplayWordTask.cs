@@ -17,18 +17,7 @@ namespace Contralto.CPU
                 _wakeup = false;
 
                 _displayController = _cpu._system.DisplayController;
-            }
-
-            protected override InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
-            {
-                // We remove our wakeup only if there isn't a wakeup being generated for us by the
-                // display controller.
-                _wakeup = (!_displayController.FIFOFULL &&
-                            !_displayController.DHTBLOCK &&
-                            !_displayController.DWTBLOCK);                
-
-                return base.ExecuteInstruction(instruction);
-            }
+            }           
 
             protected override void ExecuteSpecialFunction2(MicroInstruction instruction)
             {

@@ -127,7 +127,6 @@ namespace Contralto.CPU
         /// <param name="nextAddress"></param>
         public static void SwitchMode(ushort nextAddress, TaskType task)
         {
-
             // Log.Write(Logging.LogComponent.Microcode, "SWMODE: Current Bank {0}", _microcodeBank[(int)task]);
 
             switch (Configuration.SystemType)
@@ -235,7 +234,8 @@ namespace Contralto.CPU
                 // No-op, can't write to ROM.
                 return;
             }           
-
+            
+            /* 
             Log.Write(Logging.LogComponent.Microcode, "CRAM address for write: Bank {0}, addr {1}",
                 _ramBank,                
                 Conversion.ToOctal(_ramAddr));
@@ -243,6 +243,7 @@ namespace Contralto.CPU
             Log.Write(Logging.LogComponent.Microcode, "CRAM write of low {0}, high {1}",                
                 Conversion.ToOctal(low),
                 Conversion.ToOctal(high));
+            */
 
             ushort address = (ushort)(_ramAddr + _ramBank * 1024);
             

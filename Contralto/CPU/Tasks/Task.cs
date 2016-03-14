@@ -250,8 +250,18 @@ namespace Contralto.CPU
                 //
                 ExecuteSpecialFunction1Early(instruction);
 
-                // Do ALU operation
-                aluData = ALU.Execute(instruction.ALUF, _busData, _cpu._t, _skip);
+                // Do ALU operation.
+                // Small optimization: if we're just taking bus data across the ALU, we
+                // won't go through the ALU.Execute call; this is a decent performance gain for a bit
+                // more ugly code...
+                if (instruction.ALUF != AluFunction.Bus)
+                {
+                    aluData = ALU.Execute(instruction.ALUF, _busData, _cpu._t, _skip);
+                }
+                else
+                {
+                    aluData = _busData;
+                }
 
                 //
                 // If there was a WRTRAM operation last cycle, we write the uCode RAM here
@@ -463,9 +473,9 @@ namespace Contralto.CPU
                 // (And apparently the modifier applied to NEXT in this instruction -- MADTEST expects this.)
                 //
                 if (swMode)
-                {                    
-                    UCodeMemory.SwitchMode((ushort)(instruction.NEXT | nextModifier), _taskType);
-                    Log.Write(Logging.LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1}", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT | nextModifier));
+                {
+                    // Log.Write(Logging.LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1} (NEXT is {2})", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT | nextModifier), Conversion.ToOctal(instruction.NEXT));
+                    UCodeMemory.SwitchMode((ushort)(instruction.NEXT | nextModifier), _taskType);                    
                 }
 
                 //

@@ -10,7 +10,8 @@
 		<Feature Id="ProductFeature" Title="ContrAlto" Level="1">
 			<ComponentGroupRef Id="ProductComponents" />
       <ComponentGroupRef Id="MicrocodeComponents" />
-      <ComponentGroupRef Id="DiskComponents" />
+      <ComponentRef Id="UserDiskFolder"/>
+      <ComponentGroupRef Id="DiskComponents" />      
       <ComponentGroupRef Id="CodeComponents" /> 
       <ComponentRef Id="ProgramMenuDir" />
 		</Feature>
@@ -23,8 +24,7 @@
 			<Directory Id="ProgramFilesFolder">
         <Directory Id="LCM" Name="Living Computer Museum">
 				  <Directory Id="INSTALLFOLDER" Name="Contralto">
-            <Directory Id="ROMFOLDER" Name="ROM"/>
-            <Directory Id="DISKFOLDER" Name="Disk"/>
+            <Directory Id="ROMFOLDER" Name="ROM"/>            
             <Directory Id="DISASSEMBLYFOLDER" Name="Disassembly"/>
           </Directory>
         </Directory>
@@ -37,24 +37,37 @@
               </Component>
           </Directory>
       </Directory>
-		</Directory>    
-	</Fragment>
+      <Directory Id="PersonalFolder">
+        <Directory Id="DISKFOLDER" Name="ContrAlto Disks">
+          <Component Id="UserDiskFolder" Guid="007ADB59-BCE4-43CB-9AEC-DD5962136A7E">
+              <RemoveFolder Id="DiskFolderFiles" On="uninstall"/>
+              <RegistryValue Root="HKCU" Key="Software\Living Computer Museum\ContrAlto" Type="string" Value="" KeyPath="yes" />
+          </Component>
+        </Directory>
+      </Directory>
+		</Directory>
+  </Fragment>
 
 	<Fragment>
 		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
 			<!-- Main Contralto EXE and dependencies-->
-      <Component Id="ContraltoExecutable" Guid="0AF4F077-3858-4CEA-A3CD-CF8585F98AAA">        
-        <File Id="exe" Name="ContrAlto.exe" Source="$(var.Contralto.TargetPath)" KeyPath="yes"/>
-        
-        <Shortcut Id="shortcut" Directory="ProgramMenuDir" Name="ContrAlto" 
-            WorkingDirectory="INSTALLFOLDER" Icon="ContrAlto.exe" IconIndex="0" Advertise="yes" />
+      <Component Id="ContraltoExecutable" Guid="0AF4F077-3858-4CEA-A3CD-CF8585F98AAA">
+        <File Id="exe" Name="ContrAlto.exe" Source="$(var.Contralto.TargetPath)" KeyPath="yes">
+          <Shortcut Id="shortcut" Directory="ProgramMenuDir" Name="ContrAlto"
+              WorkingDirectory="INSTALLFOLDER" Icon="ContrAlto.exe" IconIndex="0" Advertise="yes" />
+        </File>        
         
         <!-- PCAP libs -->
         <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Base.dll"/>
         <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Core.dll"/>
         <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Core.Extensions.dll"/>
         <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Packets.dll"/>
-      </Component>            
+      </Component>
+      <Component Id="ContraltoReadme" Guid="0AF4F077-3858-4CEA-A3CD-CF8585F98AAB">
+        <File Id="readme" Name="readme.txt" Source="$(var.Contralto.TargetDir)\readme.txt">
+          <Shortcut Id="docshortcut" Directory="ProgramMenuDir" Name="ContrAlto Readme" Advertise="yes" />
+        </File>
+      </Component>
 		</ComponentGroup>
     
     <ComponentGroup Id="MicrocodeComponents" Directory="ROMFOLDER">
@@ -87,8 +100,13 @@
     </ComponentGroup>
     
     <ComponentGroup Id="DiskComponents" Directory="DISKFOLDER">
-      <!-- Disk Images -->
-      <Component Id="DiskImages" Guid="A0977605-CD44-462D-80A0-A6347D87B700" KeyPath="yes">
+      <!-- Disk Images: Not removed during uninstall -->
+      <Component Id="DiskImages" Guid="A0977605-CD44-462D-80A0-A6347D87B700" Permanent="yes">
+        <RegistryValue Root="HKCU" Key="Software\Living Computer Museum\ContrAlto"
+                     Name="InstallFolder"
+                     Value="[INSTALLFOLDER]"
+                     Type="string"
+                     KeyPath="yes" />
         <File Id="allgames" Name="AllGames.dsk" Source="$(var.Contralto.TargetDir)\Disk\allgames.dsk"/>      
         <File Id="bcpl" Name="Bcpl.dsk" Source="$(var.Contralto.TargetDir)\Disk\bcpl.dsk"/>      
         <File Id="diag" Name="Diag.dsk" Source="$(var.Contralto.TargetDir)\Disk\diag.dsk"/>      
