@@ -221,7 +221,7 @@ namespace Contralto
             OpenFileDialog fileDialog = new OpenFileDialog();
 
             fileDialog.DefaultExt = "dsk";
-            fileDialog.Filter = "Raw Alto Disk Images (*.dsk)|*.dsk|All Files (*.*)|*.*";
+            fileDialog.Filter = "Alto Disk Images (*.dsk, *.dsk44)|*.dsk;*.dsk44|Diablo 31 Disk Images (*.dsk)|*.dsk|Diablo 44 Disk Images (*.dsk44)|*.dsk44|All Files (*.*)|*.*";
             fileDialog.Multiselect = false;
             fileDialog.Title = String.Format("Select image to load into drive {0}", drive);
 

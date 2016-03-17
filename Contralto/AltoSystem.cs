@@ -47,7 +47,7 @@ namespace Contralto
             t.AutoReset = true;
             t.Interval = 1000;
             t.Elapsed += T_Elapsed;
-            t.Start();       
+            //t.Start();       
         }
 
         public void Reset()
@@ -102,7 +102,24 @@ namespace Contralto
             {
                 throw new InvalidOperationException("drive must be 0 or 1.");
             }
-            DiabloPack newPack = new DiabloPack(DiabloDiskType.Diablo31);
+
+            DiabloDiskType type;
+
+            //
+            // We select the disk type based on the file extension.  Very elegant.
+            //
+            switch(Path.GetExtension(path).ToLowerInvariant())
+            {
+                case ".dsk44":
+                    type = DiabloDiskType.Diablo44;
+                    break;
+
+                default:
+                    type = DiabloDiskType.Diablo31;
+                    break;
+            }                
+
+            DiabloPack newPack = new DiabloPack(type);
 
             using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
             {

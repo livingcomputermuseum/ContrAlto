@@ -14,13 +14,17 @@ ContrAlto currently emulates the following Alto hardware:
    - Alto IIxm CPU
    - Microcode RAM (in 1K RAM, 1K RAM/2K ROM, or 3K RAM configurations)
    - 256KW of main memory (in 64KW banks)
-   - Diablo Model 31 drives
+   - Two Diablo Model 31 or 44 drives
    - Ethernet (encapsulated in either UDP datagrams or raw Ethernet frames
                on the host machine)
    - Standard Keyboard/Mouse/Video
 
-At this time, ContrAlto does not support more exotic hardware such as Diablo 44
-and Trident disks, the Orbit printer interface, or the keyset input device.
+1.2 What's Not
+--------------
+
+At this time, ContrAlto does not support more exotic hardware such as Trident 
+disks, printers using the utility port, the Orbit printer interface, or the 
+keyset input device.
 
 
 2.0 Requirements
@@ -59,7 +63,8 @@ Booting an emulated Alto under ContrAlto is slightly less time-consuming.
 To load a disk pack into the virtual Diablo drive, click on the "System"
 menu and go to "Drive 0 -> Load...".  You will be presented with a file dialog
 allowing selection of the disk image (effectively a "virtual disk pack") to
-be loaded.  Several images are provided with ContrAlto, select one and click
+be loaded.  Several images are provided with ContrAlto and are placed in the
+"ContrAlto Disks" subfolder of your "Documents" folder.  Select one and click
 the "Open" button.
 
 Once the pack has been loaded, you can start the Alto by clicking on the 
@@ -68,17 +73,14 @@ after 5-10 seconds a mouse cursor will appear, followed shortly by the banner
 of the Xerox Alto Executive.  Congratulations, your Alto is now running!  Click
 on the display window to start interacting with it using the keyboard and mouse
 (and if you need your mouse back for other things, press either "Alt" key on
-your keyboard.)
+your keyboard.)  See Section 3.1 for details on using ContrAlto.
 
 
 3.1 Using the Alto
 ==================
 
-3.1.1 The Basics
-----------------
-
-3.1.1.1 Mouse
--------------
+3.1.1 Mouse
+-----------
 
 ContrAlto uses your computer's mouse to simulate the one the Alto uses.  
 In order to accurately simulate the mouse, ContrAlto must "capture" the real 
@@ -104,8 +106,8 @@ may be more complicated.  See what configuration options your operating system
 and/or drivers provides you for mapping mouse buttons.
 
 
-3.1.1.2 Keyboard
-----------------
+3.1.2 Keyboard
+--------------
 
 ContrAlto emulates the 61-key Alto II keyboard.  The vast majority of keys
 (the alphanumerics and punctuation) work as you would expect them to, but the
@@ -123,16 +125,18 @@ DEL            Del
 LOCK           F4
 
 
-3.1.1.3 Disk Packs
-------------------
+3.1.3 Disk Packs
+----------------
 
 A real Alto uses large 14" disk packs for disk storage, each containing
-approximately 2.5 megabytes of data.  ContrAlto uses files, referred to as
-"disk images" or just "images" that contain a bit-for-bit copy of these original
-packs.  These are a lot easier to use with a modern PC.
+approximately 2.5 megabytes (for Diablo 31) or 5 megabytes (for Diablo 44) of 
+data.  ContrAlto uses files, referred to as "disk images" or just "images" 
+that contain a bit-for-bit copy of these original packs.  These are a lot 
+easier to use with a modern PC.
 
 Disk images can be loaded and unloaded via the "System->Drive 0" and 
-System->Drive 1" menus.  
+System->Drive 1" menus.  A file dialog will be presented showing possible disk
+images in the current directory.
 
 If you modify the contents of a loaded disk (for example creating new files or
 deleting existing ones) the changes will be written back out to the disk image
@@ -140,9 +144,20 @@ when a new image is loaded or when ContrAlto exits.  For this reason it may be
 a good idea to make backups of packs from time to time (just like on the real
 machine.)
 
+ContrAlto comes with a set of disk packs containing an assortment of Alto 
+programs, these can be found in your "Documents" folder, in the 
+"ContrAlto Disks" subfolder.  These are:
 
-3.1.1.4 Startup, Reset and Shutdown
------------------------------------
+AllGames.dsk   -  A collection of games for the Alto
+Bcpl.dsk       -  A set of BCPL development tools
+Diag.dsk       -  Diagnostic tools
+NonProg.dsk    -  The "Non-Programmer's Disk," containing Bravo
+ST76.dsk       -  Smalltalk-76
+XmST76.dsk44   -  Another Smalltalk-76, with sources and space to play.
+
+
+3.1.4 Startup, Reset and Shutdown
+---------------------------------
 
 The system can be started at any time by using the "System->Start" menu, though
 in general having a pack image loaded first is a good idea.  Similarly, the
@@ -154,7 +169,7 @@ However, you will want to be sure the software running on the Alto is ready
 to be shutdown first, or else you may lose work or corrupt your disk.
 
 
-3.1.2 Additional Reading Materials
+3.2 Additional Reading Materials
 ----------------------------------
 
 The Bitsavers Alto archive at http://http://bitsavers.org/pdf/xerox/alto is an 
@@ -192,21 +207,104 @@ get you started:
 4.0 Configuration
 =================
 
+ContrAlto provides a number of configuration options via the 
+"System->System Configuration..." menu.  Selecting this menu item will invoke
+a small configuration dialog with three tabs, which are described in the
+following sections.
+
+
 4.1 CPU
 -------
+
+This tab allows selection of the CPU configuration.  Normally, this setting 
+should not need to be changed from the default 
+(Alto II, 2K Control ROM, 1K Control RAM).  If you need to run software that
+demands a specific configuration (which is very rarely the case) then change
+the configuration here.  The system will need to be reset for the change to
+take effect.
 
 
 4.2 Ethernet
 ------------
 
+The Ethernet tab provides configuration options for ContrAlto's host Ethernet
+encapsulation.  ContrAlto can encapsulate the Alto's 3mbit ("experimental") 
+Ethernet packets in either UDP datagrams or raw Ethernet packets on a network
+interface on the "host" computer (the computer running ContrAlto).
+
+Raw packet encapsulation requires WinPCAP to be installed; this can be acquired
+from http://www.winpcap.org/.
+
+4.2.1 Host Address
+------------------
+
+The Alto's network address can be specified via the "Alto Address" box at the
+top of the tab.  This is an octal value between 1 and 376.  (The addresses 0
+and 377 are reserved for broadcast and Breath Of Life packets, respectively.)
+
+The default address is "42" and need only be changed if you will be
+communicating with other Alto hosts on the network.  Duplicate network addresses
+will cause odd problems in communication, so make sure all hosts have unique
+addresses!
+
+
+4.2.2 UDP Encapsulation
+-----------------------
+
+UDP Encapsulation is selected via the "UDP" radio button.  This causes Alto 
+Ethernet packets to be encapsulated in broadcast UDP datagrams.  These 
+broadcasts are sent to the IPV4 network associated with the network adapter
+selected in the "Host Interface" network list box.
+
+
+4.2.3 Raw Ethernet Encapsulation
+--------------------------------
+
+Raw Ethernet Encapsulation is selected via the "Raw Ethernet" radio button.
+This causes Alto Ethernet packets to be encapsulated in ethernet packets on the
+selected network interface.
+
 
 4.3 Display
 -----------
+
+The Display tab provides options governing the way ContrAlto displays the
+simulated Alto display.
+
+The "Throttle Framerate" checkbox will force ContrAlto to run at an even 60
+fields/second (matching the speed of the original Alto).  Use this if things 
+are running too fast (for example, games that require reflexes.)  Uncheck this
+if you want things to run as fast as possible (for example, compiling code.)
+
+The "Interlaced Display" checkbox attempts to simulate the Alto's original
+interlaced display.  Depending on your monitor and the speed of your computer
+this may or may not work well.
 
 
 4.4 Alternate ("keyboard") Boots
 --------------------------------
 
+The Alto allowed the specification of alternate boot addresses by holding down
+a set of keys on the keyboard while hitting the "reset" switch on the back of
+the keyboard.  Since this would be difficult to pull off by hand on the emulator
+due to the UI involved, ContrAlto provides a configuration dialog to select the
+alternate address to boot.  When the "Start with Alternate Boot" menu is
+chosen, the system will be started (or restarted) with these keys held down on
+your behalf.
+
+The "Alternate Boot Options" dialog is invoked by the "System->Alternate Boot
+Options" menu and provides configuration for alternate boots.
+
+The boot type (disk or ethernet) can be selected via the "Alternate Boot Type"
+radio buttons.  Ethernet booting will only work if another host on the network
+is providing boot services.
+
+The "Disk Boot Address" text box accepts a 16-bit octal value (from 0 to 177777)
+specifying the address to be booted.
+
+The "Ethernet Boot File" option provides a list box containing a number of
+standard boot files, or a 16-bit octal value (from 0 to 177777) can be manually
+supplied.
 
 
 5.0 Debugger
@@ -239,13 +337,15 @@ Auto:    Automatically single-steps the CPU at a relatively slow rate, while
 Run:     Starts the CPU running normally.  Execution will continue until a 
          breakpoint is hit one of the other control buttons are pressed.
          
-Run T:   Runs the CPU until the next TASK switch occurs
+Run T:   Runs the CPU until the next TASK switch occurs, the next instruction 
+         executed will be the instruction after the TASK SF that caused the 
+         switch.
 
 Nova Step: Runs the CPU until the current Nova instruction is completed.  This
-         will only work properly if the standard Nova microcode is running (if
-         you are executing a Mesa program, this will not work correctly.)
+         will only work properly if the standard Nova microcode is running in 
+         the Emulator task.
          
-Stop:    Stops the CPU
+Stop:    Stops the CPU.
 
 Reset:   Resets the Alto system.
 
@@ -262,7 +362,7 @@ ROM0 contains the listing for the main microcode ROMs -- this 1K of ROM contains
 code for all of the microcode tasks (Emulator, Disk Sector, Ethernet, Memory
 Refresh, Display Word, Cursor, Display Horizontal, Display Vertical, Parity, and
 Disk Word).  The source code for each task is highlighted in a different color
-to make it easy to differentiate.
+to make task-specific code easy to differentiate.
 
 ROM1 contains the listing for the Mesa microcode ROMs.
 
@@ -271,8 +371,8 @@ ROM1 contains the listing for the Mesa microcode ROMs.
 ---------------
 
 The pane near the lower-left (labeled "Memory") shows a view into the main
-memory of the Alto, providing address/data and an automated disassembly of Alto
-(Nova) instructions.
+memory of the Alto, providing address/data and a machine-generated disassembly 
+of Alto (Nova) instructions.
 
 
 5.4 Breakpoints
@@ -282,7 +382,8 @@ Breakpoints can be set on either microcode or Nova code by checking the box
 in the "B" column next to the instruction.  Unchecking the box will remove the
 breakpoint.
 
-Nova code breakpoints will only work if the standard Nova microcode is running.
+Nova code breakpoints will only work if the standard Nova microcode is running
+in the Emulator task.
 
 
 5.5 Everything Else
@@ -290,7 +391,7 @@ Nova code breakpoints will only work if the standard Nova microcode is running.
 
 The other panes in the debugger are:
 
-Disk:    Shows registers and other status of the disk hardware
+Disk:    Shows registers and other status of the disk hardware.
 
 Tasks:   Shows the current microcode task status.  The "T" column indicates the
          task name, "S" indicates the status ("W"akeup and "R"unning), and the
@@ -311,7 +412,25 @@ Reserved Memory:
 6.0 Known Issues
 ================
 
+At the moment, the following issues are known and being worked on.  If you find
+an issue not listed here, see section 7.0 to report a new bug.
+
+- Multiple drives do not function properly, there are still issues in the drive
+  selection logic.
+  
+
 
 7.0 Reporting Bugs
 ==================
+
+If you believe you have found a new issue (or have a feature request) please
+send an e-mail to joshd@livingcomputermuseum.org with a subject line starting
+with "ContrAlto Bug".
+
+When you send a report, please be as specific and detailed as possible:
+- What issue are you seeing?
+- What are the exact steps needed to reproduce the issue?
+
+The more detailed the bug report, the more possible it is for me to track down
+the cause.
 

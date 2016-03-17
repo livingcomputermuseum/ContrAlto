@@ -113,7 +113,7 @@
         <File Id="nonprog" Name="NonProg.dsk" Source="$(var.Contralto.TargetDir)\Disk\nonprog.dsk"/>      
         <File Id="st76" Name="ST76.dsk" Source="$(var.Contralto.TargetDir)\Disk\st76.dsk"/>      
         <File Id="st80" Name="ST80.dsk" Source="$(var.Contralto.TargetDir)\Disk\st80.dsk"/>      
-        <File Id="xmsmall" Name="XmSmall.dsk" Source="$(var.Contralto.TargetDir)\Disk\xmsmall.dsk"/>
+        <File Id="xmsmall" Name="XmST76.dsk44" Source="$(var.Contralto.TargetDir)\Disk\xmst76.dsk44"/>
       </Component>
     </ComponentGroup>
 

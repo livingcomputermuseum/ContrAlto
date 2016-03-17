@@ -56,7 +56,7 @@ namespace Contralto.Display
         {
             get
             {
-                return _dataBuffer.Count >= 14;
+                return _dataBuffer.Count >= 15;
             }
         }
 
@@ -101,15 +101,7 @@ namespace Contralto.Display
 
             // Block DHT, DWT
             _system.CPU.BlockTask(TaskType.DisplayHorizontal);
-            _system.CPU.BlockTask(TaskType.DisplayWord);
-
-            // TODO: this eliminates the garbage on the top two lines of the screen.  We are likely
-            // not stopping the Word task at the right point at the end of the field, leading to it reading
-            // garbage for the first word(s) or so of the next field...
-            // OR: we need more time at the start of the scanline before rendering starts...
-            // Fix this right!
-            _system.CPU.Tasks[(int)TaskType.DisplayWord].Reset();
-
+            _system.CPU.BlockTask(TaskType.DisplayWord);            
 
             _fields++;
 
@@ -181,12 +173,12 @@ namespace Contralto.Display
             {
                 _cursorXLatched = _cursorX;
                 _cursorXLatch = false;
-            }       
+            }
 
             // Schedule wakeup for first word on this scanline
             // TODO: the delay below is chosen to reduce flicker on first scanline;
             // investigate.
-            _wordWakeup.TimestampNsec = _wordDuration * 3;
+            _wordWakeup.TimestampNsec = _lowRes ? 0 : _wordDuration * 3;
             _system.Scheduler.Schedule(_wordWakeup);
         }
 

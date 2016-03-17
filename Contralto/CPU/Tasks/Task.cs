@@ -261,6 +261,7 @@ namespace Contralto.CPU
                 else
                 {
                     aluData = _busData;
+                    ALU.Carry = 0;
                 }
 
                 //

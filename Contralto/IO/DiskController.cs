@@ -392,10 +392,10 @@ namespace Contralto.IO
 
         private void InitSeek(int destCylinder)
         {
-            // set "seek fail" bit based on selected cylinder (if out of bounds) and do not
-            // commence a seek if so.
-            // TODO: handle Model-44 cylinder count (and packs, for that matter)
-            if (destCylinder > 202)
+            //
+            // Set "seek fail" bit based on selected cylinder (if out of bounds) and do not
+            // commence a seek if so.            
+            if (destCylinder > SelectedDrive.Pack.Geometry.Cylinders - 1)
             {
                 _kStat |= SEEKFAIL;
 

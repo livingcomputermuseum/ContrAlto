@@ -256,6 +256,9 @@
     <None Include="Disk\xmsmall.dsk">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Disk\xmst76.dsk44">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="ROM\2kctl.u3">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

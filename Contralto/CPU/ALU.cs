@@ -21,6 +21,7 @@ namespace Contralto.CPU
         public static int Carry
         {
             get { return _carry; }
+            set { _carry = value; }
         }
 
         public static ushort Execute(AluFunction fn, ushort bus, ushort t, int skip)
