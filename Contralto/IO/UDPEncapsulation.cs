@@ -120,22 +120,22 @@ namespace Contralto.IO
             // First two bytes include the length of the 3mbit packet; since 10mbit packets have a minimum length of 46 
             // bytes, and 3mbit packets have no minimum length this is necessary so the receiver can pull out the 
             // correct amount of data.
-            //
-            packetBytes[0] = (byte)(length);
-            packetBytes[1] = (byte)((length) >> 8);
+            //            
+            packetBytes[0] = (byte)((length) >> 8);
+            packetBytes[1] = (byte)(length);
 
             //
             // Do this annoying dance to stuff the ushorts into bytes because this is C#.
             //
             for (int i = 0; i < length; i++)
-            {
-                packetBytes[i * 2 + 2] = (byte)(packet[i]);
-                packetBytes[i * 2 + 3] = (byte)(packet[i] >> 8);
+            {                
+                packetBytes[i * 2 + 2] = (byte)(packet[i] >> 8);
+                packetBytes[i * 2 + 3] = (byte)(packet[i]);
             }
 
             Log.Write(LogType.Verbose, LogComponent.HostNetworkInterface, "Sending packet via UDP; source {0} destination {1}, length {2} words.",
-                Conversion.ToOctal(packetBytes[2]),
                 Conversion.ToOctal(packetBytes[3]),
+                Conversion.ToOctal(packetBytes[2]),
                 length);
 
             _udpClient.Send(packetBytes, packetBytes.Length, _broadcastEndpoint);            

@@ -413,7 +413,7 @@ namespace Contralto.IO
                         //
                         // Read the packet length (in words) (first word of the packet as provided by the sending emulator).  Convert to bytes.
                         //
-                        _incomingPacketLength = ((_incomingPacket.ReadByte()) | (_incomingPacket.ReadByte() << 8)) * 2;
+                        _incomingPacketLength = ((_incomingPacket.ReadByte() << 8) | (_incomingPacket.ReadByte())) * 2;
 
                         // Add one word to the count for the checksum.
                         // NOTE: This is not provided by the sending emulator and is not computed here either.
@@ -427,8 +427,8 @@ namespace Contralto.IO
                         if (_incomingPacketLength > _incomingPacket.Length ||
                             (_incomingPacketLength % 2) != 0)
                         {
-                            throw new InvalidOperationException(
-                                String.Format("Invalid 3mbit packet length header ({0} vs {1}.", _incomingPacketLength, _incomingPacket.Length));
+                           throw new InvalidOperationException(
+                                String.Format("Invalid 3mbit packet length header ({0} vs {1}.", _incomingPacketLength, _incomingPacket.Length));                            
                         }
 
                         Log.Write(LogComponent.EthernetPacket, "Accepting incoming packet (length {0}).", _incomingPacketLength);
@@ -454,7 +454,7 @@ namespace Contralto.IO
                     if (_incomingPacketLength >= 2)
                     {
                         // Stuff 1 word into the FIFO, if we run out of data to send then we clear _iBusy further down.       
-                        ushort nextWord = (ushort)((_incomingPacket.ReadByte()) | (_incomingPacket.ReadByte() << 8));
+                        ushort nextWord = (ushort)((_incomingPacket.ReadByte() << 8) | (_incomingPacket.ReadByte()));
                         _fifo.Enqueue(nextWord);
 
                         _incomingPacketLength -= 2;

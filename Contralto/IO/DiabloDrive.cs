@@ -59,6 +59,14 @@ namespace Contralto.IO
             LoadSector();
         }
 
+        // Offsets in words for start of data in sector
+        public static readonly int HeaderOffset = 44;
+        public static readonly int LabelOffset = HeaderOffset + 14;
+        public static readonly int DataOffset = LabelOffset + 20;
+
+        // Total "words" (really timeslices) per sector.
+        public static readonly int SectorWordCount = 269 + HeaderOffset + 34;
+
         public void LoadPack(DiabloPack pack)
         {
             _pack = pack;
@@ -189,36 +197,36 @@ namespace Contralto.IO
             DiabloDiskSector sector = _pack.GetSector(_cylinder, _head, _sector);
 
             // Header (2 words data, 1 word cksum)
-            for (int i = _headerOffset + 1, j = 1; i < _headerOffset + 3; i++, j--)
+            for (int i = HeaderOffset + 1, j = 1; i < HeaderOffset + 3; i++, j--)
             {
                 // actual data to be loaded from disk / cksum calculated
                 _sectorData[i] = new DataCell(sector.Header[j], CellType.Data);
             }
 
-            ushort checksum = CalculateChecksum(_sectorData, _headerOffset + 1, 2);
-            _sectorData[_headerOffset + 3].Data = checksum;
+            ushort checksum = CalculateChecksum(_sectorData, HeaderOffset + 1, 2);
+            _sectorData[HeaderOffset + 3].Data = checksum;
             Log.Write(LogType.Verbose, LogComponent.DiskController, "Header checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, Conversion.ToOctal(checksum));
 
             // Label (8 words data, 1 word cksum)
-            for (int i = _labelOffset + 1, j = 7; i < _labelOffset + 9; i++, j--)
+            for (int i = LabelOffset + 1, j = 7; i < LabelOffset + 9; i++, j--)
             {
                 // actual data to be loaded from disk / cksum calculated
                 _sectorData[i] = new DataCell(sector.Label[j], CellType.Data);
             }
 
-            checksum = CalculateChecksum(_sectorData, _labelOffset + 1, 8);
-            _sectorData[_labelOffset + 9].Data = checksum;
+            checksum = CalculateChecksum(_sectorData, LabelOffset + 1, 8);
+            _sectorData[LabelOffset + 9].Data = checksum;
             Log.Write(LogType.Verbose, LogComponent.DiskController, "Label checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, Conversion.ToOctal(checksum));
 
             // sector data (256 words data, 1 word cksum)
-            for (int i = _dataOffset + 1, j = 255; i < _dataOffset + 257; i++, j--)
+            for (int i = DataOffset + 1, j = 255; i < DataOffset + 257; i++, j--)
             {
                 // actual data to be loaded from disk / cksum calculated
                 _sectorData[i] = new DataCell(sector.Data[j], CellType.Data);
             }
 
-            checksum = CalculateChecksum(_sectorData, _dataOffset + 1, 256);
-            _sectorData[_dataOffset + 257].Data = checksum;
+            checksum = CalculateChecksum(_sectorData, DataOffset + 1, 256);
+            _sectorData[DataOffset + 257].Data = checksum;
             Log.Write(LogType.Verbose, LogComponent.DiskController, "Data checksum for C/H/S {0}/{1}/{2} is {3}", _cylinder, _head, _sector, Conversion.ToOctal(checksum));
 
         }       
@@ -237,21 +245,21 @@ namespace Contralto.IO
             DiabloDiskSector sector = _pack.GetSector(_cylinder, _head, _sector);
 
             // Header (2 words data, 1 word cksum)
-            for (int i = _headerOffset + 1, j = 1; i < _headerOffset + 3; i++, j--)
+            for (int i = HeaderOffset + 1, j = 1; i < HeaderOffset + 3; i++, j--)
             {
                 // actual data to be loaded from disk / cksum calculated
                 sector.Header[j] = _sectorData[i].Data;
             }
 
             // Label (8 words data, 1 word cksum)
-            for (int i = _labelOffset + 1, j = 7; i < _labelOffset + 9; i++, j--)
+            for (int i = LabelOffset + 1, j = 7; i < LabelOffset + 9; i++, j--)
             {
                 // actual data to be loaded from disk / cksum calculated
                 sector.Label[j] = _sectorData[i].Data;
             }
 
             // sector data (256 words data, 1 word cksum)
-            for (int i = _dataOffset + 1, j = 255; i < _dataOffset + 257; i++, j--)
+            for (int i = DataOffset + 1, j = 255; i < DataOffset + 257; i++, j--)
             {
                 // actual data to be loaded from disk / cksum calculated
                 sector.Data[j] = _sectorData[i].Data;
@@ -264,28 +272,28 @@ namespace Contralto.IO
 
             //
             // header delay, 22 words
-            for (int i = 0; i < _headerOffset; i++)
+            for (int i = 0; i < HeaderOffset; i++)
             {
                 _sectorData[i] = new DataCell(0, CellType.Gap);
             }
 
-            _sectorData[_headerOffset] = new DataCell(1, CellType.Sync);
+            _sectorData[HeaderOffset] = new DataCell(1, CellType.Sync);
             // inter-reccord delay between header & label (10 words)
-            for (int i = _headerOffset + 4; i < _labelOffset; i++)
+            for (int i = HeaderOffset + 4; i < LabelOffset; i++)
             {
                 _sectorData[i] = new DataCell(0, CellType.Gap);
             }
 
-            _sectorData[_labelOffset] = new DataCell(1, CellType.Sync);
+            _sectorData[LabelOffset] = new DataCell(1, CellType.Sync);
             // inter-reccord delay between label & data (10 words)
-            for (int i = _labelOffset + 10; i < _dataOffset; i++)
+            for (int i = LabelOffset + 10; i < DataOffset; i++)
             {
                 _sectorData[i] = new DataCell(0, CellType.Gap);
             }
 
-            _sectorData[_dataOffset] = new DataCell(1, CellType.Sync);
+            _sectorData[DataOffset] = new DataCell(1, CellType.Sync);
             // read-postamble
-            for (int i = _dataOffset + 258; i < _sectorWordCount; i++)
+            for (int i = DataOffset + 258; i < SectorWordCount; i++)
             {
                 _sectorData[i] = new DataCell(0, CellType.Gap);
             }
@@ -324,16 +332,9 @@ namespace Contralto.IO
         private int _head;
         private int _sector;       
 
-        // offsets in words for start of data in sector
-        private const int _headerOffset = 22;
-        private const int _labelOffset = _headerOffset + 14;
-        private const int _dataOffset = _labelOffset + 20;
+        private bool _sectorModified;        
 
-        private bool _sectorModified;
-
-        private static int _sectorWordCount = 269 + 22 + 34;
-
-        private DataCell[] _sectorData = new DataCell[_sectorWordCount];
+        private DataCell[] _sectorData = new DataCell[SectorWordCount];
 
 
         // The pack loaded into the drive

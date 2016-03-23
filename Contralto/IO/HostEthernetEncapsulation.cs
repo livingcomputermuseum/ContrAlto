@@ -108,25 +108,25 @@ namespace Contralto.IO
             // First two bytes include the length of the 3mbit packet; since 10mbit packets have a minimum length of 46 
             // bytes, and 3mbit packets have no minimum length this is necessary so the receiver can pull out the 
             // correct amount of data.
-            //
-            packetBytes[0] = (byte)(length);
-            packetBytes[1] = (byte)((length) >> 8);
+            //            
+            packetBytes[0] = (byte)((length) >> 8);
+            packetBytes[1] = (byte)(length);
 
             //
             // Do this annoying dance to stuff the ushorts into bytes because this is C#.
             //
             for (int i = 0; i < length; i++)
-            {
-                packetBytes[i * 2 + 2] = (byte)(packet[i]);
-                packetBytes[i * 2 + 3] = (byte)(packet[i] >> 8);
+            {                
+                packetBytes[i * 2 + 2] = (byte)(packet[i] >> 8);
+                packetBytes[i * 2 + 3] = (byte)(packet[i]);
             }
 
             //
             // Grab the source and destination host addresses from the packet we're sending
             // and build 10mbit versions.
             //
-            byte destinationHost = packetBytes[3];
-            byte sourceHost = packetBytes[2];
+            byte destinationHost = packetBytes[2];
+            byte sourceHost = packetBytes[3];
 
             Log.Write(LogComponent.HostNetworkInterface, "Sending packet; source {0} destination {1}, length {2} words.",
                 Conversion.ToOctal(sourceHost),
@@ -162,9 +162,7 @@ namespace Contralto.IO
             //
             // Filter out packets intended for the emulator, forward them on, drop everything else.
             //
-            if ((int)p.Ethernet.EtherType == _3mbitFrameType &&                                                 // encapsulated 3mbit frames
-                ((p.Ethernet.Destination.ToValue() & 0xffffffffff00) == _10mbitMACPrefix ||                     //  addressed to any emulator OR
-                 p.Ethernet.Destination.ToValue() == _10mbitBroadcast) &&                                       //  broadcast
+            if ((int)p.Ethernet.EtherType == _3mbitFrameType &&                                                 // encapsulated 3mbit frames            
                 (p.Ethernet.Source.ToValue() != (UInt48)(_10mbitMACPrefix | Configuration.HostAddress)))        //  and not sent by this emulator                
             {
                 Log.Write(LogComponent.HostNetworkInterface, "Received encapsulated 3mbit packet.");

@@ -143,23 +143,17 @@ namespace Contralto
         {
             get
             {
-                if (_queue.Count > 0)
-                {
-                    return _queue.First.Value;
-                }
-                else
-                {
-                    return null;
-                }
+                return _top;                
             }
         }
 
         public void Push(Event e)
         {
             // Degenerate case:  list is empty or new entry is earlier than the head of the list.
-            if (_queue.Count == 0 || _queue.First.Value.TimestampNsec >= e.TimestampNsec)
+            if (_queue.Count == 0 || _top.TimestampNsec >= e.TimestampNsec)
             {
                 _queue.AddFirst(e);
+                _top = e;
                 return;
             }
 
@@ -189,20 +183,29 @@ namespace Contralto
 
         public Event Pop()
         {           
-            Event e = _queue.First.Value;
+            Event e = _top;
             _queue.RemoveFirst();
+
+            _top = _queue.First.Value;            
 
             return e;
         }
 
         public void Remove(Event e)
         {
-            _queue.Remove(e);
+            _queue.Remove(e);           
+            _top = _queue.First.Value;
+           
         }
 
         /// <summary>
         /// TODO: provide more optimal data structure here once profiling can be done.
         /// </summary>
         private LinkedList<Event> _queue;
+
+        /// <summary>
+        /// The Top of the queue (null if queue is empty).
+        /// </summary>
+        private Event _top;
     }
 }

@@ -322,7 +322,7 @@ namespace Contralto.IO
             SpinDisk();
 
             // Schedule next word if this wasn't the last word this sector.
-            if (_sectorWordIndex < _sectorWordCount)
+            if (_sectorWordIndex < DiabloDrive.SectorWordCount)
             {
                 _wordEvent.TimestampNsec = _wordDuration - skewNsec;
                 _system.Scheduler.Schedule(_wordEvent);
@@ -341,14 +341,16 @@ namespace Contralto.IO
             {
                 _seclate = true;                
                 _kStat |= SECLATE;
+                Console.WriteLine("SECLATE for sector {0}.", _sector);
                 Log.Write(LogComponent.DiskSectorTask, "SECLATE for sector {0}.", _sector);
             }
         }
 
         public void ClearStatus()
         {
-            // "...clears KSTAT[13]." (chksum error flag)
+            // "Causes all error latches in disk controller hardware to reset, clears clears KSTAT[13]." (chksum error flag)
             _kStat &= 0xff4b;
+            _seclate = false;
         }
 
         public void IncrementRecord()
@@ -415,7 +417,7 @@ namespace Contralto.IO
                 _seeking = true;
 
                 // And figure out how long this will take.
-                _seekDuration = 0; // (ulong)(CalculateSeekTime() / (ulong)(Math.Abs(_destCylinder - SelectedDrive.Cylinder) + 1));
+                _seekDuration = (ulong)(CalculateSeekTime() / (ulong)(Math.Abs(_destCylinder - SelectedDrive.Cylinder) + 1));
 
                 _seekEvent.TimestampNsec = _seekDuration;
                 _system.Scheduler.Schedule(_seekEvent);
@@ -488,6 +490,7 @@ namespace Contralto.IO
                         // microcode via KDATA, log it.
                         if (_debugRead)
                         {
+                            Console.WriteLine("--- missed sector word {0}({1}) ---", _sectorWordIndex, _kDataRead);
                             Log.Write(LogType.Warning, LogComponent.DiskController, "--- missed sector word {0}({1}) ---", _sectorWordIndex, _kDataRead);
                         }
 
@@ -540,15 +543,15 @@ namespace Contralto.IO
                 switch (_recNo)
                 {
                     case 0:
-                        _sectorWordIndex = _headerOffset;
+                        _sectorWordIndex = DiabloDrive.HeaderOffset;
                         break;
 
                     case 1:
-                        _sectorWordIndex = _labelOffset;
+                        _sectorWordIndex = DiabloDrive.LabelOffset;
                         break;
 
                     case 2:
-                        _sectorWordIndex = _dataOffset;
+                        _sectorWordIndex = DiabloDrive.DataOffset;
                         break;
                 }
             }
@@ -674,24 +677,21 @@ namespace Contralto.IO
         // $MIR0BL		$177775;	DISK INTERRECORD PREAMBLE IS 3 WORDS            <<-- writing
         // $MRPAL		$177775;	DISK READ POSTAMBLE LENGTH IS 3 WORDS
         // $MWPAL		$177773;	DISK WRITE POSTAMBLE LENGTH IS 5 WORDS          <<-- writing, clearly.
-        private static double _scale = 1.75;
-        private static ulong _sectorDuration = (ulong)((40.0 / 12.0) * Conversion.MsecToNsec * _scale);      // time in nsec for one sector    
-        private static int _sectorWordCount = 269 + 22 + 34;                                            // Based on : 269 data words (+ cksums) / sector, + X words for delay / preamble / sync
-        private static ulong _wordDuration = (ulong)((_sectorDuration / (ulong)(_sectorWordCount)) * _scale);  // time in nsec for one word
+        private static double _scale = 1.0;
+        private static ulong _sectorDuration = (ulong)((40.0 / 12.0) * Conversion.MsecToNsec * _scale);      // time in nsec for one sector            
+        private static ulong _wordDuration = (ulong)((_sectorDuration / (ulong)(DiabloDrive.SectorWordCount)) * _scale);  // time in nsec for one word
         private int _sectorWordIndex;                                                               // current word being read
 
         private Event _sectorEvent;
-        private Event _wordEvent;
+        private Event _wordEvent;      
 
-
-        // offsets in words for start of data in sector
-        private const int _headerOffset = 22;
-        private const int _labelOffset = _headerOffset + 14;
-        private const int _dataOffset = _labelOffset + 20;
-
+        //
         // SECLATE data.
-        // 8.5uS for seclate delay (approx. 50 clocks)
-        private static ulong _seclateDuration = (ulong)(20.0 * Conversion.UsecToNsec * _scale);
+        // 86uS for SECLATE delay (approx. 505 clocks)
+        // This is based on the R/C network connected to the 74123 (monostable vibrator) at 31 on the disk control board.
+        // R = 30K, C = .01uF (10000pF).  T(nsec) = .28 * R * C * (1 + (0.7/R)) => .28 * 30 * 10000 * (1 + (0.7/30)) = 85959.9999nsec; 86usec.
+        //
+        private static ulong _seclateDuration = (ulong)(86.0 * Conversion.UsecToNsec * _scale);
         private bool _seclateEnable;
         private bool _seclate;      
         private Event _seclateEvent;
