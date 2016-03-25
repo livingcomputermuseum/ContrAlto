@@ -65,6 +65,9 @@ namespace Contralto.CPU
             _ramBank = 0;
             _ramSelect = true;
             _lowHalfsel = true;
+
+            // Cache the system type from the configuration
+            _systemType = Configuration.SystemType;
         }
 
         public static void LoadBanksFromRMR(ushort rmr)
@@ -97,25 +100,19 @@ namespace Contralto.CPU
         }
 
         public static void LoadControlRAMAddress(ushort address)
-        {
-            _ramBank = (address & 0x3000) >> 12;
+        {            
             _ramSelect = (address & 0x0800) == 0;
             _lowHalfsel = (address & 0x0400) == 0;
             _ramAddr = (address & 0x3ff);
 
             // Clip RAM bank into range, it's always 0 unless we have a 3K uCode RAM system
-            switch (Configuration.SystemType)
+            if (_systemType != SystemType.ThreeKRam)
             {
-                case SystemType.OneKRom:
-                case SystemType.TwoKRom:
-                    _ramBank = 0;
-                    break;
-                case SystemType.ThreeKRam:                    
-                    if (_ramBank > 2)
-                    {
-                        _ramBank = 2;
-                    }
-                    break;            
+                _ramBank = 0;
+            }
+            else
+            {
+                _ramBank = (address & 0x3000) >> 12;
             }
         }
 
@@ -129,7 +126,7 @@ namespace Contralto.CPU
         {
             // Log.Write(Logging.LogComponent.Microcode, "SWMODE: Current Bank {0}", _microcodeBank[(int)task]);
 
-            switch (Configuration.SystemType)
+            switch (_systemType)
             {
                 case SystemType.OneKRom:
                     _microcodeBank[(int)task] = _microcodeBank[(int)task] == MicrocodeBank.ROM0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
@@ -376,6 +373,8 @@ namespace Contralto.CPU
         private static bool _ramSelect;
         private static bool _lowHalfsel;
         private static int _ramAddr;
+
+        private static SystemType _systemType;
 
     }
 }

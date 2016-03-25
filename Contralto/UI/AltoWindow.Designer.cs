@@ -54,6 +54,7 @@
             this.CaptureStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.SystemStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.DiskStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.saveScreenshotToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.DisplayBox)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.StatusLine.SuspendLayout();
@@ -86,6 +87,7 @@
             // fileToolStripMenuItem
             // 
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.saveScreenshotToolStripMenuItem,
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
@@ -94,7 +96,7 @@
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(92, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(232, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.OnFileExitClick);
             // 
@@ -272,6 +274,15 @@
             this.DiskStatusLabel.Size = new System.Drawing.Size(89, 17);
             this.DiskStatusLabel.Text = "DiskStatusLabel";
             // 
+            // saveScreenshotToolStripMenuItem
+            // 
+            this.saveScreenshotToolStripMenuItem.Name = "saveScreenshotToolStripMenuItem";
+            this.saveScreenshotToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
+            | System.Windows.Forms.Keys.P)));
+            this.saveScreenshotToolStripMenuItem.Size = new System.Drawing.Size(232, 22);
+            this.saveScreenshotToolStripMenuItem.Text = "Save Screenshot...";
+            this.saveScreenshotToolStripMenuItem.Click += new System.EventHandler(this.OnFileSaveScreenshotClick);
+            // 
             // AltoWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -330,5 +341,6 @@
         private System.Windows.Forms.ToolStripStatusLabel DiskStatusLabel;
         private System.Windows.Forms.ToolStripMenuItem SystemEthernetBootMenu;
         private System.Windows.Forms.ToolStripMenuItem AlternateBootToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem saveScreenshotToolStripMenuItem;
     }
 }

@@ -91,6 +91,21 @@ namespace Contralto.IO
             BeginReceive();
         }
 
+        public void Shutdown()
+        {
+            // Shut down the reciever thread.
+
+            if (_receiveThread != null)
+            {
+                _receiveThread.Abort();
+            }
+
+            if (_udpClient != null)
+            {
+                _udpClient.Close();
+            }
+        }
+
 
         /// <summary>
         /// Sends an array of bytes over the ethernet as a 3mbit packet encapsulated in a 10mbit packet.

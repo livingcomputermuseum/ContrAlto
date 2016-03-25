@@ -2,8 +2,7 @@
 using System.Text;
 
 namespace Contralto.CPU
-{
-    // BUG: register assignments should come from L (not 0) 
+{    
     public static class UCodeDisassembler
     {       
         
@@ -150,9 +149,8 @@ namespace Contralto.CPU
                     f1 = "TASK ";
                     break;
 
-                case SpecialFunction1.Block:
-                    // "...this function is reserved by convention only; it is *not* done by the microprocessor"
-                    f1 = "BLOCK "; // throw new InvalidOperationException("BLOCK should never be invoked by microcode.");
+                case SpecialFunction1.Block:                    
+                    f1 = "BLOCK ";
                     break;
 
                 case SpecialFunction1.LLSH1:

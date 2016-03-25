@@ -50,29 +50,30 @@ namespace Contralto
 
             DataGridView view = bank == MicrocodeBank.ROM0 ? _rom0SourceViewer : _rom1SourceViewer;
 
-            StreamReader sr = new StreamReader(path);
-
-            while (!sr.EndOfStream)
+            using (StreamReader sr = new StreamReader(path))
             {
-                string line = sr.ReadLine();
-
-                SourceLine src = new SourceLine(line);
-
-                int i = view.Rows.Add(
-                    false,  // breakpoint
-                    GetTextForTask(src.Task),
-                    src.Address,
-                    src.Text);
-
-                // Give the row a color based on the task
-                view.Rows[i].DefaultCellStyle.BackColor = GetColorForTask(src.Task);              
-
-                // Tag the row based on the PROM address (if any) to make it easy to find.
-                if (!String.IsNullOrEmpty(src.Address))
+                while (!sr.EndOfStream)
                 {
-                    view.Rows[i].Tag = Convert.ToUInt16(src.Address, 8);
+                    string line = sr.ReadLine();
+
+                    SourceLine src = new SourceLine(line);
+
+                    int i = view.Rows.Add(
+                        false,  // breakpoint
+                        GetTextForTask(src.Task),
+                        src.Address,
+                        src.Text);
+
+                    // Give the row a color based on the task
+                    view.Rows[i].DefaultCellStyle.BackColor = GetColorForTask(src.Task);
+
+                    // Tag the row based on the PROM address (if any) to make it easy to find.
+                    if (!String.IsNullOrEmpty(src.Address))
+                    {
+                        view.Rows[i].Tag = Convert.ToUInt16(src.Address, 8);
+                    }
                 }
-            }            
+            }
 
             // Ensure the UI view gets refreshed to display the current MPC source
             Refresh();    
@@ -121,19 +122,7 @@ namespace Contralto
             //_otherRegs.Rows[4].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.Skip, 1);
             _otherRegs.Rows[5].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.MAR, 6);
             _otherRegs.Rows[6].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.MD, 6);
-            _otherRegs.Rows[7].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.Cycle & 0x3f, 2);
-
-            // Disk info
-            _diskData.Rows[0].Cells[1].Value = _system.DiskController.ClocksUntilNextSector.ToString("0.00");
-            _diskData.Rows[1].Cells[1].Value = _system.DiskController.Cylinder.ToString();
-            _diskData.Rows[2].Cells[1].Value = _system.DiskController.SeekCylinder.ToString();
-            _diskData.Rows[3].Cells[1].Value = _system.DiskController.Head.ToString();
-            _diskData.Rows[4].Cells[1].Value = _system.DiskController.Sector.ToString();
-            _diskData.Rows[5].Cells[1].Value = Conversion.ToOctal(_system.DiskController.KDATA, 6);
-            _diskData.Rows[6].Cells[1].Value = Conversion.ToOctal(_system.DiskController.KADR, 6);
-            _diskData.Rows[7].Cells[1].Value = Conversion.ToOctal(_system.DiskController.KCOM, 6);
-            _diskData.Rows[8].Cells[1].Value = Conversion.ToOctal(_system.DiskController.KSTAT, 6);
-            _diskData.Rows[9].Cells[1].Value = _system.DiskController.RECNO.ToString();
+            _otherRegs.Rows[7].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.Cycle & 0x3f, 2);           
 
             // Reserved memory locations
             for (int i = 0; i < _reservedMemoryEntries.Length; i++)
@@ -245,18 +234,7 @@ namespace Contralto
             //_otherRegs.Rows.Add("SKIP", "0");
             _otherRegs.Rows.Add("MAR", "0");
             _otherRegs.Rows.Add("MD", "0");
-            _otherRegs.Rows.Add("MCycle", "0");            
-
-            _diskData.Rows.Add("Cycles", "0");
-            _diskData.Rows.Add("Cylinder", "0");
-            _diskData.Rows.Add("D.Cylinder", "0");
-            _diskData.Rows.Add("Head", "0");
-            _diskData.Rows.Add("Sector", "0");
-            _diskData.Rows.Add("KDATA", "0");
-            _diskData.Rows.Add("KADR", "0");
-            _diskData.Rows.Add("KCOM", "0");
-            _diskData.Rows.Add("KSTAT", "0");
-            _diskData.Rows.Add("RECNO", "0");    
+            _otherRegs.Rows.Add("MCycle", "0");                       
             
             for(int i=0;i< _reservedMemoryEntries.Length;i++)
             {
@@ -797,7 +775,7 @@ namespace Contralto
                         this.BeginInvoke(new StepDelegate(RefreshUI));
                         this.BeginInvoke(new StepDelegate(Invalidate));
                         System.Threading.Thread.Sleep(10);
-                        return true; /* break always */
+                        return false; /* break always */
                     }                    
 
                 case ExecutionType.Step:

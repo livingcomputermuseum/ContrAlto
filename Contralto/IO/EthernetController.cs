@@ -111,6 +111,11 @@ namespace Contralto.IO
             set { _countdownWakeup = value; }
         }
 
+        public IPacketEncapsulation HostInterface
+        {
+            get { return _hostInterface; }
+        }
+
         public void ResetInterface()
         {            
             // Latch status before resetting

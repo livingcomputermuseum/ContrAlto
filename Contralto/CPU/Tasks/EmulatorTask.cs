@@ -21,7 +21,9 @@ namespace Contralto.CPU
             public override void Reset()
             {
                 base.Reset();
-                _wakeup = true;                
+                _wakeup = true;
+
+                _systemType = Configuration.SystemType;
             }
 
             public override void BlockTask()
@@ -153,7 +155,7 @@ namespace Contralto.CPU
                     case EmulatorF1.LoadESRB:                        
                         _rb = (ushort)((_busData & 0xe) >> 1);
 
-                        if (_rb != 0 && Configuration.SystemType != SystemType.ThreeKRam)
+                        if (_rb != 0 && _systemType != SystemType.ThreeKRam)
                         {
                             // Force bank 0 for machines with only 1K RAM.
                             _rb = 0;                            
@@ -455,6 +457,8 @@ namespace Contralto.CPU
             //
             // NB: _skip is in the encapsulating AltoCPU class to make it easier to reference since the ALU needs to know about it.
             private int _carry;
+
+            private SystemType _systemType;
         }
     }
 }

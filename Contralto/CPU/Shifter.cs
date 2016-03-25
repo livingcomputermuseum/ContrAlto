@@ -15,10 +15,9 @@ namespace Contralto.CPU
     // NOTE: FOR NOVA (NOVEL) SHIFTS (from aug '76 manual):
     // The emulator has two additional bits of state, the SKIP and CARRY flip flops.CARRY is identical
     // to the Nova carry bit, and is set or cleared as appropriate when the DNS+- (do Nova shifts)
-    // function is executed.DNS also addresses R from(1R[3 - 4] XOR 3), and sets the SKIP flip flop if 
+    // function is executed.  DNS also addresses R from (R[3 - 4] XOR 3), and sets the SKIP flip flop if 
     // appropriate.The PC is incremented by 1 at the beginning of the next emulated instruction if
-    // SKIP is set, using ALUF DB.IR4- clears SKIP.
-
+    // SKIP is set, using ALUF DB.  IR<- clears SKIP.
     public static class Shifter
     {
         static Shifter()

@@ -35,9 +35,6 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
@@ -53,8 +50,9 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle23 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle24 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle25 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle26 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle27 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Debugger));
             this.Microcode = new System.Windows.Forms.GroupBox();
             this.SourceTabs = new System.Windows.Forms.TabControl();
@@ -66,10 +64,6 @@
             this.Source = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Rom1Page = new System.Windows.Forms.TabPage();
             this._rom1SourceViewer = new System.Windows.Forms.DataGridView();
-            this.dataGridViewCheckBoxColumn1 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.dataGridViewTextBoxColumn4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Rom2Page = new System.Windows.Forms.TabPage();
             this._ram0SourceViewer = new System.Windows.Forms.DataGridView();
             this.dataGridViewCheckBoxColumn2 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
@@ -106,10 +100,6 @@
             this.Disassembly = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.label1 = new System.Windows.Forms.Label();
             this.ExecutionStateLabel = new System.Windows.Forms.Label();
-            this.groupBox5 = new System.Windows.Forms.GroupBox();
-            this._diskData = new System.Windows.Forms.DataGridView();
-            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ResetButton = new System.Windows.Forms.Button();
             this.RunToNextTaskButton = new System.Windows.Forms.Button();
             this.NovaStep = new System.Windows.Forms.Button();
@@ -118,7 +108,10 @@
             this.dataGridViewTextBoxColumn9 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn11 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.HackButton = new System.Windows.Forms.Button();
+            this.dataGridViewCheckBoxColumn1 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.dataGridViewTextBoxColumn4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Microcode.SuspendLayout();
             this.SourceTabs.SuspendLayout();
             this.Rom0Page.SuspendLayout();
@@ -135,8 +128,6 @@
             ((System.ComponentModel.ISupportInitialize)(this._otherRegs)).BeginInit();
             this.groupBox4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._memoryData)).BeginInit();
-            this.groupBox5.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this._diskData)).BeginInit();
             this.groupBox6.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._reservedMemory)).BeginInit();
             this.SuspendLayout();
@@ -148,7 +139,7 @@
             this.Microcode.Controls.Add(this.JumpToAddress);
             this.Microcode.Location = new System.Drawing.Point(3, 3);
             this.Microcode.Name = "Microcode";
-            this.Microcode.Size = new System.Drawing.Size(603, 625);
+            this.Microcode.Size = new System.Drawing.Size(603, 622);
             this.Microcode.TabIndex = 0;
             this.Microcode.TabStop = false;
             this.Microcode.Text = "Microcode Source";
@@ -311,59 +302,10 @@
             this._rom1SourceViewer.ShowCellErrors = false;
             this._rom1SourceViewer.ShowEditingIcon = false;
             this._rom1SourceViewer.ShowRowErrors = false;
-            this._rom1SourceViewer.Size = new System.Drawing.Size(582, 545);
+            this._rom1SourceViewer.Size = new System.Drawing.Size(582, 554);
             this._rom1SourceViewer.TabIndex = 2;
             this._rom1SourceViewer.TabStop = false;
             this._rom1SourceViewer.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.Rom1SourceViewCellClick);
-            // 
-            // dataGridViewCheckBoxColumn1
-            // 
-            this.dataGridViewCheckBoxColumn1.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
-            this.dataGridViewCheckBoxColumn1.FalseValue = "false";
-            this.dataGridViewCheckBoxColumn1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.dataGridViewCheckBoxColumn1.HeaderText = "B";
-            this.dataGridViewCheckBoxColumn1.IndeterminateValue = "null";
-            this.dataGridViewCheckBoxColumn1.Name = "dataGridViewCheckBoxColumn1";
-            this.dataGridViewCheckBoxColumn1.ReadOnly = true;
-            this.dataGridViewCheckBoxColumn1.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridViewCheckBoxColumn1.TrueValue = "true";
-            this.dataGridViewCheckBoxColumn1.Width = 20;
-            // 
-            // dataGridViewTextBoxColumn4
-            // 
-            this.dataGridViewTextBoxColumn4.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
-            dataGridViewCellStyle7.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.dataGridViewTextBoxColumn4.DefaultCellStyle = dataGridViewCellStyle7;
-            this.dataGridViewTextBoxColumn4.HeaderText = "Addr";
-            this.dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
-            this.dataGridViewTextBoxColumn4.ReadOnly = true;
-            this.dataGridViewTextBoxColumn4.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridViewTextBoxColumn4.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.dataGridViewTextBoxColumn4.Width = 5;
-            // 
-            // dataGridViewTextBoxColumn3
-            // 
-            this.dataGridViewTextBoxColumn3.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
-            dataGridViewCellStyle8.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle8.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle8;
-            this.dataGridViewTextBoxColumn3.HeaderText = "Word";
-            this.dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
-            this.dataGridViewTextBoxColumn3.ReadOnly = true;
-            this.dataGridViewTextBoxColumn3.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridViewTextBoxColumn3.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.dataGridViewTextBoxColumn3.Width = 5;
-            // 
-            // dataGridViewTextBoxColumn5
-            // 
-            this.dataGridViewTextBoxColumn5.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            dataGridViewCellStyle9.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.dataGridViewTextBoxColumn5.DefaultCellStyle = dataGridViewCellStyle9;
-            this.dataGridViewTextBoxColumn5.HeaderText = "Source Code";
-            this.dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
-            this.dataGridViewTextBoxColumn5.ReadOnly = true;
-            this.dataGridViewTextBoxColumn5.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridViewTextBoxColumn5.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
             // Rom2Page
             // 
@@ -486,9 +428,9 @@
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this._registerData);
-            this.groupBox1.Location = new System.Drawing.Point(614, 3);
+            this.groupBox1.Location = new System.Drawing.Point(909, 3);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(137, 625);
+            this.groupBox1.Size = new System.Drawing.Size(137, 667);
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "General Registers";
@@ -528,7 +470,7 @@
             this._registerData.ShowCellToolTips = false;
             this._registerData.ShowEditingIcon = false;
             this._registerData.ShowRowErrors = false;
-            this._registerData.Size = new System.Drawing.Size(123, 600);
+            this._registerData.Size = new System.Drawing.Size(123, 642);
             this._registerData.TabIndex = 0;
             this._registerData.TabStop = false;
             // 
@@ -563,7 +505,7 @@
             // 
             // StepButton
             // 
-            this.StepButton.Location = new System.Drawing.Point(0, 954);
+            this.StepButton.Location = new System.Drawing.Point(9, 647);
             this.StepButton.Name = "StepButton";
             this.StepButton.Size = new System.Drawing.Size(44, 23);
             this.StepButton.TabIndex = 3;
@@ -574,7 +516,7 @@
             // 
             // AutoStep
             // 
-            this.AutoStep.Location = new System.Drawing.Point(50, 954);
+            this.AutoStep.Location = new System.Drawing.Point(59, 647);
             this.AutoStep.Name = "AutoStep";
             this.AutoStep.Size = new System.Drawing.Size(47, 23);
             this.AutoStep.TabIndex = 4;
@@ -585,7 +527,7 @@
             // 
             // RunButton
             // 
-            this.RunButton.Location = new System.Drawing.Point(103, 954);
+            this.RunButton.Location = new System.Drawing.Point(112, 647);
             this.RunButton.Name = "RunButton";
             this.RunButton.Size = new System.Drawing.Size(41, 23);
             this.RunButton.TabIndex = 5;
@@ -596,7 +538,7 @@
             // 
             // StopButton
             // 
-            this.StopButton.Location = new System.Drawing.Point(351, 955);
+            this.StopButton.Location = new System.Drawing.Point(489, 648);
             this.StopButton.Name = "StopButton";
             this.StopButton.Size = new System.Drawing.Size(43, 23);
             this.StopButton.TabIndex = 6;
@@ -608,7 +550,7 @@
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this._taskData);
-            this.groupBox2.Location = new System.Drawing.Point(469, 634);
+            this.groupBox2.Location = new System.Drawing.Point(612, 326);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(137, 344);
             this.groupBox2.TabIndex = 7;
@@ -679,9 +621,9 @@
             // groupBox3
             // 
             this.groupBox3.Controls.Add(this._otherRegs);
-            this.groupBox3.Location = new System.Drawing.Point(612, 634);
+            this.groupBox3.Location = new System.Drawing.Point(755, 326);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(137, 344);
+            this.groupBox3.Size = new System.Drawing.Size(148, 344);
             this.groupBox3.TabIndex = 8;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "CPU Registers";
@@ -717,7 +659,7 @@
             this._otherRegs.ShowCellToolTips = false;
             this._otherRegs.ShowEditingIcon = false;
             this._otherRegs.ShowRowErrors = false;
-            this._otherRegs.Size = new System.Drawing.Size(123, 319);
+            this._otherRegs.Size = new System.Drawing.Size(135, 319);
             this._otherRegs.TabIndex = 0;
             // 
             // Reg
@@ -746,16 +688,16 @@
             this.groupBox4.Controls.Add(this.MemoryJumpToAddress);
             this.groupBox4.Controls.Add(this.label3);
             this.groupBox4.Controls.Add(this._memoryData);
-            this.groupBox4.Location = new System.Drawing.Point(172, 634);
+            this.groupBox4.Location = new System.Drawing.Point(612, 3);
             this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Size = new System.Drawing.Size(291, 298);
+            this.groupBox4.Size = new System.Drawing.Size(291, 317);
             this.groupBox4.TabIndex = 8;
             this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "Memory";
+            this.groupBox4.Text = "System Memory";
             // 
             // MemoryJumpToAddress
             // 
-            this.MemoryJumpToAddress.Location = new System.Drawing.Point(53, 276);
+            this.MemoryJumpToAddress.Location = new System.Drawing.Point(53, 294);
             this.MemoryJumpToAddress.Name = "MemoryJumpToAddress";
             this.MemoryJumpToAddress.Size = new System.Drawing.Size(48, 20);
             this.MemoryJumpToAddress.TabIndex = 15;
@@ -765,7 +707,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(6, 279);
+            this.label3.Location = new System.Drawing.Point(4, 297);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(47, 13);
             this.label3.TabIndex = 14;
@@ -807,7 +749,7 @@
             this._memoryData.ShowCellToolTips = false;
             this._memoryData.ShowEditingIcon = false;
             this._memoryData.ShowRowErrors = false;
-            this._memoryData.Size = new System.Drawing.Size(279, 257);
+            this._memoryData.Size = new System.Drawing.Size(279, 272);
             this._memoryData.TabIndex = 0;
             this._memoryData.TabStop = false;
             this._memoryData.VirtualMode = true;
@@ -860,7 +802,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(0, 935);
+            this.label1.Location = new System.Drawing.Point(9, 628);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(85, 13);
             this.label1.TabIndex = 9;
@@ -869,77 +811,15 @@
             // ExecutionStateLabel
             // 
             this.ExecutionStateLabel.AutoSize = true;
-            this.ExecutionStateLabel.Location = new System.Drawing.Point(92, 935);
+            this.ExecutionStateLabel.Location = new System.Drawing.Point(101, 628);
             this.ExecutionStateLabel.Name = "ExecutionStateLabel";
             this.ExecutionStateLabel.Size = new System.Drawing.Size(33, 13);
             this.ExecutionStateLabel.TabIndex = 10;
             this.ExecutionStateLabel.Text = "unset";
             // 
-            // groupBox5
-            // 
-            this.groupBox5.Controls.Add(this._diskData);
-            this.groupBox5.Location = new System.Drawing.Point(3, 634);
-            this.groupBox5.Name = "groupBox5";
-            this.groupBox5.Size = new System.Drawing.Size(163, 298);
-            this.groupBox5.TabIndex = 11;
-            this.groupBox5.TabStop = false;
-            this.groupBox5.Text = "Disk";
-            // 
-            // _diskData
-            // 
-            this._diskData.AllowUserToAddRows = false;
-            this._diskData.AllowUserToDeleteRows = false;
-            dataGridViewCellStyle24.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            this._diskData.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle24;
-            this._diskData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this._diskData.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.dataGridViewTextBoxColumn1,
-            this.dataGridViewTextBoxColumn2});
-            dataGridViewCellStyle25.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle25.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle25.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle25.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle25.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle25.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle25.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this._diskData.DefaultCellStyle = dataGridViewCellStyle25;
-            this._diskData.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
-            this._diskData.Location = new System.Drawing.Point(6, 19);
-            this._diskData.MultiSelect = false;
-            this._diskData.Name = "_diskData";
-            this._diskData.ReadOnly = true;
-            this._diskData.RowHeadersVisible = false;
-            this._diskData.RowTemplate.DefaultCellStyle.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this._diskData.RowTemplate.Height = 18;
-            this._diskData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this._diskData.ShowCellErrors = false;
-            this._diskData.ShowCellToolTips = false;
-            this._diskData.ShowEditingIcon = false;
-            this._diskData.ShowRowErrors = false;
-            this._diskData.Size = new System.Drawing.Size(147, 273);
-            this._diskData.TabIndex = 1;
-            this._diskData.TabStop = false;
-            // 
-            // dataGridViewTextBoxColumn1
-            // 
-            this.dataGridViewTextBoxColumn1.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
-            this.dataGridViewTextBoxColumn1.HeaderText = "Data";
-            this.dataGridViewTextBoxColumn1.MinimumWidth = 16;
-            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
-            this.dataGridViewTextBoxColumn1.ReadOnly = true;
-            this.dataGridViewTextBoxColumn1.Width = 55;
-            // 
-            // dataGridViewTextBoxColumn2
-            // 
-            this.dataGridViewTextBoxColumn2.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.dataGridViewTextBoxColumn2.HeaderText = "Value";
-            this.dataGridViewTextBoxColumn2.MinimumWidth = 16;
-            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
-            this.dataGridViewTextBoxColumn2.ReadOnly = true;
-            // 
             // ResetButton
             // 
-            this.ResetButton.Location = new System.Drawing.Point(400, 955);
+            this.ResetButton.Location = new System.Drawing.Point(538, 648);
             this.ResetButton.Name = "ResetButton";
             this.ResetButton.Size = new System.Drawing.Size(57, 23);
             this.ResetButton.TabIndex = 12;
@@ -950,7 +830,7 @@
             // 
             // RunToNextTaskButton
             // 
-            this.RunToNextTaskButton.Location = new System.Drawing.Point(150, 954);
+            this.RunToNextTaskButton.Location = new System.Drawing.Point(159, 647);
             this.RunToNextTaskButton.Name = "RunToNextTaskButton";
             this.RunToNextTaskButton.Size = new System.Drawing.Size(51, 23);
             this.RunToNextTaskButton.TabIndex = 13;
@@ -961,7 +841,7 @@
             // 
             // NovaStep
             // 
-            this.NovaStep.Location = new System.Drawing.Point(207, 954);
+            this.NovaStep.Location = new System.Drawing.Point(216, 647);
             this.NovaStep.Name = "NovaStep";
             this.NovaStep.Size = new System.Drawing.Size(66, 23);
             this.NovaStep.TabIndex = 14;
@@ -973,9 +853,9 @@
             // groupBox6
             // 
             this.groupBox6.Controls.Add(this._reservedMemory);
-            this.groupBox6.Location = new System.Drawing.Point(757, 3);
+            this.groupBox6.Location = new System.Drawing.Point(1052, 3);
             this.groupBox6.Name = "groupBox6";
-            this.groupBox6.Size = new System.Drawing.Size(180, 975);
+            this.groupBox6.Size = new System.Drawing.Size(180, 667);
             this.groupBox6.TabIndex = 3;
             this.groupBox6.TabStop = false;
             this.groupBox6.Text = "Reserved Memory";
@@ -986,21 +866,21 @@
             this._reservedMemory.AllowUserToDeleteRows = false;
             this._reservedMemory.AllowUserToResizeColumns = false;
             this._reservedMemory.AllowUserToResizeRows = false;
-            dataGridViewCellStyle26.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            this._reservedMemory.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle26;
+            dataGridViewCellStyle24.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            this._reservedMemory.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle24;
             this._reservedMemory.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this._reservedMemory.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.dataGridViewTextBoxColumn9,
             this.dataGridViewTextBoxColumn10,
             this.dataGridViewTextBoxColumn11});
-            dataGridViewCellStyle27.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle27.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle27.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle27.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle27.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle27.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle27.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this._reservedMemory.DefaultCellStyle = dataGridViewCellStyle27;
+            dataGridViewCellStyle25.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle25.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle25.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle25.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle25.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle25.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle25.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this._reservedMemory.DefaultCellStyle = dataGridViewCellStyle25;
             this._reservedMemory.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
             this._reservedMemory.Location = new System.Drawing.Point(7, 19);
             this._reservedMemory.MultiSelect = false;
@@ -1015,7 +895,7 @@
             this._reservedMemory.ShowCellToolTips = false;
             this._reservedMemory.ShowEditingIcon = false;
             this._reservedMemory.ShowRowErrors = false;
-            this._reservedMemory.Size = new System.Drawing.Size(167, 950);
+            this._reservedMemory.Size = new System.Drawing.Size(167, 642);
             this._reservedMemory.TabIndex = 0;
             this._reservedMemory.TabStop = false;
             // 
@@ -1047,27 +927,64 @@
             this.dataGridViewTextBoxColumn11.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.dataGridViewTextBoxColumn11.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
-            // HackButton
+            // dataGridViewCheckBoxColumn1
             // 
-            this.HackButton.Location = new System.Drawing.Point(295, 955);
-            this.HackButton.Name = "HackButton";
-            this.HackButton.Size = new System.Drawing.Size(36, 23);
-            this.HackButton.TabIndex = 15;
-            this.HackButton.Text = "hack";
-            this.HackButton.UseVisualStyleBackColor = true;
-            this.HackButton.Click += new System.EventHandler(this.HackButton_Click);
+            this.dataGridViewCheckBoxColumn1.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.dataGridViewCheckBoxColumn1.FalseValue = "false";
+            this.dataGridViewCheckBoxColumn1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.dataGridViewCheckBoxColumn1.HeaderText = "B";
+            this.dataGridViewCheckBoxColumn1.IndeterminateValue = "null";
+            this.dataGridViewCheckBoxColumn1.Name = "dataGridViewCheckBoxColumn1";
+            this.dataGridViewCheckBoxColumn1.ReadOnly = true;
+            this.dataGridViewCheckBoxColumn1.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.dataGridViewCheckBoxColumn1.TrueValue = "true";
+            this.dataGridViewCheckBoxColumn1.Width = 20;
+            // 
+            // dataGridViewTextBoxColumn4
+            // 
+            this.dataGridViewTextBoxColumn4.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
+            dataGridViewCellStyle7.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.dataGridViewTextBoxColumn4.DefaultCellStyle = dataGridViewCellStyle7;
+            this.dataGridViewTextBoxColumn4.HeaderText = "T";
+            this.dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
+            this.dataGridViewTextBoxColumn4.ReadOnly = true;
+            this.dataGridViewTextBoxColumn4.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.dataGridViewTextBoxColumn4.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.dataGridViewTextBoxColumn4.Width = 5;
+            // 
+            // dataGridViewTextBoxColumn3
+            // 
+            this.dataGridViewTextBoxColumn3.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
+            dataGridViewCellStyle8.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle8.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle8;
+            this.dataGridViewTextBoxColumn3.HeaderText = "Addr";
+            this.dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
+            this.dataGridViewTextBoxColumn3.ReadOnly = true;
+            this.dataGridViewTextBoxColumn3.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.dataGridViewTextBoxColumn3.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.dataGridViewTextBoxColumn3.Width = 5;
+            // 
+            // dataGridViewTextBoxColumn5
+            // 
+            this.dataGridViewTextBoxColumn5.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            dataGridViewCellStyle9.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.dataGridViewTextBoxColumn5.DefaultCellStyle = dataGridViewCellStyle9;
+            this.dataGridViewTextBoxColumn5.HeaderText = "Source Code";
+            this.dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
+            this.dataGridViewTextBoxColumn5.ReadOnly = true;
+            this.dataGridViewTextBoxColumn5.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.dataGridViewTextBoxColumn5.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
             // Debugger
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(949, 997);
-            this.Controls.Add(this.HackButton);
+            this.ClientSize = new System.Drawing.Size(1235, 673);
             this.Controls.Add(this.groupBox6);
             this.Controls.Add(this.NovaStep);
             this.Controls.Add(this.RunToNextTaskButton);
             this.Controls.Add(this.ResetButton);
-            this.Controls.Add(this.groupBox5);
             this.Controls.Add(this.ExecutionStateLabel);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.groupBox4);
@@ -1106,8 +1023,6 @@
             this.groupBox4.ResumeLayout(false);
             this.groupBox4.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this._memoryData)).EndInit();
-            this.groupBox5.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this._diskData)).EndInit();
             this.groupBox6.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this._reservedMemory)).EndInit();
             this.ResumeLayout(false);
@@ -1147,10 +1062,6 @@
         private System.Windows.Forms.Label ExecutionStateLabel;
         private System.Windows.Forms.TextBox JumpToAddress;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.GroupBox groupBox5;
-        private System.Windows.Forms.DataGridView _diskData;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
         private System.Windows.Forms.Button ResetButton;
         private System.Windows.Forms.Button RunToNextTaskButton;
         private System.Windows.Forms.Button NovaStep;
@@ -1168,10 +1079,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn7;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn8;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn dataGridViewCheckBoxColumn1;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
         private System.Windows.Forms.GroupBox groupBox6;
         private System.Windows.Forms.DataGridView _reservedMemory;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn9;
@@ -1179,6 +1086,9 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn11;
         private System.Windows.Forms.TextBox MemoryJumpToAddress;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Button HackButton;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn dataGridViewCheckBoxColumn1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
     }
 }

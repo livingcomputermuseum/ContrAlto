@@ -163,7 +163,6 @@
     <Compile Include="UI\Debugger.Designer.cs">
       <DependentUpon>Debugger.cs</DependentUpon>
     </Compile>
-    <Compile Include="Display\FakeDisplayController.cs" />
     <Compile Include="Display\DisplayController.cs" />
     <Compile Include="Display\IAltoDisplay.cs" />
     <Compile Include="UI\AlternateBootWindow.cs">
@@ -393,6 +392,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\dragon.png" />
+    <EmbeddedResource Include="dragon.png" />
     <Content Include="pcap\PcapDotNet.Base.dll" />
     <Content Include="pcap\PcapDotNet.Base.pdb" />
     <Content Include="pcap\PcapDotNet.Base.xml" />

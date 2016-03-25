@@ -215,7 +215,7 @@ namespace Contralto.UI
                 Configuration.HostPacketInterfaceType != _selectedInterfaceType ||
                 Configuration.SystemType != _selectedSystemType)
             {
-                MessageBox.Show("Changes to CPU or Ethernet configuration will not take effect until ContrAlto is restarted.");
+                MessageBox.Show("Changes to CPU or host Ethernet configuration will not take effect until ContrAlto is restarted.");
             }
 
             // System

@@ -19,5 +19,10 @@ namespace Contralto.IO
         /// <param name="packet"></param>
         /// <param name="length"></param>
         void Send(ushort[] packet, int length);
+
+        /// <summary>
+        /// Shuts down the encapsulation provider
+        /// </summary>
+        void Shutdown();
     }
 }

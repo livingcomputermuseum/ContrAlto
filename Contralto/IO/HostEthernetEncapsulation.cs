@@ -84,12 +84,24 @@ namespace Contralto.IO
             BeginReceive();
         }
 
+        public void Shutdown()
+        {
+            if (_communicator != null)
+            {
+                _communicator.Break();
+            }
+
+            if (_receiveThread != null)
+            {
+                _receiveThread.Abort();
+            }
+        }
 
         /// <summary>
         /// Sends an array of bytes over the ethernet as a 3mbit packet encapsulated in a 10mbit packet.
         /// </summary>
         /// <param name="packet"></param>
-        /// <param name="hostId"></param>
+        /// <param name="hostId"></param> 
         public void Send(ushort[] packet, int length)
         {
             // Sanity check.
@@ -222,7 +234,8 @@ namespace Contralto.IO
             // (probably need to make this more elegant so we can tear down the thread
             // properly.)
             Log.Write(LogComponent.HostNetworkInterface, "Receiver thread started.");
-            _communicator.ReceivePackets(-1, ReceiveCallback);
+
+            _communicator.ReceivePackets(-1, ReceiveCallback);            
         }
 
         private MacAddress Get10mbitDestinationMacFrom3mbit(byte destinationHost)

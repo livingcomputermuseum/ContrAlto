@@ -3,6 +3,9 @@ using Contralto.IO;
 using System;
 using System.Net;
 using System.Collections.Generic;
+using System.IO;
+using System.Windows.Forms;
+using System.Threading;
 
 namespace Contralto
 {
@@ -17,18 +20,18 @@ namespace Contralto
             // See if WinPCap is installed and working
             TestPCap();                   
 
-            AltoSystem system = new AltoSystem();
+            _system = new AltoSystem();
 
             if (!String.IsNullOrEmpty(Configuration.Drive0Image))
             {
                 try
                 {
-                    system.LoadDrive(0, Configuration.Drive0Image);
+                    _system.LoadDrive(0, Configuration.Drive0Image);
                 }
                 catch(Exception e)
                 {
                     Console.WriteLine("Could not load image '{0}' for drive 0.  Error '{1}'.", Configuration.Drive0Image, e.Message);
-                    system.UnloadDrive(0);
+                    _system.UnloadDrive(0);
                 }
             }
 
@@ -36,27 +39,51 @@ namespace Contralto
             {
                 try
                 {
-                    system.LoadDrive(1, Configuration.Drive0Image);
+                    _system.LoadDrive(1, Configuration.Drive1Image);
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine("Could not load image '{0}' for drive 1.  Error '{1}'.", Configuration.Drive1Image, e.Message);
-                    system.UnloadDrive(1);
+                    _system.UnloadDrive(1);
                 }
             }
 
-            AltoWindow mainWindow = new AltoWindow();
+            //
+            // Attach handlers so that we can properly flush state if we're terminated.
+            //
+            AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
 
-            mainWindow.AttachSystem(system);
-            
-            mainWindow.ShowDialog();
+            //
+            // Invoke the main UI window; this will run until the user closes it, at which
+            // point we are done.
+            //                        
+            using (AltoWindow mainWindow = new AltoWindow())
+            {                
+                mainWindow.AttachSystem(_system);
+                Application.Run(mainWindow);
+            }            
+        } 
 
+        private static void OnProcessExit(object sender, EventArgs e)
+        {
+            Console.WriteLine("Exiting...");
+
+            //
+            // Save disk contents
+            //
+            _system.CommitDiskPack(0);
+            _system.CommitDiskPack(1);
+
+            //
+            // Commit current configuration to disk
+            //
+            Configuration.WriteConfiguration();
 
         }
 
         private static void PrintHerald()
         {
-            Console.WriteLine("ContrAlto v0.1 (c) 2015, 2016 Living Computer Museum.");            
+            Console.WriteLine("ContrAlto v1.0 (c) 2015, 2016 Living Computer Museum.");            
             Console.WriteLine("Bug reports to joshd@livingcomputermuseum.org");
             Console.WriteLine();
         }      
@@ -72,12 +99,11 @@ namespace Contralto
             }
             catch
             {
-                Console.WriteLine("WARNING: WinPCAP does not appear to be properly installed.");
-                Console.WriteLine("         Raw Ethernet functionality will be disabled.");
-                Console.WriteLine("         Please install WinPCAP from: http://www.winpcap.org/");
-
                 Configuration.HostRawEthernetInterfacesAvailable = false;
             }
-        }
+        }       
+
+        private static AltoSystem _system;
+        private static ManualResetEvent _closeEvent;
     }
 }

@@ -53,8 +53,7 @@ namespace Contralto.IO
 
             _ySteps = Math.Abs(dy);
             _yDir = Math.Sign(dy);
-
-            //Console.WriteLine("Mouse move from ({0},{1}) to ({2},{3}).", _mouseX, _mouseY, _destX, _destY);
+            
             _lock.ExitWriteLock();
         }
 
@@ -122,9 +121,7 @@ namespace Contralto.IO
             else if (_yDir == 1 && _xDir == 1)
             {
                 bits = 8;
-            }
-
-            //Console.WriteLine("Mouse poll: xdir {0}, ydir {1}, bits {2}", _xDir, _yDir, Conversion.ToOctal(bits));
+            }            
 
             // Move the mouse closer to its destination
             if (_xSteps > 0)

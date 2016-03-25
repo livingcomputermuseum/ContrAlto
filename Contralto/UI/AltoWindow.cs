@@ -91,7 +91,7 @@ namespace Contralto
             try
             {
                 // Commit loaded pack back to disk
-                CommitDiskPack(0);
+                _system.CommitDiskPack(0);
                 _system.LoadDrive(0, path);
                 Drive0ImageName.Text = System.IO.Path.GetFileName(path);
                 Configuration.Drive0Image = path;
@@ -106,7 +106,7 @@ namespace Contralto
 
         private void OnSystemDrive0UnloadClick(object sender, EventArgs e)
         {
-            CommitDiskPack(0);
+            _system.CommitDiskPack(0);
             _system.UnloadDrive(0);
             Drive0ImageName.Text = _noImageLoadedText;
             Configuration.Drive0Image = String.Empty;
@@ -124,7 +124,7 @@ namespace Contralto
             try
             {
                 // Commit loaded pack back to disk                
-                CommitDiskPack(1);
+                _system.CommitDiskPack(1);
                 _system.LoadDrive(1, path);
                 Drive1ImageName.Text = System.IO.Path.GetFileName(path);
                 Configuration.Drive1Image = path;
@@ -139,7 +139,7 @@ namespace Contralto
 
         private void OnSystemDrive1UnloadClick(object sender, EventArgs e)
         {
-            CommitDiskPack(1);
+            _system.CommitDiskPack(1);
             _system.UnloadDrive(1);
             Drive1ImageName.Text = _noImageLoadedText;
             Configuration.Drive1Image = String.Empty;
@@ -193,6 +193,44 @@ namespace Contralto
             _debugger = null;
         }
 
+        private void OnFileSaveScreenshotClick(object sender, EventArgs e)
+        {
+            // Pause execution while the user selects the destination for the screenshot
+            bool wasRunning = _controller.IsRunning;
+
+            _controller.StopExecution();
+
+            SaveFileDialog fileDialog = new SaveFileDialog();
+            fileDialog.DefaultExt = "png";
+
+            fileDialog.Filter = "PNG Images (*.png)|*.png|All Files (*.*)|*.*";            
+            fileDialog.Title = String.Format("Select destination for screenshot.");
+            fileDialog.CheckPathExists = true;
+            fileDialog.FileName = "Screenshot.png";        
+
+            DialogResult res = fileDialog.ShowDialog();
+
+            if (res == DialogResult.OK)
+            {
+                EncoderParameters p = new EncoderParameters(1);
+                p.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 100L);
+
+                try
+                {
+                    _displayBuffer.Save(fileDialog.FileName, GetEncoderForFormat(ImageFormat.Png), p);
+                }
+                catch
+                {
+                    MessageBox.Show("Could not save screenshot.  Check the specified filename and path and try again.");
+                }
+            }
+
+            if (wasRunning)
+            {
+                _controller.StartExecution(AlternateBootType.None);
+            }
+        }
+
         private void OnFileExitClick(object sender, EventArgs e)
         {
             _controller.StopExecution();
@@ -201,19 +239,17 @@ namespace Contralto
 
         private void OnAltoWindowClosed(object sender, FormClosedEventArgs e)
         {
-            // Halt the system and detach our display            
+            // Halt the system and detach our display              
             _controller.StopExecution();
             _system.DetachDisplay();
+            _system.Shutdown();
 
-            // Commit loaded packs back to disk
-            CommitDiskPack(0);
-            CommitDiskPack(1);
-
+            //
             // Commit current configuration to disk
+            //
             Configuration.WriteConfiguration();
 
-            this.Dispose();
-            Application.Exit();
+            DialogResult = DialogResult.OK;            
         }
 
         private string ShowImageLoadDialog(int drive)
@@ -223,6 +259,8 @@ namespace Contralto
             fileDialog.DefaultExt = "dsk";
             fileDialog.Filter = "Alto Disk Images (*.dsk, *.dsk44)|*.dsk;*.dsk44|Diablo 31 Disk Images (*.dsk)|*.dsk|Diablo 44 Disk Images (*.dsk44)|*.dsk44|All Files (*.*)|*.*";
             fileDialog.Multiselect = false;
+            fileDialog.CheckFileExists = true;
+            fileDialog.CheckPathExists = true;
             fileDialog.Title = String.Format("Select image to load into drive {0}", drive);
 
             DialogResult res = fileDialog.ShowDialog();
@@ -250,29 +288,7 @@ namespace Contralto
             Console.WriteLine("Execution error: {0} - {1}", e.Message, e.StackTrace);
 
             System.Diagnostics.Debugger.Break();
-        }
-
-        //
-        // Disk handling
-        //
-        private void CommitDiskPack(int driveId)
-        {
-            DiabloDrive drive = _system.DiskController.Drives[driveId];
-            if (drive.IsLoaded)
-            {
-                using (FileStream fs = new FileStream(drive.Pack.PackName, FileMode.Create, FileAccess.Write))
-                {
-                    try
-                    {
-                        drive.Pack.Save(fs);
-                    }
-                    catch (Exception e)
-                    {
-                        MessageBox.Show(String.Format("Unable to save disk {0}'s contents.  Error {0}.  Any changes have been lost.", e.Message), "Disk save error");
-                    }
-                }                
-            }
-        }
+        }        
 
         private void StartSystem(AlternateBootType bootType)
         {
@@ -314,6 +330,10 @@ namespace Contralto
                     _currentBuffer = _displayData1;
                     _lastBuffer = _displayData0;
                 }
+            }
+            else
+            {
+                _lastBuffer = _currentBuffer;                
             }
 
             // Asynchronously render this frame.
@@ -762,8 +782,22 @@ namespace Contralto
             _keyMap.Add(Keys.OemCloseBrackets, AltoKey.RBracket);
             _keyMap.Add(Keys.Down, AltoKey.LF);            
         }
-        
-        
+
+        private ImageCodecInfo GetEncoderForFormat(ImageFormat format)
+        {
+            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageDecoders();
+
+            foreach (ImageCodecInfo codec in codecs)
+            {
+                if (codec.FormatID == format.Guid)
+                {
+                    return codec;
+                }
+            }
+            return null;
+        }
+
+
         // Display related data.
         // Note: display is actually 606 pixels wide, but that's not an even multiple of 8, so we round up.
         // Two backbuffers and references to the current / last buffer for rendering

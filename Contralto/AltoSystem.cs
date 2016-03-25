@@ -82,6 +82,15 @@ namespace Contralto
             _displayController.DetachDisplay();
         }
 
+        public void Shutdown()
+        {
+            // Kill any host interface threads that are running.
+            if (_ethernetController.HostInterface != null)
+            {
+                _ethernetController.HostInterface.Shutdown();
+            }
+        }
+
         public void SingleStep()
         {
             // Run every device that needs attention for a single clock cycle.
@@ -138,6 +147,29 @@ namespace Contralto
             }
 
             _diskController.Drives[drive].UnloadPack();
+        }
+
+        //
+        // Disk handling
+        //
+        public void CommitDiskPack(int driveId)
+        {
+            DiabloDrive drive = _diskController.Drives[driveId];
+            if (drive.IsLoaded)
+            {
+                using (FileStream fs = new FileStream(drive.Pack.PackName, FileMode.Create, FileAccess.Write))
+                {
+                    try
+                    {
+                        drive.Pack.Save(fs);
+                    }
+                    catch (Exception e)
+                    {
+                        // TODO: this does not really belong here.
+                        System.Windows.Forms.MessageBox.Show(String.Format("Unable to save disk {0}'s contents.  Error {0}.  Any changes have been lost.", e.Message), "Disk save error");
+                    }
+                }
+            }
         }
 
         public void PressBootKeys(AlternateBootType bootType)

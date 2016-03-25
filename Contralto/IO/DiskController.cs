@@ -351,8 +351,7 @@ namespace Contralto.IO
             if (_seclateEnable)
             {
                 _seclate = true;                
-                _kStat |= SECLATE;
-                Console.WriteLine("SECLATE for sector {0}.", _sector);
+                _kStat |= SECLATE;                
                 Log.Write(LogComponent.DiskSectorTask, "SECLATE for sector {0}.", _sector);
             }
         }
@@ -500,8 +499,7 @@ namespace Contralto.IO
                         // Debugging: on a read/check, if we are overwriting a word that was never read by the
                         // microcode via KDATA, log it.
                         if (_debugRead)
-                        {
-                            Console.WriteLine("--- missed sector word {0}({1}) ---", _sectorWordIndex, _kDataRead);
+                        {                            
                             Log.Write(LogType.Warning, LogComponent.DiskController, "--- missed sector word {0}({1}) ---", _sectorWordIndex, _kDataRead);
                         }
 
