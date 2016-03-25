@@ -14,10 +14,11 @@ namespace Contralto.CPU
             MemoryWait,
         }
 
-        // Task:
-        // Base task class: provides implementation for non-task-specific microcode execution and
-        // state.  Task subclasses implement and execute Task-specific behavior and are called into
-        // by the base class as necessary.
+        /// <summary>
+        /// Base task class: provides implementation for non-task-specific microcode execution and
+        /// state.  Task subclasses implement and execute Task-specific behavior and are called into
+        /// by the base class as necessary.
+        /// </summary>
         public abstract class Task
         {
             public Task(AltoCPU cpu)
@@ -25,9 +26,7 @@ namespace Contralto.CPU
                 _wakeup = false;
                 _mpc = 0xffff;  // invalid, for sanity checking
                 _taskType = TaskType.Invalid;
-                _cpu = cpu;
-
-                _block = false;
+                _cpu = cpu;                
             }
 
             public int Priority
@@ -61,15 +60,6 @@ namespace Contralto.CPU
                 set { _firstInstructionAfterSwitch = value; }
             }
 
-            /// <summary>
-            /// Indicates whether the current uInstruction asserts BLOCK.
-            /// Used by hardware for various tasks.
-            /// </summary>
-            public bool BLOCK
-            {
-                get { return _block; }
-            }
-
             public virtual void Reset()
             {
                 // From The Alto Hardware Manual (section 2, "Initialization"):
@@ -82,6 +72,8 @@ namespace Contralto.CPU
 
                 _swMode = false;
                 _wrtRam = false;
+                _wakeup = false;
+                _skip = 0;
             }
 
             public virtual void SoftReset()
@@ -104,11 +96,7 @@ namespace Contralto.CPU
 
             public InstructionCompletion ExecuteNext()
             {                
-                MicroInstruction instruction = UCodeMemory.GetInstruction(_mpc, _taskType);
-
-                // Grab BLOCK bit so that other tasks / hardware can look at it
-                _block = instruction.F1 == SpecialFunction1.Block;
-             
+                MicroInstruction instruction = UCodeMemory.GetInstruction(_mpc, _taskType);                             
                 return ExecuteInstruction(instruction);
             }
 
@@ -309,7 +297,7 @@ namespace Contralto.CPU
                         // It also doensn't appear to affect the execution of the standard Alto uCode in any significant
                         // way, but is included here for correctness.
                         //
-                        //if (!_firstInstructionAfterSwitch)
+                        if (!_firstInstructionAfterSwitch)
                         {
                             // Yield to other more important tasks
                             completion = InstructionCompletion.TaskSwitch;            
@@ -571,8 +559,6 @@ namespace Contralto.CPU
             protected TaskType _taskType;
             protected bool _wakeup;
             protected bool _firstInstructionAfterSwitch;
-
-            protected bool _block;
 
             // Emulator Task-specific data.  This is placed here because it is used by the ALU and it's easier to reference in the
             // base class even if it does break encapsulation.  See notes in the EmulatorTask class for meaning.        

@@ -18,6 +18,12 @@ namespace Contralto.CPU
                 _wakeup = true;
             }
 
+            public override void Reset()
+            {
+                base.Reset();
+                _wakeup = true;                
+            }
+
             public override void BlockTask()
             {
                 throw new InvalidOperationException("The emulator task cannot be blocked.");
@@ -176,14 +182,11 @@ namespace Contralto.CPU
                         // "...causes (IR[3-4] XOR 3) to be used as the low-order two bits of the RSELECT field.
                         // This address the accumulators from the destination field of the instruction.  The selected
                         // register may be loaded or read."
-                        _rSelect = (_rSelect & 0xfffc) | ((((uint)_cpu._ir & 0x1800) >> 11) ^ 3);
-                        break;
-
                     case EmulatorF2.LoadDNS:
                         //
                         // "...DNS also addresses R from (3-IR[3 - 4])..."
                         //
-                        _rSelect = (_rSelect & 0xfffc) | ((((uint)_cpu._ir & 0x1800) >> 11) ^ 3);
+                        _rSelect = (_rSelect & 0xfffc) | ((((uint)_cpu._ir & 0x1800) >> 11) ^ 3);                        
                         break;
 
                 }
@@ -195,12 +198,11 @@ namespace Contralto.CPU
                 switch (ef2)
                 {
                     case EmulatorF2.LoadIR:
-                        // based on block diagram, this always comes from the bus
+                        // Load IR from the bus                        
                         _cpu._ir = _busData;
 
                         // "IR<- also merges bus bits 0, 5, 6 and 7 into NEXT[6-9] which does a first level
-                        // instruction dispatch."                        
-                        // Assuming for now this is an OR operation like everything else that modifies NEXT.
+                        // instruction dispatch."                                                
                         _nextModifier = (ushort)(((_busData & 0x8000) >> 12) | ((_busData & 0x0700) >> 8));
 
                         // "IR<- clears SKIP"

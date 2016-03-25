@@ -36,10 +36,10 @@ namespace Contralto.CPU
                         break;
 
                     case DisplayHorizontalF2.SETMODE:
-                        _displayController.SETMODE(_busData);
-
                         // "If bit 0 = 1, the bit clock rate is set to 100ns period (at the start of the next scan line),
                         // and a 1 is merged into NEXT[9]."
+                        _displayController.SETMODE(_busData);
+
                         if ((_busData & 0x8000) != 0)
                         {
                             _nextModifier |= 1;

@@ -22,9 +22,7 @@ namespace Contralto.CPU
             }
 
             protected override InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
-            {
-                // Log.Write(LogComponent.Debug, "{0}: {1}", Conversion.ToOctal(_mpc), UCodeDisassembler.DisassembleInstruction(instruction, _taskType));
-
+            {                
                 InstructionCompletion completion = base.ExecuteInstruction(instruction);
 
                 // Deal with SECLATE semantics:  If the Disk Sector task wakes up and runs before
@@ -89,7 +87,7 @@ namespace Contralto.CPU
 
                     case DiskF1.LoadKSTAT:
                         // "KSTAT[12-15] are loaded from BUS[12-15].  (Actually BUS[13] is ORed onto
-                        // KSTAT[13].)"                        
+                        //  KSTAT[13].)"                        
                         
                         // From the schematic (and ucode source, based on the values it actually uses for BUS[13]), BUS[13]
                         // is also inverted.  So there's that, too.
@@ -170,11 +168,7 @@ namespace Contralto.CPU
                         if (!_diskController.FatalError)
                         {
                             _nextModifier |= 0x1;
-                        }
-                        else
-                        {
-                            Console.WriteLine("fatal disk error on disk {0}", _diskController.Drive);
-                        }
+                        }                       
                         break;
 
                     case DiskF2.STROBON:
@@ -190,8 +184,7 @@ namespace Contralto.CPU
                         // "NEXT <- NEXT OR (IF disk not ready to accept command THEN 1 ELSE 0)                        
                         _nextModifier |= GetInitModifier(instruction);
                         if (!_diskController.Ready)
-                        {
-                            Console.WriteLine("disk {0} not ready", _diskController.Drive);
+                        {                            
                             _nextModifier |= 0x1;
                         }
                         break;

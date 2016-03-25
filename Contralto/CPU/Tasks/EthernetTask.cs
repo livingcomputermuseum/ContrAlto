@@ -7,7 +7,7 @@ namespace Contralto.CPU
     public partial class AltoCPU
     {
         /// <summary>
-        /// EthernetTask implements Ethernet-specific task function
+        /// EthernetTask implements Ethernet-specific task functions
         /// </summary>
         private sealed class EthernetTask : Task
         {

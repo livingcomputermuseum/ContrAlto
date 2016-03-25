@@ -55,13 +55,25 @@ namespace Contralto.IO
                 // position is reached (before any data is transferred)."
                 _dataXfer = (_kAdr & 0x2) != 0x2;
 
+                //
+                // Select disk from bit 14 of KDATA.
+                // The HW reference claims that the drive is selected by bit 14 of KDATA XOR'd with bit 15
+                // of KADR but I can find no evidence in the schematics that this is actually so. 
+                // Page 18 of the controller schematic ("DISK ADDRESSING") shows that the current DATA(14) (KDATA bit 14) 
+                // value is gated into the DISK select lines (running to the drive) whenever a KADR<- F1 is executed.
+                // It is possible that the HW ref is telling the truth but the XORing is done by the Sector Task uCode
+                // and not the hardware, but where this is actually occurring is not obvious.
+                // At any rate: The below behavior appears to work correctly, so I'm sticking with it.
+                //
+                _disk = ((_kDataWrite & 0x2) >> 1);
+
                 Log.Write(LogComponent.DiskController, "KADR set to {0} (Header {1}, Label {2}, Data {3}, Xfer {4}, Drive {5})",
                     Conversion.ToOctal(_kAdr),
                     Conversion.ToOctal((_kAdr & 0xc0) >> 6),
                     Conversion.ToOctal((_kAdr & 0x30) >> 4),
                     Conversion.ToOctal((_kAdr & 0xc) >> 2),
                     _dataXfer,
-                    _kAdr & 0x1);
+                    _disk);
 
                 Log.Write(LogComponent.DiskController, "  -Disk Address ({0}) is C/H/S {1}/{2}/{3}, Drive {4} Restore {5}",
                     Conversion.ToOctal(_kDataWrite),
@@ -77,7 +89,7 @@ namespace Contralto.IO
                 {
                     // Restore operation to cyl. 0:
                     InitSeek(0);
-                }
+                }                
             }
         }
 
@@ -106,19 +118,7 @@ namespace Contralto.IO
                 
                 if (_sendAdr & (_kDataWrite & 0x2) != 0)
                 {
-                    // Select disk if _sendAdr is true
-                    _disk = (_kAdr & 0x1);
-                    _seeking = false;
-                                        
-                    // Clear the NOTREADY flag depending on whether the drive is loaded or not
-                    if (_drives[_disk].IsLoaded)
-                    {
-                        _kStat &= (ushort)~NOTREADY;
-                    }
-                    else
-                    {
-                        _kStat |= NOTREADY;
-                    }
+                    _seeking = false;                                                           
                 }
 
             }
@@ -214,7 +214,8 @@ namespace Contralto.IO
                 //
                 return (_kStat & SECLATE) != 0 ||
                        (_kStat & SEEKFAIL) != 0 ||
-                       (_kStat & NOTREADY) != 0;
+                       (_kStat & NOTREADY) != 0 ||
+                       (!Ready);
             }
         }
 
@@ -278,6 +279,16 @@ namespace Contralto.IO
             _sector = (_sector + 1) % 12;            
 
             _kStat = (ushort)((_kStat & 0x0fff) | (_sector << 12));
+
+            // Clear the NOTREADY flag depending on whether the selected drive is loaded or not
+            if (_drives[_disk].IsLoaded)
+            {
+                _kStat &= (ushort)~NOTREADY;
+            }
+            else
+            {
+                _kStat |= NOTREADY;
+            }
 
             // Reset internal state machine for sector data
             _sectorWordIndex = 0;
@@ -397,7 +408,7 @@ namespace Contralto.IO
             //
             // Set "seek fail" bit based on selected cylinder (if out of bounds) and do not
             // commence a seek if so.            
-            if (destCylinder > SelectedDrive.Pack.Geometry.Cylinders - 1)
+            if (!SelectedDrive.IsLoaded || destCylinder > SelectedDrive.Pack.Geometry.Cylinders - 1)
             {
                 _kStat |= SEEKFAIL;
 
@@ -703,11 +714,19 @@ namespace Contralto.IO
 
         private bool _debugRead;
 
-        // KSTAT bitfields        
-        public static readonly ushort SECLATE   = 0x10;
-        public static readonly ushort NOTREADY  = 0x20;
-        public static readonly ushort STROBE    = 0x40;
-        public static readonly ushort SEEKFAIL  = 0x80;
+        //
+        // KSTAT bitfields.
+        // Note that in reality the SECLATE status bit (bit 11) is a bit more nuanced; it's actually the OR of two signals:
+        // 1) SECLATE while the Sector Task is enabled (meaning that the sector task missed the beginning of a sector and that's bad).
+        //    This is emulated.
+        // 2) CARRY while the Word Task is enabled.  CARRY in this case is the carry out from the disk word shift register, signaling
+        //    a completed word.  If the Word Task is still running while a word is completed, this indicates that the word task missed that
+        //    word and that's a fault.  This is not currently emulated.
+        //
+        public static readonly ushort SECLATE   = 0x10;     // status bit 11
+        public static readonly ushort NOTREADY  = 0x20;     // 10
+        public static readonly ushort STROBE    = 0x40;     // 9
+        public static readonly ushort SEEKFAIL  = 0x80;     // 8
         
     }
 }
