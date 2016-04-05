@@ -98,10 +98,11 @@
             // 
             // pictureBox1
             // 
+            this.pictureBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pictureBox1.Image = global::Contralto.Properties.Resources.dragon;
-            this.pictureBox1.Location = new System.Drawing.Point(48, 79);
+            this.pictureBox1.Location = new System.Drawing.Point(44, 79);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(153, 238);
+            this.pictureBox1.Size = new System.Drawing.Size(156, 238);
             this.pictureBox1.TabIndex = 6;
             this.pictureBox1.TabStop = false;
             // 

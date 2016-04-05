@@ -3,8 +3,7 @@
 namespace Contralto.CPU
 {
     public enum ShifterOp
-    {
-        Invalid = 0,
+    {        
         None,
         ShiftLeft,
         ShiftRight,
@@ -27,7 +26,7 @@ namespace Contralto.CPU
 
         public static void Reset()
         {
-            _op = ShifterOp.Invalid;
+            _op = ShifterOp.None;
             _count = 0;
             _output = 0;
             _magic = false;
@@ -41,6 +40,12 @@ namespace Contralto.CPU
         public static ushort Output
         {
             get { return _output; }
+            set { _output = value; }
+        }
+
+        public static ShifterOp Op
+        {
+            get { return _op; }
         }
 
         /// <summary>
@@ -65,7 +70,6 @@ namespace Contralto.CPU
         {
             _magic = magic;            
         }
-
 
         /// <summary>
         /// TODO: this is still kind of clumsy.
@@ -92,10 +96,7 @@ namespace Contralto.CPU
         public static ushort DoOperation(ushort input, ushort t)
         {           
             switch(_op)
-            {
-                case ShifterOp.Invalid:
-                    throw new InvalidOperationException("Shifter op has not been set.");
-
+            {               
                 case ShifterOp.None:
                     _output = input;
                     break;
@@ -196,7 +197,7 @@ namespace Contralto.CPU
 
                 default:
                     throw new InvalidOperationException(String.Format("Unhandled shift operation {0}", _op));
-            }
+            }            
 
             return _output;
         }

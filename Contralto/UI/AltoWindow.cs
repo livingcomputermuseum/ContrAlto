@@ -1,12 +1,14 @@
 ﻿using Contralto.CPU;
 using Contralto.Display;
 using Contralto.IO;
+using Contralto.Properties;
 using Contralto.UI;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Timers;
 using System.Windows.Forms;
 
 namespace Contralto
@@ -34,7 +36,25 @@ namespace Contralto
             SystemStatusLabel.Text = _systemStoppedText;
             DiskStatusLabel.Text = String.Empty;
 
-            this.DoubleBuffered = true;            
+            _diskIdleImage = Resources.DiskNoAccess;
+            _diskReadImage = Resources.DiskRead;
+            _diskWriteImage = Resources.DiskWrite;
+            _diskSeekImage = Resources.DiskSeek;
+
+            this.DoubleBuffered = true;
+
+            System.Timers.Timer fpsTimer = new System.Timers.Timer();
+            fpsTimer.AutoReset = true;
+            fpsTimer.Interval = 1000;
+            fpsTimer.Elapsed += OnFPSTimerElapsed;
+            fpsTimer.Start();
+
+
+            System.Timers.Timer diskTimer = new System.Timers.Timer();
+            diskTimer.AutoReset = true;
+            diskTimer.Interval = 25;
+            diskTimer.Elapsed += OnDiskTimerElapsed;
+            diskTimer.Start();
         }
 
         public void AttachSystem(AltoSystem system)
@@ -49,7 +69,7 @@ namespace Contralto
             // Update disk image UI info
             Drive0ImageName.Text = _system.DiskController.Drives[0].IsLoaded ? Path.GetFileName(_system.DiskController.Drives[0].Pack.PackName) : _noImageLoadedText;
             Drive1ImageName.Text = _system.DiskController.Drives[1].IsLoaded ? Path.GetFileName(_system.DiskController.Drives[1].Pack.PackName) : _noImageLoadedText;
-        }
+        }       
 
         /// <summary>
         /// Handler for "System->Start" menu.  Start the Alto system running.
@@ -606,6 +626,11 @@ namespace Contralto
 
         private void OnDisplayMouseDown(object sender, MouseEventArgs e)
         {
+            if (!_mouseCaptured)
+            {
+                return;
+            }
+
             AltoMouseButton button = AltoMouseButton.None;
 
             switch (e.Button)
@@ -713,6 +738,46 @@ namespace Contralto
         {
             // We are no longer the focus, make sure to release the mouse.
             ReleaseMouse();
+        }
+
+        private void OnFPSTimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            string fpsMessage = String.Format("{0} fields/sec", _system.DisplayController.Fields);
+
+            FPSLabel.Text = fpsMessage;
+
+            _system.DisplayController.Fields = 0;
+        }
+
+        private void OnDiskTimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            BeginInvoke(new DisplayDelegate(RefreshDiskStatus));            
+        }
+
+        private void RefreshDiskStatus()
+        {
+            if (_lastActivity != _system.DiskController.LastDiskActivity)
+            {
+                _lastActivity = _system.DiskController.LastDiskActivity;
+                switch (_lastActivity)
+                {
+                    case DiskActivityType.Idle:
+                        DiskStatusLabel.Image = _diskIdleImage;
+                        break;
+
+                    case DiskActivityType.Read:
+                        DiskStatusLabel.Image = _diskReadImage;
+                        break;
+
+                    case DiskActivityType.Write:
+                        DiskStatusLabel.Image = _diskWriteImage;
+                        break;
+
+                    case DiskActivityType.Seek:
+                        DiskStatusLabel.Image = _diskSeekImage;
+                        break;
+                }
+            }
         }
 
         private void InitKeymap()
@@ -836,6 +901,12 @@ namespace Contralto
         private const string _systemStoppedText = "Alto Stopped.";
         private const string _systemRunningText = "Alto Running.";
         private const string _systemErrorText = "Alto Stopped due to error.  See Debugger.";
+
+        private DiskActivityType _lastActivity;
+        private Image _diskIdleImage;
+        private Image _diskReadImage;
+        private Image _diskWriteImage;
+        private Image _diskSeekImage;   
 
     }
 }

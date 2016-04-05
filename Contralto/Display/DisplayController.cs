@@ -379,8 +379,8 @@ namespace Contralto.Display
         // ~35 scanlines for vblank (1330uS)
         private const double _scale = 1.0;        
         private const ulong _verticalBlankDuration = (ulong)(665000.0 * _scale);              // 665uS
-        private const ulong _verticalBlankScanlineDuration = (ulong)(38080 * _scale);         // 38uS
-        private const ulong _horizontalBlankDuration = (ulong)(6084 * _scale);                // 6uS
+        private const ulong _verticalBlankScanlineDuration = (ulong)(38080.0 * _scale);       // 38uS
+        private const ulong _horizontalBlankDuration = (ulong)(6084.0 * _scale);              // 6uS
         private const ulong _wordDuration = (ulong)(842.0 * _scale);                          // 32/38uS
 
         private int _vblankScanlineCount;

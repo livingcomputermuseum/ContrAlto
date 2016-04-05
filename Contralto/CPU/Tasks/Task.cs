@@ -120,9 +120,7 @@ namespace Contralto.CPU
                 _busData = 0;
                 _softReset = false;
 
-
-                Shifter.SetMagic(false);
-                Shifter.SetDNS(false, 0);
+                Shifter.Reset();                
 
                 //
                 // Wait for memory state machine if a memory operation is requested by this instruction and
@@ -217,8 +215,7 @@ namespace Contralto.CPU
                 // "Note that the [emulator task F2] functions which replace the low bits of RSELECT with IR affect only the 
                 // selection of R; they do not affect the address supplied to the constant ROM."
                 // Hence we use the unmodified RSELECT value here and above.
-                if ((int)instruction.BS > 4 ||
-                    instruction.ConstantAccess)
+                if (instruction.ConstantAccessOrBS4)
                 {
                     _busData &= ControlROM.ConstantROM[(instruction.RSELECT << 3) | ((uint)instruction.BS)];
                 }
@@ -272,10 +269,7 @@ namespace Contralto.CPU
                     _swMode = false;
                     swMode = true;
                 }
-
-                // Reset shifter op
-                Shifter.SetOperation(ShifterOp.None, 0);
-
+                
                 //
                 // Do Special Functions
                 //
@@ -350,25 +344,11 @@ namespace Contralto.CPU
                         break;
 
                     case SpecialFunction2.ShLt0:
-                        //
-                        // Note:
-                        // "the value of SHIFTER OUTPUT is determined by the value of L as the microinstruction
-                        // *begins* execution and the shifter function specified during the  *current* microinstruction.
-                        //
-                        // Since we haven't modifed L yet, and we've selected the shifter function above, we're good to go here.
-                        //
-                        if ((short)Shifter.DoOperation(_cpu._l, _cpu._t) < 0)
-                        {
-                            _nextModifier = 1;
-                        }
+                        // Handled below, after the Shifter runs
                         break;
 
                     case SpecialFunction2.ShEq0:
-                        // See note above.
-                        if (Shifter.DoOperation(_cpu._l, _cpu._t) == 0)
-                        {
-                            _nextModifier = 1;
-                        }
+                        // Same as above.
                         break;
 
                     case SpecialFunction2.Bus:
@@ -401,10 +381,52 @@ namespace Contralto.CPU
                         ExecuteSpecialFunction2(instruction);
                         break;
                 }
-               
-                // We always do the shifter operation; DNS may need its output.
+
                 //
-                Shifter.DoOperation(_cpu._l, _cpu._t);
+                // Do the shifter operation if we're doing an operation that requires the shifter output (loading R, doing a LoadDNS,
+                // modifying NEXT based on the shifter output.)
+                //
+                if (_loadR || instruction.NeedShifterOutput)
+                {
+                    // A crude optimization:  if there's no shifter operation,
+                    // we bypass the call to DoOperation and stuff L in Shifter.Output ourselves.
+                    if (Shifter.Op == ShifterOp.None)
+                    {
+                        Shifter.Output = _cpu._l;
+                    }
+                    else
+                    {
+                        Shifter.DoOperation(_cpu._l, _cpu._t);
+                    }
+                }
+
+                //
+                // Handle NEXT modifiers that rely on the Shifter output.
+                //
+                switch(instruction.F2)
+                {
+                    case SpecialFunction2.ShLt0:
+                        //
+                        // Note:
+                        // "the value of SHIFTER OUTPUT is determined by the value of L as the microinstruction
+                        // *begins* execution and the shifter function specified during the  *current* microinstruction.
+                        //
+                        // Since we haven't modifed L yet, and we've calculated the shifter output above, we're good to go here.
+                        //
+                        if ((short)Shifter.Output < 0)
+                        {
+                            _nextModifier = 1;
+                        }
+                        break;
+
+                    case SpecialFunction2.ShEq0:
+                        // See note above.
+                        if (Shifter.Output == 0)
+                        {
+                            _nextModifier = 1;
+                        }
+                        break;
+                }
 
                 //
                 // Write back to registers:

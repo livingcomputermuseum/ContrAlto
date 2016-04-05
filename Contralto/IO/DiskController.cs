@@ -5,6 +5,16 @@ using Contralto.CPU;
 
 namespace Contralto.IO
 {
+    public enum DiskActivityType
+    {
+        Idle,
+        Read,
+        Write,
+        Seek,
+    }
+
+    public delegate void DiskActivity(DiskActivityType activity);
+
     public class DiskController
     {
         public DiskController(AltoSystem system)
@@ -89,7 +99,7 @@ namespace Contralto.IO
                 {
                     // Restore operation to cyl. 0:
                     InitSeek(0);
-                }                
+                }              
             }
         }
 
@@ -222,7 +232,18 @@ namespace Contralto.IO
         public DiabloDrive[] Drives
         {
             get { return _drives; }
-        }
+        }     
+        
+        /// <summary>
+        /// Exposes the last activity the disk controller undertook.
+        /// This is used exclusively so the UI can show a tiny disk
+        /// access icon, it is not necessary to the functioning of the
+        /// emulation.
+        /// </summary>
+        public DiskActivityType LastDiskActivity
+        {
+            get { return _lastDiskActivity; }
+        } 
 
         public void Reset()
         {
@@ -297,7 +318,7 @@ namespace Contralto.IO
             _kDataRead = 0;
 
             // Load new sector in
-            SelectedDrive.Sector = _sector;
+            SelectedDrive.Sector = _sector;            
 
             // Only wake up if not actively seeking.
             if ((_kStat & STROBE) == 0)
@@ -319,6 +340,8 @@ namespace Contralto.IO
                 // Schedule SECLATE trigger
                 _seclateEvent.TimestampNsec = _seclateDuration;
                 _system.Scheduler.Schedule(_seclateEvent);
+
+                _lastDiskActivity = DiskActivityType.Idle;
             }
             else
             {
@@ -399,7 +422,7 @@ namespace Contralto.IO
 
             Log.Write(LogComponent.DiskController, "STROBE: Seek initialized.");
 
-            InitSeek((_kDataWrite & 0x0ff8) >> 3);
+            InitSeek((_kDataWrite & 0x0ff8) >> 3);            
         }
 
         private void InitSeek(int destCylinder)
@@ -413,6 +436,7 @@ namespace Contralto.IO
 
                 Log.Write(LogComponent.DiskController, "Seek failed, specified cylinder {0} is out of range.", destCylinder);
                 _seeking = false;
+                _lastDiskActivity = DiskActivityType.Idle;
             }
             else if (destCylinder != SelectedDrive.Cylinder)
             {
@@ -433,6 +457,7 @@ namespace Contralto.IO
                 _system.Scheduler.Schedule(_seekEvent);
 
                 Log.Write(LogComponent.DiskController, "Seek to {0} from {1} commencing.  Will take {2} nsec.", _destCylinder, SelectedDrive.Cylinder, _seekDuration);
+                _lastDiskActivity = DiskActivityType.Seek;
             }
             else
             {
@@ -506,6 +531,8 @@ namespace Contralto.IO
                         Log.Write(LogType.Verbose, LogComponent.DiskWordTask, "Sector {0} Word {1} read into KDATA", _sector, Conversion.ToOctal(diskWord.Data));
                         _kDataRead = diskWord.Data;
                         _debugRead = diskWord.Type == CellType.Data;
+
+                        _lastDiskActivity = DiskActivityType.Read;
                     }
                     else
                     {
@@ -522,6 +549,7 @@ namespace Contralto.IO
                         {
                             // Commit actual data to disk now that the sync word has been laid down
                             SelectedDrive.WriteWord(_sectorWordIndex, _kDataWrite);
+                            _lastDiskActivity = DiskActivityType.Write;
                         }
                     }
                 }
@@ -599,7 +627,7 @@ namespace Contralto.IO
             {
                 // clear Seek bit
                 _kStat &= (ushort)~STROBE;
-                _seeking = false;
+                _seeking = false;                
 
                 Log.Write(LogComponent.DiskController, "Seek to {0} completed.", SelectedDrive.Cylinder);
             }
@@ -609,6 +637,8 @@ namespace Contralto.IO
                 // Schedule next seek step.
                 _seekEvent.TimestampNsec = _seekDuration - skewNsec;
                 _system.Scheduler.Schedule(_seekEvent);
+
+                _lastDiskActivity = DiskActivityType.Seek;
             }
         }
 
@@ -711,6 +741,8 @@ namespace Contralto.IO
         private AltoSystem _system;
 
         private bool _debugRead;
+
+        private DiskActivityType _lastDiskActivity;
 
         //
         // KSTAT bitfields.

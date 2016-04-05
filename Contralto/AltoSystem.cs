@@ -41,13 +41,7 @@ namespace Contralto
             _clockableDevices.Add(_memBus);                    
             _clockableDevices.Add(_cpu);
 
-            Reset();
-
-            Timer t = new Timer();
-            t.AutoReset = true;
-            t.Interval = 1000;
-            t.Elapsed += T_Elapsed;
-            //t.Start();       
+            Reset();           
         }
 
         public void Reset()
@@ -226,16 +220,7 @@ namespace Contralto
             get { return _scheduler; }
         }
 
-        public int _novaInst;
-    
-        private void T_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            System.Console.WriteLine("{0} CPU clocks/sec %{1}. {2} fields/sec", _clocks, ((double)_clocks / 5882353.0) * 100.0, _displayController.Fields);
-            System.Console.WriteLine("{0} nova instructions/sec.", _novaInst);
-            _clocks = 0;
-            _novaInst = 0;
-            _displayController.Fields = 0;
-        }
+        public int _novaInst;        
 
         private AltoCPU _cpu;
         private MemoryBus _memBus;

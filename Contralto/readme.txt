@@ -202,6 +202,12 @@ get you started:
   writing an Alto emulator of your own.  If you're into that sort of thing.
   http://bitsavers.org/pdf/xerox/alto/AltoHWRef.part1.pdf
   http://bitsavers.org/pdf/xerox/alto/AltoHWRef.part2.pdf
+
+- "A Field Guide to Alto-Land" is a casual perspective on Alto use (and
+  the culture that grew around it) at Xerox.
+  http://xeroxalto.computerhistory.org/_cd8_/altodocs/.fieldguide.press!2.pdf
+
+
  
 
 4.0 Configuration

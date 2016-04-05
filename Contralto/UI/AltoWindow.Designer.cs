@@ -29,9 +29,9 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AltoWindow));
-            this.DisplayBox = new System.Windows.Forms.PictureBox();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveScreenshotToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SystemStartMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -54,23 +54,12 @@
             this.CaptureStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.SystemStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.DiskStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            this.saveScreenshotToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            ((System.ComponentModel.ISupportInitialize)(this.DisplayBox)).BeginInit();
+            this.FPSLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.DisplayBox = new System.Windows.Forms.PictureBox();
             this.menuStrip1.SuspendLayout();
             this.StatusLine.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.DisplayBox)).BeginInit();
             this.SuspendLayout();
-            // 
-            // DisplayBox
-            // 
-            this.DisplayBox.BackColor = System.Drawing.SystemColors.Window;
-            this.DisplayBox.Location = new System.Drawing.Point(0, 27);
-            this.DisplayBox.Name = "DisplayBox";
-            this.DisplayBox.Size = new System.Drawing.Size(606, 808);
-            this.DisplayBox.TabIndex = 1;
-            this.DisplayBox.TabStop = false;
-            this.DisplayBox.MouseDown += new System.Windows.Forms.MouseEventHandler(this.OnDisplayMouseDown);
-            this.DisplayBox.MouseMove += new System.Windows.Forms.MouseEventHandler(this.OnDisplayMouseMove);
-            this.DisplayBox.MouseUp += new System.Windows.Forms.MouseEventHandler(this.OnDisplayMouseUp);
             // 
             // menuStrip1
             // 
@@ -92,6 +81,15 @@
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "File";
+            // 
+            // saveScreenshotToolStripMenuItem
+            // 
+            this.saveScreenshotToolStripMenuItem.Name = "saveScreenshotToolStripMenuItem";
+            this.saveScreenshotToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
+            | System.Windows.Forms.Keys.P)));
+            this.saveScreenshotToolStripMenuItem.Size = new System.Drawing.Size(232, 22);
+            this.saveScreenshotToolStripMenuItem.Text = "Save Screenshot...";
+            this.saveScreenshotToolStripMenuItem.Click += new System.EventHandler(this.OnFileSaveScreenshotClick);
             // 
             // exitToolStripMenuItem
             // 
@@ -248,7 +246,8 @@
             this.StatusLine.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.CaptureStatusLabel,
             this.SystemStatusLabel,
-            this.DiskStatusLabel});
+            this.DiskStatusLabel,
+            this.FPSLabel});
             this.StatusLine.Location = new System.Drawing.Point(0, 837);
             this.StatusLine.Name = "StatusLine";
             this.StatusLine.Size = new System.Drawing.Size(608, 22);
@@ -270,18 +269,31 @@
             // 
             // DiskStatusLabel
             // 
+            this.DiskStatusLabel.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.DiskStatusLabel.Image = global::Contralto.Properties.Resources.DiskNoAccess;
+            this.DiskStatusLabel.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.DiskStatusLabel.Name = "DiskStatusLabel";
-            this.DiskStatusLabel.Size = new System.Drawing.Size(89, 17);
+            this.DiskStatusLabel.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
+            this.DiskStatusLabel.Size = new System.Drawing.Size(16, 17);
             this.DiskStatusLabel.Text = "DiskStatusLabel";
             // 
-            // saveScreenshotToolStripMenuItem
+            // FPSLabel
             // 
-            this.saveScreenshotToolStripMenuItem.Name = "saveScreenshotToolStripMenuItem";
-            this.saveScreenshotToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
-            | System.Windows.Forms.Keys.P)));
-            this.saveScreenshotToolStripMenuItem.Size = new System.Drawing.Size(232, 22);
-            this.saveScreenshotToolStripMenuItem.Text = "Save Screenshot...";
-            this.saveScreenshotToolStripMenuItem.Click += new System.EventHandler(this.OnFileSaveScreenshotClick);
+            this.FPSLabel.Name = "FPSLabel";
+            this.FPSLabel.Size = new System.Drawing.Size(54, 17);
+            this.FPSLabel.Text = "FPSLabel";
+            // 
+            // DisplayBox
+            // 
+            this.DisplayBox.BackColor = System.Drawing.SystemColors.Window;
+            this.DisplayBox.Location = new System.Drawing.Point(0, 27);
+            this.DisplayBox.Name = "DisplayBox";
+            this.DisplayBox.Size = new System.Drawing.Size(606, 808);
+            this.DisplayBox.TabIndex = 1;
+            this.DisplayBox.TabStop = false;
+            this.DisplayBox.MouseDown += new System.Windows.Forms.MouseEventHandler(this.OnDisplayMouseDown);
+            this.DisplayBox.MouseMove += new System.Windows.Forms.MouseEventHandler(this.OnDisplayMouseMove);
+            this.DisplayBox.MouseUp += new System.Windows.Forms.MouseEventHandler(this.OnDisplayMouseUp);
             // 
             // AltoWindow
             // 
@@ -304,11 +316,11 @@
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnKeyUp);
             this.Leave += new System.EventHandler(this.OnWindowLeave);
-            ((System.ComponentModel.ISupportInitialize)(this.DisplayBox)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.StatusLine.ResumeLayout(false);
             this.StatusLine.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.DisplayBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -342,5 +354,6 @@
         private System.Windows.Forms.ToolStripMenuItem SystemEthernetBootMenu;
         private System.Windows.Forms.ToolStripMenuItem AlternateBootToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveScreenshotToolStripMenuItem;
+        private System.Windows.Forms.ToolStripStatusLabel FPSLabel;
     }
 }

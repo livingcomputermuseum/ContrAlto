@@ -392,6 +392,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\DiskSeek.bmp" />
+    <None Include="Resources\DiskWrite.bmp" />
+    <None Include="Resources\DiskRead.bmp" />
+    <None Include="Resources\DiskNoAccess.bmp" />
     <None Include="Resources\dragon.png" />
     <EmbeddedResource Include="dragon.png" />
     <Content Include="pcap\PcapDotNet.Base.dll" />

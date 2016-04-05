@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Contralto.IO
-{
+{    
 
     // The data for the current sector
     public enum CellType

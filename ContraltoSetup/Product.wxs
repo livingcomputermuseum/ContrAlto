@@ -7,7 +7,7 @@
 
     <Media Id="1" Cabinet="ContrAlto.cab" EmbedCab="yes"/>
 
-		<Feature Id="ProductFeature" Title="ContrAlto" Level="1">
+		<Feature Id="ProductFeature" Title="ContrAlto" Description="The ContrAlto Alto Emulator" Level="1" ConfigurableDirectory="INSTALLFOLDER">
 			<ComponentGroupRef Id="ProductComponents" />
       <ComponentGroupRef Id="MicrocodeComponents" />
       <ComponentRef Id="UserDiskFolder"/>
@@ -17,6 +17,14 @@
 		</Feature>
   
     <Icon Id="ContrAlto.exe" SourceFile="$(var.Contralto.TargetPath)"/>
+    
+    <UIRef Id="WixUI_InstallDir" />
+    <UIRef Id="WixUI_ErrorProgressText" />   
+    
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    
+    <WixVariable Id="WixUILicenseRtf" Value="EULA.rtf" />
+    
 	</Product>
 
 	<Fragment>
@@ -125,4 +133,5 @@
       </Component>
     </ComponentGroup>
 	</Fragment>
+
 </Wix>

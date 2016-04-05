@@ -198,6 +198,15 @@ namespace Contralto.CPU
                        F1 == SpecialFunction1.Constant ||
                        F2 == SpecialFunction2.Constant;
 
+            ConstantAccessOrBS4 = ConstantAccess || (int)BS > 4;
+
+            // Whether this instruction needs the Shifter output
+            // This is the only task-specific thing we cache, even if this isn't
+            // the right task, worst-case we'll do an operation we didn't need to.
+            NeedShifterOutput = (EmulatorF2)F2 == EmulatorF2.LoadDNS ||
+                               F2 == SpecialFunction2.ShEq0 ||
+                               F2 == SpecialFunction2.ShLt0;
+
             // Whether this instruction accesses memory
             MemoryAccess = 
                 (BS == BusSource.ReadMD && !ConstantAccess) ||        // ReadMD only occurs if not reading from constant ROM.
@@ -260,10 +269,12 @@ namespace Contralto.CPU
         public SpecialFunction2 F2;
         public bool LoadT;
         public bool LoadL;
+        public bool NeedShifterOutput;
         public ushort NEXT;
 
         // Metadata about the instruction that can be precalculated and used during execution
         public bool ConstantAccess;
+        public bool ConstantAccessOrBS4;
         public bool MemoryAccess;
         public MemoryOperation MemoryOperation;
         public bool LoadTFromALU;
