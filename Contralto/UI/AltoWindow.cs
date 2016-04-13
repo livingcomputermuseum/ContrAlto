@@ -29,7 +29,18 @@ namespace Contralto
             _lastBuffer = _currentBuffer = _displayData0;
             _frame = 0;
 
-            _frameTimer = new FrameTimer(60.0);
+            try
+            {
+                _frameTimer = new FrameTimer(60.0);
+            }
+            catch(DllNotFoundException)
+            {
+                //
+                // On Mono platforms, we can't PInvoke to get what we want.
+                // We just won't be able to synchronize to 60fps.
+                //
+                _frameTimer = null;
+            }
 
             ReleaseMouse();
 
@@ -332,7 +343,7 @@ namespace Contralto
             _frame++;
 
             // Wait for the next frame
-            if (Configuration.ThrottleSpeed)
+            if (Configuration.ThrottleSpeed && _frameTimer != null)
             {
                 _frameTimer.WaitForFrame();
             }
@@ -354,7 +365,7 @@ namespace Contralto
             else
             {
                 _lastBuffer = _currentBuffer;                
-            }
+            }            
 
             // Asynchronously render this frame.
             BeginInvoke(new DisplayDelegate(RefreshDisplayBox));            
@@ -362,6 +373,12 @@ namespace Contralto
 
         private void RefreshDisplayBox()
         {
+            DisplayBox.Invalidate();
+
+        }
+
+        private void OnPaint(object sender, PaintEventArgs e)
+        { 
             // Update the display
             BitmapData data = _displayBuffer.LockBits(_displayRect, ImageLockMode.WriteOnly, PixelFormat.Format1bppIndexed);
 
@@ -369,7 +386,6 @@ namespace Contralto
             System.Runtime.InteropServices.Marshal.Copy(_lastBuffer, 0, ptr, _lastBuffer.Length - 4);
 
             _displayBuffer.UnlockBits(data);
-            DisplayBox.Refresh();
 
             // Clear the buffer if we're displaying in fakey-"interlaced" mode.
             if (Configuration.InterlaceDisplay)
@@ -597,7 +613,7 @@ namespace Contralto
 
             if (_skipNextMouseMove)
             {
-                _skipNextMouseMove = false;
+                _skipNextMouseMove = false;                
                 return;
             }
 
@@ -613,15 +629,23 @@ namespace Contralto
             int dx = e.X - middle.X;
             int dy = e.Y - middle.Y;            
 
-            _system.Mouse.MouseMove(dx, dy);
+            if (dx != 0 || dy != 0)
+            {
+                _system.Mouse.MouseMove(dx, dy);
 
+                // Don't handle the very next Mouse Move event (which will just be the motion we caused in the
+                // below line...)
+                //_skipNextMouseMove = true;
+                
+                Cursor.Position = DisplayBox.PointToScreen(middle);
+            }
+        }
+
+        private void HackMouseMove()
+        {
+            Point middle = new Point(DisplayBox.Width / 2, DisplayBox.Height / 2);
             // Force (invisible) cursor to middle of window            
             Cursor.Position = DisplayBox.PointToScreen(middle);
-
-            // Don't handle the very next Mouse Move event (which will just be the motion we caused in the
-            // above line...)
-            _skipNextMouseMove = true;
-
         }
 
         private void OnDisplayMouseDown(object sender, MouseEventArgs e)

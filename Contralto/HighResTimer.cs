@@ -140,13 +140,23 @@ namespace Contralto
             //
             // Clean stuff up
             //
-            DeleteTimerQueueTimer(_hTimerQueue, _hTimer, IntPtr.Zero);
-            DeleteTimerQueue(_hTimerQueue, IntPtr.Zero);
+            try
+            {
+                DeleteTimerQueueTimer(_hTimerQueue, _hTimer, IntPtr.Zero);
+                DeleteTimerQueue(_hTimerQueue, IntPtr.Zero);
+            }
+            catch
+            {
+                // Eat exceptions (for Mono)
+            }
 
             //
             // Fire off a final event to release any call that's waiting...
             //
-            _event.Set();
+            if (_event != null)
+            {
+                _event.Set();
+            }
         }
 
         /// <summary>

@@ -44,7 +44,15 @@ namespace Contralto.CPU
             //                               
             // Max 3 banks of microcode RAM            
             _uCodeRam = new UInt32[1024 * 3];
-            LoadMicrocode(_uCodeRoms);
+
+            if (Configuration.SystemType == SystemType.AltoI)
+            {
+                LoadAltoIMicrocode(_uCodeRomsAltoI);
+            }
+            else
+            {
+                LoadAltoIIMicrocode(_uCodeRomsAltoII);
+            }
 
             //
             // Cache 5k of instructions: max 2K ROM, 3K RAM.
@@ -128,7 +136,8 @@ namespace Contralto.CPU
 
             switch (_systemType)
             {
-                case SystemType.OneKRom:
+                case SystemType.AltoI:
+                case SystemType.OneKRom:                
                     _microcodeBank[(int)task] = _microcodeBank[(int)task] == MicrocodeBank.ROM0 ? MicrocodeBank.RAM0 : MicrocodeBank.ROM0;
                     break;
 
@@ -260,7 +269,7 @@ namespace Contralto.CPU
             return _decodeCache[address + (int)_microcodeBank[(int)task] * 1024];            
         }
 
-        private static void LoadMicrocode(RomFile[] romInfo)
+        private static void LoadAltoIIMicrocode(RomFile[] romInfo)
         {
             _uCodeRom = new UInt32[2048];
 
@@ -283,17 +292,49 @@ namespace Contralto.CPU
                     // OR in the data
                     for(int i=0;i<length;i++)
                     {
-                        _uCodeRom[file.StartingAddress + i] |= (uint)((data[AddressMap(i)] & 0xf) << file.BitPosition);
+                        _uCodeRom[file.StartingAddress + i] |= (uint)((data[AddressMapAltoII(i)] & 0xf) << file.BitPosition);
                     }
                 }
             }
-
                        
             for(int i=0;i<_uCodeRom.Length;i++)
             {               
                 _uCodeRom[i] = MapWord(_uCodeRom[i]);
             } 
+        }
 
+        private static void LoadAltoIMicrocode(RomFile[] romInfo)
+        {
+            _uCodeRom = new UInt32[1024];
+
+            foreach (RomFile file in romInfo)
+            {
+                //
+                // Each file contains 256 bytes, each byte containing one nybble in the low 4 bits.
+                //
+                using (FileStream fs = new FileStream(Path.Combine("ROM", file.Filename), FileMode.Open, FileAccess.Read))
+                {
+                    int length = (int)fs.Length;
+                    if (length != 256)
+                    {
+                        throw new InvalidOperationException("ROM file should be 256 bytes in length");
+                    }
+
+                    byte[] data = new byte[fs.Length];
+                    fs.Read(data, 0, (int)fs.Length);
+
+                    // OR in the data
+                    for (int i = 0; i < length; i++)
+                    {                        
+                        _uCodeRom[file.StartingAddress + i] |= (uint)((data[AddressMapAltoI(i)] & 0xf) << file.BitPosition);
+                    }
+                }
+            }
+
+            for (int i = 0; i < _uCodeRom.Length; i++)
+            {
+                _uCodeRom[i] = MapWord(_uCodeRom[i]);
+            }
         }
 
         private static UInt32 MapWord(UInt32 word)
@@ -319,9 +360,15 @@ namespace Contralto.CPU
             return word;
         }
 
-        private static int AddressMap(int address)
+        private static int AddressMapAltoII(int address)
         {            
             int  mappedAddress = (~address) & 0x3ff;
+            return mappedAddress;
+        }
+
+        private static int AddressMapAltoI(int address)
+        {
+            int mappedAddress = (~address) & 0xff;
             return mappedAddress;
         }
 
@@ -339,7 +386,7 @@ namespace Contralto.CPU
             _decodeCache[2048 + address] = new MicroInstruction(instructionWord);
         }
 
-        private static RomFile[] _uCodeRoms =
+        private static RomFile[] _uCodeRomsAltoII =
         {
             // first K
             new RomFile("u55", 0x000, 28),
@@ -360,7 +407,50 @@ namespace Contralto.CPU
             new RomFile("u70", 0x400, 8),
             new RomFile("u71", 0x400, 4),
             new RomFile("u72", 0x400, 0)
-        };        
+        };
+
+        private static RomFile[] _uCodeRomsAltoI =
+        {
+            // 0 to 377
+            new RomFile("0.2", 0x000, 28),
+            new RomFile("1.2", 0x000, 24),
+            new RomFile("2.2", 0x000, 20),
+            new RomFile("3.2", 0x000, 16),
+            new RomFile("4.2", 0x000, 12),
+            new RomFile("5.2", 0x000, 8),
+            new RomFile("6.2", 0x000, 4),
+            new RomFile("7.2", 0x000, 0),
+
+            // 400 to 777
+            new RomFile("10.2", 0x100, 28),
+            new RomFile("11.2", 0x100, 24),
+            new RomFile("12.2", 0x100, 20),
+            new RomFile("13.2", 0x100, 16),
+            new RomFile("14.2", 0x100, 12),
+            new RomFile("15.2", 0x100, 8),
+            new RomFile("16.2", 0x100, 4),
+            new RomFile("17.2", 0x100, 0),
+
+            // 1000 to 1377
+            new RomFile("20.2", 0x200, 28),
+            new RomFile("21.2", 0x200, 24),
+            new RomFile("22.2", 0x200, 20),
+            new RomFile("23.2", 0x200, 16),
+            new RomFile("24.2", 0x200, 12),
+            new RomFile("25.2", 0x200, 8),
+            new RomFile("26.2", 0x200, 4),
+            new RomFile("27.2", 0x200, 0),
+
+            // 1400 to 1777
+            new RomFile("30.2", 0x300, 28),
+            new RomFile("31.2", 0x300, 24),
+            new RomFile("32.2", 0x300, 20),
+            new RomFile("33.2", 0x300, 16),
+            new RomFile("34.2", 0x300, 12),
+            new RomFile("35.2", 0x300, 8),
+            new RomFile("36.2", 0x300, 4),
+            new RomFile("37.2", 0x300, 0),
+        };  
 
         private static UInt32[] _uCodeRom;
         private static UInt32[] _uCodeRam;

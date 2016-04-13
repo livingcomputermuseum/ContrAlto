@@ -227,42 +227,48 @@ namespace Contralto.CPU
                         //   else                   IR[4-7]
                         // NB: as always, Xerox labels bits in the opposite order from modern convention;
                         // (bit 0 is the msb...)
-                        if ((_cpu._ir & 0x8000) != 0)
+                        /*
+                        if (Configuration.SystemType == SystemType.AltoI && UCodeMemory.GetBank(TaskType.Emulator) == MicrocodeBank.RAM0)
                         {
-                            _nextModifier = (ushort)(3 - ((_cpu._ir & 0xc0) >> 6));
+                            if ((_cpu._ir & 0x8000) != 0)
+                            {1
+                                _nextModifier = (ushort)(3 - ((_cpu._ir & 0xc0) >> 6));
+                            }
+                            else if ((_cpu._ir & 0x6000) == 0x0000)
+                            {
+                                _nextModifier = (ushort)((_cpu._ir & 0x3000) >> 12);
+                            }
+                            else if ((_cpu._ir & 0x6000) == 0x2000)
+                            {
+                                _nextModifier = 4;
+                            }
+                            else if ((_cpu._ir & 0x6000) == 0x4000)
+                            {
+                                _nextModifier = 5;
+                            }
+                            else if ((_cpu._ir & 0x6000) == 0x6000)
+                            {
+                                if ((_cpu._ir & 0x1f00) == 0x0e00)
+                                {
+                                    _nextModifier = 6;
+                                }
+                                else
+                                {
+                                    _nextModifier = 1;
+                                }
+                            }
                         }
-                        else if ((_cpu._ir & 0x6000) == 0)
+                        else */
                         {
-                            _nextModifier = (ushort)((_cpu._ir & 0x1800) >> 11);
-                        }
-                        else if ((_cpu._ir & 0x6000) == 0x2000)
-                        {
-                            _nextModifier = 4;
-                        }
-                        else if ((_cpu._ir & 0x6000) == 0x4000)
-                        {
-                            _nextModifier = 5;
-                        }
-                        else if ((_cpu._ir & 0x0f00) == 0)
-                        {
-                            _nextModifier = 1;
-                        }
-                        else if ((_cpu._ir & 0x0f00) == 0x0100)
-                        {
-                            _nextModifier = 0;
-                        }
-                        else if ((_cpu._ir & 0x0f00) == 0x0600)
-                        {
-                            _nextModifier = 0xe;
-                        }
-                        else if ((_cpu._ir & 0x0f00) == 0x0e00)
-                        {
-                            _nextModifier = 0x6;
-                        }
-                        else
-                        {
-                            _nextModifier = (ushort)((_cpu._ir & 0x0f00) >> 8);
-                        }
+                            if ((_cpu._ir & 0x8000) != 0)
+                            {
+                                _nextModifier = (ushort)(3 - ((_cpu._ir & 0xc0) >> 6));
+                            }
+                            else
+                            {
+                                _nextModifier = ControlROM.ACSourceROM[((_cpu._ir & 0x7f00) >> 8) + 0x80];
+                            }
+                        }                       
                         break;
 
                     case EmulatorF2.ACSOURCE:
@@ -287,8 +293,7 @@ namespace Contralto.CPU
                         // NOTE: the above table from the Hardware Manual is incorrect (or at least incomplete / misleading).
                         // There is considerably more that goes into determining the dispatch, which is controlled by a 256x8
                         // PROM.  We just use the PROM rather than implementing the above logic (because it works.)
-                        //
-
+                        //                        
                         if ((_cpu._ir & 0x8000) != 0)
                         {
                             // 3-IR[8-9] (shift field of arithmetic instruction)
@@ -298,7 +303,8 @@ namespace Contralto.CPU
                         {
                             // Use the PROM.                            
                             _nextModifier = ControlROM.ACSourceROM[((_cpu._ir & 0x7f00) >> 8)];
-                        }                       
+                        }
+                                           
                         break;
 
                     case EmulatorF2.ACDEST:

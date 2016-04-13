@@ -36,6 +36,7 @@
             this.AltoII1KROMRadioButton = new System.Windows.Forms.RadioButton();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.NoEncapsulationRadioButton = new System.Windows.Forms.RadioButton();
             this.RawEthernetRadioButton = new System.Windows.Forms.RadioButton();
             this.UDPRadioButton = new System.Windows.Forms.RadioButton();
             this.HostInterfaceGroupBox = new System.Windows.Forms.GroupBox();
@@ -48,7 +49,7 @@
             this.InterlaceDisplayCheckBox = new System.Windows.Forms.CheckBox();
             this.OKButton = new System.Windows.Forms.Button();
             this.CancelButton = new System.Windows.Forms.Button();
-            this.NoEncapsulationRadioButton = new System.Windows.Forms.RadioButton();
+            this.AltoI1KROMRadioButton = new System.Windows.Forms.RadioButton();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
@@ -70,6 +71,7 @@
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.AltoI1KROMRadioButton);
             this.tabPage1.Controls.Add(this.AltoII3KRAMRadioButton);
             this.tabPage1.Controls.Add(this.AltoII2KROMRadioButton);
             this.tabPage1.Controls.Add(this.label1);
@@ -85,24 +87,24 @@
             // AltoII3KRAMRadioButton
             // 
             this.AltoII3KRAMRadioButton.AutoSize = true;
-            this.AltoII3KRAMRadioButton.Location = new System.Drawing.Point(14, 75);
+            this.AltoII3KRAMRadioButton.Location = new System.Drawing.Point(14, 99);
             this.AltoII3KRAMRadioButton.Name = "AltoII3KRAMRadioButton";
-            this.AltoII3KRAMRadioButton.Size = new System.Drawing.Size(217, 17);
+            this.AltoII3KRAMRadioButton.Size = new System.Drawing.Size(236, 17);
             this.AltoII3KRAMRadioButton.TabIndex = 3;
             this.AltoII3KRAMRadioButton.TabStop = true;
-            this.AltoII3KRAMRadioButton.Text = "Alto II, 1K Control ROM, 3K Control RAM";
+            this.AltoII3KRAMRadioButton.Text = "Alto II XM, 1K Control ROM, 3K Control RAM";
             this.AltoII3KRAMRadioButton.UseVisualStyleBackColor = true;
             this.AltoII3KRAMRadioButton.CheckedChanged += new System.EventHandler(this.OnSystemTypeCheckChanged);
             // 
             // AltoII2KROMRadioButton
             // 
             this.AltoII2KROMRadioButton.AutoSize = true;
-            this.AltoII2KROMRadioButton.Location = new System.Drawing.Point(14, 52);
+            this.AltoII2KROMRadioButton.Location = new System.Drawing.Point(14, 76);
             this.AltoII2KROMRadioButton.Name = "AltoII2KROMRadioButton";
-            this.AltoII2KROMRadioButton.Size = new System.Drawing.Size(217, 17);
+            this.AltoII2KROMRadioButton.Size = new System.Drawing.Size(236, 17);
             this.AltoII2KROMRadioButton.TabIndex = 2;
             this.AltoII2KROMRadioButton.TabStop = true;
-            this.AltoII2KROMRadioButton.Text = "Alto II, 2K Control ROM, 1K Control RAM";
+            this.AltoII2KROMRadioButton.Text = "Alto II XM, 2K Control ROM, 1K Control RAM";
             this.AltoII2KROMRadioButton.UseVisualStyleBackColor = true;
             this.AltoII2KROMRadioButton.CheckedChanged += new System.EventHandler(this.OnSystemTypeCheckChanged);
             // 
@@ -118,12 +120,12 @@
             // AltoII1KROMRadioButton
             // 
             this.AltoII1KROMRadioButton.AutoSize = true;
-            this.AltoII1KROMRadioButton.Location = new System.Drawing.Point(14, 29);
+            this.AltoII1KROMRadioButton.Location = new System.Drawing.Point(14, 53);
             this.AltoII1KROMRadioButton.Name = "AltoII1KROMRadioButton";
-            this.AltoII1KROMRadioButton.Size = new System.Drawing.Size(217, 17);
+            this.AltoII1KROMRadioButton.Size = new System.Drawing.Size(236, 17);
             this.AltoII1KROMRadioButton.TabIndex = 0;
             this.AltoII1KROMRadioButton.TabStop = true;
-            this.AltoII1KROMRadioButton.Text = "Alto II, 1K Control ROM, 1K Control RAM";
+            this.AltoII1KROMRadioButton.Text = "Alto II XM, 1K Control ROM, 1K Control RAM";
             this.AltoII1KROMRadioButton.UseVisualStyleBackColor = true;
             this.AltoII1KROMRadioButton.CheckedChanged += new System.EventHandler(this.OnSystemTypeCheckChanged);
             // 
@@ -152,6 +154,17 @@
             this.groupBox1.TabIndex = 3;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Ethernet Encapsulation";
+            // 
+            // NoEncapsulationRadioButton
+            // 
+            this.NoEncapsulationRadioButton.AutoSize = true;
+            this.NoEncapsulationRadioButton.Location = new System.Drawing.Point(255, 16);
+            this.NoEncapsulationRadioButton.Name = "NoEncapsulationRadioButton";
+            this.NoEncapsulationRadioButton.Size = new System.Drawing.Size(51, 17);
+            this.NoEncapsulationRadioButton.TabIndex = 2;
+            this.NoEncapsulationRadioButton.TabStop = true;
+            this.NoEncapsulationRadioButton.Text = "None";
+            this.NoEncapsulationRadioButton.UseVisualStyleBackColor = true;
             // 
             // RawEthernetRadioButton
             // 
@@ -273,16 +286,16 @@
             this.CancelButton.UseVisualStyleBackColor = true;
             this.CancelButton.Click += new System.EventHandler(this.CancelButton_Click);
             // 
-            // NoEncapsulation
+            // AltoI1KROMRadioButton
             // 
-            this.NoEncapsulationRadioButton.AutoSize = true;
-            this.NoEncapsulationRadioButton.Location = new System.Drawing.Point(255, 16);
-            this.NoEncapsulationRadioButton.Name = "NoEncapsulation";
-            this.NoEncapsulationRadioButton.Size = new System.Drawing.Size(51, 17);
-            this.NoEncapsulationRadioButton.TabIndex = 2;
-            this.NoEncapsulationRadioButton.TabStop = true;
-            this.NoEncapsulationRadioButton.Text = "None";
-            this.NoEncapsulationRadioButton.UseVisualStyleBackColor = true;
+            this.AltoI1KROMRadioButton.AutoSize = true;
+            this.AltoI1KROMRadioButton.Location = new System.Drawing.Point(14, 30);
+            this.AltoI1KROMRadioButton.Name = "AltoI1KROMRadioButton";
+            this.AltoI1KROMRadioButton.Size = new System.Drawing.Size(214, 17);
+            this.AltoI1KROMRadioButton.TabIndex = 4;
+            this.AltoI1KROMRadioButton.TabStop = true;
+            this.AltoI1KROMRadioButton.Text = "Alto I, 1K Control ROM, 1K Control RAM";
+            this.AltoI1KROMRadioButton.UseVisualStyleBackColor = true;
             // 
             // SystemOptions
             // 
@@ -334,5 +347,6 @@
         private System.Windows.Forms.RadioButton RawEthernetRadioButton;
         private System.Windows.Forms.RadioButton UDPRadioButton;
         private System.Windows.Forms.RadioButton NoEncapsulationRadioButton;
+        private System.Windows.Forms.RadioButton AltoI1KROMRadioButton;
     }
 }

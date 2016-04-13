@@ -8,11 +8,36 @@ namespace Contralto.CPU
         static ControlROM()
         {
             Init();
+
+            /*
+            LoadConstants(_constantRomsAltoI);
+
+            ushort[] temp = new ushort[256];
+
+            _constantRom.CopyTo(temp, 0);
+
+            LoadConstants(_constantRomsAltoII);
+
+            for(int i=0;i<256;i++)
+            {
+                if (temp[i] != _constantRom[i])
+                {
+                    Console.WriteLine("Diff at {0:x} - {1:x} vs {2:x}", i, temp[i], _constantRom[i]);
+                }
+            } */
+
         }
 
         private static void Init()
         {
-            LoadConstants(_constantRoms);
+            if (Configuration.SystemType == SystemType.AltoI)
+            {
+                LoadConstants(_constantRomsAltoI);
+            }
+            else
+            {
+                LoadConstants(_constantRomsAltoI);
+            }
             LoadACSource(_acSourceRoms);
         }
 
@@ -134,12 +159,20 @@ namespace Contralto.CPU
             return (~mappedData) & 0xff;
         }
 
-        private static RomFile[] _constantRoms =
+        private static RomFile[] _constantRomsAltoII =
             {               
                 new RomFile("c0", 0x000, 12),
                 new RomFile("c1", 0x000, 8),
                 new RomFile("c2", 0x000, 4),
                 new RomFile("c3", 0x000, 0),                
+            };
+
+        private static RomFile[] _constantRomsAltoI =
+           {
+                new RomFile("c0.2", 0x000, 12),
+                new RomFile("c1.2", 0x000, 8),
+                new RomFile("c2.2", 0x000, 4),
+                new RomFile("c3.2", 0x000, 0),
             };
 
         private static RomFile _acSourceRoms = new RomFile("2kctl.u3", 0x000, 0);

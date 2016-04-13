@@ -12,6 +12,10 @@ namespace Contralto.Memory
         Store
     }
 
+    /// <summary>
+    /// Implements the memory bus and memory timings for the Alto system.
+    /// TODO: Currently only implements timings for Alto II systems.
+    /// </summary>
     public class MemoryBus : IClockable
     {
         public MemoryBus()

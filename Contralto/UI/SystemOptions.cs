@@ -32,6 +32,10 @@ namespace Contralto.UI
 
             switch(Configuration.SystemType)
             {
+                case SystemType.AltoI:
+                    AltoI1KROMRadioButton.Checked = true;
+                    break;
+
                 case SystemType.OneKRom:
                     AltoII1KROMRadioButton.Checked = true;
                     break;
@@ -153,7 +157,11 @@ namespace Contralto.UI
 
         private void OnSystemTypeCheckChanged(object sender, EventArgs e)
         {
-            if (AltoII1KROMRadioButton.Checked)
+            if (AltoI1KROMRadioButton.Checked)
+            {
+                _selectedSystemType = SystemType.AltoI;
+            }
+            else if (AltoII1KROMRadioButton.Checked)
             {
                 _selectedSystemType = SystemType.OneKRom;
             }
@@ -191,7 +199,7 @@ namespace Contralto.UI
             {
                 int testValue = Convert.ToByte(AltoEthernetAddressTextBox.Text, 8);
 
-                if (testValue < 1 || testValue > 254)
+                if (testValue < 1 || testValue > 255)
                 {
                     throw new ArgumentOutOfRangeException("Invalid host address.");
                 }

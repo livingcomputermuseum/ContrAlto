@@ -200,6 +200,18 @@ namespace Contralto.CPU
 
             ConstantAccessOrBS4 = ConstantAccess || (int)BS > 4;
 
+            // Constant ROM access:
+            // "The constant memory is gated to the bus by F1=7, F2=7, or BS>4.  The constant memory is addressed by the
+            // (8 bit) concatenation of RSELECT and BS.  The intent in enabling constants with BS>4 is to provide a masking
+            // facility, particularly for the <-MOUSE and <-DISP bus sources.  This works because the processor bus ANDs if
+            // more than one source is gated to it.  Up to 32 such mask contans can be provided for each of the four bus sources
+            // > 4."
+            // NOTE also:
+            // "Note that the [emulator task F2] functions which replace the low bits of RSELECT with IR affect only the 
+            // selection of R; they do not affect the address supplied to the constant ROM."
+            // Hence this can be statically cached without issue.
+            ConstantValue = ControlROM.ConstantROM[(RSELECT << 3) | ((uint)BS)];            
+
             // Whether this instruction needs the Shifter output
             // This is the only task-specific thing we cache, even if this isn't
             // the right task, worst-case we'll do an operation we didn't need to.
@@ -275,6 +287,7 @@ namespace Contralto.CPU
         // Metadata about the instruction that can be precalculated and used during execution
         public bool ConstantAccess;
         public bool ConstantAccessOrBS4;
+        public ushort ConstantValue;
         public bool MemoryAccess;
         public MemoryOperation MemoryOperation;
         public bool LoadTFromALU;

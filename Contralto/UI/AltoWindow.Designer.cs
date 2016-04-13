@@ -51,10 +51,10 @@
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.StatusLine = new System.Windows.Forms.StatusStrip();
-            this.CaptureStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            this.SystemStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.DiskStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.FPSLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.CaptureStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.SystemStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.DisplayBox = new System.Windows.Forms.PictureBox();
             this.menuStrip1.SuspendLayout();
             this.StatusLine.SuspendLayout();
@@ -244,44 +244,53 @@
             // StatusLine
             // 
             this.StatusLine.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.CaptureStatusLabel,
-            this.SystemStatusLabel,
             this.DiskStatusLabel,
-            this.FPSLabel});
-            this.StatusLine.Location = new System.Drawing.Point(0, 837);
+            this.FPSLabel,
+            this.CaptureStatusLabel,
+            this.SystemStatusLabel});
+            this.StatusLine.Location = new System.Drawing.Point(0, 834);
             this.StatusLine.Name = "StatusLine";
-            this.StatusLine.Size = new System.Drawing.Size(608, 22);
+            this.StatusLine.Size = new System.Drawing.Size(608, 25);
             this.StatusLine.TabIndex = 3;
             this.StatusLine.Text = "statusStrip1";
             this.StatusLine.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
             // 
-            // CaptureStatusLabel
-            // 
-            this.CaptureStatusLabel.Name = "CaptureStatusLabel";
-            this.CaptureStatusLabel.Size = new System.Drawing.Size(109, 17);
-            this.CaptureStatusLabel.Text = "CaptureStatusLabel";
-            // 
-            // SystemStatusLabel
-            // 
-            this.SystemStatusLabel.Name = "SystemStatusLabel";
-            this.SystemStatusLabel.Size = new System.Drawing.Size(105, 17);
-            this.SystemStatusLabel.Text = "SystemStatusLabel";
-            // 
             // DiskStatusLabel
             // 
+            this.DiskStatusLabel.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
             this.DiskStatusLabel.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
             this.DiskStatusLabel.Image = global::Contralto.Properties.Resources.DiskNoAccess;
             this.DiskStatusLabel.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.DiskStatusLabel.Name = "DiskStatusLabel";
             this.DiskStatusLabel.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
-            this.DiskStatusLabel.Size = new System.Drawing.Size(16, 17);
+            this.DiskStatusLabel.Padding = new System.Windows.Forms.Padding(5, 0, 5, 0);
+            this.DiskStatusLabel.Size = new System.Drawing.Size(26, 20);
             this.DiskStatusLabel.Text = "DiskStatusLabel";
             // 
             // FPSLabel
             // 
+            this.FPSLabel.AutoSize = false;
+            this.FPSLabel.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
+            this.FPSLabel.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
+            this.FPSLabel.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.FPSLabel.Name = "FPSLabel";
-            this.FPSLabel.Size = new System.Drawing.Size(54, 17);
-            this.FPSLabel.Text = "FPSLabel";
+            this.FPSLabel.Size = new System.Drawing.Size(80, 20);
+            // 
+            // CaptureStatusLabel
+            // 
+            this.CaptureStatusLabel.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
+            this.CaptureStatusLabel.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
+            this.CaptureStatusLabel.Name = "CaptureStatusLabel";
+            this.CaptureStatusLabel.Size = new System.Drawing.Size(113, 20);
+            this.CaptureStatusLabel.Text = "CaptureStatusLabel";
+            // 
+            // SystemStatusLabel
+            // 
+            this.SystemStatusLabel.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
+            this.SystemStatusLabel.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
+            this.SystemStatusLabel.Name = "SystemStatusLabel";
+            this.SystemStatusLabel.Size = new System.Drawing.Size(109, 20);
+            this.SystemStatusLabel.Text = "SystemStatusLabel";
             // 
             // DisplayBox
             // 
@@ -291,6 +300,7 @@
             this.DisplayBox.Size = new System.Drawing.Size(606, 808);
             this.DisplayBox.TabIndex = 1;
             this.DisplayBox.TabStop = false;
+            this.DisplayBox.Paint += new System.Windows.Forms.PaintEventHandler(this.OnPaint);
             this.DisplayBox.MouseDown += new System.Windows.Forms.MouseEventHandler(this.OnDisplayMouseDown);
             this.DisplayBox.MouseMove += new System.Windows.Forms.MouseEventHandler(this.OnDisplayMouseMove);
             this.DisplayBox.MouseUp += new System.Windows.Forms.MouseEventHandler(this.OnDisplayMouseUp);

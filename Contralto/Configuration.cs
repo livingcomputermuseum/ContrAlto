@@ -14,17 +14,22 @@ namespace Contralto
     public enum SystemType
     {
         /// <summary>
-        /// System with the standard 1K ROM, 1K RAM
+        /// Alto I System with 1K ROM, 1K RAM
+        /// </summary>
+        AltoI,
+
+        /// <summary>
+        /// Alto II XM System with the standard 1K ROM, 1K RAM
         /// </summary>
         OneKRom,
 
         /// <summary>
-        /// System with 2K ROM, 1K RAM
+        /// Alto II XM System with 2K ROM, 1K RAM
         /// </summary>
         TwoKRom,
 
         /// <summary>
-        /// System with 3K RAM
+        /// Alto II XM System with 3K RAM
         /// </summary>
         ThreeKRam,
     }
@@ -55,6 +60,12 @@ namespace Contralto
         Ethernet,
     }
 
+    public enum PlatformType
+    {
+        Windows,
+        Unix
+    }
+
     /// <summary>
     /// Encapsulates user-configurable settings.  To be enhanced.
     /// </summary>
@@ -75,8 +86,25 @@ namespace Contralto
 
             ThrottleSpeed = true;
 
+            switch(Environment.OSVersion.Platform)
+            {
+                case PlatformID.MacOSX:
+                case PlatformID.Unix:
+                    Platform = PlatformType.Unix;
+                    break;
+
+                default:
+                    Platform = PlatformType.Windows;
+                    break;
+            }
+
             ReadConfiguration();
         }
+
+        /// <summary>
+        /// What kind of system we're running on.  (Not technically configurable.)
+        /// </summary>
+        public static PlatformType Platform;
 
         /// <summary>
         /// The type of Alto II to emulate

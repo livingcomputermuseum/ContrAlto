@@ -163,8 +163,8 @@ namespace Contralto.CPU
                 }
             }
 
-            UCodeMemory.LoadBanksFromRMR(_rmr);
-            _rmr = 0xffff;      // Reset RMR (all tasks start in ROM0)
+            Log.Write(LogComponent.CPU, "Silent Boot; microcode banks initialized to {0}", Conversion.ToOctal(_rmr));            
+            UCodeMemory.LoadBanksFromRMR(_rmr);            
           
             // Start in Emulator
             _currentTask = _tasks[0];
@@ -177,9 +177,7 @@ namespace Contralto.CPU
             // Unsure if there is a deeper issue here or if there are other reset semantics
             // in play here.
             //
-            WakeupTask(CPU.TaskType.DiskSector);            
-
-            Log.Write(LogComponent.CPU, "Silent Boot; microcode banks initialized to {0}", Conversion.ToOctal(_rmr));
+            WakeupTask(CPU.TaskType.DiskSector);                      
         }
 
         /// <summary>

@@ -202,7 +202,7 @@ namespace Contralto.CPU
                 else
                 {
                     // See also comments below.
-                    _busData = ControlROM.ConstantROM[(instruction.RSELECT << 3) | ((uint)instruction.BS)];
+                    _busData = instruction.ConstantValue;
                 }
 
                 // Constant ROM access:
@@ -211,13 +211,10 @@ namespace Contralto.CPU
                 // facility, particularly for the <-MOUSE and <-DISP bus sources.  This works because the processor bus ANDs if
                 // more than one source is gated to it.  Up to 32 such mask contans can be provided for each of the four bus sources
                 // > 4."
-                // NOTE also:
-                // "Note that the [emulator task F2] functions which replace the low bits of RSELECT with IR affect only the 
-                // selection of R; they do not affect the address supplied to the constant ROM."
-                // Hence we use the unmodified RSELECT value here and above.
+                // This is precached by the MicroInstruction object.
                 if (instruction.ConstantAccessOrBS4)
                 {
-                    _busData &= ControlROM.ConstantROM[(instruction.RSELECT << 3) | ((uint)instruction.BS)];
+                    _busData &= instruction.ConstantValue;
                 }
 
                 //
@@ -280,8 +277,11 @@ namespace Contralto.CPU
                         break;
 
                     case SpecialFunction1.LoadMAR:  
-                        // Do MAR or XMAR reference based on whether F2 is MD<-, indicating an extended memory reference.
-                        _cpu._system.MemoryBus.LoadMAR(aluData, _taskType, instruction.F2 == SpecialFunction2.StoreMD);
+                        // Do MAR or XMAR reference based on whether F2 is MD<- (for Alto IIs), indicating an extended memory reference.
+                        _cpu._system.MemoryBus.LoadMAR(
+                            aluData, 
+                            _taskType, 
+                            Configuration.SystemType == SystemType.AltoI ? false : instruction.F2 == SpecialFunction2.StoreMD);                      
                         break;
 
                     case SpecialFunction1.Task:

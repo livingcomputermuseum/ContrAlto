@@ -14,14 +14,25 @@
                 _wakeup = false;
             }            
             
-            //
-            // MRT has no special functions or special behavior, but here's a note regarding the MRT
-            // wakeup behavior, for future reference:
-            //
-            // Based on readings of the MRT microcode, the MRT keeps its wakeup
-            // until it executes a BLOCK.  (i.e. no special wakeup handling at all.)
-            // "; This version assumes MRTACT is cleared by BLOCK, not MAR<- R37"
-            //            
+            protected override void ExecuteSpecialFunction1Early(MicroInstruction instruction)
+            {
+                //
+                // Based on readings of the below MRT microcode comment, the MRT keeps its wakeup
+                // until it executes a BLOCK on Alto IIs.  (i.e. no special wakeup handling at all.)
+                // On Alto Is, this was accomplished by doing an MAR <- R37.
+                //
+                // "; This version assumes MRTACT is cleared by BLOCK, not MAR<- R37"
+                //
+                if (Configuration.SystemType == SystemType.AltoI &&
+                    instruction.F1 == SpecialFunction1.LoadMAR && 
+                    _rSelect == 31)
+                {
+                    BlockTask();
+                }
+
+                base.ExecuteSpecialFunction1Early(instruction);
+            }
+
         }
     }
 }
