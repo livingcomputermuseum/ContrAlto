@@ -26,7 +26,7 @@ namespace Contralto
         {
             _system = system;
             _controller = controller;
-            _microcodeBreakpointEnabled = new bool[3,1024];
+            _microcodeBreakpointEnabled = new bool[5, 1024];
             _novaBreakpointEnabled = new bool[65536];
 
             _controller.StepCallback += OnExecutionStep;
@@ -37,9 +37,9 @@ namespace Contralto
             _execType = _controller.IsRunning ? ExecutionType.Normal : ExecutionType.None;
 
             InitializeComponent();
-            InitControls();            
-            RefreshUI();                     
-        }        
+            InitControls();
+            RefreshUI();
+        }
 
         public void LoadSourceCode(MicrocodeBank bank, string path)
         {
@@ -76,7 +76,7 @@ namespace Contralto
             }
 
             // Ensure the UI view gets refreshed to display the current MPC source
-            Refresh();    
+            Refresh();
         }
 
         public override void Refresh()
@@ -122,7 +122,7 @@ namespace Contralto
             //_otherRegs.Rows[4].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.Skip, 1);
             _otherRegs.Rows[5].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.MAR, 6);
             _otherRegs.Rows[6].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.MD, 6);
-            _otherRegs.Rows[7].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.Cycle & 0x3f, 2);           
+            _otherRegs.Rows[7].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.Cycle & 0x3f, 2);
 
             // Reserved memory locations
             for (int i = 0; i < _reservedMemoryEntries.Length; i++)
@@ -148,7 +148,7 @@ namespace Contralto
                 case MicrocodeBank.RAM0:
                     SourceTabs.SelectedIndex = 2;
                     break;
-            }            
+            }
 
             RefreshMicrocodeDisassembly(_system.CPU.CurrentTask.MPC);
 
@@ -186,7 +186,7 @@ namespace Contralto
                     break;
             }
 
-            this.BringToFront();        
+            this.BringToFront();
         }
 
         private void RefreshMicrocodeDisassembly(ushort address)
@@ -199,13 +199,20 @@ namespace Contralto
                     HighlightMicrocodeSourceLine(_rom0SourceViewer, address);
                     break;
 
-                case 1:                                
+                case 1:
                     HighlightMicrocodeSourceLine(_rom1SourceViewer, address);
                     break;
 
-                case 2:                    
-                    UpdateMicrocodeDisassembly(MicrocodeBank.RAM0);
-                    HighlightMicrocodeSourceLine(_ram0SourceViewer, address);
+                case 2:
+                    HighlightMicrocodeDisassemblyLine(_ram0SourceViewer, address);
+                    break;
+
+                case 3:
+                    HighlightMicrocodeDisassemblyLine(_ram1SourceViewer, address);
+                    break;
+
+                case 4:
+                    HighlightMicrocodeDisassemblyLine(_ram2SourceViewer, address);
                     break;
             }
         }
@@ -214,7 +221,7 @@ namespace Contralto
         {
             for (int i = 0; i < 32; i++)
             {
-                _registerData.Rows.Add(-1, -1 ,-1);
+                _registerData.Rows.Add(-1, -1, -1);
             }
 
             for (int i = 0; i < 16; i++)
@@ -223,7 +230,10 @@ namespace Contralto
             }
 
             // TODO: handle extended memory
-            _memoryData.RowCount = 65536;            
+            _memoryData.RowCount = 65536;
+            _ram0SourceViewer.RowCount = 1024;
+            _ram1SourceViewer.RowCount = 1024;
+            _ram2SourceViewer.RowCount = 1024;            
 
             _otherRegs.Rows.Add("L", "0");
             _otherRegs.Rows.Add("T", "0");
@@ -234,9 +244,9 @@ namespace Contralto
             //_otherRegs.Rows.Add("SKIP", "0");
             _otherRegs.Rows.Add("MAR", "0");
             _otherRegs.Rows.Add("MD", "0");
-            _otherRegs.Rows.Add("MCycle", "0");                       
-            
-            for(int i=0;i< _reservedMemoryEntries.Length;i++)
+            _otherRegs.Rows.Add("MCycle", "0");
+
+            for (int i = 0; i < _reservedMemoryEntries.Length; i++)
             {
                 _reservedMemory.Rows.Add(
                     Conversion.ToOctal(_reservedMemoryEntries[i].Address, 3),
@@ -244,7 +254,7 @@ namespace Contralto
                     Conversion.ToOctal(0, 6));
             }
         }
-        
+
 
         /// <summary>
         /// Handle breakpoint placement on column 0.
@@ -252,20 +262,20 @@ namespace Contralto
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void Rom0SourceViewCellClick(object sender, DataGridViewCellEventArgs e)
-        {            
+        {
             // Check for breakpoint column click.
             if (e.ColumnIndex == 0)
             {
-                SetBreakpointFromCellClick(MicrocodeBank.ROM0, e.RowIndex);
+                SetBreakpointFromCellClickForSourceView(MicrocodeBank.ROM0, e.RowIndex);
             }
-        }     
+        }
 
         private void Rom1SourceViewCellClick(object sender, DataGridViewCellEventArgs e)
         {
             // Check for breakpoint column click.
             if (e.ColumnIndex == 0)
             {
-                SetBreakpointFromCellClick(MicrocodeBank.ROM1, e.RowIndex);
+                SetBreakpointFromCellClickForSourceView(MicrocodeBank.ROM1, e.RowIndex);
             }
         }
 
@@ -274,15 +284,33 @@ namespace Contralto
             // Check for breakpoint column click.
             if (e.ColumnIndex == 0)
             {
-                SetBreakpointFromCellClick(MicrocodeBank.RAM0, e.RowIndex);
+                SetBreakpointFromCellClickForDisassemblyView(MicrocodeBank.RAM0, e.RowIndex);
             }
         }
 
-        private void SetBreakpointFromCellClick(MicrocodeBank bank, int index)
+        private void Ram1SourceViewCellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Check for breakpoint column click.
+            if (e.ColumnIndex == 0)
+            {
+                SetBreakpointFromCellClickForDisassemblyView(MicrocodeBank.RAM1, e.RowIndex);
+            }
+        }
+
+        private void Ram2SourceViewCellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Check for breakpoint column click.
+            if (e.ColumnIndex == 0)
+            {
+                SetBreakpointFromCellClickForDisassemblyView(MicrocodeBank.RAM2, e.RowIndex);
+            }
+        }
+
+        private void SetBreakpointFromCellClickForSourceView(MicrocodeBank bank, int index)
         {
             DataGridView view = null;
 
-            switch(bank)
+            switch (bank)
             {
                 case MicrocodeBank.ROM0:
                     view = _rom0SourceViewer;
@@ -292,9 +320,8 @@ namespace Contralto
                     view = _rom1SourceViewer;
                     break;
 
-                case MicrocodeBank.RAM0:
-                    view = _ram0SourceViewer;
-                    break;
+                default:
+                    throw new InvalidOperationException("Bank does not have a source view.");
             }
 
             // See if this is a source line, if so check/uncheck the box
@@ -306,6 +333,35 @@ namespace Contralto
 
                 ModifyMicrocodeBreakpoint(bank, (UInt16)view.Rows[index].Tag, !value);
             }
+        }
+
+        private void SetBreakpointFromCellClickForDisassemblyView(MicrocodeBank bank, int index)
+        {
+            DataGridView view = null;
+
+            switch (bank)
+            {
+                case MicrocodeBank.RAM0:
+                    view = _rom0SourceViewer;
+                    break;
+
+                case MicrocodeBank.RAM1:
+                    view = _ram1SourceViewer;
+                    break;
+
+                case MicrocodeBank.RAM2:
+                    view = _ram2SourceViewer;
+                    break;
+
+                default:
+                    throw new InvalidOperationException("Bank does not have a disassembly view.");
+            }
+
+            // Set/unset the breakpoint
+            bool value = (bool)view.Rows[index].Cells[0].Value;
+            view.Rows[index].Cells[0].Value = !value;
+
+            ModifyMicrocodeBreakpoint(bank, (UInt16)index, !value);
         }
 
         private void MemoryViewCellClick(object sender, DataGridViewCellEventArgs e)
@@ -321,55 +377,8 @@ namespace Contralto
             }
         }
 
-        private void UpdateMicrocodeDisassembly(MicrocodeBank bank)
-        {
-            DataGridView view = null;
-            uint[] uCode = null;
-            switch (bank)
-            {
-                case MicrocodeBank.ROM1:
-                    view = _rom1SourceViewer;
-                    uCode = UCodeMemory.UCodeROM;
-                    break;
-
-                case MicrocodeBank.RAM0:
-                    view = _ram0SourceViewer;
-                    uCode = UCodeMemory.UCodeRAM;
-                    break;
-            }
-
-            bool bFirstTime = view.Rows.Count == 0;                       
-
-            
-            for(int i=0;i<1024;i++)
-            {
-                int address = (bank == MicrocodeBank.RAM0) ? i : 1024 + i;
-                MicroInstruction instruction = new MicroInstruction(uCode[address]);
-
-                if (bFirstTime)
-                {
-                    // Create new row
-                    int index = view.Rows.Add(
-                       false,  // breakpoint
-                       Conversion.ToOctal(address, 4),
-                       Conversion.ToOctal((int)uCode[address], 11),
-                       UCodeDisassembler.DisassembleInstruction(instruction, TaskType.Emulator));
-
-                    view.Rows[index].Tag = (ushort)i;
-                }
-                else
-                {
-                    // Update existing row
-                    view.Rows[i].Cells[1].Value = Conversion.ToOctal(address, 4);
-                    view.Rows[i].Cells[2].Value = Conversion.ToOctal((int)uCode[address], 11);
-                    view.Rows[i].Cells[3].Value = UCodeDisassembler.DisassembleInstruction(instruction, TaskType.Emulator);
-                }                
-            }
-        }
-
-
         private void HighlightMicrocodeSourceLine(DataGridView view, UInt16 address)
-        {            
+        {
             foreach (DataGridViewRow row in view.Rows)
             {
                 if (row.Tag != null &&
@@ -383,13 +392,22 @@ namespace Contralto
             }
         }
 
+        private void HighlightMicrocodeDisassemblyLine(DataGridView view, UInt16 address)
+        {
+            DataGridViewRow row = view.Rows[address];
+            
+            view.ClearSelection();
+            row.Selected = true;
+            view.CurrentCell = row.Cells[0];            
+        }
+
         private void HighlightNovaSourceLine(UInt16 address)
         {
             if (address < _memoryData.Rows.Count)
             {
                 _memoryData.ClearSelection();
                 _memoryData.Rows[address].Selected = true;
-                _memoryData.CurrentCell = _memoryData.Rows[address].Cells[0];            
+                _memoryData.CurrentCell = _memoryData.Rows[address].Cells[0];
             }
         }
 
@@ -408,7 +426,7 @@ namespace Contralto
                 return;
             }
 
-            switch(_memoryData.Columns[e.ColumnIndex].Name)
+            switch (_memoryData.Columns[e.ColumnIndex].Name)
             {
                 case "Bkpt":
                     e.Value = GetNovaBreakpoint((UInt16)e.RowIndex);
@@ -420,21 +438,82 @@ namespace Contralto
 
                 case "Data":
                     e.Value = Conversion.ToOctal(_system.MemoryBus.DebugReadWord((ushort)e.RowIndex), 6);
-                    
+
                     break;
 
                 case "Disassembly":
                     e.Value = CPU.Nova.NovaDisassembler.DisassembleInstruction(
-                        (ushort)e.RowIndex, 
+                        (ushort)e.RowIndex,
                         _system.MemoryBus.DebugReadWord((ushort)e.RowIndex));
                     break;
             }
 
         }
 
+        private void OnMicrocodeSourceValueNeeded(object sender, DataGridViewCellValueEventArgs e)
+        {
+            if (e.RowIndex > 1024)
+            {
+                // Top of uCode memory, nothing to do.
+                return;
+            }
+
+            DataGridView view = (DataGridView)sender;
+
+            int bank = 0;
+            switch ((string)view.Tag)
+            {
+                case "RAM0":
+                    bank = 0;
+                    break;
+
+                case "RAM1":
+                    bank = 1;
+                    break;
+
+                case "RAM2":
+                    bank = 2;
+                    break;
+
+                default:
+                    throw new InvalidOperationException("Invalid view Tag for disassembly view.");
+            }
+
+            ushort address = (ushort)(e.RowIndex + (bank * 1024));
+
+            // Yes, switching on the Header Text seems clumsy and awful but this is
+            // what WinForms has driven me to do.
+            switch (((DataGridView)sender).Columns[e.ColumnIndex].HeaderText)
+            {
+                case "B":
+                    e.Value = GetMicrocodeBreakpoint(MicrocodeBank.RAM0 + bank, (ushort)(address % 1024));
+                    break;
+
+                case "Addr":
+                    e.Value = Conversion.ToOctal(e.RowIndex, 4);
+                    break;
+
+                case "Word":
+                    e.Value = Conversion.ToOctal((int)UCodeMemory.UCodeRAM[address], 11);
+
+                    break;
+
+                case "Disassembly":
+                    // TODO: should provide means to disassemble as specific task, not just Emulator.
+                    MicroInstruction instruction = new MicroInstruction(UCodeMemory.UCodeRAM[address]);
+                    e.Value = UCodeDisassembler.DisassembleInstruction(instruction, TaskType.Emulator);
+                    break;
+            }
+        }
+
         private void ModifyMicrocodeBreakpoint(MicrocodeBank bank, UInt16 address, bool set)
         {
-            _microcodeBreakpointEnabled[(int)bank,address] = set;
+            _microcodeBreakpointEnabled[(int)bank, address] = set;
+        }
+
+        private bool GetMicrocodeBreakpoint(MicrocodeBank bank, UInt16 address)
+        {
+            return _microcodeBreakpointEnabled[(int)bank, address];
         }
 
         private bool GetNovaBreakpoint(UInt16 address)
@@ -530,7 +609,7 @@ namespace Contralto
             {
                 return taskColors[(int)task];
             }
-        }        
+        }
 
         private struct SourceLine
         {
@@ -546,7 +625,7 @@ namespace Contralto
                 string[] tokens = sourceText.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
 
                 bool annotated = false;
-                
+
                 // Make the compiler happy
                 Text = sourceText;
                 Address = String.Empty;
@@ -557,7 +636,7 @@ namespace Contralto
                     tokens[0].EndsWith(">"))
                 {
                     // Close enough.  Look for the task tag and parse out the (octal) address
-                    switch(tokens[0].Substring(0,2))
+                    switch (tokens[0].Substring(0, 2))
                     {
                         case "EM":
                             Task = TaskType.Emulator;
@@ -604,7 +683,7 @@ namespace Contralto
                             break;
 
                         default:
-                            Task = TaskType.Invalid;                            
+                            Task = TaskType.Invalid;
                             break;
                     }
 
@@ -621,16 +700,16 @@ namespace Contralto
                             annotated = false;
                         }
 
-                        Text = sourceText.Substring(tokens[0].Length + 1, sourceText.Length - tokens[0].Length -1);
+                        Text = sourceText.Substring(tokens[0].Length + 1, sourceText.Length - tokens[0].Length - 1);
                         annotated = true;
                     }
                     else
                     {
                         // We will just display this as a non-source line
                         annotated = false;
-                    }                                        
+                    }
                 }
-                
+
                 if (!annotated)
                 {
                     Text = sourceText;
@@ -653,7 +732,7 @@ namespace Contralto
         private void Debugger_Load(object sender, EventArgs e)
         {
 
-        }        
+        }
 
         private void OnJumpAddressKeyDown(object sender, KeyEventArgs e)
         {
@@ -665,7 +744,7 @@ namespace Contralto
                     UInt16 address = Convert.ToUInt16(JumpToAddress.Text, 8);
 
                     // find the source address that matches this, if any.
-                    RefreshMicrocodeDisassembly(address);                    
+                    RefreshMicrocodeDisassembly(address);
                 }
                 catch
                 {
@@ -697,7 +776,7 @@ namespace Contralto
         {
             _execType = ExecutionType.Step;
             SetExecutionState(ExecutionState.SingleStep);
-            _controller.StartExecution(AlternateBootType.None);                        
+            _controller.StartExecution(AlternateBootType.None);
         }
 
         private void OnAutoStepButtonClicked(object sender, EventArgs e)
@@ -719,11 +798,11 @@ namespace Contralto
             //                  
             _execType = ExecutionType.Normal;
             SetExecutionState(ExecutionState.Running);
-            _controller.StartExecution(AlternateBootType.None);         
+            _controller.StartExecution(AlternateBootType.None);
         }
 
         private void RunToNextTaskButton_Click(object sender, EventArgs e)
-        {            
+        {
             _execType = ExecutionType.NextTask;
             SetExecutionState(ExecutionState.Running);
             _controller.StartExecution(AlternateBootType.None);
@@ -742,7 +821,7 @@ namespace Contralto
             _execType = ExecutionType.NextNovaInstruction;
             SetExecutionState(ExecutionState.Running);
             _controller.StartExecution(AlternateBootType.None);
-            
+
         }
 
         private void OnStopButtonClicked(object sender, EventArgs e)
@@ -750,14 +829,14 @@ namespace Contralto
             _controller.StopExecution();
             Refresh();
         }
-        
+
 
         private void ResetButton_Click(object sender, EventArgs e)
         {
-            _controller.Reset(AlternateBootType.None);            
+            _controller.Reset(AlternateBootType.None);
             Refresh();
-        }    
-        
+        }
+
         private void OnExecutionError(Exception e)
         {
             _lastExceptionText = e.Message;
@@ -776,12 +855,12 @@ namespace Contralto
                         this.BeginInvoke(new StepDelegate(Invalidate));
                         System.Threading.Thread.Sleep(10);
                         return false; /* break always */
-                    }                    
+                    }
 
                 case ExecutionType.Step:
-                    return true;  /* break always */ 
-                                   
-                case ExecutionType.Normal:                    
+                    return true;  /* break always */
+
+                case ExecutionType.Normal:
                 case ExecutionType.NextTask:
                 case ExecutionType.NextNovaInstruction:
 
@@ -810,9 +889,9 @@ namespace Contralto
                         _system._novaInst++;
                     }
 
-                        // See if we need to stop here
+                    // See if we need to stop here
                     if (_execAbort ||                                               // The Stop button was hit
-                        _microcodeBreakpointEnabled[(int)UCodeMemory.GetBank(_system.CPU.CurrentTask.TaskType),_system.CPU.CurrentTask.MPC] || // A microcode breakpoint was hit
+                        _microcodeBreakpointEnabled[(int)UCodeMemory.GetBank(_system.CPU.CurrentTask.TaskType), _system.CPU.CurrentTask.MPC] || // A microcode breakpoint was hit
                         (_execType == ExecutionType.NextTask &&
                             _system.CPU.NextTask != null &&
                             _system.CPU.NextTask != _system.CPU.CurrentTask) ||     // The next task was switched to                    
@@ -1237,7 +1316,7 @@ namespace Contralto
             Running,
             BreakpointStop,
             InternalError,
-        }        
+        }
 
         private struct ReservedMemoryEntry
         {
@@ -1332,12 +1411,6 @@ namespace Contralto
         private bool[,] _microcodeBreakpointEnabled;
 
         // Nova Debugger breakpoints; same as above
-        private bool[] _novaBreakpointEnabled;
-
-        private void HackButton_Click(object sender, EventArgs e)
-        {
-            //_system.CPU.HAX = true;
-            Log.Write(Logging.LogComponent.Debug, "***** HACK HIT ******");
-        }
+        private bool[] _novaBreakpointEnabled;       
     }
 }
