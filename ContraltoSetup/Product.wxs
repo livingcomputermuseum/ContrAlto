@@ -9,7 +9,9 @@
 
 		<Feature Id="ProductFeature" Title="ContrAlto" Description="The ContrAlto Alto Emulator" Level="1" ConfigurableDirectory="INSTALLFOLDER">
 			<ComponentGroupRef Id="ProductComponents" />
-      <ComponentGroupRef Id="MicrocodeComponents" />
+      <ComponentGroupRef Id="MicrocodeComponentsShared" />
+      <ComponentGroupRef Id="MicrocodeComponentsAltoI" />
+      <ComponentGroupRef Id="MicrocodeComponentsAltoII" />
       <ComponentRef Id="UserDiskFolder"/>
       <ComponentGroupRef Id="DiskComponents" />      
       <ComponentGroupRef Id="CodeComponents" /> 
@@ -32,7 +34,10 @@
 			<Directory Id="ProgramFilesFolder">
         <Directory Id="LCM" Name="Living Computer Museum">
 				  <Directory Id="INSTALLFOLDER" Name="Contralto">
-            <Directory Id="ROMFOLDER" Name="ROM"/>            
+            <Directory Id="ROMFOLDER" Name="ROM">
+              <Directory Id="ROMFOLDERALTOI" Name="AltoI"/>
+              <Directory Id="ROMFOLDERALTOII" Name="AltoII"/>
+            </Directory>
             <Directory Id="DISASSEMBLYFOLDER" Name="Disassembly"/>
           </Directory>
         </Directory>
@@ -77,33 +82,82 @@
         </File>
       </Component>
 		</ComponentGroup>
+
+    <ComponentGroup Id="MicrocodeComponentsShared" Directory="ROMFOLDER">
+      <!-- Microcode and other ROM files shared between all Alto revisions -->
+      <Component Id="MicrocodeAltoShared" Guid="74E9E780-8D35-40D0-92EB-05B399D06EB6" KeyPath="yes">
+        <File Id="ACSOURCE_new" Name="ACSOURCE.NEW" Source="$(var.Contralto.TargetDir)\ROM\ACSOURCE.NEW"/>
+        <File Id="ACSOURCE_old" Name="ACSOURCE.OLD" Source="$(var.Contralto.TargetDir)\ROM\ACSOURCE.OLD"/>
+      </Component>
+    </ComponentGroup>
     
-    <ComponentGroup Id="MicrocodeComponents" Directory="ROMFOLDER">
-      <!-- Microcode and other ROM files -->
-      <Component Id="Microcode" Guid="74E9E780-8D35-40D0-92EB-05B399D06EB6" KeyPath="yes">
-        <File Id="u52" Name="u52" Source="$(var.Contralto.TargetDir)\ROM\u52"/>      
-        <File Id="u53" Name="u53" Source="$(var.Contralto.TargetDir)\ROM\u53"/>      
-        <File Id="u54" Name="u54" Source="$(var.Contralto.TargetDir)\ROM\u54"/>      
-        <File Id="u55" Name="u55" Source="$(var.Contralto.TargetDir)\ROM\u55"/>      
-        <File Id="u60" Name="u60" Source="$(var.Contralto.TargetDir)\ROM\u60"/>      
-        <File Id="u61" Name="u61" Source="$(var.Contralto.TargetDir)\ROM\u61"/>      
-        <File Id="u62" Name="u62" Source="$(var.Contralto.TargetDir)\ROM\u62"/>      
-        <File Id="u63" Name="u63" Source="$(var.Contralto.TargetDir)\ROM\u63"/>      
-        <File Id="u64" Name="u64" Source="$(var.Contralto.TargetDir)\ROM\u64"/>      
-        <File Id="u65" Name="u65" Source="$(var.Contralto.TargetDir)\ROM\u65"/>      
-        <File Id="u70" Name="u70" Source="$(var.Contralto.TargetDir)\ROM\u70"/>      
-        <File Id="u71" Name="u71" Source="$(var.Contralto.TargetDir)\ROM\u71"/>      
-        <File Id="u72" Name="u72" Source="$(var.Contralto.TargetDir)\ROM\u72"/>      
-        <File Id="u73" Name="u73" Source="$(var.Contralto.TargetDir)\ROM\u73"/>      
-        <File Id="u74" Name="u74" Source="$(var.Contralto.TargetDir)\ROM\u74"/>      
-        <File Id="u75" Name="u75" Source="$(var.Contralto.TargetDir)\ROM\u75"/>      
+    <ComponentGroup Id="MicrocodeComponentsAltoII" Directory="ROMFOLDERALTOII">
+      <!-- Microcode and other ROM files for the Alto II -->
+      <Component Id="MicrocodeAltoII" Guid="74E9E780-8D35-40D0-92EB-05B399D06EB7" KeyPath="yes">
+        <File Id="u52" Name="u52" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u52"/>      
+        <File Id="u53" Name="u53" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u53"/>      
+        <File Id="u54" Name="u54" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u54"/>      
+        <File Id="u55" Name="u55" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u55"/>      
+        <File Id="u60" Name="u60" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u60"/>      
+        <File Id="u61" Name="u61" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u61"/>      
+        <File Id="u62" Name="u62" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u62"/>      
+        <File Id="u63" Name="u63" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u63"/>      
+        <File Id="u64" Name="u64" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u64"/>      
+        <File Id="u65" Name="u65" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u65"/>      
+        <File Id="u70" Name="u70" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u70"/>      
+        <File Id="u71" Name="u71" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u71"/>      
+        <File Id="u72" Name="u72" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u72"/>      
+        <File Id="u73" Name="u73" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u73"/>      
+        <File Id="u74" Name="u74" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u74"/>      
+        <File Id="u75" Name="u75" Source="$(var.Contralto.TargetDir)\ROM\AltoII\u75"/>      
           
-        <File Id="c0" Name="C0" Source="$(var.Contralto.TargetDir)\ROM\C0"/>    
-        <File Id="c1" Name="C1" Source="$(var.Contralto.TargetDir)\ROM\C1"/>      
-        <File Id="c2" Name="C2" Source="$(var.Contralto.TargetDir)\ROM\C2"/>      
-        <File Id="c3" Name="C3" Source="$(var.Contralto.TargetDir)\ROM\C3"/>
-      
-        <File Id="Twokctl" Name="2kctl.u3" Source="$(var.Contralto.TargetDir)\ROM\2kctl.u3"/>
+        <File Id="c0" Name="C0" Source="$(var.Contralto.TargetDir)\ROM\AltoII\C0"/>    
+        <File Id="c1" Name="C1" Source="$(var.Contralto.TargetDir)\ROM\AltoII\C1"/>      
+        <File Id="c2" Name="C2" Source="$(var.Contralto.TargetDir)\ROM\AltoII\C2"/>      
+        <File Id="c3" Name="C3" Source="$(var.Contralto.TargetDir)\ROM\AltoII\C3"/>     
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="MicrocodeComponentsAltoI" Directory="ROMFOLDERALTOI">
+      <!-- Microcode and other ROM files for the Alto I-->
+      <Component Id="MicrocodeAltoI" Guid="74E9E780-8D35-40D0-92EB-05B399D06EB8" KeyPath="yes">
+        <File Id="u00_23" Name="00_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\00_23.BIN"/>
+        <File Id="u01_23" Name="01_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\01_23.BIN"/>
+        <File Id="u02_23" Name="02_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\02_23.BIN"/>
+        <File Id="u03_23" Name="03_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\03_23.BIN"/>
+        <File Id="u04_23" Name="04_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\04_23.BIN"/>
+        <File Id="u05_23" Name="05_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\05_23.BIN"/>
+        <File Id="u06_23" Name="06_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\06_23.BIN"/>
+        <File Id="u07_23" Name="07_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\07_23.BIN"/>
+        <File Id="u10_23" Name="10_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\10_23.BIN"/>
+        <File Id="u11_23" Name="11_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\11_23.BIN"/>
+        <File Id="u12_23" Name="12_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\12_23.BIN"/>
+        <File Id="u13_23" Name="13_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\13_23.BIN"/>
+        <File Id="u14_23" Name="14_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\14_23.BIN"/>
+        <File Id="u15_23" Name="15_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\15_23.BIN"/>
+        <File Id="u16_23" Name="16_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\16_23.BIN"/>
+        <File Id="u17_23" Name="17_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\17_23.BIN"/>
+        <File Id="u20_23" Name="20_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\20_23.BIN"/>
+        <File Id="u21_23" Name="21_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\21_23.BIN"/>
+        <File Id="u22_23" Name="22_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\22_23.BIN"/>
+        <File Id="u23_23" Name="23_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\23_23.BIN"/>
+        <File Id="u24_23" Name="24_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\24_23.BIN"/>
+        <File Id="u25_23" Name="25_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\25_23.BIN"/>
+        <File Id="u26_23" Name="26_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\26_23.BIN"/>
+        <File Id="u27_23" Name="27_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\27_23.BIN"/>
+        <File Id="u30_23" Name="30_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\30_23.BIN"/>
+        <File Id="u31_23" Name="31_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\31_23.BIN"/>
+        <File Id="u32_23" Name="32_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\32_23.BIN"/>
+        <File Id="u33_23" Name="33_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\33_23.BIN"/>
+        <File Id="u34_23" Name="34_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\34_23.BIN"/>
+        <File Id="u35_23" Name="35_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\35_23.BIN"/>
+        <File Id="u36_23" Name="36_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\36_23.BIN"/>
+        <File Id="u37_23" Name="37_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\37_23.BIN"/>
+
+        <File Id="C0_23" Name="C1_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoII\C0"/>
+        <File Id="C1_23" Name="C2_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoII\C1"/>
+        <File Id="C2_23" Name="C3_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoII\C2"/>
+        <File Id="C3_23" Name="C4_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoII\C3"/>        
       </Component>
     </ComponentGroup>
     
