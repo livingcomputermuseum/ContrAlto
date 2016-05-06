@@ -18,15 +18,10 @@ namespace Contralto.CPU
                 _displayController = _cpu._system.DisplayController;
             }
 
-            protected override InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
+            public override void OnTaskSwitch()
             {
-                // We put ourselves back to sleep immediately once we've started running
-                // TODO: for this and other similar patterns: rework this so we don't need to
-                // override ExecuteInstruction just to do this (or similar polling).  Virtual calls
-                // are expensive, especially when millions of them are being made a second.
+                // We put ourselves back to sleep immediately once we've started running.
                 _wakeup = false;
-
-                return base.ExecuteInstruction(instruction);
             }
 
             protected override void ExecuteSpecialFunction2(MicroInstruction instruction)

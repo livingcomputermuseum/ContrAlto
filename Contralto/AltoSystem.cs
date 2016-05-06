@@ -125,9 +125,9 @@ namespace Contralto
             DiabloPack newPack = new DiabloPack(type);
 
             using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-            {
+            {                
                 newPack.Load(fs, path, false);
-                fs.Close();
+                fs.Close();                
             }
 
             _diskController.Drives[drive].LoadPack(newPack);

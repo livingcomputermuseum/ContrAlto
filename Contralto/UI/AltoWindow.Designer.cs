@@ -253,7 +253,7 @@
             this.StatusLine.Size = new System.Drawing.Size(608, 25);
             this.StatusLine.TabIndex = 3;
             this.StatusLine.Text = "statusStrip1";
-            this.StatusLine.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
+            this.StatusLine.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);            
             // 
             // DiskStatusLabel
             // 

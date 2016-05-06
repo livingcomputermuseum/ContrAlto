@@ -168,9 +168,6 @@ namespace Contralto.IO
 
         private void ReceiveThread()
         {
-            // Just call ReceivePackets, that's it.  This will never return.
-            // (probably need to make this more elegant so we can tear down the thread
-            // properly.)
             Log.Write(LogComponent.HostNetworkInterface, "UDP Receiver thread started.");
             
             IPEndPoint groupEndPoint = new IPEndPoint(IPAddress.Any, _udpPort);            

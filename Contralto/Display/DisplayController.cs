@@ -91,6 +91,9 @@ namespace Contralto.Display
             _system.Scheduler.Schedule(_verticalBlankScanlineWakeup);
         }
 
+        /// <summary>
+        /// Begins the next display field.
+        /// </summary>
         private void FieldStart()
         {
             // Start of Vertical Blanking (end of last field).  This lasts for 34 scanline times or so.
@@ -117,6 +120,12 @@ namespace Contralto.Display
             _system.Scheduler.Schedule(_verticalBlankScanlineWakeup);            
         }
 
+        /// <summary>
+        /// Callback for each scanline during vblank.
+        /// </summary>
+        /// <param name="timeNsec"></param>
+        /// <param name="skewNsec"></param>
+        /// <param name="context"></param>
         private void VerticalBlankScanlineCallback(ulong timeNsec, ulong skewNsec, object context)
         {
             // End of VBlank scanline.         
@@ -157,6 +166,12 @@ namespace Contralto.Display
             }
         }        
 
+        /// <summary>
+        /// Callback for the end of each horizontal blank period.
+        /// </summary>
+        /// <param name="timeNsec"></param>
+        /// <param name="skewNsec"></param>
+        /// <param name="context"></param>
         private void HorizontalBlankEndCallback(ulong timeNsec, ulong skewNsec, object context)
         {
             // Reset scanline word counter
@@ -182,6 +197,12 @@ namespace Contralto.Display
             _system.Scheduler.Schedule(_wordWakeup);
         }
 
+        /// <summary>
+        /// Callback for each word of visible display lines.
+        /// </summary>
+        /// <param name="timeNsec"></param>
+        /// <param name="skewNsec"></param>
+        /// <param name="context"></param>
         private void WordCallback(ulong timeNsec, ulong skewNsec, object context)
         {
             if (_display == null)
@@ -268,6 +289,10 @@ namespace Contralto.Display
             }
         }
 
+        /// <summary>
+        /// Check to see if a Display Word task wakeup should be generated based on the current
+        /// state of the FIFO and task wakeup bits.
+        /// </summary>
         private void CheckWordWakeup()
         {
             if (FIFOFULL ||
@@ -290,6 +315,10 @@ namespace Contralto.Display
             }
         }
        
+        /// <summary>
+        /// Enqueues a display word on the display controller's FIFO.
+        /// </summary>
+        /// <param name="word"></param>
         public void LoadDDR(ushort word)
         {        
             _dataBuffer.Enqueue(word);            
@@ -303,6 +332,10 @@ namespace Contralto.Display
             CheckWordWakeup();
         }
 
+        /// <summary>
+        /// Loads the X position register for the cursor
+        /// </summary>
+        /// <param name="word"></param>
         public void LoadXPREG(ushort word)
         {
             if (!_cursorXLatch)
@@ -312,6 +345,10 @@ namespace Contralto.Display
             }
         }
 
+        /// <summary>
+        /// Loads the cursor register
+        /// </summary>
+        /// <param name="word"></param>
         public void LoadCSR(ushort word)
         {            
             if (!_cursorRegLatch)
@@ -321,6 +358,10 @@ namespace Contralto.Display
             }                        
         }
 
+        /// <summary>
+        /// Sets the mode (low res and white on black bits)
+        /// </summary>
+        /// <param name="word"></param>
         public void SETMODE(ushort word)
         {
             // These take effect at the beginning of the next scanline.            
@@ -358,7 +399,7 @@ namespace Contralto.Display
         private ushort _cursorX;
         private ushort _cursorXLatched;
 
-        // Indicates whether the DWT or DHT blocked itself
+        // Indicates whether the DWT or DHT blocked themselves
         // in which case they cannot be reawakened until the next field.
         private bool _dwtBlocked;
         private bool _dhtBlocked;        

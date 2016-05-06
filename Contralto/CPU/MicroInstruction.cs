@@ -177,6 +177,11 @@ namespace Contralto.CPU
         EISFCT = 14,
     }
 
+    /// <summary>
+    /// MicroInstruction encapsulates the decoding of a microinstruction word.
+    /// It also caches precomputed metadata related to the microinstruction that
+    /// help speed microcode execution.
+    /// </summary>
     public class MicroInstruction
     {
         public MicroInstruction(UInt32 code)
@@ -228,13 +233,13 @@ namespace Contralto.CPU
             // What kind of memory access this instruction performs, if any.
             if (MemoryAccess)
             {
-                if (BS == BusSource.ReadMD)
-                {
-                    MemoryOperation = MemoryOperation.Read;
-                }
-                else if (F1 == SpecialFunction1.LoadMAR)
+                if (F1 == SpecialFunction1.LoadMAR)
                 {
                     MemoryOperation = MemoryOperation.LoadAddress;
+                }
+                else if (BS == BusSource.ReadMD)
+                {
+                    MemoryOperation = MemoryOperation.Read;
                 }
                 else
                 {

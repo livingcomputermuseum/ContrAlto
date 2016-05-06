@@ -15,7 +15,9 @@ using System.Threading;
 
 namespace Contralto.IO
 {
-
+    /// <summary>
+    /// Represents a host ethernet interface.
+    /// </summary>
     public struct EthernetInterface
     {
         public EthernetInterface(string name, string description)
@@ -249,19 +251,8 @@ namespace Contralto.IO
             }
             else
             {
-                // Check addressing table for external (non emulator) addresses;
-                // otherwise just address other emulators
-                // TODO: implement table.  Currently hardcoded address 1 to test IFS on dev machine
-                //
-                if (destinationHost == 1)
-                {
-                    destinationMac = new MacAddress((UInt48)(_ifsTestMAC));
-                }
-                else
-                {
-                    destinationMac = new MacAddress((UInt48)(_10mbitMACPrefix | destinationHost));       // emulator destination address
-                }
-            
+                // Build 10mbit address from 3mbit
+                destinationMac = new MacAddress((UInt48)(_10mbitMACPrefix | destinationHost));       // emulator destination address            
             }            
 
             return destinationMac;
@@ -285,9 +276,6 @@ namespace Contralto.IO
         private UInt48 _10mbitMACPrefix = 0x0000aa010200;  // 00-00-AA is the Xerox vendor code, used just to be cute.  
 
         private UInt48 _10mbitBroadcast = (UInt48)0xffffffffffff;
-        private const int _3mbitBroadcast = 0;
-
-        // Temporary; to be replaced with an external address mapping table
-        private UInt48 _ifsTestMAC = (UInt48)0x001060b88e3e;
+        private const int _3mbitBroadcast = 0;        
     }   
 }

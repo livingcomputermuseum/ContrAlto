@@ -258,223 +258,178 @@
     <None Include="Disk\xmst76.dsk44">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\0.2">
+    <None Include="ROM\ACSOURCE.NEW">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\1.2">
+    <None Include="ROM\ACSOURCE.OLD">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\10.2">
+    <None Include="ROM\AltoII\C0">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\11.2">
+    <None Include="ROM\AltoII\C1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\12.2">
+    <None Include="ROM\AltoII\C2">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\13.2">
+    <None Include="ROM\AltoII\C3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\14.2">
+    <None Include="ROM\AltoII\U52">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\15.2">
+    <None Include="ROM\AltoII\U53">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\16.2">
+    <None Include="ROM\AltoII\U54">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\17.2">
+    <None Include="ROM\AltoII\U55">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\2.2">
+    <None Include="ROM\AltoII\U60">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\20.2">
+    <None Include="ROM\AltoII\U61">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\21.2">
+    <None Include="ROM\AltoII\U62">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\22.2">
+    <None Include="ROM\AltoII\U63">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\23.2">
+    <None Include="ROM\AltoII\U64">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\24.2">
+    <None Include="ROM\AltoII\U65">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\25.2">
+    <None Include="ROM\AltoII\U70">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\26.2">
+    <None Include="ROM\AltoII\U71">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\27.2">
+    <None Include="ROM\AltoII\U72">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\2kctl.u3">
+    <None Include="ROM\AltoII\U73">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\3.2">
+    <None Include="ROM\AltoII\U74">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\30.2">
+    <None Include="ROM\AltoII\U75">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\31.2">
+    <None Include="ROM\AltoI\00_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\32.2">
+    <None Include="ROM\AltoI\01_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\33.2">
+    <None Include="ROM\AltoI\02_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\34.2">
+    <None Include="ROM\AltoI\03_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\35.2">
+    <None Include="ROM\AltoI\04_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\36.2">
+    <None Include="ROM\AltoI\05_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\37.2">
+    <None Include="ROM\AltoI\06_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\4.2">
+    <None Include="ROM\AltoI\07_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\5.2">
+    <None Include="ROM\AltoI\10_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\6.2">
+    <None Include="ROM\AltoI\11_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\7.2">
+    <None Include="ROM\AltoI\12_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\C0">
+    <None Include="ROM\AltoI\13_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\C0.2">
+    <None Include="ROM\AltoI\14_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\C1">
+    <None Include="ROM\AltoI\15_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\C1.2">
+    <None Include="ROM\AltoI\16_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\C2">
+    <None Include="ROM\AltoI\17_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\C2.2">
+    <None Include="ROM\AltoI\20_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\C3">
+    <None Include="ROM\AltoI\21_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\C3.2">
+    <None Include="ROM\AltoI\22_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U52">
+    <None Include="ROM\AltoI\23_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U52_2k">
+    <None Include="ROM\AltoI\24_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U53">
+    <None Include="ROM\AltoI\25_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U53_2k">
+    <None Include="ROM\AltoI\26_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U54">
+    <None Include="ROM\AltoI\27_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U54_2k">
+    <None Include="ROM\AltoI\30_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U55">
+    <None Include="ROM\AltoI\31_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U55_2k">
+    <None Include="ROM\AltoI\32_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U60">
+    <None Include="ROM\AltoI\33_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U60_2k">
+    <None Include="ROM\AltoI\34_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U61">
+    <None Include="ROM\AltoI\35_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U61_2k">
+    <None Include="ROM\AltoI\36_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U62">
+    <None Include="ROM\AltoI\37_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U62_2k">
+    <None Include="ROM\AltoI\C0_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U63">
+    <None Include="ROM\AltoI\C1_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U63_2k">
+    <None Include="ROM\AltoI\C2_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ROM\U64">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U64_2k">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U65">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U65_2k">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U70">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U70_2k">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U71">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U71_2k">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U72">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U72_2k">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U73">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U73_2k">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U74">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U74_2k">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U75">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ROM\U75_2k">
+    <None Include="ROM\AltoI\C3_23.BIN">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

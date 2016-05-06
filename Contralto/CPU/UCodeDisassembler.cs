@@ -3,6 +3,9 @@ using System.Text;
 
 namespace Contralto.CPU
 {    
+    /// <summary>
+    /// Provides a facility for doing a (crude) disassembly of microcode.
+    /// </summary>
     public static class UCodeDisassembler
     {       
         

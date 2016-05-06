@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace Contralto.Display
 {
+    /// <summary>
+    /// IAltoDisplay defines the interface necessary for generating and rendering the Alto's
+    /// bitmapped display.
+    /// </summary>
     public interface IAltoDisplay
     {
         /// <summary>
@@ -18,7 +22,7 @@ namespace Contralto.Display
         void DrawDisplayWord(int scanline, int wordOffset, ushort dataWord, bool lowRes);
 
         /// <summary>
-        /// Renders the cursor word for the specified scanline
+        /// Renders the cursor word for the specified scanline.
         /// </summary>
         /// <param name="scanline"></param>
         /// <param name="wordOffset"></param>
@@ -27,7 +31,7 @@ namespace Contralto.Display
         void DrawCursorWord(int scanline, int xOffset, bool whiteOnBlack, ushort cursorWord);
 
         /// <summary>
-        /// Causes the display to be rendered
+        /// Indicates that an entire frame is ready for display and should be rendered.
         /// </summary>
         void Render();
     }

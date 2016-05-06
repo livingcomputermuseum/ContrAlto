@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Contralto
 {
     /// <summary>
-    /// The configuration of an Alto II to emulate
+    /// The configuration of the Alto to emulate
     /// </summary>
     public enum SystemType
     {
@@ -165,6 +165,21 @@ namespace Contralto
         /// Whether to cap execution speed at native execution speed or not.
         /// </summary>
         public static bool ThrottleSpeed;
+
+        public static string GetAltoIRomPath(string romFileName)
+        {
+            return Path.Combine("ROM", "AltoI", romFileName);               
+        }
+
+        public static string GetAltoIIRomPath(string romFileName)
+        {
+            return Path.Combine("ROM", "AltoII", romFileName);
+        }
+
+        public static string GetRomPath(string romFileName)
+        {
+            return Path.Combine("ROM", romFileName);
+        }
 
         /// <summary>
         /// Reads the current configuration file from disk.

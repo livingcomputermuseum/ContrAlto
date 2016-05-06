@@ -3,42 +3,28 @@ using System.IO;
 
 namespace Contralto.CPU
 {
+    /// <summary>
+    /// Maintains a set of Control ROM images dumped from real Alto hardware.
+    /// </summary>
     static class ControlROM
     {
         static ControlROM()
         {
-            Init();
-
-            /*
-            LoadConstants(_constantRomsAltoI);
-
-            ushort[] temp = new ushort[256];
-
-            _constantRom.CopyTo(temp, 0);
-
-            LoadConstants(_constantRomsAltoII);
-
-            for(int i=0;i<256;i++)
-            {
-                if (temp[i] != _constantRom[i])
-                {
-                    Console.WriteLine("Diff at {0:x} - {1:x} vs {2:x}", i, temp[i], _constantRom[i]);
-                }
-            } */
-
+            Init();          
         }
 
         private static void Init()
         {
             if (Configuration.SystemType == SystemType.AltoI)
             {
-                LoadConstants(_constantRomsAltoI);
+                LoadConstants(_constantRomsAltoI, true);                
+                LoadACSource(_acSourceRoms, true);               
             }
             else
             {
-                LoadConstants(_constantRomsAltoI);
-            }
-            LoadACSource(_acSourceRoms);
+                LoadConstants(_constantRomsAltoII, false);                
+                LoadACSource(_acSourceRoms, true);
+            }            
         }
 
         public static ushort[] ConstantROM
@@ -51,7 +37,7 @@ namespace Contralto.CPU
             get { return _acSourceRom; }
         }
 
-        private static void LoadConstants(RomFile[] romInfo)
+        private static void LoadConstants(RomFile[] romInfo, bool flip)
         {
             _constantRom = new ushort[256];
 
@@ -60,7 +46,7 @@ namespace Contralto.CPU
                 //
                 // Each file contains 256 bytes, each byte containing one nybble in the low 4 bits.
                 //
-                using (FileStream fs = new FileStream(Path.Combine("ROM", file.Filename), FileMode.Open, FileAccess.Read))
+                using (FileStream fs = new FileStream(file.Filename, FileMode.Open, FileAccess.Read))
                 {
                     int length = (int)fs.Length;
                     if (length != 256)
@@ -74,7 +60,14 @@ namespace Contralto.CPU
                     // OR in the data
                     for (int i = 0; i < length; i++)
                     {
-                        _constantRom[file.StartingAddress + i] |= (ushort)((DataMapConstantRom(data[AddressMapConstantRom(i)]) & 0xf) << file.BitPosition);
+                        if (flip)
+                        {
+                            _constantRom[file.StartingAddress + i] |= (ushort)((DataMapConstantRom(~data[AddressMapConstantRom(i)]) & 0xf) << file.BitPosition);
+                        }
+                        else
+                        {
+                            _constantRom[file.StartingAddress + i] |= (ushort)((DataMapConstantRom(data[AddressMapConstantRom(i)]) & 0xf) << file.BitPosition);
+                        }
                     }
                 }
             }
@@ -86,11 +79,11 @@ namespace Contralto.CPU
             } 
         }
 
-        private static void LoadACSource(RomFile romInfo)
+        private static void LoadACSource(RomFile romInfo, bool reverseBits)
         {
             _acSourceRom = new byte[256];
             
-            using (FileStream fs = new FileStream(Path.Combine("ROM", romInfo.Filename), FileMode.Open, FileAccess.Read))
+            using (FileStream fs = new FileStream(romInfo.Filename, FileMode.Open, FileAccess.Read))
             {
                 int length = (int)fs.Length;
                 if (length != 256)
@@ -103,7 +96,14 @@ namespace Contralto.CPU
                 // Copy in the data, modifying the address as required.
                 for (int i = 0; i < length; i++)
                 {
-                    _acSourceRom[i] = (byte)((~data[AddressMapACSourceRom(i)]) & 0xf);
+                    if (reverseBits)
+                    {
+                        _acSourceRom[i] = (byte)((~DataMapConstantRom(data[AddressMapACSourceRom(i)])) & 0xf);
+                    }
+                    else
+                    {
+                        _acSourceRom[i] = (byte)((~data[AddressMapACSourceRom(i)]) & 0xf);
+                    }
                 }
             }
         }
@@ -158,24 +158,24 @@ namespace Contralto.CPU
             // And invert data lines
             return (~mappedData) & 0xff;
         }
-
-        private static RomFile[] _constantRomsAltoII =
-            {               
-                new RomFile("c0", 0x000, 12),
-                new RomFile("c1", 0x000, 8),
-                new RomFile("c2", 0x000, 4),
-                new RomFile("c3", 0x000, 0),                
-            };
-
+       
         private static RomFile[] _constantRomsAltoI =
            {
-                new RomFile("c0.2", 0x000, 12),
-                new RomFile("c1.2", 0x000, 8),
-                new RomFile("c2.2", 0x000, 4),
-                new RomFile("c3.2", 0x000, 0),
+                new RomFile(Configuration.GetAltoIRomPath("c0_23.BIN"), 0x000, 12),
+                new RomFile(Configuration.GetAltoIRomPath("c1_23.BIN"), 0x000, 8),
+                new RomFile(Configuration.GetAltoIRomPath("c2_23.BIN"), 0x000, 4),
+                new RomFile(Configuration.GetAltoIRomPath("c3_23.BIN"), 0x000, 0),
             };
 
-        private static RomFile _acSourceRoms = new RomFile("2kctl.u3", 0x000, 0);
+        private static RomFile[] _constantRomsAltoII =
+            {
+                new RomFile(Configuration.GetAltoIIRomPath("c0"), 0x000, 12),
+                new RomFile(Configuration.GetAltoIIRomPath("c1"), 0x000, 8),
+                new RomFile(Configuration.GetAltoIIRomPath("c2"), 0x000, 4),
+                new RomFile(Configuration.GetAltoIIRomPath("c3"), 0x000, 0),
+            };
+
+        private static RomFile _acSourceRoms = new RomFile(Configuration.GetRomPath("ACSOURCE.NEW"), 0x000, 0);
 
         private static ushort[] _constantRom;
         private static byte[] _acSourceRom;

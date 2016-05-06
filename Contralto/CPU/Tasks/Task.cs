@@ -26,7 +26,9 @@ namespace Contralto.CPU
                 _wakeup = false;
                 _mpc = 0xffff;  // invalid, for sanity checking
                 _taskType = TaskType.Invalid;
-                _cpu = cpu;                
+                _cpu = cpu;
+
+                _systemType = Configuration.SystemType;
             }
 
             public int Priority
@@ -84,16 +86,26 @@ namespace Contralto.CPU
                 _mpc = (ushort)_taskType;
             }
 
+            /// <summary>
+            /// Removes the Wakeup signal for this task.
+            /// </summary>
             public virtual void BlockTask()
             {
                 _wakeup = false;
             }
 
+            /// <summary>
+            /// Sets the Wakeup signal for this task.
+            /// </summary>
             public virtual void WakeupTask()
             {
                 _wakeup = true;
             }
 
+            /// <summary>
+            /// Executes a single microinstruction.
+            /// </summary>
+            /// <returns>An InstructionCompletion indicating whether this instruction calls for a task switch or not.</returns>
             public InstructionCompletion ExecuteNext()
             {                
                 MicroInstruction instruction = UCodeMemory.GetInstruction(_mpc, _taskType);                             
@@ -102,10 +114,10 @@ namespace Contralto.CPU
 
             /// <summary>
             /// ExecuteInstruction causes the Task to execute the next instruction (the one
-            /// _mpc is pointing to).  The base implementation covers non-task specific logic; subclasses may
-            /// provide their own overrides.
+            /// _mpc is pointing to).  The base implementation covers non-task specific logic,
+            /// subclasses (specific task implementations) may provide their own implementations.
             /// </summary>
-            /// <returns>True if a task switch has been requested by a TASK instruction, false otherwise.</returns>
+            /// <returns>An InstructionCompletion indicating whether this instruction calls for a task switch or not.</returns>
             protected virtual InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
             {
                 InstructionCompletion completion = InstructionCompletion.Normal;
@@ -281,7 +293,7 @@ namespace Contralto.CPU
                         _cpu._system.MemoryBus.LoadMAR(
                             aluData, 
                             _taskType, 
-                            Configuration.SystemType == SystemType.AltoI ? false : instruction.F2 == SpecialFunction2.StoreMD);                      
+                            _systemType == SystemType.AltoI ? false : instruction.F2 == SpecialFunction2.StoreMD);                      
                         break;
 
                     case SpecialFunction1.Task:
@@ -364,9 +376,13 @@ namespace Contralto.CPU
                         break;
 
                     case SpecialFunction2.StoreMD:
-                        // Special case for XMAR; if F1 is a LoadMAR we do nothing here;
+                        // Special case for XMAR on non-Alto I machines: if F1 is a LoadMAR we do nothing here;
                         // the handler for LoadMAR will load the correct bank.
-                        if (instruction.F1 != SpecialFunction1.LoadMAR)
+                        if (_systemType == SystemType.AltoI)
+                        {
+                            _cpu._system.MemoryBus.LoadMD(_busData);
+                        }
+                        else if(instruction.F1 != SpecialFunction1.LoadMAR)
                         {
                             _cpu._system.MemoryBus.LoadMD(_busData);
                         }
@@ -510,24 +526,39 @@ namespace Contralto.CPU
                 return completion;
             }
 
+            /// <summary>
+            /// Provides task-specific implementations the opportunity to handle task-specific bus sources.
+            /// </summary>
+            /// <param name="bs"></param>
+            /// <returns></returns>
             protected virtual ushort GetBusSource(int bs)
             {
                 // Nothing by default.
                 return 0;
             }
 
+            /// <summary>
+            /// Executes before the ALU runs but after bus sources have been selected.
+            /// </summary>
+            /// <param name="instruction"></param>
             protected virtual void ExecuteSpecialFunction1Early(MicroInstruction instruction)
             {
                 // Nothing by default
             }
 
+            /// <summary>
+            /// Executes after the ALU has run but before the shifter runs, provides task-specific implementations 
+            /// the opportunity to handle task-specific F1s.
+            /// </summary>
+            /// <param name="instruction"></param>
             protected virtual void ExecuteSpecialFunction1(MicroInstruction instruction)
             {
                 // Nothing by default
             }
 
             /// <summary>
-            /// Used to allow Task-specific F2s that need to modify RSELECT to do so.
+            /// Executes before bus sources are selected.  Used to allow Task-specific F2s that need to 
+            /// modify RSELECT to do so.
             /// </summary>
             /// <param name="f2"></param>
             protected virtual void ExecuteSpecialFunction2Early(MicroInstruction instruction)
@@ -535,11 +566,20 @@ namespace Contralto.CPU
                 // Nothing by default.
             }
 
+            /// <summary>
+            /// Executes after the ALU has run but before the shifter runs, provides task-specific implementations 
+            /// the opportunity to handle task-specific F2s.
+            /// </summary>
             protected virtual void ExecuteSpecialFunction2(MicroInstruction instruction)
             {
                 // Nothing by default.
             }
 
+            /// <summary>
+            /// Executes after the shifter has run, provides task-specific implementations the opportunity
+            /// to handle task-specific F2s late in the cycle.
+            /// </summary>
+            /// <param name="instruction"></param>
             protected virtual void ExecuteSpecialFunction2Late(MicroInstruction instruction)
             {
                 // Nothing by default.
@@ -553,6 +593,20 @@ namespace Contralto.CPU
             {
                 // Nothing by default
             }
+
+            /// <summary>
+            /// Allows task-specific behavior when a new task begins execution.
+            /// (Generally this is used to remove wakeup immediately.)
+            /// </summary>
+            public virtual void OnTaskSwitch()
+            {
+                // Nothing by default
+            }
+
+            /// <summary>
+            /// Cache the system type.
+            /// </summary>
+            protected SystemType _systemType;
 
             //
             // Per uInstruction Task Data:

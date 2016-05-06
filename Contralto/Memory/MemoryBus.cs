@@ -14,13 +14,14 @@ namespace Contralto.Memory
 
     /// <summary>
     /// Implements the memory bus and memory timings for the Alto system.
-    /// TODO: Currently only implements timings for Alto II systems.
+    /// This implements timings for both Alto I and Alto II systems.
     /// </summary>
-    public class MemoryBus : IClockable
+    public sealed class MemoryBus : IClockable
     {
         public MemoryBus()
         {
             _bus = new Dictionary<ushort, IMemoryMappedDevice>(65536);
+            _systemType = Configuration.SystemType;
             Reset();
         }
 
@@ -106,25 +107,59 @@ namespace Contralto.Memory
         {
             _memoryCycle++;
             if (_memoryOperationActive)
-            {                                
-                switch (_memoryCycle)
+            {                  
+                if (_systemType == SystemType.AltoI)
                 {
-                    case 3:
-                        // Buffered read of single word
-                        _memoryData = ReadFromBus(_memoryAddress, _task, _extendedMemoryReference);
-                        break;
-
-                    case 4:
-                        // Buffered read of double-word
-                        _memoryData2 = ReadFromBus((ushort)(_memoryAddress ^ 1), _task, _extendedMemoryReference);
-                        break;
-
-                    case 5:
-                        // End of memory operation
-                        _memoryOperationActive = false;
-                        _doubleWordStore = false;                        
-                        break;
+                    ClockAltoI();
                 }
+                else
+                {
+                    ClockAltoII();
+                }                
+            }
+        }
+
+        private void ClockAltoI()
+        {
+            switch (_memoryCycle)
+            {
+                case 4:
+                    // Buffered read of single word
+                    _memoryData = ReadFromBus(_memoryAddress, _task, _extendedMemoryReference);
+                    break;
+
+                case 5:
+                    // Buffered read of double-word
+                    _memoryData2 = ReadFromBus((ushort)(_memoryAddress | 1), _task, _extendedMemoryReference);
+                    break;
+
+                case 7:
+                    // End of memory operation
+                    _memoryOperationActive = false;
+                    _doubleWordStore = false;
+                    break;
+            }
+        }
+
+        private void ClockAltoII()
+        {
+            switch (_memoryCycle)
+            {
+                case 3:
+                    // Buffered read of single word
+                    _memoryData = ReadFromBus(_memoryAddress, _task, _extendedMemoryReference);
+                    break;
+
+                case 4:
+                    // Buffered read of double-word
+                    _memoryData2 = ReadFromBus((ushort)(_memoryAddress ^ 1), _task, _extendedMemoryReference);
+                    break;
+
+                case 5:
+                    // End of memory operation
+                    _memoryOperationActive = false;
+                    _doubleWordStore = false;
+                    break;
             }
         }
 
@@ -143,8 +178,16 @@ namespace Contralto.Memory
                         return _memoryCycle > 4;
 
                     case MemoryOperation.Store:
-                        // Write operations take place on cycles 3 and 4
-                        return _memoryCycle > 2;
+                        if (_systemType == SystemType.AltoI)
+                        {
+                            // // Store operations take place on cycles 5 and 6
+                            return _memoryCycle > 4;
+                        }
+                        else
+                        {
+                            // Store operations take place on cycles 3 and 4
+                            return _memoryCycle > 2;
+                        }
 
                     default:
                         throw new InvalidOperationException(String.Format("Unexpected memory operation {0}", op));
@@ -161,7 +204,8 @@ namespace Contralto.Memory
         {
             if (_memoryOperationActive)
             {
-                // This should not happen; CPU should check whether the operation is possible using Ready and stall if not.
+                // This should not happen; CPU implementation should check whether the operation is possible 
+                // using Ready and stall if not.
                 throw new InvalidOperationException("Invalid LoadMAR request during active memory operation.");
             }
             else
@@ -177,31 +221,71 @@ namespace Contralto.Memory
         }        
 
         public ushort ReadMD()
+        {           
+            if (_systemType == SystemType.AltoI)
+            {
+                return ReadMDAltoI();
+            }
+            else
+            {
+                return ReadMDAltoII();
+            }
+        }
+
+        private ushort ReadMDAltoI()
         {
             if (_memoryOperationActive)
             {
                 switch (_memoryCycle)
                 {
-                    case 1:                        
+                    case 1:
+                    case 2:
+
+                        // TODO: good microcode should never do this
+                        throw new InvalidOperationException("Unexpected microcode behavior -- ReadMD too soon after start of memory cycle.");
+                    case 3:
+                    case 4:
+                        // This should not happen; CPU should check whether the operation is possible using Ready and stall if not.
+                        throw new InvalidOperationException("Invalid ReadMR request during cycle 3 or 4 of memory operation.");
+
+                    case 5:
+                        // Single word read                       
+                        return _memoryData;
+
+                    case 6:
+                        // Double word read, return other half of double word.
+                        return _memoryData2;                                         
+
+                    default:
+                        // Invalid state.
+                        throw new InvalidOperationException(string.Format("Unexpected memory cycle {0} in memory state machine.", _memoryCycle));
+                }
+            }
+            else
+            {
+                // The Alto I does not latch memory contents, an <-MD operation returns undefined results
+                return 0xffff;
+            }
+        }
+
+        private ushort ReadMDAltoII()
+        {
+            if (_memoryOperationActive)
+            {
+                switch (_memoryCycle)
+                {
+                    case 1:
                     case 2:
                         // TODO: good microcode should never do this
                         throw new InvalidOperationException("Unexpected microcode behavior -- ReadMD too soon after start of memory cycle.");
                     case 3:
                     case 4:
                         // This should not happen; CPU should check whether the operation is possible using Ready and stall if not.
-                        throw new InvalidOperationException("Invalid ReadMR request during cycle 3 or 4 of memory operation.");                        
+                        throw new InvalidOperationException("Invalid ReadMR request during cycle 3 or 4 of memory operation.");
 
                     case 5:
-                        // Single word read
-                        //Log.Write(LogType.Verbose, LogComponent.Memory, "Single-word read of {0} from {1} (cycle 5)", Conversion.ToOctal(_memoryData), Conversion.ToOctal(_memoryAddress ^ 1));
-
-                        // debug 
-                        /*
-                        if (_memoryAddress == 0xfc90 && _task != TaskType.Emulator)      // 176220 -- status word for disk
-                        {
-                            Logging.Log.Write(Logging.LogComponent.Debug, "--> Task {0} read {1} from 176220.", _task, _memoryData);
-                        } */
-                        return _memoryData;                        
+                        // Single word read                       
+                        return _memoryData;
 
                     // ***
                     // NB: Handler for double-word read (cycle 6) is in the "else" clause below; this is kind of a hack.
@@ -219,102 +303,95 @@ namespace Contralto.Memory
                 // cycle 5 of a reference and obtain the results of the read operation")
                 // If this is memory cycle 6 we will return the last half of the doubleword to complete a double-word read.
                 if (_memoryCycle == 6 || (_memoryCycle == 5 && _doubleWordMixed))
-                {
-
-                    //Log.Write(LogType.Verbose, LogComponent.Memory, "Double-word read of {0} from {1} (cycle 6)", Conversion.ToOctal(_memoryData2), Conversion.ToOctal(_memoryAddress ^ 1));                    
-                    _doubleWordMixed = false;
-                    // debug 
-                    /*
-                    if ((_memoryAddress ^ 1) == 0xfc90 && _task != TaskType.Emulator)      // 176220 -- status word for disk
-                    {
-                        Logging.Log.Write(Logging.LogComponent.Debug, "--> Task {0} read {1} from 176220.", _task, _memoryData2);
-                    } */
+                {                    
+                    _doubleWordMixed = false;                 
                     return _memoryData2;
                 }
                 else
                 {
-                    _doubleWordMixed = false;
-                    // debug 
-                    /*
-                    if (_memoryAddress == 0xfc90 && _task != TaskType.Emulator)      // 176220 -- status word for disk
-                    {
-                        Logging.Log.Write(Logging.LogComponent.Debug, "--> Task {0} read {1} from 176220.", _task, _memoryData);
-                    } */
-                    //Log.Write(LogType.Verbose, LogComponent.Memory, "Single-word read of {0} from {1} (post cycle 6)", Conversion.ToOctal(_memoryData), Conversion.ToOctal(_memoryAddress));
+                    _doubleWordMixed = false;                    
                     return _memoryData;
                 }
-            }
+            }            
         }
 
         public void LoadMD(ushort data)
         {
             if (_memoryOperationActive)
             {
-                switch (_memoryCycle)
+                if (_systemType == SystemType.AltoI)
                 {
-                    case 1:
-                    case 2:
-                    case 5:
-                        // TODO: good microcode should never do this
-                        throw new InvalidOperationException("Unexpected microcode behavior -- LoadMD during incorrect memory cycle.");                        
-
-                    case 3:
-
-                        // debug 
-                        /*
-                        if (_memoryAddress == 0xfc90 || _memoryAddress == 0xfc91 || _memoryAddress == 0x151)      // 176220 -- status word for disk
-                        {
-                            Logging.Log.Write(Logging.LogComponent.Debug, "++> Task {0} wrote {1} to {3} (was {2}).", _task, Conversion.ToOctal(data), Conversion.ToOctal(DebugReadWord(_task, _memoryAddress)), Conversion.ToOctal(_memoryAddress));
-                        }*/
-
-                        _memoryData = data; // Only really necessary to show in debugger
-                        // Start of doubleword write:
-                        WriteToBus(_memoryAddress, data, _task, _extendedMemoryReference);
-                        _doubleWordStore = true;
-                        _doubleWordMixed = true;
-
-
-
-                        /*
-                        Log.Write(
-                            LogType.Verbose,
-                            LogComponent.Memory,
-                            "Single-word store of {0} to {1} (cycle 3)",
-                            Conversion.ToOctal(data),
-                            Conversion.ToOctal(_memoryAddress)); */
-                        break;
-
-                    case 4:
-                        _memoryData = data; // Only really necessary to show in debugger
-
-                        /*
-                        Log.Write(
-                            LogType.Verbose,
-                            LogComponent.Memory, 
-                            _doubleWordStore ? "Double-word store of {0} to {1} (cycle 4)" : "Single-word store of {0} to {1} (cycle 4)", 
-                            Conversion.ToOctal(data),
-                            _doubleWordStore ? Conversion.ToOctal(_memoryAddress ^ 1) : Conversion.ToOctal(_memoryAddress));
-                            */
-                        // debug                        
-                        ushort actualAddress = _doubleWordStore ? (ushort)(_memoryAddress ^ 1) : _memoryAddress;
-
-                        /*
-                        if (actualAddress == 0xfc90 || actualAddress == 0xfc91 || _memoryAddress == 0x151)      // 176220 -- status word for disk
-                        {
-                            Logging.Log.Write(Logging.LogComponent.Debug, "--> Task {0} wrote {1} to {4} (was {2}).  Extd {3}", _task, Conversion.ToOctal(data), Conversion.ToOctal(DebugReadWord(_task, actualAddress)), _extendedMemoryReference, Conversion.ToOctal(actualAddress));
-                        } */
-
-                        WriteToBus(actualAddress, data, _task, _extendedMemoryReference);
-
-                        /*
-                        if (actualAddress == 0xfc90 || actualAddress == 0xfc91 || _memoryAddress == 0x151)      // 176220 -- status word for disk
-                        {
-                            Logging.Log.Write(Logging.LogComponent.Debug, "--> Now {0}.", Conversion.ToOctal(DebugReadWord(_task, actualAddress)));
-                        } */
-                        break;
-                }       
-
+                    LoadMDAltoI(data);
+                }
+                else
+                {
+                    LoadMDAltoII(data);
+                }                
             }
+        }
+
+        private void LoadMDAltoI(ushort data)
+        {
+            switch (_memoryCycle)
+            {
+                case 1:
+                case 2:
+                case 3:
+                case 4:                
+                    // TODO: good microcode should never do this
+                    throw new InvalidOperationException("Unexpected microcode behavior -- LoadMD during incorrect memory cycle.");
+
+                case 5:
+
+                    _memoryData = data; // Only really necessary to show in debugger
+                                        // Start of doubleword write:
+                    WriteToBus(_memoryAddress, data, _task, _extendedMemoryReference);
+                    _doubleWordStore = true;
+                    _doubleWordMixed = true;
+                    break;
+
+                case 6:
+                    if (!_doubleWordStore)
+                    {
+                        throw new InvalidOperationException("Unexpected microcode behavior -- LoadMD on cycle 6, no LoadMD on cycle 5.");
+                    }
+
+                    _memoryData = data; // Only really necessary to show in debugger                                 
+                    ushort actualAddress = (ushort)(_memoryAddress | 1);
+
+                    WriteToBus(actualAddress, data, _task, _extendedMemoryReference);
+                    break;
+            }
+
+        }
+
+        private void LoadMDAltoII(ushort data)
+        {
+            switch (_memoryCycle)
+            {
+                case 1:
+                case 2:
+                case 5:
+                    // TODO: good microcode should never do this
+                    throw new InvalidOperationException("Unexpected microcode behavior -- LoadMD during incorrect memory cycle.");
+
+                case 3:
+
+                    _memoryData = data; // Only really necessary to show in debugger
+                                        // Start of doubleword write:
+                    WriteToBus(_memoryAddress, data, _task, _extendedMemoryReference);
+                    _doubleWordStore = true;
+                    _doubleWordMixed = true;
+                    break;
+
+                case 4:
+                    _memoryData = data; // Only really necessary to show in debugger                                 
+                    ushort actualAddress = _doubleWordStore ? (ushort)(_memoryAddress ^ 1) : _memoryAddress;
+
+                    WriteToBus(actualAddress, data, _task, _extendedMemoryReference);
+                    break;
+            }
+
         }
 
         /// <summary>
@@ -340,8 +417,7 @@ namespace Contralto.Memory
                     return memoryMappedDevice.Read(address, task, extendedMemoryReference);
                 }
                 else
-                {
-                    //throw new NotImplementedException(String.Format("Read from unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));                    
+                {                    
                     return 0;
                 }
             }
@@ -369,11 +445,7 @@ namespace Contralto.Memory
                 if (_bus.TryGetValue(address, out memoryMappedDevice))
                 {
                     memoryMappedDevice.Load(address, data, task, extendedMemoryReference);
-                }
-                else
-                {
-                    // throw new NotImplementedException(String.Format("Write to unimplemented memory-mapped I/O device at {0}.", OctalHelpers.ToOctal(address)));                    
-                }
+                }                
             }
         }
 
@@ -381,6 +453,11 @@ namespace Contralto.Memory
         /// Hashtable used for address-based dispatch to devices on the memory bus.
         /// </summary>
         private Dictionary<ushort, IMemoryMappedDevice> _bus;
+
+        /// <summary>
+        /// Cache the system type since we rely on it        
+        /// </summary>
+        private SystemType _systemType;
 
         //
         // Optimzation: keep reference to main memory; since 99.9999% of accesses go directly there,

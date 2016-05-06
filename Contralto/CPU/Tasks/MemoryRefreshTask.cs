@@ -23,7 +23,7 @@
                 //
                 // "; This version assumes MRTACT is cleared by BLOCK, not MAR<- R37"
                 //
-                if (Configuration.SystemType == SystemType.AltoI &&
+                if (_systemType == SystemType.AltoI &&
                     instruction.F1 == SpecialFunction1.LoadMAR && 
                     _rSelect == 31)
                 {

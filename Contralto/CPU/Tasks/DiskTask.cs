@@ -7,9 +7,9 @@ namespace Contralto.CPU
     public partial class AltoCPU
     {
         /// <summary>
-        /// DiskTask provides implementation for disk-specific special functions
+        /// DiskTask provides implementations of disk-specific special functions
         /// (for both Disk Sector and Disk Word tasks, since the special functions are
-        /// identical between the two)
+        /// identical between the two).
         /// </summary>
         private sealed class DiskTask : Task
         {
@@ -19,12 +19,10 @@ namespace Contralto.CPU
                 _wakeup = false;
 
                 _diskController = _cpu._system.DiskController;
-            }
+            }           
 
-            protected override InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
-            {                
-                InstructionCompletion completion = base.ExecuteInstruction(instruction);
-
+            public override void OnTaskSwitch()
+            {
                 // Deal with SECLATE semantics:  If the Disk Sector task wakes up and runs before
                 // the Disk Controller hits the SECLATE trigger time, then SECLATE remains false.
                 // Otherwise, when the trigger time is hit SECLATE is raised until
@@ -32,10 +30,8 @@ namespace Contralto.CPU
                 if (_taskType == TaskType.DiskSector)
                 {
                     // Sector task is running; clear enable for seclate signal
-                    _diskController.DisableSeclate();                    
-                }                              
-
-                return completion;
+                    _diskController.DisableSeclate();
+                }
             }
 
             protected override ushort GetBusSource(int bs)

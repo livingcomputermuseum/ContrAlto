@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace Contralto.IO
 {
+    /// <summary>
+    /// EthernetController implements the logic for the Alto's 3Mbit Ethernet controller.
+    /// </summary>
     public class EthernetController
     {
         public EthernetController(AltoSystem system)
@@ -345,7 +348,7 @@ namespace Contralto.IO
 
         /// <summary>
         /// Invoked when the host ethernet interface receives a packet destined for us.
-        /// NOTE: This runs on the PCap receiver thread (see HostEthernet), not the main emulator thread.
+        /// NOTE: This runs on the PCap or UDP receiver thread, not the main emulator thread.
         ///       Any access to emulator structures must be properly protected.
         /// 
         /// Due to the nature of the "ethernet" we're simulating, there will never be any collisions or corruption and
@@ -502,18 +505,7 @@ namespace Contralto.IO
             // Schedule the next wakeup.                
             _inputPollEvent.TimestampNsec = _inputPollPeriod - skewNsec;
             _system.Scheduler.Schedule(_inputPollEvent);            
-        }        
-
-        private void LogPacket(int length, MemoryStream packet)
-        {
-            Log.Write(LogComponent.EthernetPacket,
-                "  - Packet src {0}, dest {1}, length {2}",
-                packet.ReadByte(), packet.ReadByte(), length);
-
-
-            // Return to top of packet
-            packet.Position = 2;
-        }
+        }      
 
         private Queue<ushort> _fifo;
 
@@ -555,11 +547,11 @@ namespace Contralto.IO
         private const int _maxQueuedPackets = 32;
 
         // The actual connection to a real network device of some sort on the host
-        IPacketEncapsulation _hostInterface;
+        private IPacketEncapsulation _hostInterface;
 
         // Buffer to hold outgoing data to the host ethernet
-        ushort[] _outputData;
-        int _outputIndex;
+        private ushort[] _outputData;
+        private int _outputIndex;
 
         // Incoming data and locking
         private MemoryStream _incomingPacket;        

@@ -103,7 +103,6 @@ namespace Contralto
             }
         }       
 
-        private static AltoSystem _system;
-        private static ManualResetEvent _closeEvent;
+        private static AltoSystem _system;        
     }
 }

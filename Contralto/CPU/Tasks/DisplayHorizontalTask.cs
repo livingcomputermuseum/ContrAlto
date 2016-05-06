@@ -6,7 +6,7 @@ namespace Contralto.CPU
     public partial class AltoCPU
     {
         /// <summary>
-        /// DisplayWordTask provides functionality for the DHT task
+        /// DisplayHorizontalTask provides implementations of the DHT task functions.
         /// </summary>
         private sealed class DisplayHorizontalTask : Task
         {
@@ -18,12 +18,10 @@ namespace Contralto.CPU
                 _displayController = _cpu._system.DisplayController;
             }
 
-            protected override InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
+            public override void OnTaskSwitch()
             {
-                // We put ourselves back to sleep immediately once we've started running
+                // We put ourselves back to sleep immediately once we've started running.
                 _wakeup = false;
-
-                return base.ExecuteInstruction(instruction);
             }
 
             protected override void ExecuteSpecialFunction2(MicroInstruction instruction)

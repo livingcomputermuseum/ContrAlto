@@ -5,6 +5,10 @@ namespace Contralto.IO
 {
     public delegate void ReceivePacketDelegate(MemoryStream data);
 
+    /// <summary>
+    /// Provides a generic interface for host network devices that can encapsulate
+    /// Alto ethernet packets.
+    /// </summary>
     public interface IPacketEncapsulation
     {
         /// <summary>
@@ -14,14 +18,14 @@ namespace Contralto.IO
         void RegisterReceiveCallback(ReceivePacketDelegate callback);
 
         /// <summary>
-        /// Sends the specified word array
+        /// Sends the specified word array over the device.
         /// </summary>
         /// <param name="packet"></param>
         /// <param name="length"></param>
         void Send(ushort[] packet, int length);
 
         /// <summary>
-        /// Shuts down the encapsulation provider
+        /// Shuts down the encapsulation provider.
         /// </summary>
         void Shutdown();
     }

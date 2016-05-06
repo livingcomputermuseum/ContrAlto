@@ -135,6 +135,7 @@ namespace Contralto.CPU
                         // If we have a new task, switch to it now.                                
                         _currentTask = _nextTask;
                         _nextTask = null;
+                        _currentTask.OnTaskSwitch();
                     }
                     break;
 
@@ -164,7 +165,10 @@ namespace Contralto.CPU
             }
 
             Log.Write(LogComponent.CPU, "Silent Boot; microcode banks initialized to {0}", Conversion.ToOctal(_rmr));            
-            UCodeMemory.LoadBanksFromRMR(_rmr);            
+            UCodeMemory.LoadBanksFromRMR(_rmr);
+
+            // Reset RMR after reset.
+            _rmr = 0x0;         
           
             // Start in Emulator
             _currentTask = _tasks[0];
@@ -175,7 +179,7 @@ namespace Contralto.CPU
             // itself as soon as the Emulator task yields after the reset.  (CopyDisk is broken otherwise due to the
             // sector task stomping over the KBLK CopyDisk sets up after the reset.  This is a race of sorts.)
             // Unsure if there is a deeper issue here or if there are other reset semantics
-            // in play here.
+            // in play that are not understood.
             //
             WakeupTask(CPU.TaskType.DiskSector);                      
         }

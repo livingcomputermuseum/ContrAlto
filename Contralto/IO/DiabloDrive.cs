@@ -9,7 +9,9 @@ using System.Threading.Tasks;
 namespace Contralto.IO
 {    
 
-    // The data for the current sector
+    /// <summary>
+    /// Defines the "type" of data in the current sector timeslice.
+    /// </summary>
     public enum CellType
     {
         Data,
@@ -17,6 +19,11 @@ namespace Contralto.IO
         Sync,
     }
 
+    /// <summary>
+    /// Represents the data (or lack thereof) in the current sector timeslice.
+    /// This may be actual data (header, label, or data), interrecord gaps, or
+    /// sync words.
+    /// </summary>
     public struct DataCell
     {
         public DataCell(ushort data, CellType type)

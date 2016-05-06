@@ -22,8 +22,6 @@ namespace Contralto.CPU
             {
                 base.Reset();
                 _wakeup = true;
-
-                _systemType = Configuration.SystemType;
             }
 
             public override void BlockTask()
@@ -126,7 +124,7 @@ namespace Contralto.CPU
                             // Dispatch to the appropriate device.
                             // The Ethernet controller is the only common device that is documented
                             // to have used STARTF, so we'll just go there directly; if other
-                            // hardware is discovered to be worth emulating we'll put together a more flexible dispatch.
+                            // hardware is determined to be worth emulating we'll put together a more flexible dispatch.
                             //
                             if (_busData < 4)
                             {
@@ -226,49 +224,18 @@ namespace Contralto.CPU
                         //   elseif IR[4-7] = 16B   6
                         //   else                   IR[4-7]
                         // NB: as always, Xerox labels bits in the opposite order from modern convention;
-                        // (bit 0 is the msb...)
-                        /*
-                        if (Configuration.SystemType == SystemType.AltoI && UCodeMemory.GetBank(TaskType.Emulator) == MicrocodeBank.RAM0)
+                        // (bit 0 is the msb...)     
+                        //
+                        // NOTE: The above table is accurate and functions correctly; using the PROM is faster.
+                        //                                         
+                        if ((_cpu._ir & 0x8000) != 0)
                         {
-                            if ((_cpu._ir & 0x8000) != 0)
-                            {1
-                                _nextModifier = (ushort)(3 - ((_cpu._ir & 0xc0) >> 6));
-                            }
-                            else if ((_cpu._ir & 0x6000) == 0x0000)
-                            {
-                                _nextModifier = (ushort)((_cpu._ir & 0x3000) >> 12);
-                            }
-                            else if ((_cpu._ir & 0x6000) == 0x2000)
-                            {
-                                _nextModifier = 4;
-                            }
-                            else if ((_cpu._ir & 0x6000) == 0x4000)
-                            {
-                                _nextModifier = 5;
-                            }
-                            else if ((_cpu._ir & 0x6000) == 0x6000)
-                            {
-                                if ((_cpu._ir & 0x1f00) == 0x0e00)
-                                {
-                                    _nextModifier = 6;
-                                }
-                                else
-                                {
-                                    _nextModifier = 1;
-                                }
-                            }
+                            _nextModifier = (ushort)(3 - ((_cpu._ir & 0xc0) >> 6));
                         }
-                        else */
+                        else
                         {
-                            if ((_cpu._ir & 0x8000) != 0)
-                            {
-                                _nextModifier = (ushort)(3 - ((_cpu._ir & 0xc0) >> 6));
-                            }
-                            else
-                            {
-                                _nextModifier = ControlROM.ACSourceROM[((_cpu._ir & 0x7f00) >> 8) + 0x80];
-                            }
-                        }                       
+                            _nextModifier = ControlROM.ACSourceROM[((_cpu._ir & 0x7f00) >> 8) + 0x80];
+                        }                                              
                         break;
 
                     case EmulatorF2.ACSOURCE:
@@ -290,7 +257,8 @@ namespace Contralto.CPU
                         //   else                   16B                     ROMTRAP
 
                         //
-                        // NOTE: the above table from the Hardware Manual is incorrect (or at least incomplete / misleading).
+                        // NOTE: the above table from the Hardware Manual is incorrect 
+                        // (or at least incomplete / out of date / misleading).
                         // There is considerably more that goes into determining the dispatch, which is controlled by a 256x8
                         // PROM.  We just use the PROM rather than implementing the above logic (because it works.)
                         //                        
@@ -462,9 +430,7 @@ namespace Contralto.CPU
             // BUS+SKIP(ALUF= 13B).  IR<- clears SKIP."
             //
             // NB: _skip is in the encapsulating AltoCPU class to make it easier to reference since the ALU needs to know about it.
-            private int _carry;
-
-            private SystemType _systemType;
+            private int _carry;        
         }
     }
 }

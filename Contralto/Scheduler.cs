@@ -14,7 +14,7 @@ namespace Contralto
     public delegate void SchedulerEventCallback(ulong timeNsec, ulong skewNsec, object context);
 
     /// <summary>
-    /// 
+    /// An Event represents a callback and associated context that is scheduled for a future timestamp.
     /// </summary>
     public class Event
     {
@@ -88,24 +88,20 @@ namespace Contralto
 
             //
             // See if we have any events waiting to fire at this timestep.
-            //
-            while (true)
-            {                
-                if (_schedule.Top != null && _currentTimeNsec >= _schedule.Top.TimestampNsec)
-                {
-                    // Pop the top event and fire the callback.
-                    Event e = _schedule.Pop();
-                    e.EventCallback(_currentTimeNsec, _currentTimeNsec - e.TimestampNsec, e.Context);
-                }
-                else
-                {
-                    // All done.
-                    break;
-                }
-            }
+            //            
+            while (_schedule.Top != null && _currentTimeNsec >= _schedule.Top.TimestampNsec)
+            {
+                // Pop the top event and fire the callback.
+                Event e = _schedule.Pop();
+                e.EventCallback(_currentTimeNsec, _currentTimeNsec - e.TimestampNsec, e.Context);
+            }            
         }
 
-
+        /// <summary>
+        /// Add a new event to the schedule.
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
         public Event Schedule(Event e)
         {
             e.TimestampNsec += _currentTimeNsec;
@@ -114,6 +110,10 @@ namespace Contralto
             return e;
         }
 
+        /// <summary>
+        /// Remove an event from the schedule.
+        /// </summary>
+        /// <param name="e"></param>
         public void CancelEvent(Event e)
         {
             _schedule.Remove(e);

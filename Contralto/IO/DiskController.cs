@@ -15,6 +15,10 @@ namespace Contralto.IO
 
     public delegate void DiskActivity(DiskActivityType activity);
 
+    /// <summary>
+    /// DiskController provides an implementation for the logic in the standard Alto disk controller,
+    /// which talks to a Diablo model 31 or 44 removable pack drive.
+    /// </summary>
     public class DiskController
     {
         public DiskController(AltoSystem system)
@@ -28,11 +32,7 @@ namespace Contralto.IO
 
             Reset();
         }
-
-        /// <summary>        
-        /// According to docs, on a Write, eventually it appears on the Read side during an actual write to the disk
-        /// but not right away.  
-        /// </summary>
+        
         public ushort KDATA
         {
             get
@@ -165,37 +165,7 @@ namespace Contralto.IO
         public bool DataXfer
         {
             get { return _dataXfer; }
-        }
-
-        public int Cylinder
-        {
-            get { return SelectedDrive.Cylinder; }
-        }
-
-        public int SeekCylinder
-        {
-            get { return _destCylinder; }
-        }
-
-        public int Head
-        {
-            get { return SelectedDrive.Head; }
-        }
-
-        public int Sector
-        {
-            get { return SelectedDrive.Sector; }
-        }
-
-        public int Drive
-        {
-            get { return _disk; }
-        }
-
-        public double ClocksUntilNextSector
-        {
-            get { return 0; }  // _sectorClocks - _elapsedSectorTime; }
-        }
+        }        
 
         public bool Ready
         {
@@ -292,6 +262,12 @@ namespace Contralto.IO
             _seclateEnable = false;
         }
 
+        /// <summary>
+        /// Called back 12 times per rotation of the disk to kick off a new disk sector.
+        /// </summary>
+        /// <param name="timeNsec"></param>
+        /// <param name="skewNsec"></param>
+        /// <param name="context"></param>
         private void SectorCallback(ulong timeNsec, ulong skewNsec, object context)
         {
             //
@@ -351,6 +327,12 @@ namespace Contralto.IO
             }
         }
 
+        /// <summary>
+        /// Called back for every word time in this sector.
+        /// </summary>
+        /// <param name="timeNsec"></param>
+        /// <param name="skewNsec"></param>
+        /// <param name="context"></param>
         private void WordCallback(ulong timeNsec, ulong skewNsec, object context)
         {
             SpinDisk();
@@ -369,6 +351,13 @@ namespace Contralto.IO
             }
         }
 
+        /// <summary>
+        /// Called back if the sector task doesn't start in time, providing SECLATE
+        /// semantics.
+        /// </summary>
+        /// <param name="timeNsec"></param>
+        /// <param name="skewNsec"></param>
+        /// <param name="context"></param>
         private void SeclateCallback(ulong timeNsec, ulong skewNsec, object context)
         {            
             if (_seclateEnable)
@@ -405,6 +394,9 @@ namespace Contralto.IO
             }
         }
 
+        /// <summary>
+        /// Starts a seek operation.
+        /// </summary>
         public void Strobe()
         {
             //
@@ -487,7 +479,7 @@ namespace Contralto.IO
             // for lead-in or inter-record delays, but the slices are still used to
             // keep things in line time-wise; the real hardware uses a crystal-controlled clock
             // to generate these slices during these periods (and the clock comes from the
-            // disk itself when actual data is present).  For our purposes, the two clocks
+            // drive itself when actual data is present).  For our purposes, the two clocks
             // are one and the same.
             //                                         
 

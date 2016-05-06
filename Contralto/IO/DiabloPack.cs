@@ -4,6 +4,9 @@ using System.IO;
 namespace Contralto.IO
 {
 
+    /// <summary>
+    /// DiskGeometry encapsulates the geometry of a disk.
+    /// </summary>
     public struct DiskGeometry
     {
         public DiskGeometry(int cylinders, int tracks, int sectors)
@@ -24,6 +27,10 @@ namespace Contralto.IO
         Diablo44
     }
 
+    /// <summary>
+    /// DiabloDiskSector encapsulates the records contained in a single Alto disk sector
+    /// on a Diablo disk.  This includes the header, label, and data records.
+    /// </summary>
     public class DiabloDiskSector
     {
         public DiabloDiskSector(byte[] header, byte[] label, byte[] data)
@@ -106,13 +113,14 @@ namespace Contralto.IO
                         // Bitsavers images have an extra word in the header for some reason.
                         // ignore it.
                         // TODO: should support different formats ("correct" raw, Alto CopyDisk format, etc.)
-                        //
+                        //                        
                         imageStream.Seek(2, SeekOrigin.Current);
+                        
 
                         if (imageStream.Read(header, 0, header.Length) != header.Length)
                         {                            
                             throw new InvalidOperationException("Short read while reading sector header.");
-                        }
+                        }                        
 
                         if (imageStream.Read(label, 0, label.Length) != label.Length)
                         {

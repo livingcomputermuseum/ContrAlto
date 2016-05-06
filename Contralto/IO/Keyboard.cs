@@ -5,7 +5,9 @@ using Contralto.CPU;
 
 namespace Contralto.IO
 {
-
+    /// <summary>
+    /// The keys on the Alto keyboard.
+    /// </summary>
     public enum AltoKey
     {
         None = 0,
@@ -72,6 +74,9 @@ namespace Contralto.IO
         BlankBottom,
     }
 
+    /// <summary>
+    /// Specifies the word and bitmask for a given Alto keyboard key.
+    /// </summary>
     public struct AltoKeyBit
     {
         public AltoKeyBit(int word, ushort mask)

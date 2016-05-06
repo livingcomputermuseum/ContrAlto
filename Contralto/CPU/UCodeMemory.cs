@@ -27,6 +27,10 @@ namespace Contralto.CPU
         public int BitPosition;
     }
 
+    /// <summary>
+    /// UCodeMemory maintains a set of Microcode ROM images and provides facilities
+    /// for accessing them.
+    /// </summary>
     static class UCodeMemory
     {
         static UCodeMemory()
@@ -278,7 +282,7 @@ namespace Contralto.CPU
                 //
                 // Each file contains 1024 bytes, each byte containing one nybble in the low 4 bits.
                 //
-                using(FileStream fs = new FileStream(Path.Combine("ROM", file.Filename), FileMode.Open, FileAccess.Read))
+                using(FileStream fs = new FileStream(file.Filename, FileMode.Open, FileAccess.Read))
                 {
                     int length = (int)fs.Length;
                     if (length != 1024)
@@ -312,7 +316,7 @@ namespace Contralto.CPU
                 //
                 // Each file contains 256 bytes, each byte containing one nybble in the low 4 bits.
                 //
-                using (FileStream fs = new FileStream(Path.Combine("ROM", file.Filename), FileMode.Open, FileAccess.Read))
+                using (FileStream fs = new FileStream(file.Filename, FileMode.Open, FileAccess.Read))
                 {
                     int length = (int)fs.Length;
                     if (length != 256)
@@ -384,73 +388,74 @@ namespace Contralto.CPU
         {
             UInt32 instructionWord = _uCodeRam[address];
             _decodeCache[2048 + address] = new MicroInstruction(instructionWord);
-        }
-
-        private static RomFile[] _uCodeRomsAltoII =
-        {
-            // first K
-            new RomFile("u55", 0x000, 28),
-            new RomFile("u64", 0x000, 24),
-            new RomFile("u65", 0x000, 20),
-            new RomFile("u63", 0x000, 16),
-            new RomFile("u53", 0x000, 12),
-            new RomFile("u60", 0x000, 8),
-            new RomFile("u61", 0x000, 4),
-            new RomFile("u62", 0x000, 0),
-
-            // second K
-            new RomFile("u54", 0x400, 28),
-            new RomFile("u74", 0x400, 24),
-            new RomFile("u75", 0x400, 20),
-            new RomFile("u73", 0x400, 16),
-            new RomFile("u52", 0x400, 12),
-            new RomFile("u70", 0x400, 8),
-            new RomFile("u71", 0x400, 4),
-            new RomFile("u72", 0x400, 0)
-        };
+        }       
 
         private static RomFile[] _uCodeRomsAltoI =
         {
             // 0 to 377
-            new RomFile("0.2", 0x000, 28),
-            new RomFile("1.2", 0x000, 24),
-            new RomFile("2.2", 0x000, 20),
-            new RomFile("3.2", 0x000, 16),
-            new RomFile("4.2", 0x000, 12),
-            new RomFile("5.2", 0x000, 8),
-            new RomFile("6.2", 0x000, 4),
-            new RomFile("7.2", 0x000, 0),
+            new RomFile(Configuration.GetAltoIRomPath("00_23.BIN"), 0x000, 28),
+            new RomFile(Configuration.GetAltoIRomPath("01_23.BIN"), 0x000, 24),
+            new RomFile(Configuration.GetAltoIRomPath("02_23.BIN"), 0x000, 20),
+            new RomFile(Configuration.GetAltoIRomPath("03_23.BIN"), 0x000, 16),
+            new RomFile(Configuration.GetAltoIRomPath("04_23.BIN"), 0x000, 12),
+            new RomFile(Configuration.GetAltoIRomPath("05_23.BIN"), 0x000, 8),
+            new RomFile(Configuration.GetAltoIRomPath("06_23.BIN"), 0x000, 4),
+            new RomFile(Configuration.GetAltoIRomPath("07_23.BIN"), 0x000, 0),
 
             // 400 to 777
-            new RomFile("10.2", 0x100, 28),
-            new RomFile("11.2", 0x100, 24),
-            new RomFile("12.2", 0x100, 20),
-            new RomFile("13.2", 0x100, 16),
-            new RomFile("14.2", 0x100, 12),
-            new RomFile("15.2", 0x100, 8),
-            new RomFile("16.2", 0x100, 4),
-            new RomFile("17.2", 0x100, 0),
+            new RomFile(Configuration.GetAltoIRomPath("10_23.BIN"), 0x100, 28),
+            new RomFile(Configuration.GetAltoIRomPath("11_23.BIN"), 0x100, 24),
+            new RomFile(Configuration.GetAltoIRomPath("12_23.BIN"), 0x100, 20),
+            new RomFile(Configuration.GetAltoIRomPath("13_23.BIN"), 0x100, 16),
+            new RomFile(Configuration.GetAltoIRomPath("14_23.BIN"), 0x100, 12),
+            new RomFile(Configuration.GetAltoIRomPath("15_23.BIN"), 0x100, 8),
+            new RomFile(Configuration.GetAltoIRomPath("16_23.BIN"), 0x100, 4),
+            new RomFile(Configuration.GetAltoIRomPath("17_23.BIN"), 0x100, 0),
 
             // 1000 to 1377
-            new RomFile("20.2", 0x200, 28),
-            new RomFile("21.2", 0x200, 24),
-            new RomFile("22.2", 0x200, 20),
-            new RomFile("23.2", 0x200, 16),
-            new RomFile("24.2", 0x200, 12),
-            new RomFile("25.2", 0x200, 8),
-            new RomFile("26.2", 0x200, 4),
-            new RomFile("27.2", 0x200, 0),
+            new RomFile(Configuration.GetAltoIRomPath("20_23.BIN"), 0x200, 28),
+            new RomFile(Configuration.GetAltoIRomPath("21_23.BIN"), 0x200, 24),
+            new RomFile(Configuration.GetAltoIRomPath("22_23.BIN"), 0x200, 20),
+            new RomFile(Configuration.GetAltoIRomPath("23_23.BIN"), 0x200, 16),
+            new RomFile(Configuration.GetAltoIRomPath("24_23.BIN"), 0x200, 12),
+            new RomFile(Configuration.GetAltoIRomPath("25_23.BIN"), 0x200, 8),
+            new RomFile(Configuration.GetAltoIRomPath("26_23.BIN"), 0x200, 4),
+            new RomFile(Configuration.GetAltoIRomPath("27_23.BIN"), 0x200, 0),
 
             // 1400 to 1777
-            new RomFile("30.2", 0x300, 28),
-            new RomFile("31.2", 0x300, 24),
-            new RomFile("32.2", 0x300, 20),
-            new RomFile("33.2", 0x300, 16),
-            new RomFile("34.2", 0x300, 12),
-            new RomFile("35.2", 0x300, 8),
-            new RomFile("36.2", 0x300, 4),
-            new RomFile("37.2", 0x300, 0),
-        };  
+            new RomFile(Configuration.GetAltoIRomPath("30_23.BIN"), 0x300, 28),
+            new RomFile(Configuration.GetAltoIRomPath("31_23.BIN"), 0x300, 24),
+            new RomFile(Configuration.GetAltoIRomPath("32_23.BIN"), 0x300, 20),
+            new RomFile(Configuration.GetAltoIRomPath("33_23.BIN"), 0x300, 16),
+            new RomFile(Configuration.GetAltoIRomPath("34_23.BIN"), 0x300, 12),
+            new RomFile(Configuration.GetAltoIRomPath("35_23.BIN"), 0x300, 8),
+            new RomFile(Configuration.GetAltoIRomPath("36_23.BIN"), 0x300, 4),
+            new RomFile(Configuration.GetAltoIRomPath("37_23.BIN"), 0x300, 0),
+        };
+
+        private static RomFile[] _uCodeRomsAltoII =
+       {
+            // first K (standard uCode)
+            new RomFile(Configuration.GetAltoIIRomPath("u55"), 0x000, 28),
+            new RomFile(Configuration.GetAltoIIRomPath("u64"), 0x000, 24),
+            new RomFile(Configuration.GetAltoIIRomPath("u65"), 0x000, 20),
+            new RomFile(Configuration.GetAltoIIRomPath("u63"), 0x000, 16),
+            new RomFile(Configuration.GetAltoIIRomPath("u53"), 0x000, 12),
+            new RomFile(Configuration.GetAltoIIRomPath("u60"), 0x000, 8),
+            new RomFile(Configuration.GetAltoIIRomPath("u61"), 0x000, 4),
+            new RomFile(Configuration.GetAltoIIRomPath("u62"), 0x000, 0),
+
+            // second K (MESA 5.0)
+            new RomFile(Configuration.GetAltoIIRomPath("u54"), 0x400, 28),
+            new RomFile(Configuration.GetAltoIIRomPath("u74"), 0x400, 24),
+            new RomFile(Configuration.GetAltoIIRomPath("u75"), 0x400, 20),
+            new RomFile(Configuration.GetAltoIIRomPath("u73"), 0x400, 16),
+            new RomFile(Configuration.GetAltoIIRomPath("u52"), 0x400, 12),
+            new RomFile(Configuration.GetAltoIIRomPath("u70"), 0x400, 8),
+            new RomFile(Configuration.GetAltoIIRomPath("u71"), 0x400, 4),
+            new RomFile(Configuration.GetAltoIIRomPath("u72"), 0x400, 0)
+        };
+
 
         private static UInt32[] _uCodeRom;
         private static UInt32[] _uCodeRam;

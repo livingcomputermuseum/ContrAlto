@@ -3,6 +3,10 @@ using Contralto.Logging;
 
 namespace Contralto.Memory
 {
+    /// <summary>
+    /// Implements the Alto's main memory, up to 4 banks of 64KW in 16-bit words.
+    /// Provides implementation of the IIXM's memory mapping hardware.
+    /// </summary>
     public class Memory : IMemoryMappedDevice
     {
         public Memory()

@@ -17,6 +17,9 @@ namespace Contralto.IO
         Left = 0x4,
     }
         
+    /// <summary>
+    /// Implements the hardware for the standard Alto mouse.
+    /// </summary>
     public class Mouse : IMemoryMappedDevice
     {
         public Mouse()
@@ -27,10 +30,7 @@ namespace Contralto.IO
 
         public void Reset()
         {
-            // cheat for synchronization: this is approximately where the mouse is initialized to
-            // at alto boot.
-            _mouseY = 80;
-            _mouseX = 0;
+
         }
 
         public ushort Read(int address, TaskType task, bool extendedMemoryReference)
