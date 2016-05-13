@@ -89,10 +89,6 @@
             this.MemoryJumpToAddress = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this._memoryData = new System.Windows.Forms.DataGridView();
-            this.Bkpt = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.Address = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Data = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Disassembly = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.label1 = new System.Windows.Forms.Label();
             this.ExecutionStateLabel = new System.Windows.Forms.Label();
             this.ResetButton = new System.Windows.Forms.Button();
@@ -134,6 +130,12 @@
             this.dataGridViewTextBoxColumn13 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn14 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn15 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.MemoryFindTextBox = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.Bkpt = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.Address = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Data = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Disassembly = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Microcode.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._registerData)).BeginInit();
@@ -448,6 +450,8 @@
             // 
             // groupBox4
             // 
+            this.groupBox4.Controls.Add(this.MemoryFindTextBox);
+            this.groupBox4.Controls.Add(this.label4);
             this.groupBox4.Controls.Add(this.MemoryJumpToAddress);
             this.groupBox4.Controls.Add(this.label3);
             this.groupBox4.Controls.Add(this._memoryData);
@@ -518,49 +522,6 @@
             this._memoryData.VirtualMode = true;
             this._memoryData.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.MemoryViewCellClick);
             this._memoryData.CellValueNeeded += new System.Windows.Forms.DataGridViewCellValueEventHandler(this.OnMemoryCellValueNeeded);
-            // 
-            // Bkpt
-            // 
-            this.Bkpt.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
-            this.Bkpt.FalseValue = "false";
-            this.Bkpt.HeaderText = "B";
-            this.Bkpt.Name = "Bkpt";
-            this.Bkpt.ReadOnly = true;
-            this.Bkpt.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.Bkpt.ToolTipText = "Breakpoint";
-            this.Bkpt.TrueValue = "true";
-            this.Bkpt.Width = 20;
-            // 
-            // Address
-            // 
-            this.Address.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
-            this.Address.HeaderText = "Addr";
-            this.Address.MinimumWidth = 16;
-            this.Address.Name = "Address";
-            this.Address.ReadOnly = true;
-            this.Address.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.Address.ToolTipText = "Address";
-            this.Address.Width = 54;
-            // 
-            // Data
-            // 
-            this.Data.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
-            this.Data.HeaderText = "Data";
-            this.Data.MinimumWidth = 16;
-            this.Data.Name = "Data";
-            this.Data.ReadOnly = true;
-            this.Data.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.Data.ToolTipText = "Data";
-            this.Data.Width = 55;
-            // 
-            // Disassembly
-            // 
-            this.Disassembly.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.Disassembly.HeaderText = "Disassembly";
-            this.Disassembly.Name = "Disassembly";
-            this.Disassembly.ReadOnly = true;
-            this.Disassembly.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.Disassembly.ToolTipText = "Disassembly";
             // 
             // label1
             // 
@@ -1213,6 +1174,67 @@
             this.dataGridViewTextBoxColumn15.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.dataGridViewTextBoxColumn15.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
+            // MemoryFindTextBox
+            // 
+            this.MemoryFindTextBox.Location = new System.Drawing.Point(159, 294);
+            this.MemoryFindTextBox.Name = "MemoryFindTextBox";
+            this.MemoryFindTextBox.Size = new System.Drawing.Size(48, 20);
+            this.MemoryFindTextBox.TabIndex = 17;
+            this.MemoryFindTextBox.TabStop = false;
+            this.MemoryFindTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnMemoryFindKeyDown);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(123, 297);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(30, 13);
+            this.label4.TabIndex = 16;
+            this.label4.Text = "Find:";
+            // 
+            // Bkpt
+            // 
+            this.Bkpt.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            this.Bkpt.FalseValue = "false";
+            this.Bkpt.HeaderText = "B";
+            this.Bkpt.Name = "Bkpt";
+            this.Bkpt.ReadOnly = true;
+            this.Bkpt.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.Bkpt.ToolTipText = "Breakpoint";
+            this.Bkpt.TrueValue = "true";
+            this.Bkpt.Width = 20;
+            // 
+            // Address
+            // 
+            this.Address.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCellsExceptHeader;
+            this.Address.HeaderText = "Addr";
+            this.Address.MinimumWidth = 16;
+            this.Address.Name = "Address";
+            this.Address.ReadOnly = true;
+            this.Address.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.Address.ToolTipText = "Address";
+            this.Address.Width = 16;
+            // 
+            // Data
+            // 
+            this.Data.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCellsExceptHeader;
+            this.Data.HeaderText = "Data";
+            this.Data.MinimumWidth = 16;
+            this.Data.Name = "Data";
+            this.Data.ReadOnly = true;
+            this.Data.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.Data.ToolTipText = "Data";
+            this.Data.Width = 16;
+            // 
+            // Disassembly
+            // 
+            this.Disassembly.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.Disassembly.HeaderText = "Disassembly";
+            this.Disassembly.Name = "Disassembly";
+            this.Disassembly.ReadOnly = true;
+            this.Disassembly.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.Disassembly.ToolTipText = "Disassembly";
+            // 
             // Debugger
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1301,10 +1323,6 @@
         private System.Windows.Forms.Button ResetButton;
         private System.Windows.Forms.Button RunToNextTaskButton;
         private System.Windows.Forms.Button NovaStep;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn Bkpt;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Address;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Data;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Disassembly;
         private System.Windows.Forms.GroupBox groupBox6;
         private System.Windows.Forms.DataGridView _reservedMemory;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn9;
@@ -1343,5 +1361,11 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn13;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn14;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn15;
+        private System.Windows.Forms.TextBox MemoryFindTextBox;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn Bkpt;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Address;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Data;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Disassembly;
     }
 }

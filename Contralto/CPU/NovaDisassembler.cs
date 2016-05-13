@@ -16,11 +16,7 @@ namespace Contralto.CPU.Nova
             _altoIOTable = new Dictionary<ushort, string>();
 
             _altoIOTable.Add(0x6210, "MUL");
-            _altoIOTable.Add(0x6211, "DIV");
-            _altoIOTable.Add(0x6000, "CYCLE");
-            _altoIOTable.Add(0x6900, "JSRII");
-            _altoIOTable.Add(0x6a00, "JSRIS");
-            _altoIOTable.Add(0x6e00, "CONVERT");
+            _altoIOTable.Add(0x6211, "DIV");            
             _altoIOTable.Add(0x6203, "RCLK");
             _altoIOTable.Add(0x6204, "SIO");
             _altoIOTable.Add(0x6205, "BLT");
@@ -61,8 +57,9 @@ namespace Contralto.CPU.Nova
                     disassembly = DisassembleLoadStore(address, instructionWord);
                     break;
 
-                case InstructionClass.IO:
-                    disassembly = DisassembleIO(instructionWord);
+                case InstructionClass.AltoSpecific1:
+                case InstructionClass.AltoSpecific2:
+                    disassembly = DisassembleAltoSpecific(address, instructionWord);
                     break;
 
                 default:
@@ -189,46 +186,50 @@ namespace Contralto.CPU.Nova
             return d.ToString();
         }
 
-        private static string DisassembleIO(ushort instructionWord)
+        private static string DisassembleAltoSpecific(ushort address, ushort instructionWord)
         {
             StringBuilder d = new StringBuilder();
 
             //
-            // First see if this is an Alto-specific instruction; if so
-            // use those mnemonics.  Otherwise decode as a Nova I/O instruction.
+            // Check for Alto-specific instructions that do not use the DISP field
             //
             if (_altoIOTable.ContainsKey(instructionWord))
             {
-                return _altoIOTable[instructionWord];
-            }
-
-            // Accumulator
-            int ac = (instructionWord & 0x1800) >> 11;
-
-            // Transfer
-            IOTransfer trans = (IOTransfer)(instructionWord & 0x700);
-
-            // Control
-            IOControl cont = (IOControl)(instructionWord & 0xc0);
-
-            // Device code
-            int deviceCode = (instructionWord & 0x3f);
-
-            if (trans != IOTransfer.SKP)
-            {
-                d.AppendFormat("{0}{1} {2},{3}",
-                    trans,
-                    cont == IOControl.None ? String.Empty : cont.ToString(),
-                    ac,
-                    Conversion.ToOctal(deviceCode));
+                d.Append(_altoIOTable[instructionWord]);
             }
             else
             {
-                d.AppendFormat("{0} {1}",
-                    (IOSkip)cont,                    
-                    Conversion.ToOctal(deviceCode));
-            }
+                //
+                // Check for Alto-specific instructions using the DISP field               
+                int topBits = (instructionWord & 0xff00);
 
+                switch (topBits)
+                {
+                    case 0x6000:
+                        d.AppendFormat("CYCLE {0}", Conversion.ToOctal(instructionWord & 0xf));
+                        break;
+
+                    case 0x6900:
+                        d.AppendFormat("JSRII {0}     ;({1})",
+                            Conversion.ToOctal((sbyte)(instructionWord & 0xff)),
+                            Conversion.ToOctal(address + (sbyte)((instructionWord & 0xff))));
+                        break;
+
+                    case 0x6a00:
+                        d.AppendFormat("JSRIS {0}", Conversion.ToOctal((sbyte)(instructionWord & 0xff)));
+                        break;
+
+                    case 0x6e00:
+                        d.AppendFormat("CONVERT {0}", Conversion.ToOctal((sbyte)(instructionWord & 0xff)));
+                        break;
+
+                    default:
+                        // Unimplemented, treated as a TRAP to either ROM or RAM.
+                        d.Append("TRAP");
+                        break;
+                }
+            }
+            
             return d.ToString();
         }
 
@@ -286,7 +287,8 @@ namespace Contralto.CPU.Nova
             MEM = 0x0000,
             LDA = 0x2000,
             STA = 0x4000,
-            IO =  0x6000,
+            AltoSpecific1 =  0x6000,
+            AltoSpecific2 = 0x7000,
         }
 
         private enum ALCFunctions
@@ -327,35 +329,7 @@ namespace Contralto.CPU.Nova
             SNR =  0x5,
             SEZ =  0x6,
             SBN =  0x7,
-        }
-
-        private enum IOTransfer
-        {
-            NIO = 0x000,
-            DIA = 0x100,
-            DOA = 0x200,
-            DIB = 0x300,
-            DOB = 0x400,
-            DIC = 0x500,
-            DOC = 0x600,
-            SKP = 0x700,
-        }
-
-        private enum IOControl
-        {
-            None = 0x00,
-            S =    0x40,
-            C =    0x80,
-            P =    0xc0,
-        }
-
-        private enum IOSkip
-        {
-            SKPBN = 0x00,
-            SKPBZ = 0x40,
-            SKPDN = 0x80,
-            SKPDZ = 0xc0,
-        }
+        }        
 
         private enum MemFunction
         {

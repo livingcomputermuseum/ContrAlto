@@ -11,9 +11,9 @@ namespace Contralto.Memory
     {
         public MemoryRange(ushort start, ushort end)
         {
-            if (!(end > start))
+            if (!(end >= start))
             {
-                throw new ArgumentOutOfRangeException("end must be greater than start.");
+                throw new ArgumentOutOfRangeException("end must be greater than or equal to start.");
             }
 
             Start = start;

@@ -1,6 +1,7 @@
 ﻿using Contralto.CPU;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Contralto.Memory
 {
@@ -21,9 +22,10 @@ namespace Contralto.Memory
         public MemoryBus()
         {
             _bus = new Dictionary<ushort, IMemoryMappedDevice>(65536);
-            _systemType = Configuration.SystemType;
+            _systemType = Configuration.SystemType;           
+
             Reset();
-        }
+        }       
 
         public void AddDevice(IMemoryMappedDevice dev)
         {
@@ -62,7 +64,7 @@ namespace Contralto.Memory
             _doubleWordStore = false;
             _doubleWordMixed = false;
             _memoryOperationActive = false;
-            _extendedMemoryReference = false;
+            _extendedMemoryReference = false;            
         }
 
         public ushort MAR
@@ -415,11 +417,11 @@ namespace Contralto.Memory
                 if (_bus.TryGetValue(address, out memoryMappedDevice))
                 {
                     return memoryMappedDevice.Read(address, task, extendedMemoryReference);
-                }
+                }    
                 else
-                {                    
+                {
                     return 0;
-                }
+                }           
             }
         }
 
@@ -445,7 +447,7 @@ namespace Contralto.Memory
                 if (_bus.TryGetValue(address, out memoryMappedDevice))
                 {
                     memoryMappedDevice.Load(address, data, task, extendedMemoryReference);
-                }                
+                }                 
             }
         }
 

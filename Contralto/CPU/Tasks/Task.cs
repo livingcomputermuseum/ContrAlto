@@ -501,7 +501,7 @@ namespace Contralto.CPU
                 //
                 if (swMode)
                 {
-                    // Log.Write(Logging.LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1} (NEXT is {2})", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT | nextModifier), Conversion.ToOctal(instruction.NEXT));
+                    //Log.Write(LogType.Verbose, LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1} (NEXT is {2})", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT | nextModifier), Conversion.ToOctal(instruction.NEXT));
                     UCodeMemory.SwitchMode((ushort)(instruction.NEXT | nextModifier), _taskType);                    
                 }
 

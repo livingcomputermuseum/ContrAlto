@@ -118,6 +118,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="HighResTimer.cs" />
+    <Compile Include="IO\Music.cs" />
     <Compile Include="IO\UDPEncapsulation.cs" />
     <Compile Include="IO\IPacketEncapsulation.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

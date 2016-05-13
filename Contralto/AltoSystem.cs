@@ -27,6 +27,7 @@ namespace Contralto
             _displayController = new DisplayController(this);
             _mouse = new Mouse();
             _ethernetController = new EthernetController(this);
+            _musicInterface = new Music(this);
 
             _cpu = new AltoCPU(this);
 
@@ -35,6 +36,7 @@ namespace Contralto
             _memBus.AddDevice(_mem);
             _memBus.AddDevice(_keyboard);
             _memBus.AddDevice(_mouse);
+            _memBus.AddDevice(_musicInterface);
 
             // Register devices that need clocks
             _clockableDevices = new List<IClockable>();            
@@ -58,6 +60,7 @@ namespace Contralto
             _mouse.Reset();
             _cpu.Reset();
             _ethernetController.Reset();
+            _musicInterface.Reset();
 
             UCodeMemory.Reset();            
         }
@@ -230,6 +233,7 @@ namespace Contralto
         private DiskController _diskController;
         private DisplayController _displayController;
         private EthernetController _ethernetController;
+        private Music _musicInterface;
 
         private Scheduler _scheduler;
         private ulong _clocks;

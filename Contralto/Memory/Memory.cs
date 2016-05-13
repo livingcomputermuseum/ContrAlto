@@ -55,11 +55,17 @@ namespace Contralto.Memory
             }
             else
             {
+                
                 /*
-                if (extendedMemory)
+                // debug for kaehler's music st
+                if (address == 0x1fe || address == 0x1ff)      // music microcode
+                   // || (address >= 0x7f00 && address <= 0x80ff))  // DAC buffer
                 {
-                    Log.Write(LogComponent.Memory, "Extended memory read, bank {0} address {1}, read {2}", GetBankNumber(task, extendedMemory), Conversion.ToOctal(address), Conversion.ToOctal(_mem[address + 0x10000 * GetBankNumber(task, extendedMemory)]));
-                } */                
+                   System.Console.WriteLine("MUSIC read from {0} by task {1} in bank {2}.", 
+                       Conversion.ToOctal(address), task, UCodeMemory.GetBank(task));
+                }
+                */
+                   
                 address += 0x10000 * GetBankNumber(task, extendedMemory);
                 return _mem[address];                
             }
@@ -79,12 +85,15 @@ namespace Contralto.Memory
             else
             {
                 /*
-                if (extendedMemory)
+                if (address == 0x1fe || address == 0x1ff ||     // music microcode
+                   (address >= 0x7f00 && address <= 0x80ff))  // DAC buffer
                 {
-                    Log.Write(LogComponent.Memory, "Extended memory write, bank {0} address {1}, data {2}", GetBankNumber(task, extendedMemory), Conversion.ToOctal(address), Conversion.ToOctal(data));
-                } */
-                address += 0x10000 * GetBankNumber(task, extendedMemory);              
+                    System.Console.WriteLine("MUSIC write to {0} ({1}) by task {2} in bank {3}.", 
+                        Conversion.ToOctal(address), Conversion.ToOctal(data), task, UCodeMemory.GetBank(task));
+                }
+                */
 
+                address += 0x10000 * GetBankNumber(task, extendedMemory);              
                 _mem[address] = data;               
             }
         }

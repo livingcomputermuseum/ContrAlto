@@ -772,6 +772,39 @@ namespace Contralto
             }
         }
 
+        private void OnMemoryFindKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Return ||
+               e.KeyCode == Keys.Enter)
+            {
+                try
+                {
+                    UInt16 value = Convert.ToUInt16(MemoryFindTextBox.Text, 8);
+
+                    // find the first address that contains this value
+                    ushort address = 0;
+                    if (_memoryData.SelectedRows.Count > 0)
+                    {
+                        // start at entry after selected line
+                        address = (ushort)(_memoryData.SelectedRows[0].Index + 1);
+                    }
+
+                    for(int i=address;i<65536;i++)
+                    {
+                        if (_system.MemoryBus.DebugReadWord((ushort)i) == value)
+                        {
+                            HighlightNovaSourceLine((ushort)i);
+                            break;
+                        }
+                    }                    
+                }
+                catch
+                {
+                    // eh, just do nothing for now
+                }
+            }
+        }
+
         private void OnStepButtonClicked(object sender, EventArgs e)
         {
             _execType = ExecutionType.Step;
@@ -891,13 +924,16 @@ namespace Contralto
 
                     // See if we need to stop here
                     if (_execAbort ||                                               // The Stop button was hit
-                        _microcodeBreakpointEnabled[(int)UCodeMemory.GetBank(_system.CPU.CurrentTask.TaskType), _system.CPU.CurrentTask.MPC] || // A microcode breakpoint was hit
+                        _microcodeBreakpointEnabled[
+                            (int)UCodeMemory.GetBank(
+                                _system.CPU.CurrentTask.TaskType), 
+                                _system.CPU.CurrentTask.MPC] || // A microcode breakpoint was hit
                         (_execType == ExecutionType.NextTask &&
                             _system.CPU.NextTask != null &&
                             _system.CPU.NextTask != _system.CPU.CurrentTask) ||     // The next task was switched to                    
                         (_system.CPU.CurrentTask.MPC == 0x10 &&                     // MPC is 20(octal) meaning a new Nova instruction and...
                             (_novaBreakpointEnabled[_system.CPU.R[6]] ||            // A breakpoint is set here
-                             _execType == ExecutionType.NextNovaInstruction)))      // or we're running only a single Nova instruction. 
+                             _execType == ExecutionType.NextNovaInstruction)))      // or we're running only a single Nova instruction.                              
                     {
                         // Stop here as we've hit a breakpoint or have been stopped 
                         // Update UI to indicate where we stopped.
@@ -1411,6 +1447,8 @@ namespace Contralto
         private bool[,] _microcodeBreakpointEnabled;
 
         // Nova Debugger breakpoints; same as above
-        private bool[] _novaBreakpointEnabled;       
+        private bool[] _novaBreakpointEnabled;
+
+
     }
 }

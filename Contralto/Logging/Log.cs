@@ -28,6 +28,7 @@ namespace Contralto.Logging
         HostNetworkInterface = 0x2000,
         EthernetPacket = 0x4000,
         Configuration = 0x8000,
+        Music = 0x10000,
 
         Debug = 0x40000000,
         All =   0x7fffffff

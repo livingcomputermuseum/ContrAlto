@@ -24,9 +24,8 @@ namespace Contralto.CPU
             string source = string.Empty;
             string operation = string.Empty;
             string f1 = string.Empty;
-            string f2 = string.Empty;
-            string loadT = string.Empty;
-            string loadL = string.Empty;
+            string f2 = string.Empty;            
+            string load = string.Empty;
 
             // Select BUS data.
             if (instruction.F1 != SpecialFunction1.Constant &&
@@ -36,7 +35,7 @@ namespace Contralto.CPU
                 switch (instruction.BS)
                 {
                     case BusSource.ReadR:
-                        source = String.Format("R[{0}] ", Conversion.ToOctal((int)rSelect));
+                        source = String.Format("$R{0} ", Conversion.ToOctal((int)rSelect));
                         break;
 
                     case BusSource.LoadR:
@@ -45,7 +44,7 @@ namespace Contralto.CPU
                         break;
 
                     case BusSource.None:
-                        source = "177777(no source) ";                           
+                        // nothing
                         break;
 
                     case BusSource.TaskSpecific1:
@@ -240,41 +239,61 @@ namespace Contralto.CPU
                         break;
                 }
 
-                loadT = String.Format("T<- {0}", loadTFromALU ? operation : source);
+                load = String.Format("T<- {0}", loadTFromALU ? operation : source);
             }
 
             // Load L (and M) from ALU
             if (instruction.LoadL)
             {
-                if (string.IsNullOrEmpty(loadT))
+                if (string.IsNullOrEmpty(load))
                 {
-                    loadL = String.Format("L<- {0}", operation);
+                    load = String.Format("L<- {0}", operation);
                 }
                 else
                 {
-                    loadL = String.Format("L<- {0}", loadT);
+                    load = String.Format("L<- {0}", load);
                 }
             }
 
             // Do writeback to selected R register from shifter output
             if (loadR)
             {
-                loadL = String.Format("R[{0}]<- {1}", Conversion.ToOctal((int)rSelect), loadL != String.Empty ? loadL : operation);
+                load = String.Format("$R{0}<- {1}", 
+                    Conversion.ToOctal((int)rSelect), 
+                    load != String.Empty ? load : operation);
             }
 
             // Do writeback to selected S register from M
             if (loadS)
             {
-                loadL = String.Format("S[{0}]<- {1}", Conversion.ToOctal((int)rSelect), loadL);
+                if (string.IsNullOrEmpty(load))
+                {
+                    load = String.Format("$S{0}<- M",
+                         Conversion.ToOctal((int)rSelect));
+                }
+                else
+                {
+                    load = String.Format("$S{0}<- M, {1}",
+                        Conversion.ToOctal((int)rSelect),
+                        load);
+                }
             }
 
-            if (!string.IsNullOrEmpty(loadL) || !string.IsNullOrEmpty(loadT))
+            if (!string.IsNullOrEmpty(load))
             {
-                disassembly.AppendFormat("{0}{1}{2}{3} :{4}", f1, f2, loadT, loadL, Conversion.ToOctal(instruction.NEXT));
+                disassembly.AppendFormat("{0}{1}{2} :{3}", 
+                    f1, 
+                    f2, 
+                    load,
+                    Conversion.ToOctal(instruction.NEXT));
             }
             else
             {
-                disassembly.AppendFormat("{0}{1}{2} :{3}", f1, f2, operation, Conversion.ToOctal(instruction.NEXT));
+                disassembly.AppendFormat("{0}{1}{2} :{3}", 
+                    f1, 
+                    f2, 
+                    operation, 
+                    Conversion.ToOctal(instruction.NEXT));
             }
 
 
@@ -326,7 +345,7 @@ namespace Contralto.CPU
             {
                 case EmulatorBusSource.ReadSLocation:
                     loadS = false;
-                    return String.Format("<-S[{0}]", Conversion.ToOctal((int)instruction.RSELECT));
+                    return String.Format("$S{0}", Conversion.ToOctal((int)instruction.RSELECT));
 
                 case EmulatorBusSource.LoadSLocation:
                     loadS = true;
