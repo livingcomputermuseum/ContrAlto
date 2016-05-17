@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AltoWindow));
-            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this._mainMenu = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveScreenshotToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -56,22 +56,23 @@
             this.CaptureStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.SystemStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.DisplayBox = new System.Windows.Forms.PictureBox();
-            this.menuStrip1.SuspendLayout();
+            this.fullScreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this._mainMenu.SuspendLayout();
             this.StatusLine.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.DisplayBox)).BeginInit();
             this.SuspendLayout();
             // 
-            // menuStrip1
+            // _mainMenu
             // 
-            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this._mainMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.settingsToolStripMenuItem,
             this.helpToolStripMenuItem});
-            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
-            this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(608, 24);
-            this.menuStrip1.TabIndex = 2;
-            this.menuStrip1.Text = "menuStrip1";
+            this._mainMenu.Location = new System.Drawing.Point(0, 0);
+            this._mainMenu.Name = "_mainMenu";
+            this._mainMenu.Size = new System.Drawing.Size(608, 24);
+            this._mainMenu.TabIndex = 2;
+            this._mainMenu.Text = "menuStrip1";
             // 
             // fileToolStripMenuItem
             // 
@@ -108,7 +109,8 @@
             this.AlternateBootToolStripMenuItem,
             this.SystemEthernetBootMenu,
             this.optionsToolStripMenuItem,
-            this.SystemShowDebuggerMenuItem});
+            this.SystemShowDebuggerMenuItem,
+            this.fullScreenToolStripMenuItem});
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
             this.settingsToolStripMenuItem.Size = new System.Drawing.Size(57, 20);
             this.settingsToolStripMenuItem.Text = "System";
@@ -253,7 +255,7 @@
             this.StatusLine.Size = new System.Drawing.Size(608, 25);
             this.StatusLine.TabIndex = 3;
             this.StatusLine.Text = "statusStrip1";
-            this.StatusLine.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);            
+            this.StatusLine.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
             // 
             // DiskStatusLabel
             // 
@@ -305,6 +307,15 @@
             this.DisplayBox.MouseMove += new System.Windows.Forms.MouseEventHandler(this.OnDisplayMouseMove);
             this.DisplayBox.MouseUp += new System.Windows.Forms.MouseEventHandler(this.OnDisplayMouseUp);
             // 
+            // fullScreenToolStripMenuItem
+            // 
+            this.fullScreenToolStripMenuItem.Name = "fullScreenToolStripMenuItem";
+            this.fullScreenToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
+            | System.Windows.Forms.Keys.F)));
+            this.fullScreenToolStripMenuItem.Size = new System.Drawing.Size(223, 22);
+            this.fullScreenToolStripMenuItem.Text = "Full Screen";
+            this.fullScreenToolStripMenuItem.Click += new System.EventHandler(this.OnFullScreenMenuClick);
+            // 
             // AltoWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -312,22 +323,23 @@
             this.ClientSize = new System.Drawing.Size(608, 859);
             this.Controls.Add(this.StatusLine);
             this.Controls.Add(this.DisplayBox);
-            this.Controls.Add(this.menuStrip1);
+            this.Controls.Add(this._mainMenu);
             this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MainMenuStrip = this.menuStrip1;
+            this.MainMenuStrip = this._mainMenu;
             this.MaximizeBox = false;
             this.Name = "AltoWindow";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Text = "ContrAlto";
             this.Deactivate += new System.EventHandler(this.OnWindowDeactivate);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.OnAltoWindowClosed);
+            this.SizeChanged += new System.EventHandler(this.OnWindowSizeChanged);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnKeyUp);
             this.Leave += new System.EventHandler(this.OnWindowLeave);
-            this.menuStrip1.ResumeLayout(false);
-            this.menuStrip1.PerformLayout();
+            this._mainMenu.ResumeLayout(false);
+            this._mainMenu.PerformLayout();
             this.StatusLine.ResumeLayout(false);
             this.StatusLine.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.DisplayBox)).EndInit();
@@ -339,7 +351,7 @@
         #endregion
 
         private System.Windows.Forms.PictureBox DisplayBox;
-        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.MenuStrip _mainMenu;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem settingsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
@@ -365,5 +377,6 @@
         private System.Windows.Forms.ToolStripMenuItem AlternateBootToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveScreenshotToolStripMenuItem;
         private System.Windows.Forms.ToolStripStatusLabel FPSLabel;
+        private System.Windows.Forms.ToolStripMenuItem fullScreenToolStripMenuItem;
     }
 }

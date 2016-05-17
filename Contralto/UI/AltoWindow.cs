@@ -22,6 +22,7 @@ namespace Contralto
 
             _mouseCaptured = false;
             _currentCursorState = true;
+            _fullScreenDisplay = false;
 
             _displayBuffer = new Bitmap(608, 808, PixelFormat.Format1bppIndexed);
             DisplayBox.Image = _displayBuffer;
@@ -54,18 +55,17 @@ namespace Contralto
 
             this.DoubleBuffered = true;
 
-            System.Timers.Timer fpsTimer = new System.Timers.Timer();
-            fpsTimer.AutoReset = true;
-            fpsTimer.Interval = 1000;
-            fpsTimer.Elapsed += OnFPSTimerElapsed;
-            fpsTimer.Start();
+            _fpsTimer = new System.Timers.Timer();
+            _fpsTimer.AutoReset = true;
+            _fpsTimer.Interval = 1000;
+            _fpsTimer.Elapsed += OnFPSTimerElapsed;
+            _fpsTimer.Start();
 
-
-            System.Timers.Timer diskTimer = new System.Timers.Timer();
-            diskTimer.AutoReset = true;
-            diskTimer.Interval = 25;
-            diskTimer.Elapsed += OnDiskTimerElapsed;
-            diskTimer.Start();
+            _diskAccessTimer = new System.Timers.Timer();
+            _diskAccessTimer.AutoReset = true;
+            _diskAccessTimer.Interval = 25;
+            _diskAccessTimer.Elapsed += OnDiskTimerElapsed;
+            _diskAccessTimer.Start();
         }
 
         public void AttachSystem(AltoSystem system)
@@ -188,6 +188,11 @@ namespace Contralto
             optionsWindow.ShowDialog();            
         }
 
+        private void OnFullScreenMenuClick(object sender, EventArgs e)
+        {
+            BeginInvoke(new DisplayDelegate(ToggleFullScreen));
+        }
+
         private void OnHelpAboutClick(object sender, EventArgs e)
         {
             AboutBox about = new AboutBox();
@@ -270,6 +275,12 @@ namespace Contralto
 
         private void OnAltoWindowClosed(object sender, FormClosedEventArgs e)
         {
+            //
+            // Stop UI timers
+            //
+            _fpsTimer.Stop();
+            _diskAccessTimer.Stop();
+
             // Halt the system and detach our display              
             _controller.StopExecution();
             _system.DetachDisplay();
@@ -278,7 +289,7 @@ namespace Contralto
             //
             // Commit current configuration to disk
             //
-            Configuration.WriteConfiguration();
+            Configuration.WriteConfiguration();            
 
             DialogResult = DialogResult.OK;            
         }
@@ -764,6 +775,23 @@ namespace Contralto
             ReleaseMouse();
         }
 
+        private void OnWindowSizeChanged(object sender, EventArgs e)
+        {
+            //
+            // If we've switched to a fullscreen mode, update the
+            // Alto's display area.
+            //
+            if (_fullScreenDisplay)
+            {
+                DisplayBox.Top = 0;
+                DisplayBox.Left = 0;
+                DisplayBox.Width = this.Width;
+                DisplayBox.Height = this.Height;
+                DisplayBox.SizeMode = PictureBoxSizeMode.Zoom;
+                DisplayBox.BackColor = Color.Black;
+            }            
+        }
+
         private void OnFPSTimerElapsed(object sender, ElapsedEventArgs e)
         {
             string fpsMessage = String.Format("{0} fields/sec", _system.DisplayController.Fields);
@@ -801,6 +829,41 @@ namespace Contralto
                         DiskStatusLabel.Image = _diskSeekImage;
                         break;
                 }
+            }
+        }
+
+        private void ToggleFullScreen()
+        {
+            _fullScreenDisplay = !_fullScreenDisplay;
+
+            if (_fullScreenDisplay)
+            {
+                // Save the original size and location of the Alto's Display so we can
+                // restore it when full-screen mode is exited.
+                _windowedDisplayBoxLocation = DisplayBox.Location;
+                _windowedDisplayBoxSize = DisplayBox.Size;
+
+                // Hide window adornments and make the window full screen on the current
+                // display.
+                this.FormBorderStyle = FormBorderStyle.None;
+                this.WindowState = FormWindowState.Maximized;                
+                _mainMenu.Visible = false;
+                StatusLine.Visible = false;                
+
+                // Once the window repaints we will center the Alto's display and
+                // stretch if applicable.
+            }
+            else
+            {
+                // Show everything that was hidden before.
+                this.FormBorderStyle = FormBorderStyle.FixedSingle;
+                this.WindowState = FormWindowState.Normal;                
+                _mainMenu.Visible = true;
+                StatusLine.Visible = true;
+
+                DisplayBox.SizeMode = PictureBoxSizeMode.Normal;
+                DisplayBox.Location = _windowedDisplayBoxLocation;
+                DisplayBox.Size = _windowedDisplayBoxSize;
             }
         }
 
@@ -907,9 +970,15 @@ namespace Contralto
         // Keyboard mapping from windows vkeys to Alto keys
         private Dictionary<Keys, AltoKey> _keyMap;
 
+        // Mouse capture state
         private bool _mouseCaptured;
         private bool _currentCursorState;
         private bool _skipNextMouseMove;
+
+        // Full-screen state
+        private bool _fullScreenDisplay;
+        private Point _windowedDisplayBoxLocation;
+        private Size _windowedDisplayBoxSize;
 
         // The Alto system we're running
         private AltoSystem _system;
@@ -920,17 +989,20 @@ namespace Contralto
         // The debugger, which may or may not be running.
         private Debugger _debugger;
 
-        // strings.  TODO: move to resource
-        private const string _noImageLoadedText = "<no image loaded>";
-        private const string _systemStoppedText = "Alto Stopped.";
-        private const string _systemRunningText = "Alto Running.";
-        private const string _systemErrorText = "Alto Stopped due to error.  See Debugger.";
+        // Status bar things
+        System.Timers.Timer _fpsTimer;
+        System.Timers.Timer _diskAccessTimer;
 
         private DiskActivityType _lastActivity;
         private Image _diskIdleImage;
         private Image _diskReadImage;
         private Image _diskWriteImage;
-        private Image _diskSeekImage;   
+        private Image _diskSeekImage;
 
-    }
+        // strings.  TODO: move to resource
+        private const string _noImageLoadedText = "<no image loaded>";
+        private const string _systemStoppedText = "Alto Stopped.";
+        private const string _systemRunningText = "Alto Running.";
+        private const string _systemErrorText = "Alto Stopped due to error.  See Debugger.";        
+    }                 
 }

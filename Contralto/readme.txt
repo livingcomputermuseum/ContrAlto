@@ -11,7 +11,7 @@ pioneering graphical workstations developed at Xerox PARC in 1973.
 -------------------
 
 ContrAlto currently emulates the following Alto hardware:
-   - Alto IIxm CPU
+   - Alto I and Alto II XM CPU
    - Microcode RAM (in 1K RAM, 1K RAM/2K ROM, or 3K RAM configurations)
    - 256KW of main memory (in 64KW banks)
    - Two Diablo Model 31 or 44 drives
@@ -23,7 +23,7 @@ ContrAlto currently emulates the following Alto hardware:
 --------------
 
 At this time, ContrAlto does not support more exotic hardware such as Trident 
-disks, printers using the utility port, the Orbit printer interface, or the 
+disks, printers or audio using the utility port, the Orbit printer interface, or the 
 keyset input device.
 
 
@@ -103,7 +103,7 @@ a mousewheel click maps to a click of the Alto's middle mouse button.
 
 If you have a trackpad or other pointing device, using the middle mouse button 
 may be more complicated.  See what configuration options your operating system 
-and/or drivers provides you for mapping mouse buttons.
+and/or drivers provide you for mapping mouse buttons.
 
 
 3.1.2 Keyboard
@@ -117,9 +117,9 @@ Alto Key       PC Key
 --------       ----------
 LF             Down Arrow
 BS             Backspace
-Blank-Bottom   F3
-Blank-Middle   F2
 Blank-Top      F1
+Blank-Middle   F2
+Blank-Bottom   F3
 <- (arrow)     Left Arrow
 DEL            Del
 LOCK           F4
@@ -182,7 +182,7 @@ get you started:
   http://bitsavers.org/pdf/xerox/alto/Alto_Users_Handbook_Sep79.pdf
   
 - "Alto Subsystems" documents many of the common Alto programs and tools
-  ("Subsystems" in Alto parlance) in detail.  
+  ("subsystems" in Alto parlance) in detail.  
   http://bitsavers.org/pdf/xerox/alto/AltoSubsystems_Oct79.pdf
 
 - "Alto Operating System Reference Manual" is useful if you are going to do
@@ -204,10 +204,8 @@ get you started:
   http://bitsavers.org/pdf/xerox/alto/AltoHWRef.part2.pdf
 
 - "A Field Guide to Alto-Land" is a casual perspective on Alto use (and
-  the culture that grew around it) at Xerox.
+  the culture that grew around it) at Xerox PARC.
   http://xeroxalto.computerhistory.org/_cd8_/altodocs/.fieldguide.press!2.pdf
-
-
  
 
 4.0 Configuration
@@ -280,7 +278,8 @@ simulated Alto display.
 The "Throttle Framerate" checkbox will force ContrAlto to run at an even 60
 fields/second (matching the speed of the original Alto).  Use this if things 
 are running too fast (for example, games that require reflexes.)  Uncheck this
-if you want things to run as fast as possible (for example, compiling code.)
+if you want things to run as fast as possible (for example, compiling code or
+running Smalltalk.)
 
 The "Interlaced Display" checkbox attempts to simulate the Alto's original
 interlaced display.  Depending on your monitor and the speed of your computer
@@ -359,8 +358,8 @@ Reset:   Resets the Alto system.
 -------------------------
 
 The pane in the upper left of the debugger window shows the microcode listings
-for ROM0, ROM1, and RAM1.  The listings for ROM0 and ROM1 are derived from the
-original source code listings.  The listing for RAM1 is automatically 
+for ROM0, ROM1, and RAM0-RAM2.  The listings for ROM0 and ROM1 are derived from the
+original source code listings.  The listing for the RAM banks is automatically 
 disassembled from the contents of control RAM (and is generally more annoying
 to read.)
 
@@ -370,7 +369,7 @@ Refresh, Display Word, Cursor, Display Horizontal, Display Vertical, Parity, and
 Disk Word).  The source code for each task is highlighted in a different color
 to make task-specific code easy to differentiate.
 
-ROM1 contains the listing for the Mesa microcode ROMs.
+ROM1 contains the listing for the Mesa 5.0 microcode ROMs.
 
 
 5.3 Memory Pane
@@ -408,7 +407,9 @@ CPU Registers:
          Shows the CPU L, M and T registers as well as ALU and memory registers.
 
 General Registers:
-         Shows the contents of the 32 R and 32 S registers (in octal).
+         Shows the contents of the 32 R and 32 S registers (in octal).  
+		 (The extra 7 sets of R and S registers on 3K CRAM machines are not yet
+		 displayed.)
          
 Reserved Memory:
          Shows the contents of most "well known" memory locations.  See the
@@ -421,9 +422,7 @@ Reserved Memory:
 At the moment, the following issues are known and being worked on.  If you find
 an issue not listed here, see section 7.0 to report a new bug.
 
-- Multiple drives do not function properly, there are still issues in the drive
-  selection logic.
-  
+- BravoX does not run, trapping into SWAT with "DSt" as a diagnostic.
 
 
 7.0 Reporting Bugs
@@ -435,6 +434,7 @@ with "ContrAlto Bug".
 
 When you send a report, please be as specific and detailed as possible:
 - What issue are you seeing?
+- What Alto software are you running?
 - What are the exact steps needed to reproduce the issue?
 
 The more detailed the bug report, the more possible it is for me to track down
