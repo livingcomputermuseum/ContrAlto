@@ -1110,7 +1110,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(6, 678);
+            this.label1.Location = new System.Drawing.Point(6, 676);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(85, 13);
             this.label1.TabIndex = 9;
@@ -1119,7 +1119,7 @@
             // ExecutionStateLabel
             // 
             this.ExecutionStateLabel.AutoSize = true;
-            this.ExecutionStateLabel.Location = new System.Drawing.Point(98, 678);
+            this.ExecutionStateLabel.Location = new System.Drawing.Point(98, 676);
             this.ExecutionStateLabel.Name = "ExecutionStateLabel";
             this.ExecutionStateLabel.Size = new System.Drawing.Size(33, 13);
             this.ExecutionStateLabel.TabIndex = 10;

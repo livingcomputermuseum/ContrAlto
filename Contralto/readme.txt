@@ -30,23 +30,33 @@ keyset input device.
 2.0 Requirements
 ================
 
-ContrAlto will run on any Windows PC running Windows XP or later, with version
-2.0 or later of the .NET Framework installed.  .NET should be present by default
+ContrAlto will run on any Windows PC running Windows Vista or later, with version
+4.5 or later of the .NET Framework installed.  .NET should be present by default
 on Windows Vista and later; if it is not installed on your computer it can be
 obtained at https://www.microsoft.com/net.
 
 As ContrAlto is a .NET application and has no Windows-specific dependencies,
 it will also run under Mono (http://www.mono-project.com/) on Unix and MacOS, 
-however this usage is not as well tested -- please file bugs if you find them 
-(see Section 7 for details).
+however this usage has many rough edges at the moment -- please file bugs if 
+you find them (see Section 7 for details).
 
 A three-button mouse is essential for using most Alto software.  On most mice,
-the "mousewheel" can be clicked to provide the third (middle) button.  Laptops
+the mousewheel can be clicked to provide the third (middle) button.  Laptops
 with trackpads may have configuration options to simulate three buttons but
 will likely be clumsy to use.
 
 
 3.0 Getting Started
+===================
+
+Installation of ContrAlto is simple:  Double-click the installer file, named 
+"ContraltoSetup.msi" and follow the on-screen instructions.  The installer
+will install all of the necessary files and create two icons on your Start menu,
+one for ContrAlto itself, and one for its documentation (the file you're reading
+now!)
+
+
+3.1 Getting Started
 ===================
 
 To launch ContrAlto, simply click on the shortcut created by the installer
@@ -144,16 +154,15 @@ when a new image is loaded or when ContrAlto exits.  For this reason it may be
 a good idea to make backups of packs from time to time (just like on the real
 machine.)
 
-ContrAlto comes with a set of disk packs containing an assortment of Alto 
-programs, these can be found in your "Documents" folder, in the 
-"ContrAlto Disks" subfolder.  These are:
+ContrAlto does not come with any disk images, however an assortment of Alto 
+programs can be found on Bitsavers.org, at 
+http://www.bitsavers.org/bits/Xerox/Alto/disk_images/.  Images include:
 
-AllGames.dsk   -  A collection of games for the Alto
+AllGames.dsk   -  A collection of games and toys for the Alto
 Bcpl.dsk       -  A set of BCPL development tools
-Diag.dsk       -  Diagnostic tools
+Diags.dsk      -  Diagnostic tools
 NonProg.dsk    -  The "Non-Programmer's Disk," containing Bravo
-ST76.dsk       -  Smalltalk-76
-XmST76.dsk44   -  Another Smalltalk-76, with sources and space to play.
+Xmsmall.dsk    -  Smalltalk-76
 
 
 3.1.4 Startup, Reset and Shutdown
@@ -375,7 +384,7 @@ ROM1 contains the listing for the Mesa 5.0 microcode ROMs.
 5.3 Memory Pane
 ---------------
 
-The pane near the lower-left (labeled "Memory") shows a view into the main
+The pane near the top-middle (labeled "System Memory") shows a view into the main
 memory of the Alto, providing address/data and a machine-generated disassembly 
 of Alto (Nova) instructions.
 
@@ -395,8 +404,6 @@ in the Emulator task.
 -------------------
 
 The other panes in the debugger are:
-
-Disk:    Shows registers and other status of the disk hardware.
 
 Tasks:   Shows the current microcode task status.  The "T" column indicates the
          task name, "S" indicates the status ("W"akeup and "R"unning), and the
@@ -435,8 +442,16 @@ with "ContrAlto Bug".
 When you send a report, please be as specific and detailed as possible:
 - What issue are you seeing?
 - What Alto software are you running?
+- What operating system are you running ContrAlto on?
 - What are the exact steps needed to reproduce the issue?
 
 The more detailed the bug report, the more possible it is for me to track down
 the cause.
+
+
+8.0 Thanks and Acknowledgements
+===============================
+
+ContrAlto would not have been possible without the amazing preservation work of 
+Bitsavers.org and the Computing History Museum.
 

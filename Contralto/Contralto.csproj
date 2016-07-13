@@ -462,18 +462,6 @@
     <None Include="Resources\DiskNoAccess.bmp" />
     <None Include="Resources\dragon.png" />
     <EmbeddedResource Include="dragon.png" />
-    <Content Include="pcap\PcapDotNet.Base.dll" />
-    <Content Include="pcap\PcapDotNet.Base.pdb" />
-    <Content Include="pcap\PcapDotNet.Base.xml" />
-    <Content Include="pcap\PcapDotNet.Core.dll" />
-    <Content Include="pcap\PcapDotNet.Core.Extensions.dll" />
-    <Content Include="pcap\PcapDotNet.Core.Extensions.pdb" />
-    <Content Include="pcap\PcapDotNet.Core.Extensions.XML" />
-    <Content Include="pcap\PcapDotNet.Core.pdb" />
-    <Content Include="pcap\PcapDotNet.Core.xml" />
-    <Content Include="pcap\PcapDotNet.Packets.dll" />
-    <Content Include="pcap\PcapDotNet.Packets.pdb" />
-    <Content Include="pcap\PcapDotNet.Packets.xml" />
     <Content Include="readme.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

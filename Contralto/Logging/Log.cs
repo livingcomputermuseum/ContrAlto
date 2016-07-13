@@ -1,4 +1,21 @@
-﻿#define LOGGING_ENABLED
+﻿/*  
+    This file is part of ContrAlto.
+
+    ContrAlto is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    ContrAlto is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with ContrAlto.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#define LOGGING_ENABLED
 
 using System;
 using System.IO;
@@ -56,8 +73,8 @@ namespace Contralto.Logging
         static Log()
         {
             // TODO: make configurable
-            _components = LogComponent.CPU; // LogComponent.HostNetworkInterface | LogComponent.EthernetPacket; // | LogComponent.HostEthernet | LogComponent.EthernetController; // LogComponent.DiskController | LogComponent.DiskSectorTask | LogComponent.Debug | LogComponent.CPU; // LogComponent.EthernetController; // | LogComponent.Microcode | LogComponent.Memory | LogComponent.CPU;
-            _type = LogType.Normal | LogType.Warning | LogType.Error | LogType.Verbose;
+            _components = LogComponent.None; // LogComponent.HostNetworkInterface | LogComponent.EthernetPacket; // | LogComponent.HostEthernet | LogComponent.EthernetController; // LogComponent.DiskController | LogComponent.DiskSectorTask | LogComponent.Debug | LogComponent.CPU; // LogComponent.EthernetController; // | LogComponent.Microcode | LogComponent.Memory | LogComponent.CPU;
+            _type = LogType.None; // LogType.Normal | LogType.Warning | LogType.Error | LogType.Verbose;
 
             //_logStream = new StreamWriter("log.txt");
         }

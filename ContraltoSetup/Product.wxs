@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  This file is part of ContrAlto.
+
+  ContrAlto is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  ContrAlto is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with ContrAlto.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 	<Product Id="CE5F3D08-3BD6-4BDF-9C64-0C2B852B899C" Name="ContrAlto" Language="1033" Version="1.0.0.0" Manufacturer="Living Computer Museum" UpgradeCode="38d6b09f-6e7b-4854-844a-5d4ab707a357">
 		<Package Id="*" InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
@@ -12,8 +29,8 @@
       <ComponentGroupRef Id="MicrocodeComponentsShared" />
       <ComponentGroupRef Id="MicrocodeComponentsAltoI" />
       <ComponentGroupRef Id="MicrocodeComponentsAltoII" />
-      <ComponentRef Id="UserDiskFolder"/>
-      <ComponentGroupRef Id="DiskComponents" />      
+      <!-- for disk packs, currently removed <ComponentRef Id="UserDiskFolder"/> 
+      <ComponentGroupRef Id="DiskComponents" /> -->
       <ComponentGroupRef Id="CodeComponents" /> 
       <ComponentRef Id="ProgramMenuDir" />
 		</Feature>
@@ -50,6 +67,7 @@
               </Component>
           </Directory>
       </Directory>
+      <!-- For disk packs (removed for now)
       <Directory Id="PersonalFolder">
         <Directory Id="DISKFOLDER" Name="ContrAlto Disks">
           <Component Id="UserDiskFolder" Guid="007ADB59-BCE4-43CB-9AEC-DD5962136A7E">
@@ -57,7 +75,7 @@
               <RegistryValue Root="HKCU" Key="Software\Living Computer Museum\ContrAlto" Type="string" Value="" KeyPath="yes" />
           </Component>
         </Directory>
-      </Directory>
+      </Directory> -->
 		</Directory>
   </Fragment>
 
@@ -161,8 +179,8 @@
       </Component>
     </ComponentGroup>
     
-    <ComponentGroup Id="DiskComponents" Directory="DISKFOLDER">
-      <!-- Disk Images: Not removed during uninstall -->
+    <!-- for disk images (not included at this time)
+    <ComponentGroup Id="DiskComponents" Directory="DISKFOLDER">      
       <Component Id="DiskImages" Guid="A0977605-CD44-462D-80A0-A6347D87B700" Permanent="yes">
         <RegistryValue Root="HKCU" Key="Software\Living Computer Museum\ContrAlto"
                      Name="InstallFolder"
@@ -177,7 +195,7 @@
         <File Id="st80" Name="ST80.dsk" Source="$(var.Contralto.TargetDir)\Disk\st80.dsk"/>      
         <File Id="xmsmall" Name="XmST76.dsk44" Source="$(var.Contralto.TargetDir)\Disk\xmst76.dsk44"/>
       </Component>
-    </ComponentGroup>
+    </ComponentGroup> -->
 
     <ComponentGroup Id="CodeComponents" Directory="DISASSEMBLYFOLDER">
       <!-- Annotated disassemblies -->
