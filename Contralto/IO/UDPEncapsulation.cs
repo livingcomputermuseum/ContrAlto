@@ -50,7 +50,7 @@ namespace Contralto.IO
                 IPInterfaceProperties props = null;
                 foreach(NetworkInterface nic in nics)
                 {
-                    if (nic.Description == interfaceName)
+                    if (nic.Name == interfaceName)
                     {
                         props = nic.GetIPProperties();
                         break;

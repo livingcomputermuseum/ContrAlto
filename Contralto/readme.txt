@@ -245,8 +245,13 @@ encapsulation.  ContrAlto can encapsulate the Alto's 3mbit ("experimental")
 Ethernet packets in either UDP datagrams or raw Ethernet packets on a network
 interface on the "host" computer (the computer running ContrAlto).
 
-Raw packet encapsulation requires WinPCAP to be installed; this can be acquired
-from http://www.winpcap.org/.
+Raw packet encapsulation requires WinPCAP and the Microsoft Visual C++ 2010 
+redistributable to be installed; these can be acquired from:
+
+http://www.winpcap.org/
+and
+http://www.microsoft.com/en-us/download/details.aspx?id=5555
+
 
 4.2.1 Host Address
 ------------------

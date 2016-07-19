@@ -112,7 +112,7 @@ namespace Contralto
             }
             catch
             {
-                Configuration.HostRawEthernetInterfacesAvailable = false;
+                Configuration.HostRawEthernetInterfacesAvailable = false;                
             }
         }       
 

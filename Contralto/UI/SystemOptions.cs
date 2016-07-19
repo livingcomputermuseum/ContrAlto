@@ -16,6 +16,8 @@
 */
 
 using Contralto.IO;
+using PcapDotNet.Core;
+using PcapDotNet.Core.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Net.NetworkInformation;
@@ -131,12 +133,10 @@ namespace Contralto.UI
                 // Add all interfaces that PCAP knows about.
                 case PacketInterfaceType.EthernetEncapsulation:
                     {
-                        List<EthernetInterface> ifaces = EthernetInterface.EnumerateDevices();
-
-                        foreach (EthernetInterface iface in ifaces)
-                        {
-                            EthernetInterfaceListBox.Items.Add(iface);
-                        }
+                        foreach (LivePacketDevice device in LivePacketDevice.AllLocalMachine)
+                        {                            
+                            EthernetInterfaceListBox.Items.Add(new EthernetInterface(device.GetNetworkInterface().Name, device.GetNetworkInterface().Description));                                                            
+                        }                        
                     }                    
                     break;
 
@@ -157,7 +157,7 @@ namespace Contralto.UI
                 {
                     EthernetInterface iface = (EthernetInterface)EthernetInterfaceListBox.Items[i];
 
-                    if (iface.Description == Configuration.HostPacketInterfaceName)
+                    if (iface.Name == Configuration.HostPacketInterfaceName)
                     {
                         EthernetInterfaceListBox.SelectedIndex = i;
                         break;
@@ -231,7 +231,7 @@ namespace Contralto.UI
             // First warn the user of changes that require a restart.
             //
             if ((!(String.IsNullOrEmpty(Configuration.HostPacketInterfaceName) && EthernetInterfaceListBox.SelectedIndex == 0) &&
-                    (Configuration.HostPacketInterfaceName != iface.Description ||
+                    (Configuration.HostPacketInterfaceName != iface.Name ||
                      Configuration.HostPacketInterfaceType != _selectedInterfaceType)) ||
                 Configuration.SystemType != _selectedSystemType)
             {
@@ -243,7 +243,7 @@ namespace Contralto.UI
 
             // Ethernet
             Configuration.HostAddress = Convert.ToByte(AltoEthernetAddressTextBox.Text, 8);
-            Configuration.HostPacketInterfaceName = iface.Description;
+            Configuration.HostPacketInterfaceName = iface.Name;
             Configuration.HostPacketInterfaceType = _selectedInterfaceType;
 
             // Display

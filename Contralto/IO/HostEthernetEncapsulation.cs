@@ -57,7 +57,7 @@ namespace Contralto.IO
 
         public override string ToString()
         {
-            return Description;
+            return String.Format("{0} ({1})", Name, Description);
         }
 
         public string Name;
@@ -72,26 +72,22 @@ namespace Contralto.IO
     /// </summary>
     public class HostEthernetEncapsulation : IPacketEncapsulation
     {
-        public HostEthernetEncapsulation(EthernetInterface iface)
-        {
-            AttachInterface(iface);
-        }
-
         public HostEthernetEncapsulation(string name)
         {
             // Find the specified device by name
-            List<EthernetInterface> interfaces = EthernetInterface.EnumerateDevices();
-
-            foreach (EthernetInterface i in interfaces)
+            foreach (LivePacketDevice device in LivePacketDevice.AllLocalMachine)
             {
-                if (name == i.Description)
+                if (device.GetNetworkInterface().Name.ToLowerInvariant() == Configuration.HostPacketInterfaceName.ToLowerInvariant())
                 {
-                    AttachInterface(i);
-                    return;
+                    AttachInterface(device);
+                    break;                 
                 }
             }
 
-            throw new InvalidOperationException("Specified ethernet interface does not exist or is not compatible with WinPCAP.");
+            if (_interface == null)
+            {
+                throw new InvalidOperationException("Specified ethernet interface does not exist or is not compatible with WinPCAP.");
+            }
         }
 
         public void RegisterReceiveCallback(ReceivePacketDelegate callback)
@@ -205,19 +201,9 @@ namespace Contralto.IO
             }
         }
 
-        private void AttachInterface(EthernetInterface iface)
+        private void AttachInterface(LivePacketDevice iface)
         {
-            _interface = null;
-
-            // Find the specified device by name
-            foreach (LivePacketDevice device in LivePacketDevice.AllLocalMachine)
-            {
-                if (device.Description == iface.Description)
-                {
-                    _interface = device;
-                    break;
-                }
-            }
+            _interface = iface;            
 
             if (_interface == null)
             {
