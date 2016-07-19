@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Contralto</RootNamespace>
     <AssemblyName>Contralto</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -26,6 +26,7 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -89,6 +90,9 @@
   <PropertyGroup>
     <ApplicationIcon>Alto.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="PcapDotNet.Base, Version=1.0.2.21699, Culture=neutral, PublicKeyToken=4b6f3e583145a652, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -125,6 +129,11 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="UI\AboutBox.cs">
       <SubType>Form</SubType>
@@ -197,6 +206,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.manifest" />
     <None Include="Disassembly\altocode24.mu" />
     <None Include="App.config" />
     <None Include="Disassembly\altoIIcode3.mu">
@@ -258,6 +268,10 @@
     </None>
     <None Include="Disk\xmst76.dsk44">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <None Include="ROM\ACSOURCE.NEW">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

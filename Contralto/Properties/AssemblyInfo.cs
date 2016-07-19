@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Contralto")]
+[assembly: AssemblyTitle("ContrAlto")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Vulcan Inc.")]
-[assembly: AssemblyProduct("Contralto")]
-[assembly: AssemblyCopyright("Copyright © Vulcan Inc. 2015")]
+[assembly: AssemblyCompany("Living Computer Museum")]
+[assembly: AssemblyProduct("ContrAlto")]
+[assembly: AssemblyCopyright("Copyright © Living Computer Museum 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

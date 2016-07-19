@@ -192,154 +192,46 @@ namespace Contralto
         public static string GetRomPath(string romFileName)
         {
             return Path.Combine("ROM", romFileName);
-        }
+        }        
 
         /// <summary>
-        /// Reads the current configuration file from disk.
+        /// Reads the current configuration file from the app's configuration.
         /// 
         /// TODO: use reflection to do this.
         /// </summary>
         public static void ReadConfiguration()
         {
-            try
-            {
-                using (StreamReader configStream = new StreamReader("contralto.cfg"))
-                {
-                    //
-                    // Config file consists of text lines containing name / value pairs:
-                    //      <Name> <Value>
-                    // Whitespace is ignored
-                    //
-                    int lineNumber = 0;
-                    while (!configStream.EndOfStream)
-                    {
-                        lineNumber++;
-                        string line = configStream.ReadLine().Trim();
-
-                        if (string.IsNullOrEmpty(line))
-                        {
-                            continue;
-                        }
-
-                        // Find whitespace separating tokens
-                        int ws = line.IndexOfAny(new char[] { ' ', '\t' });
-
-                        if (ws < 1)
-                        {
-                            Log.Write(LogType.Warning, LogComponent.Configuration, "Syntax error on line {0}.  Ignoring.", lineNumber);
-                            continue;
-                        }
-
-                        string parameter = line.Substring(0, ws);
-                        string value = line.Substring(ws + 1, line.Length - ws - 1);
-
-                        try
-                        {
-                            switch (parameter.ToLowerInvariant())
-                            {
-                                case "drive0image":
-                                    Drive0Image = value;
-                                    break;
-
-                                case "drive1image":
-                                    Drive1Image = value;
-                                    break;
-
-                                case "systemtype":
-                                    SystemType = (SystemType)Enum.Parse(typeof(SystemType), value, true);
-                                    break;
-
-                                case "hostaddress":
-                                    HostAddress = Convert.ToByte(value, 8);
-                                    break;
-
-                                case "hostpacketinterfacename":
-                                    HostPacketInterfaceName = value;
-                                    break;
-
-                                case "hostpacketinterfacetype":
-                                    HostPacketInterfaceType = (PacketInterfaceType)Enum.Parse(typeof(PacketInterfaceType), value, true);
-                                    break;
-
-                                case "alternateboottype":
-                                    AlternateBootType = (AlternateBootType)Enum.Parse(typeof(AlternateBootType), value, true);
-                                    break;
-
-                                case "bootaddress":
-                                    BootAddress = Convert.ToUInt16(value, 8);
-                                    break;
-
-                                case "bootfile":
-                                    BootFile = Convert.ToUInt16(value, 8);
-                                    break;
-
-                                case "interlacedisplay":
-                                    InterlaceDisplay = bool.Parse(value);
-                                    break;
-
-                                case "throttlespeed":
-                                    ThrottleSpeed = bool.Parse(value);
-                                    break;
-
-                                default:
-                                    Log.Write(LogType.Warning, LogComponent.Configuration, "Invalid parameter on line {0}.  Ignoring.", lineNumber);
-                                    break;
-                            }
-                        }
-                        catch
-                        {
-                            Log.Write(LogType.Warning, LogComponent.Configuration, "Invalid value on line {0}.  Ignoring.", lineNumber);
-                            continue;
-                        }
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                Log.Write(LogType.Warning, LogComponent.Configuration, "Configuration file 'contralto.cfg' could not be read; assuming default settings.");
-                WriteConfiguration();
-            }
+            Drive0Image = (string)Properties.Settings.Default["Drive0Image"];
+            Drive1Image = (string)Properties.Settings.Default["Drive1Image"];            
+            SystemType = (SystemType)Properties.Settings.Default["SystemType"];
+            HostAddress = (byte)Properties.Settings.Default["HostAddress"];
+            HostPacketInterfaceName = (string)Properties.Settings.Default["HostPacketInterfaceName"];
+            HostPacketInterfaceType = (PacketInterfaceType)Properties.Settings.Default["HostPacketInterfaceType"];
+            AlternateBootType = (AlternateBootType)Properties.Settings.Default["AlternateBootType"];
+            BootAddress = (ushort)Properties.Settings.Default["BootAddress"];
+            BootFile = (ushort)Properties.Settings.Default["BootFile"];
+            InterlaceDisplay = (bool)Properties.Settings.Default["InterlaceDisplay"];
+            ThrottleSpeed = (bool)Properties.Settings.Default["ThrottleSpeed"];
         }
 
         /// <summary>
-        /// Commits the current configuration to disk.
+        /// Commits the current configuration to the app's settings.
         /// </summary>
         public static void WriteConfiguration()
         {
-            try
-            {
-                using (StreamWriter configStream = new StreamWriter("contralto.cfg"))
-                {
-                    if (!string.IsNullOrEmpty(Drive0Image))
-                    {
-                        configStream.WriteLine("Drive0Image {0}", Drive0Image);
-                    }
+            Properties.Settings.Default["Drive0Image"] = Drive0Image;
+            Properties.Settings.Default["Drive1Image"] = Drive1Image;
+            Properties.Settings.Default["SystemType"] = (int)SystemType;
+            Properties.Settings.Default["HostAddress"] = HostAddress;
+            Properties.Settings.Default["HostPacketInterfaceName"] = HostPacketInterfaceName;
+            Properties.Settings.Default["HostPacketInterfaceType"] = (int)HostPacketInterfaceType;
+            Properties.Settings.Default["AlternateBootType"] = (int)AlternateBootType;
+            Properties.Settings.Default["BootAddress"] = BootAddress;
+            Properties.Settings.Default["BootFile"] = BootFile;
+            Properties.Settings.Default["InterlaceDisplay"] = InterlaceDisplay;
+            Properties.Settings.Default["ThrottleSpeed"] = ThrottleSpeed;
 
-                    if (!string.IsNullOrEmpty(Drive1Image))
-                    {
-                        configStream.WriteLine("Drive1Image {0}", Drive1Image);
-                    }
-
-                    configStream.WriteLine("SystemType {0}", SystemType);
-                    configStream.WriteLine("HostAddress {0}", Conversion.ToOctal(HostAddress));
-
-                    if (!string.IsNullOrEmpty(HostPacketInterfaceName))
-                    {
-                        configStream.WriteLine("HostPacketInterfaceName {0}", HostPacketInterfaceName);
-                    }
-
-                    configStream.WriteLine("HostPacketInterfaceType {0}", HostPacketInterfaceType);
-                    configStream.WriteLine("AlternateBootType {0}", AlternateBootType);
-                    configStream.WriteLine("BootAddress {0}", Conversion.ToOctal(BootAddress));
-                    configStream.WriteLine("BootFile {0}", Conversion.ToOctal(BootFile));
-                    configStream.WriteLine("InterlaceDisplay {0}", InterlaceDisplay);
-                    configStream.WriteLine("ThrottleSpeed {0}", ThrottleSpeed);
-                }
-            }
-            catch (Exception)
-            {
-                Log.Write(LogType.Warning, LogComponent.Configuration, "Configuration file 'contralto.cfg' could not be opened for writing.");
-            }
+            Properties.Settings.Default.Save();
         }
     }
 

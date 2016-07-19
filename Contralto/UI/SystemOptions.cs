@@ -230,8 +230,9 @@ namespace Contralto.UI
             //
             // First warn the user of changes that require a restart.
             //
-            if (Configuration.HostPacketInterfaceName != iface.Description ||
-                Configuration.HostPacketInterfaceType != _selectedInterfaceType ||
+            if ((!(String.IsNullOrEmpty(Configuration.HostPacketInterfaceName) && EthernetInterfaceListBox.SelectedIndex == 0) &&
+                    (Configuration.HostPacketInterfaceName != iface.Description ||
+                     Configuration.HostPacketInterfaceType != _selectedInterfaceType)) ||
                 Configuration.SystemType != _selectedSystemType)
             {
                 MessageBox.Show("Changes to CPU or host Ethernet configuration will not take effect until ContrAlto is restarted.");

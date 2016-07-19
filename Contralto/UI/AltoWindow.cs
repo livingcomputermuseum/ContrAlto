@@ -645,7 +645,6 @@ namespace Contralto
                 return;
             }
 
-
             // We implement a crude "mouse capture" behavior by forcing the mouse cursor to the
             // center of the display window and taking the delta of the last movement and using it
             // to move the Alto's mouse.
@@ -663,7 +662,7 @@ namespace Contralto
 
                 // Don't handle the very next Mouse Move event (which will just be the motion we caused in the
                 // below line...)
-                //_skipNextMouseMove = true;
+                _skipNextMouseMove = true;
                 
                 Cursor.Position = DisplayBox.PointToScreen(middle);
             }
