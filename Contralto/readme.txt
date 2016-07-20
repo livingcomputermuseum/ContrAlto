@@ -31,7 +31,7 @@ keyset input device.
 ================
 
 ContrAlto will run on any Windows PC running Windows Vista or later, with version
-4.5 or later of the .NET Framework installed.  .NET should be present by default
+4.6 or later of the .NET Framework installed.  .NET should be present by default
 on Windows Vista and later; if it is not installed on your computer it can be
 obtained at https://www.microsoft.com/net.
 
@@ -454,9 +454,19 @@ The more detailed the bug report, the more possible it is for me to track down
 the cause.
 
 
-8.0 Thanks and Acknowledgements
+8.0 Source Code
+===============
+
+The complete source code is available under the GPLv3 license on GitHub at:
+
+https://github.com/livingcomputermuseum/ContrAlto
+
+Contributions are welcome!
+
+
+9.0 Thanks and Acknowledgements
 ===============================
 
 ContrAlto would not have been possible without the amazing preservation work of 
-Bitsavers.org and the Computing History Museum.
+Bitsavers.org and the Computer History Museum.
 
