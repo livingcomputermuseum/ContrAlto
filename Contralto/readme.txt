@@ -252,6 +252,12 @@ http://www.winpcap.org/
 and
 http://www.microsoft.com/en-us/download/details.aspx?id=5555
 
+ContrAlto uses binaries from the Pcap.NET project to expose WinPCAP
+functionality to the emulator:
+
+https://github.com/PcapDotNet/Pcap.Net
+
+Pcap.NET is released under the BSD license.
 
 4.2.1 Host Address
 ------------------
