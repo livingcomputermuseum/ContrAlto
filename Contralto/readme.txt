@@ -474,5 +474,5 @@ Contributions are welcome!
 ===============================
 
 ContrAlto would not have been possible without the amazing preservation work of 
-Bitsavers.org and the Computer History Museum.
+the Computer History Museum.
 
