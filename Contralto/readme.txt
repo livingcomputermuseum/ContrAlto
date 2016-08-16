@@ -56,8 +56,8 @@ one for ContrAlto itself, and one for its documentation (the file you're reading
 now!)
 
 
-3.1 Getting Started
-===================
+3.1 Starting the Alto
+=====================
 
 To launch ContrAlto, simply click on the shortcut created by the installer
 on your Start Menu (or Start Screen, depending on your Windows version.)  Two
@@ -73,9 +73,8 @@ Booting an emulated Alto under ContrAlto is slightly less time-consuming.
 To load a disk pack into the virtual Diablo drive, click on the "System"
 menu and go to "Drive 0 -> Load...".  You will be presented with a file dialog
 allowing selection of the disk image (effectively a "virtual disk pack") to
-be loaded.  Several images are provided with ContrAlto and are placed in the
-"ContrAlto Disks" subfolder of your "Documents" folder.  Select one and click
-the "Open" button.
+be loaded.  Disk images are not included with ContrAlto but may be found in
+various places on the Internet -- see Section 3.1.3 for details.
 
 Once the pack has been loaded, you can start the Alto by clicking on the 
 "System->Start" menu (or hitting Ctrl+Alt+S).  The display will turn white and
@@ -252,6 +251,12 @@ http://www.winpcap.org/
 and
 http://www.microsoft.com/en-us/download/details.aspx?id=5555
 
+ContrAlto uses binaries from the Pcap.NET project to expose WinPCAP
+functionality to the emulator:
+
+https://github.com/PcapDotNet/Pcap.Net
+
+Pcap.NET is released under the BSD license.
 
 4.2.1 Host Address
 ------------------
@@ -468,5 +473,5 @@ Contributions are welcome!
 ===============================
 
 ContrAlto would not have been possible without the amazing preservation work of 
-Bitsavers.org and the Computer History Museum.
+the Computer History Museum.
 
