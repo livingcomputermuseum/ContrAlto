@@ -62,13 +62,13 @@ namespace Contralto.Memory
                     else
                     {
                         _bus.Add(addr, dev);
-
-                        if (dev is Memory)
-                        {
-                            _mainMemory = (Memory)dev;
-                        }
                     }
                 }
+            }
+
+            if (dev is Memory)
+            {
+                _mainMemory = (Memory)dev;
             }
         }
 
