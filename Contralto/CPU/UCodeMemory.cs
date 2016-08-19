@@ -189,9 +189,6 @@ namespace Contralto.CPU
                                 break;
 
                             case MicrocodeBank.RAM0:
-                                _microcodeBank[(int)task] = (nextAddress & 0x80) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.RAM2;
-                                break;
-
                             case MicrocodeBank.RAM1:
                                 _microcodeBank[(int)task] = (nextAddress & 0x80) == 0 ? MicrocodeBank.ROM0 : MicrocodeBank.RAM2;
                                 break;
@@ -210,15 +207,12 @@ namespace Contralto.CPU
                                 break;
 
                             case MicrocodeBank.RAM0:
-                                _microcodeBank[(int)task] = (nextAddress & 0x80) == 0 ? MicrocodeBank.RAM1 : MicrocodeBank.RAM1;
+                                _microcodeBank[(int)task] = MicrocodeBank.RAM1;
                                 break;
 
                             case MicrocodeBank.RAM1:
-                                _microcodeBank[(int)task] = (nextAddress & 0x80) == 0 ? MicrocodeBank.RAM0 : MicrocodeBank.RAM0;
-                                break;
-
                             case MicrocodeBank.RAM2:
-                                _microcodeBank[(int)task] = (nextAddress & 0x80) == 0 ? MicrocodeBank.RAM0 : MicrocodeBank.RAM0;
+                                _microcodeBank[(int)task] = MicrocodeBank.RAM0;
                                 break;
                         }
                     }                    
