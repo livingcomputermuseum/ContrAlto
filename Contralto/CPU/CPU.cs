@@ -130,10 +130,10 @@ namespace Contralto.CPU
             }
 
             // Execute the initial task switch.
+            _currentTask = null;
             TaskSwitch();
 
-            _currentTask = _nextTask;
-            _nextTask = null;
+            _currentTask = _nextTask;            
         }        
 
         public void Clock()
@@ -146,14 +146,14 @@ namespace Contralto.CPU
                     TaskSwitch();
                     break;
 
-                case InstructionCompletion.Normal:
-                    if (_nextTask != null)
+                case InstructionCompletion.Normal:              
+                    // If we have a new task, switch to it now.
+                    if (_currentTask != _nextTask)
                     {
-                        // If we have a new task, switch to it now.                                
                         _currentTask = _nextTask;
-                        _nextTask = null;
-                        _currentTask.OnTaskSwitch();
-                    }
+                        _currentTask.FirstInstructionAfterSwitch = true;                                            
+                        _currentTask.OnTaskSwitch();                        
+                    }                                              
                     break;
 
                 case InstructionCompletion.MemoryWait:
@@ -180,7 +180,7 @@ namespace Contralto.CPU
                     _tasks[i].SoftReset();
                 }
             }
-
+            
             Log.Write(LogComponent.CPU, "Silent Boot; microcode banks initialized to {0}", Conversion.ToOctal(_rmr));            
             UCodeMemory.LoadBanksFromRMR(_rmr);
 
@@ -251,14 +251,13 @@ namespace Contralto.CPU
         }        
 
         private void TaskSwitch()
-        {
+        {            
             // Select the highest-priority eligible task
             for (int i = _tasks.Length - 1; i >= 0; i--)
             {
                 if (_tasks[i] != null && _tasks[i].Wakeup)
                 {                    
-                    _nextTask = _tasks[i];
-                    _nextTask.FirstInstructionAfterSwitch = true;                   
+                    _nextTask = _tasks[i];                    
 
                     /*
                     if (_nextTask != _currentTask && _currentTask != null)
@@ -286,7 +285,7 @@ namespace Contralto.CPU
         private ushort _aluC0;
 
         // RMR (Reset Mode Register)
-        ushort _rmr;
+        ushort _rmr;        
 
         // Task data
         private Task _nextTask;         // The task to switch two after the next microinstruction

@@ -302,7 +302,7 @@ namespace Contralto.CPU
                         break;
 
                     case EmulatorF2.MAGIC:
-                        Shifter.SetMagic(true);
+                        Shifter.SetModifier(ShifterModifier.Magic);
                         break;
                         
                     case EmulatorF2.LoadDNS:
@@ -361,11 +361,12 @@ namespace Contralto.CPU
                                     carry = (~carry) & 0x1;
                                 }
                                 break;                                
-                        }                        
+                        }
 
                         // Tell the Shifter to do a Nova-style shift with the
                         // given carry bit.
-                        Shifter.SetDNS(true, carry);                        
+                        Shifter.SetModifier(ShifterModifier.DNS);
+                        Shifter.DNSCarry = carry;
 
                         break; 
 

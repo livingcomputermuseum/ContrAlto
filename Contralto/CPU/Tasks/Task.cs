@@ -202,7 +202,9 @@ namespace Contralto.CPU
                             break;
 
                         case BusSource.ReadMouse:                            
-                            _busData = _cpu._system.Mouse.PollMouseBits();
+                            // "BUS[12-15]<-MOUSE; BUS[0-13]<- -1"
+                            // (Note -- BUS[0-13] appears to be a typo, and should likely be BUS[0-11]).
+                            _busData = (ushort)(_cpu._system.Mouse.PollMouseBits() | 0xfff0);
                             break;
 
                         case BusSource.ReadDisp:
@@ -338,15 +340,15 @@ namespace Contralto.CPU
                         break;
 
                     case SpecialFunction1.LLSH1:
-                        Shifter.SetOperation(ShifterOp.ShiftLeft, 1);
+                        Shifter.SetOperation(ShifterOp.ShiftLeft);
                         break;
 
                     case SpecialFunction1.LRSH1:
-                        Shifter.SetOperation(ShifterOp.ShiftRight, 1);
+                        Shifter.SetOperation(ShifterOp.ShiftRight);
                         break;
 
                     case SpecialFunction1.LLCY8:
-                        Shifter.SetOperation(ShifterOp.RotateLeft, 8);
+                        Shifter.SetOperation(ShifterOp.RotateLeft);
                         break;
 
                     case SpecialFunction1.Constant:
@@ -518,7 +520,7 @@ namespace Contralto.CPU
                 //
                 if (swMode)
                 {
-                    //Log.Write(LogType.Verbose, LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1} (NEXT is {2})", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT | nextModifier), Conversion.ToOctal(instruction.NEXT));
+                    Log.Write(LogType.Verbose, LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1} (NEXT is {2})", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT | nextModifier), Conversion.ToOctal(instruction.NEXT));
                     UCodeMemory.SwitchMode((ushort)(instruction.NEXT | nextModifier), _taskType);                    
                 }
 

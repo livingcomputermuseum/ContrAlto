@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Contralto</RootNamespace>
     <AssemblyName>Contralto</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -208,7 +208,9 @@
   <ItemGroup>
     <None Include="app.manifest" />
     <None Include="Disassembly\altocode24.mu" />
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Disassembly\altoIIcode3.mu">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

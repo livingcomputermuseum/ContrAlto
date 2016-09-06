@@ -24,8 +24,14 @@ namespace Contralto.CPU
         None,
         ShiftLeft,
         ShiftRight,
-        RotateLeft,
-        RotateRight,          
+        RotateLeft,             
+    }
+
+    public enum ShifterModifier
+    {
+        None,
+        Magic,
+        DNS,
     }
 
     // NOTE: FOR NOVA (NOVEL) SHIFTS (from aug '76 manual):
@@ -43,11 +49,9 @@ namespace Contralto.CPU
 
         public static void Reset()
         {
-            _op = ShifterOp.None;
-            _count = 0;
+            _op = ShifterOp.None;            
             _output = 0;
-            _magic = false;
-            _dns = false;
+            _modifier = ShifterModifier.None;
             _dnsCarry = 0;
         }
 
@@ -66,50 +70,39 @@ namespace Contralto.CPU
         }
 
         /// <summary>
-        /// Returns the last DNS-style Carry bit from the last operation (via DoOperation).
+        /// Returns the last DNS-style Carry bit from the last operation (via DoOperation),
+        /// or sets the carry-in for the next DNS-style shift.
         /// </summary>
         public static int DNSCarry
         {
             get { return _dnsCarry; }
-        }
-
-        public static void SetOperation(ShifterOp op, int count)
-        {
-            _op = op;
-            _count = count;
-        }
-
-        /// <summary>
-        /// TODO: this is kind of clumsy.
-        /// </summary>
-        /// <param name="magic"></param>
-        public static void SetMagic(bool magic)
-        {
-            _magic = magic;            
-        }
-
-        /// <summary>
-        /// TODO: this is still kind of clumsy.
-        /// </summary>
-        /// <param name="dns"></param>
-        public static void SetDNS(bool dns, int carry)
-        {
-            // Sanity check
-            if (carry != 0 && carry != 1)
+            set
             {
-                throw new InvalidOperationException("carry can only be 0 or 1.");
+                // Sanity check
+                if (value != 0 && value != 1)
+                {
+                    throw new InvalidOperationException("Invalid DNSCarry value.");
+                }
+                _dnsCarry = value;
             }
-
-            _dns = dns;
-            _dnsCarry = carry;
         }
 
+        public static void SetOperation(ShifterOp op)
+        {
+            _op = op;            
+        }
+
+        public static void SetModifier(ShifterModifier mod)
+        {
+            _modifier = mod;
+        }        
+
         /// <summary>
-        /// Does the last specified operation to the specified inputs;  the result
+        /// Does the last specified operation to the specified inputs; the result
         /// can be read from Output.
         /// </summary>
         /// <param name="input">Normal input to be shifted</param>
-        /// <param name="t">CPU t register, for MAGIC shifts only</param>        
+        /// <param name="t">CPU t register, used for MAGIC shifts only</param>        
         public static ushort DoOperation(ushort input, ushort t)
         {           
             switch(_op)
@@ -119,98 +112,65 @@ namespace Contralto.CPU
                     break;
 
                 case ShifterOp.ShiftLeft:
-                    _output = (ushort)(input << _count);
+                    _output = (ushort)(input << 1);                   
 
-                    if (_magic)
+                    switch (_modifier)
                     {
-                        // "MAGIC places the high order bit of T into the low order bit of the
-                        // shifter output on left shifts..."
-                        _output |= (ushort)((t & 0x8000) >> 15);
+                        case ShifterModifier.Magic:
+                            // "MAGIC places the high order bit of T into the low order bit of the
+                            // shifter output on left shifts..."
+                            _output |= (ushort)((t & 0x8000) >> 15);
+                            break;
 
-                        if (_count != 1)
-                        {
-                            throw new NotImplementedException("magic LCY 8 not implemented yet.");
-                        }
+                        case ShifterModifier.DNS:
+                            //
+                            // "Rotate the 17 input bits left by one bit.  This has the effect of rotating
+                            // bit 0 left into the carry position and the carry bit into bit 15."
+                            //
+
+                            // Put input carry into bit 15.
+                            _output |= (ushort)(_dnsCarry);
+
+                            // update carry
+                            _dnsCarry = ((input & 0x8000) >> 15);
+                            break;
                     }
-                    else if (_dns)
-                    {
-                        //
-                        // "Rotate the 17 input bits left by one bit.  This has the effect of rotating
-                        // bit 0 left into the carry position and the carry bit into bit 15."
-                        //
-
-                        // Put input carry into bit 15.
-                        _output = (ushort)(_output | _dnsCarry);
-
-                        // update carry
-                        _dnsCarry = ((input & 0x8000) >> 15);
-                    }
+                    
                     break;
 
                 case ShifterOp.ShiftRight:
-                    _output = (ushort)(input >> _count);
+                    _output = (ushort)(input >> 1);                    
 
-                    if (_magic)
+                    switch (_modifier)
                     {
-                        // "...and places the low order bit of T into the high order bit position 
-                        // of the shifter output on right shifts."
-                        _output |= (ushort)((t & 0x1) << 15);
+                        case ShifterModifier.Magic:                    
+                            _output |= (ushort)((t & 0x1) << 15);
+                            break;
 
-                        if (_count != 1)
-                        {
-                            throw new NotImplementedException("magic LCY 8 not implemented yet.");
-                        }
-                    }
-                    else if (_dns)
-                    {
-                        //
-                        // "Rotate the 17 bits right by one bit.  Bit 15 is rotated into the carry position
-                        // and the carry bit into bit 0."
-                        //
+                        case ShifterModifier.DNS:
+                            //
+                            // "Rotate the 17 bits right by one bit.  Bit 15 is rotated into the carry position
+                            // and the carry bit into bit 0."
+                            //
 
-                        // Put input carry into bit 0.
-                        _output |= (ushort)(_output | (_dnsCarry << 15));
+                            // Put input carry into bit 0.
+                            _output |= (ushort)(_dnsCarry << 15);
 
-                        // update carry
-                        _dnsCarry = input & 0x1;
+                            // update carry
+                            _dnsCarry = input & 0x1;
+                            break;
                     }
                     break;
 
-                case ShifterOp.RotateLeft:                    
-                    if (_dns)
-                    {
-                        //
-                        // "Swap the 8-bit halves of the 16-bit result.  The carry is not affected."
-                        //
-                        _output = (ushort)(((input & 0xff00) >> 8) | ((input & 0x00ff) << 8));
-                    }    
-                    else
-                    {
-                        // TODO: optimize, this is stupid
-                        _output = input;
-                        for (int i = 0; i < _count; i++)
-                        {
-                            int c = (_output & 0x8000) >> 15;
-                            _output = (ushort)((_output << 1) | c);
-                        }
-                    }                
-                    break;
-
-                case ShifterOp.RotateRight:
-                    // TODO: optimize, this is still stupid
-                    _output = input;
-                    for (int i = 0; i < _count; i++)
-                    {
-                        int c = (_output & 0x1) << 15;
-                        _output = (ushort)((_output >> 1) | c);
-                    }
-
-                    if (_dns)
-                    {
-                        // Should never happen
-                        throw new InvalidOperationException("DNS on Rotate Right, not possible.");
-                    }
-                    break;
+                case ShifterOp.RotateLeft:                                        
+                    //
+                    // "Swap the 8-bit halves of the 16-bit result.  The carry is not affected."
+                    // NOTE:  The hardware reference (Section 2) seems to indicate that L LCY 8 is modified by MAGIC and/or DNS,
+                    // but this does not appear to actually be the case.  Nothing in the documentation elsewhere, the microcode,
+                    // or the schematics indicates that L LCY 8 ever does anything other than a simple swap.
+                    //
+                    _output = (ushort)(((input & 0xff00) >> 8) | ((input & 0x00ff) << 8));                                        
+                    break;                   
 
                 default:
                     throw new InvalidOperationException(String.Format("Unhandled shift operation {0}", _op));
@@ -220,10 +180,8 @@ namespace Contralto.CPU
         }
 
         private static ShifterOp _op;
-        private static ushort _output;
-        private static int _count;
-        private static bool _magic;
-        private static bool _dns;
+        private static ushort _output;        
+        private static ShifterModifier _modifier;
         private static int _dnsCarry;
     }
 }

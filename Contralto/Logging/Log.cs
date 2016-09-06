@@ -74,7 +74,7 @@ namespace Contralto.Logging
         {
             // TODO: make configurable
             _components = LogComponent.None; // LogComponent.HostNetworkInterface | LogComponent.EthernetPacket; // | LogComponent.HostEthernet | LogComponent.EthernetController; // LogComponent.DiskController | LogComponent.DiskSectorTask | LogComponent.Debug | LogComponent.CPU; // LogComponent.EthernetController; // | LogComponent.Microcode | LogComponent.Memory | LogComponent.CPU;
-            _type = LogType.None; // LogType.Normal | LogType.Warning | LogType.Error | LogType.Verbose;
+            _type = LogType.Normal | LogType.Warning | LogType.Error | LogType.Verbose;
 
             //_logStream = new StreamWriter("log.txt");
         }
