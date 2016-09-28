@@ -70,15 +70,15 @@ namespace Contralto.CPU
                         break;
 
                     case BusSource.ReadMD:
-                        source = "MD ";
+                        source = "←MD ";
                         break;
 
                     case BusSource.ReadMouse:
-                        source = "MOUSE ";
+                        source = "←MOUSE ";
                         break;
 
                     case BusSource.ReadDisp:
-                        source = "DISP ";
+                        source = "←DISP ";
                         break;
                 }
             }           
@@ -161,7 +161,15 @@ namespace Contralto.CPU
                     break;
 
                 case SpecialFunction1.LoadMAR:
-                    f1 = "MAR<- ";
+
+                    if (instruction.F2 == SpecialFunction2.StoreMD)
+                    {
+                        f1 = "XMAR← ";
+                    }
+                    else
+                    {
+                        f1 = "MAR← ";
+                    }
                     break;
 
                 case SpecialFunction1.Task:
@@ -173,15 +181,15 @@ namespace Contralto.CPU
                     break;
 
                 case SpecialFunction1.LLSH1:
-                    f1 = "<-L LSH 1 ";
+                    f1 = "←L LSH 1 ";
                     break;
 
                 case SpecialFunction1.LRSH1:
-                    f1 = "<-L RSH 1 ";
+                    f1 = "←L RSH 1 ";
                     break;
 
                 case SpecialFunction1.LLCY8:
-                    f1 = "<-L LCY 8 ";
+                    f1 = "←L LCY 8 ";
                     break;
 
                 case SpecialFunction1.Constant:
@@ -221,7 +229,10 @@ namespace Contralto.CPU
                     break;
 
                 case SpecialFunction2.StoreMD:
-                    f2 = "MD<- ";
+                    if (instruction.F1 != SpecialFunction1.LoadMAR)
+                    {
+                        f2 = "MD← ";
+                    }
                     break;
 
                 case SpecialFunction2.Constant:
@@ -256,7 +267,7 @@ namespace Contralto.CPU
                         break;
                 }
 
-                load = String.Format("T<- {0}", loadTFromALU ? operation : source);
+                load = String.Format("T← {0}", loadTFromALU ? operation : source);
             }
 
             // Load L (and M) from ALU
@@ -264,18 +275,18 @@ namespace Contralto.CPU
             {
                 if (string.IsNullOrEmpty(load))
                 {
-                    load = String.Format("L<- {0}", operation);
+                    load = String.Format("L← {0}", operation);
                 }
                 else
                 {
-                    load = String.Format("L<- {0}", load);
+                    load = String.Format("L← {0}", load);
                 }
             }
 
             // Do writeback to selected R register from shifter output
             if (loadR)
             {
-                load = String.Format("$R{0}<- {1}", 
+                load = String.Format("$R{0}← {1}", 
                     Conversion.ToOctal((int)rSelect), 
                     load != String.Empty ? load : operation);
             }
@@ -285,12 +296,12 @@ namespace Contralto.CPU
             {
                 if (string.IsNullOrEmpty(load))
                 {
-                    load = String.Format("$S{0}<- M",
+                    load = String.Format("$S{0}← M",
                          Conversion.ToOctal((int)rSelect));
                 }
                 else
                 {
-                    load = String.Format("$S{0}<- M, {1}",
+                    load = String.Format("$S{0}← M, {1}",
                         Conversion.ToOctal((int)rSelect),
                         load);
                 }
@@ -392,10 +403,10 @@ namespace Contralto.CPU
                     return "RDRAM ";
 
                 case EmulatorF1.LoadRMR:
-                    return "RMR<- ";
+                    return "RMR← ";
 
                 case EmulatorF1.LoadESRB:
-                    return "ESRB<- ";
+                    return "ESRB← ";
 
                 case EmulatorF1.RSNF:
                     return "RSNF ";
@@ -425,13 +436,13 @@ namespace Contralto.CPU
                     return "MAGIC ";
 
                 case EmulatorF2.LoadDNS:
-                    return "DNS<- ";
+                    return "DNS← ";
 
                 case EmulatorF2.BUSODD:
                     return "BUSODD ";
 
                 case EmulatorF2.LoadIR:
-                    return "IR<- ";
+                    return "IR← ";
 
                 case EmulatorF2.IDISP:
                     return "IDISP ";

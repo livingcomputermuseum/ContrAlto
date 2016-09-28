@@ -176,6 +176,11 @@ namespace Contralto
             return base.Equals(obj);
         }
 
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
         public ushort FileNumber;
         public string Description;
     }

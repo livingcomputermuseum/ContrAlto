@@ -47,8 +47,8 @@
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.ThrottleSpeedCheckBox = new System.Windows.Forms.CheckBox();
             this.InterlaceDisplayCheckBox = new System.Windows.Forms.CheckBox();
-            this.OKButton = new System.Windows.Forms.Button();
-            this.CancelButton = new System.Windows.Forms.Button();
+            this.DialogOKButton = new System.Windows.Forms.Button();
+            this.DialogCancelButton = new System.Windows.Forms.Button();
             this.AltoI1KROMRadioButton = new System.Windows.Forms.RadioButton();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -268,23 +268,23 @@
             // 
             // OKButton
             // 
-            this.OKButton.Location = new System.Drawing.Point(211, 239);
-            this.OKButton.Name = "OKButton";
-            this.OKButton.Size = new System.Drawing.Size(75, 23);
-            this.OKButton.TabIndex = 1;
-            this.OKButton.Text = "OK";
-            this.OKButton.UseVisualStyleBackColor = true;
-            this.OKButton.Click += new System.EventHandler(this.OKButton_Click);
+            this.DialogOKButton.Location = new System.Drawing.Point(211, 239);
+            this.DialogOKButton.Name = "OKButton";
+            this.DialogOKButton.Size = new System.Drawing.Size(75, 23);
+            this.DialogOKButton.TabIndex = 1;
+            this.DialogOKButton.Text = "OK";
+            this.DialogOKButton.UseVisualStyleBackColor = true;
+            this.DialogOKButton.Click += new System.EventHandler(this.OKButton_Click);
             // 
             // CancelButton
             // 
-            this.CancelButton.Location = new System.Drawing.Point(292, 239);
-            this.CancelButton.Name = "CancelButton";
-            this.CancelButton.Size = new System.Drawing.Size(75, 23);
-            this.CancelButton.TabIndex = 2;
-            this.CancelButton.Text = "Cancel";
-            this.CancelButton.UseVisualStyleBackColor = true;
-            this.CancelButton.Click += new System.EventHandler(this.CancelButton_Click);
+            this.DialogCancelButton.Location = new System.Drawing.Point(292, 239);
+            this.DialogCancelButton.Name = "CancelButton";
+            this.DialogCancelButton.Size = new System.Drawing.Size(75, 23);
+            this.DialogCancelButton.TabIndex = 2;
+            this.DialogCancelButton.Text = "Cancel";
+            this.DialogCancelButton.UseVisualStyleBackColor = true;
+            this.DialogCancelButton.Click += new System.EventHandler(this.CancelButton_Click);
             // 
             // AltoI1KROMRadioButton
             // 
@@ -302,8 +302,8 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(371, 271);
-            this.Controls.Add(this.CancelButton);
-            this.Controls.Add(this.OKButton);
+            this.Controls.Add(this.DialogCancelButton);
+            this.Controls.Add(this.DialogOKButton);
             this.Controls.Add(this.tabControl1);
             this.Name = "SystemOptions";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
@@ -338,8 +338,8 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox AltoEthernetAddressTextBox;
-        private System.Windows.Forms.Button OKButton;
-        private System.Windows.Forms.Button CancelButton;
+        private System.Windows.Forms.Button DialogOKButton;
+        private System.Windows.Forms.Button DialogCancelButton;
         private System.Windows.Forms.TabPage tabPage3;
         private System.Windows.Forms.CheckBox ThrottleSpeedCheckBox;
         private System.Windows.Forms.CheckBox InterlaceDisplayCheckBox;

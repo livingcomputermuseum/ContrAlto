@@ -31,8 +31,8 @@
             this.EthernetBootFileGroup = new System.Windows.Forms.GroupBox();
             this.label1 = new System.Windows.Forms.Label();
             this.BootFileComboBox = new System.Windows.Forms.ComboBox();
-            this.OKButton = new System.Windows.Forms.Button();
-            this.CancelButton = new System.Windows.Forms.Button();
+            this.DialogOKButton = new System.Windows.Forms.Button();
+            this.DialogCancelButton = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.EthernetBootRadioButton = new System.Windows.Forms.RadioButton();
             this.DiskBootRadioButton = new System.Windows.Forms.RadioButton();
@@ -77,23 +77,23 @@
             // 
             // OKButton
             // 
-            this.OKButton.Location = new System.Drawing.Point(245, 174);
-            this.OKButton.Name = "OKButton";
-            this.OKButton.Size = new System.Drawing.Size(75, 23);
-            this.OKButton.TabIndex = 2;
-            this.OKButton.Text = "OK";
-            this.OKButton.UseVisualStyleBackColor = true;
-            this.OKButton.Click += new System.EventHandler(this.OKButton_Click);
+            this.DialogOKButton.Location = new System.Drawing.Point(245, 174);
+            this.DialogOKButton.Name = "OKButton";
+            this.DialogOKButton.Size = new System.Drawing.Size(75, 23);
+            this.DialogOKButton.TabIndex = 2;
+            this.DialogOKButton.Text = "OK";
+            this.DialogOKButton.UseVisualStyleBackColor = true;
+            this.DialogOKButton.Click += new System.EventHandler(this.OKButton_Click);
             // 
             // CancelButton
             // 
-            this.CancelButton.Location = new System.Drawing.Point(326, 174);
-            this.CancelButton.Name = "CancelButton";
-            this.CancelButton.Size = new System.Drawing.Size(75, 23);
-            this.CancelButton.TabIndex = 3;
-            this.CancelButton.Text = "Cancel";
-            this.CancelButton.UseVisualStyleBackColor = true;
-            this.CancelButton.Click += new System.EventHandler(this.CancelButton_Click);
+            this.DialogCancelButton.Location = new System.Drawing.Point(326, 174);
+            this.DialogCancelButton.Name = "CancelButton";
+            this.DialogCancelButton.Size = new System.Drawing.Size(75, 23);
+            this.DialogCancelButton.TabIndex = 3;
+            this.DialogCancelButton.Text = "Cancel";
+            this.DialogCancelButton.UseVisualStyleBackColor = true;
+            this.DialogCancelButton.Click += new System.EventHandler(this.CancelButton_Click);
             // 
             // groupBox1
             // 
@@ -164,8 +164,8 @@
             this.ClientSize = new System.Drawing.Size(406, 201);
             this.Controls.Add(this.DiskBootGroupBox);
             this.Controls.Add(this.groupBox1);
-            this.Controls.Add(this.CancelButton);
-            this.Controls.Add(this.OKButton);
+            this.Controls.Add(this.DialogCancelButton);
+            this.Controls.Add(this.DialogOKButton);
             this.Controls.Add(this.EthernetBootFileGroup);
             this.Name = "AlternateBootOptions";
             this.ShowIcon = false;
@@ -187,8 +187,8 @@
         private System.Windows.Forms.GroupBox EthernetBootFileGroup;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox BootFileComboBox;
-        private System.Windows.Forms.Button OKButton;
-        private System.Windows.Forms.Button CancelButton;
+        private System.Windows.Forms.Button DialogOKButton;
+        private System.Windows.Forms.Button DialogCancelButton;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.RadioButton EthernetBootRadioButton;
         private System.Windows.Forms.RadioButton DiskBootRadioButton;

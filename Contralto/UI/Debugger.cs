@@ -21,6 +21,7 @@ using System.IO;
 using System.Windows.Forms;
 
 using Contralto.CPU;
+using System.Text;
 
 namespace Contralto
 {
@@ -259,7 +260,30 @@ namespace Contralto
                     Conversion.ToOctal(_reservedMemoryEntries[i].Address, 3),
                     _reservedMemoryEntries[i].Name,
                     Conversion.ToOctal(0, 6));
+            }            
+
+            ContextMenuStrip memoryContextMenu = new ContextMenuStrip();
+            memoryContextMenu.Items.Add("Copy all");
+            memoryContextMenu.ItemClicked += OnMemoryContextMenuItemClicked;
+
+            _memoryData.ContextMenuStrip = memoryContextMenu;
+            
+        }
+
+        private void OnMemoryContextMenuItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {        
+            StringBuilder sb = new StringBuilder();
+
+            for(int i=0;i<65536;i++)
+            {
+                sb.AppendFormat("{0}:{1} {2}\r\n",
+                    Conversion.ToOctal(i, 6),
+                   _memoryData.Rows[i].Cells[2].Value,
+                   _memoryData.Rows[i].Cells[3].Value);                
             }
+
+            Clipboard.SetText(sb.ToString());
+
         }
 
 
@@ -545,7 +569,7 @@ namespace Contralto
                 string status = task.Wakeup ? "W" : String.Empty;
 
                 // Run bit
-                if (task == _system.CPU.CurrentTask)
+                if (task.TaskType == _system.CPU.CurrentTask.TaskType)
                 {
                     status += "R";
                 }

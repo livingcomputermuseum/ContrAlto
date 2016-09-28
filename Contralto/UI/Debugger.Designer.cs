@@ -1045,7 +1045,6 @@
             this._memoryData.DefaultCellStyle = dataGridViewCellStyle33;
             this._memoryData.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
             this._memoryData.Location = new System.Drawing.Point(6, 19);
-            this._memoryData.MultiSelect = false;
             this._memoryData.Name = "_memoryData";
             this._memoryData.ReadOnly = true;
             this._memoryData.RowHeadersVisible = false;

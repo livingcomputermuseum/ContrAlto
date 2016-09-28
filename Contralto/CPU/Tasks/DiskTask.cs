@@ -128,7 +128,7 @@ namespace Contralto.CPU
                 switch (df2)
                 {
                     case DiskF2.INIT:                        
-                        _nextModifier |= GetInitModifier(instruction);                        
+                        _nextModifier |= GetInitModifier();                        
                         break;                                          
 
                     case DiskF2.RWC:
@@ -138,7 +138,7 @@ namespace Contralto.CPU
                         // by INCREC by the microcode to present the next set of bits.
                         int command = (_diskController.KADR & 0x00c0) >> 6;
 
-                        _nextModifier |= GetInitModifier(instruction);
+                        _nextModifier |= GetInitModifier();
 
                         switch (command)
                         {
@@ -161,7 +161,7 @@ namespace Contralto.CPU
 
                     case DiskF2.XFRDAT:
                         // "NEXT <- NEXT OR (IF current command wants data transfer THEN 1 ELSE 0)
-                        _nextModifier |= GetInitModifier(instruction);
+                        _nextModifier |= GetInitModifier();
 
                         if (_diskController.DataXfer)
                         {
@@ -170,13 +170,13 @@ namespace Contralto.CPU
                         break;
 
                     case DiskF2.RECNO:
-                        _nextModifier |= GetInitModifier(instruction);
+                        _nextModifier |= GetInitModifier();
                         _nextModifier |= _diskController.RECNO;
                         break;
 
                     case DiskF2.NFER:
                         // "NEXT <- NEXT OR (IF fatal error in latches THEN 0 ELSE 1)"                        
-                        _nextModifier |= GetInitModifier(instruction);
+                        _nextModifier |= GetInitModifier();
 
                         if (!_diskController.FatalError)
                         {
@@ -186,7 +186,7 @@ namespace Contralto.CPU
 
                     case DiskF2.STROBON:
                         // "NEXT <- NEXT OR (IF seek strobe still on THEN 1 ELSE 0)"
-                        _nextModifier |= GetInitModifier(instruction);
+                        _nextModifier |= GetInitModifier();
                         if ((_diskController.KSTAT & DiskController.STROBE) != 0)
                         {
                             _nextModifier |= 0x1;
@@ -195,7 +195,7 @@ namespace Contralto.CPU
 
                     case DiskF2.SWRNRDY:
                         // "NEXT <- NEXT OR (IF disk not ready to accept command THEN 1 ELSE 0)                        
-                        _nextModifier |= GetInitModifier(instruction);
+                        _nextModifier |= GetInitModifier();
                         if (!_diskController.Ready)
                         {                            
                             _nextModifier |= 0x1;
@@ -224,7 +224,7 @@ namespace Contralto.CPU
             /// The status of the INIT flag
             /// </summary>
             /// <returns></returns>
-            private ushort GetInitModifier(MicroInstruction instruction)
+            private ushort GetInitModifier()
             {
                 //
                 // "NEXT<-NEXT OR (if WDTASKACT AND WDINIT) then 37B else 0."

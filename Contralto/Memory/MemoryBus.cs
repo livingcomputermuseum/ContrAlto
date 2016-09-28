@@ -428,14 +428,14 @@ namespace Contralto.Memory
             {
                 // Memory-mapped device access:
                 // Look up address in hash; if populated ask the device
-                // to return a value otherwise throw.
+                // to return a value otherwise return 0.
                 IMemoryMappedDevice memoryMappedDevice = null;
                 if (_bus.TryGetValue(address, out memoryMappedDevice))
                 {
                     return memoryMappedDevice.Read(address, task, extendedMemoryReference);
                 }    
                 else
-                {
+                {                    
                     return 0;
                 }           
             }
@@ -458,12 +458,12 @@ namespace Contralto.Memory
             {
                 // Memory-mapped device access:
                 // Look up address in hash; if populated ask the device
-                // to store a value otherwise throw.
+                // to store a value otherwise do nothing.
                 IMemoryMappedDevice memoryMappedDevice = null;
                 if (_bus.TryGetValue(address, out memoryMappedDevice))
-                {
+                {                    
                     memoryMappedDevice.Load(address, data, task, extendedMemoryReference);
-                }                 
+                }            
             }
         }
 

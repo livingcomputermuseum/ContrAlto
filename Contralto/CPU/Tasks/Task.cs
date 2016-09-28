@@ -138,8 +138,7 @@ namespace Contralto.CPU
             protected virtual InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
             {
                 InstructionCompletion completion = InstructionCompletion.Normal;
-                bool swMode = false;
-                bool block = false;       
+                bool swMode = false;                
                 ushort aluData;
                 ushort nextModifier;
                 _loadR = false;
@@ -243,7 +242,7 @@ namespace Contralto.CPU
                 // more than one source is gated to it.  Up to 32 such mask contans can be provided for each of the four bus sources
                 // > 4."
                 // This is precached by the MicroInstruction object.
-                if (instruction.ConstantAccessOrBS4)
+                if (instruction.BS4)
                 {
                     _busData &= instruction.ConstantValue;
                 }
@@ -319,7 +318,7 @@ namespace Contralto.CPU
                         //
                         // If the first uOp executed after a task switch contains a TASK F1, it does not take effect.
                         // This is observed on the real hardware, and does not appear to be documented.
-                        // It also doensn't appear to affect the execution of the standard Alto uCode in any significant
+                        // It also doesn't appear to affect the execution of the standard Alto uCode in any significant
                         // way, but is included here for correctness.
                         //
                         if (!_firstInstructionAfterSwitch)
@@ -333,10 +332,7 @@ namespace Contralto.CPU
                         // Technically this is to be invoked by the hardware device associated with a task.
                         // That logic would be circuituous and unless there's a good reason not to that is discovered
                         // later, I'm just going to directly block the current task here.
-                        _cpu.BlockTask(this._taskType);
-
-                        // Let task-specific behavior take place at the end of this cycle.
-                        block = true;                        
+                        _cpu.BlockTask(this._taskType);                    
                         break;
 
                     case SpecialFunction1.LLSH1:
@@ -520,14 +516,14 @@ namespace Contralto.CPU
                 //
                 if (swMode)
                 {
-                    Log.Write(LogType.Verbose, LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1} (NEXT is {2})", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT | nextModifier), Conversion.ToOctal(instruction.NEXT));
+                    //Log.Write(LogType.Verbose, LogComponent.Microcode, "SWMODE: uPC {0}, next uPC {1} (NEXT is {2})", Conversion.ToOctal(_mpc), Conversion.ToOctal(instruction.NEXT | nextModifier), Conversion.ToOctal(instruction.NEXT));
                     UCodeMemory.SwitchMode((ushort)(instruction.NEXT | nextModifier), _taskType);                    
                 }
 
                 //
                 // Do task-specific BLOCK behavior if the last instruction had a BLOCK F1.
                 //
-                if (block)
+                if (instruction.F1 == SpecialFunction1.Block)
                 {
                     ExecuteBlock();
                 }

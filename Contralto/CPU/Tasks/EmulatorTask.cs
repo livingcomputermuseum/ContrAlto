@@ -261,7 +261,7 @@ namespace Contralto.CPU
                         //   Conditions             ORed onto NEXT          Comment
                         //
                         //   if IR[0] = 1           3-IR[8-9]               complement of SH field of IR
-                        //   if IR[1-2] = 3         IR[5]                   the Indirect bit of R
+                        //   if IR[1-2] != 3        IR[5]                   the Indirect bit of R
                         //   if IR[3-7] = 0         2                       CYCLE
                         //   if IR[3-7] = 1         5                       RAMTRAP
                         //   if IR[3-7] = 2         3                       NOPAR -- parameterless opcode group
@@ -273,21 +273,18 @@ namespace Contralto.CPU
                         //   if IR[3-7] = 37B       17B                     ROMTRAP -- used by Swat, the debugger
                         //   else                   16B                     ROMTRAP
 
-                        //
-                        // NOTE: the above table from the Hardware Manual is incorrect 
-                        // (or at least incomplete / out of date / misleading).
-                        // There is considerably more that goes into determining the dispatch, which is controlled by a 256x8
-                        // PROM.  We just use the PROM rather than implementing the above logic (because it works.)
-                        //                        
+                        //                         
+                        // NOTE: The above table is accurate and functions correctly; using the PROM is faster.
+                        //    
                         if ((_cpu._ir & 0x8000) != 0)
                         {
                             // 3-IR[8-9] (shift field of arithmetic instruction)
                             _nextModifier = (ushort)(3 - ((_cpu._ir & 0xc0) >> 6));
                         }
                         else
-                        {
+                        {                            
                             // Use the PROM.                            
-                            _nextModifier = ControlROM.ACSourceROM[((_cpu._ir & 0x7f00) >> 8)];
+                            _nextModifier = ControlROM.ACSourceROM[((_cpu._ir & 0x7f00) >> 8)];                                                       
                         }
                                            
                         break;
@@ -309,10 +306,15 @@ namespace Contralto.CPU
                         // DNS<- does the following:
                         // - modifies the normal shift operations to perform Nova-style shifts (done here)
                         // - addresses R from 3-IR[3-4] (destination AC)  (see Early LoadDNS handler)
-                        // - stores into R unless IR[12] is set (done here)
+                        // - stores into R unless IR[12] is set (done here) 
+                        //   [NOTE: This overrides a LoadR BS field if present -- that is, if IR[12] is set and
+                        //    BS=LoadR, no load into R will take place.  Note also that the standard
+                        //    microcode apparently always specifies a LoadR BS for LoadDNS microinstructions.  Need to
+                        //    look at the schematics more closely to see if this is required or just a convention
+                        //    of the PARC microassembler.]
                         // - calculates Nova-style CARRY bit (done here)
                         // - sets the SKIP and CARRY flip-flops appropriately (see Late LoadDNS handler)
-                        int carry = 0;
+                        int carry = 0;                                             
 
                         // Also indicates modifying CARRY
                         _loadR = (_cpu._ir & 0x0008) == 0;
@@ -321,40 +323,40 @@ namespace Contralto.CPU
                         // We need to set the CARRY bit that will be passed through the shifter appropriately.
                         
                         // Select carry input value based on carry control
-                        switch(_cpu._ir & 0x30)
+                        switch((_cpu._ir & 0x30) >> 4)
                         {
-                            case 0x00:
+                            case 0x0:
                                 // Nothing; CARRY unaffected.
                                 carry = _carry;
                                 break;
 
-                            case 0x10:
+                            case 0x1:
                                 carry = 0;  // Z
                                 break;
 
-                            case 0x20:
+                            case 0x2:
                                 carry = 1;  // O
                                 break;
 
-                            case 0x30:
+                            case 0x3:
                                 carry = (~_carry) & 0x1;  // C
                                 break;
                         }
 
                         // Now modify the result based on the current ALU result
-                        switch (_cpu._ir & 0x700)
+                        switch ((_cpu._ir & 0x700) >> 8)
                         {
-                            case 0x000:
-                            case 0x200:
-                            case 0x700:
+                            case 0x0:
+                            case 0x2:
+                            case 0x7:
                                 // COM, MOV, AND - Carry unaffected
                                 break;
 
-                            case 0x100:                                                                
-                            case 0x300:
-                            case 0x400:
-                            case 0x500:
-                            case 0x600:
+                            case 0x1:                                                                
+                            case 0x3:
+                            case 0x4:
+                            case 0x5:
+                            case 0x6:
                                 // NEG, INC, ADC, SUB, ADD - invert the carry bit
                                 if (_cpu._aluC0 != 0)
                                 {

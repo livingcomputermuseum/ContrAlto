@@ -68,21 +68,10 @@ namespace Contralto.Memory
             // Check for XM registers; this occurs regardless of XM flag since it's in the I/O page.
             if (address >= _xmBanksStart && address < _xmBanksStart + 16)
             {                
-                return (ushort)(0xfff0 |_xmBanks[address - _xmBanksStart]);
+                return (ushort)(0xfff0 | _xmBanks[address - _xmBanksStart]);
             }
             else
-            {
-                
-                /*
-                // debug for kaehler's music st
-                if (address == 0x1fe || address == 0x1ff)      // music microcode
-                   // || (address >= 0x7f00 && address <= 0x80ff))  // DAC buffer
-                {
-                   System.Console.WriteLine("MUSIC read from {0} by task {1} in bank {2}.", 
-                       Conversion.ToOctal(address), task, UCodeMemory.GetBank(task));
-                }
-                */
-                   
+            {                   
                 address += 0x10000 * GetBankNumber(task, extendedMemory);
                 return _mem[address];                
             }
@@ -101,15 +90,6 @@ namespace Contralto.Memory
             }
             else
             {
-                /*
-                if (address == 0x1fe || address == 0x1ff ||     // music microcode
-                   (address >= 0x7f00 && address <= 0x80ff))  // DAC buffer
-                {
-                    System.Console.WriteLine("MUSIC write to {0} ({1}) by task {2} in bank {3}.", 
-                        Conversion.ToOctal(address), Conversion.ToOctal(data), task, UCodeMemory.GetBank(task));
-                }
-                */
-
                 address += 0x10000 * GetBankNumber(task, extendedMemory);              
                 _mem[address] = data;               
             }

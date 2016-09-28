@@ -220,7 +220,7 @@ namespace Contralto.CPU
                        F1 == SpecialFunction1.Constant ||
                        F2 == SpecialFunction2.Constant;
 
-            ConstantAccessOrBS4 = ConstantAccess || (int)BS > 4;
+            BS4 = ((int)BS > 4);
 
             // Constant ROM access:
             // "The constant memory is gated to the bus by F1=7, F2=7, or BS>4.  The constant memory is addressed by the
@@ -308,7 +308,7 @@ namespace Contralto.CPU
 
         // Metadata about the instruction that can be precalculated and used during execution
         public bool ConstantAccess;
-        public bool ConstantAccessOrBS4;
+        public bool BS4;
         public ushort ConstantValue;
         public bool MemoryAccess;
         public MemoryOperation MemoryOperation;
