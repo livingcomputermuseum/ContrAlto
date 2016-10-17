@@ -51,9 +51,9 @@ namespace Contralto.CPU
                 }
             }
 
-            protected override ushort GetBusSource(int bs)
+            protected override ushort GetBusSource(MicroInstruction instruction)
             {
-                DiskBusSource dbs = (DiskBusSource)bs;
+                DiskBusSource dbs = (DiskBusSource)instruction.BS;
 
                 switch (dbs)
                 {
@@ -64,7 +64,7 @@ namespace Contralto.CPU
                         return _diskController.KDATA;                        
 
                     default:
-                        throw new InvalidOperationException(String.Format("Unhandled bus source {0}", bs));
+                        throw new InvalidOperationException(String.Format("Unhandled bus source {0}", instruction.BS));
                 }
             }
 

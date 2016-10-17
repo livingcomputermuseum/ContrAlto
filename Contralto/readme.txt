@@ -31,7 +31,7 @@ keyset input device.
 ================
 
 ContrAlto will run on any Windows PC running Windows Vista or later, with version
-4.6 or later of the .NET Framework installed.  .NET should be present by default
+4.5.3 or later of the .NET Framework installed.  .NET should be present by default
 on Windows Vista and later; if it is not installed on your computer it can be
 obtained at https://www.microsoft.com/net.
 
@@ -475,3 +475,21 @@ Contributions are welcome!
 ContrAlto would not have been possible without the amazing preservation work of 
 the Computer History Museum.
 
+
+10.0 Change History
+===================
+
+V1.1
+----
+- A few minor performance tweaks, adding to a 5% speed increase.
+- Switched back to targeting .NET 4.5.3 rather than 4.6; this works better under Mono
+  and avoids odd issues on Windows machines running pre-4.6 frameworks.
+- Microcode disassembly improved slightly, annotated microcode source updated.
+- Nova disassembler now handles BRI, DIR, EIR, DIRS instructions rather than treating
+  them all as TRAPs.
+- Fixed serious bugs in memory state machine, BravoX now runs.
+- Fixed minor bug in Constant ROM selection.
+
+V1.0
+----
+Initial release.

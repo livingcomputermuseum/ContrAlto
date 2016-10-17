@@ -51,6 +51,10 @@ namespace Contralto.CPU.Nova
             _altoIOTable.Add(0x6214, "BITBLT");
             _altoIOTable.Add(0x6215, "XMLDA");
             _altoIOTable.Add(0x6216, "XMSTA");
+            _altoIOTable.Add(0x6200, "DIR");
+            _altoIOTable.Add(0x6201, "EIR");
+            _altoIOTable.Add(0x6202, "BRI");
+            _altoIOTable.Add(0x620b, "DIRS");
         }
 
         /// <summary>

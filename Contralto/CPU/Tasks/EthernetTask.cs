@@ -50,9 +50,9 @@ namespace Contralto.CPU
                 return base.ExecuteInstruction(instruction);
             }            
 
-            protected override ushort GetBusSource(int bs)
+            protected override ushort GetBusSource(MicroInstruction instruction)
             {
-                EthernetBusSource ebs = (EthernetBusSource)bs;
+                EthernetBusSource ebs = (EthernetBusSource)instruction.BS;
 
                 switch(ebs)
                 {

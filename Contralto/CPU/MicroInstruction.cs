@@ -220,14 +220,14 @@ namespace Contralto.CPU
                        F1 == SpecialFunction1.Constant ||
                        F2 == SpecialFunction2.Constant;
 
-            BS4 = ((int)BS > 4);
+            BS4 = ((int)BS >= 4);
 
             // Constant ROM access:
             // "The constant memory is gated to the bus by F1=7, F2=7, or BS>4.  The constant memory is addressed by the
             // (8 bit) concatenation of RSELECT and BS.  The intent in enabling constants with BS>4 is to provide a masking
             // facility, particularly for the <-MOUSE and <-DISP bus sources.  This works because the processor bus ANDs if
             // more than one source is gated to it.  Up to 32 such mask contans can be provided for each of the four bus sources
-            // > 4."
+            // >= 4."
             // NOTE also:
             // "Note that the [emulator task F2] functions which replace the low bits of RSELECT with IR affect only the 
             // selection of R; they do not affect the address supplied to the constant ROM."

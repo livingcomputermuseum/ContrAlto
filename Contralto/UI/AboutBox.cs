@@ -16,6 +16,7 @@
 */
 
 using System;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace Contralto
@@ -25,6 +26,8 @@ namespace Contralto
         public AboutBox()
         {
             InitializeComponent();
+
+            VersionLabel.Text += typeof(Program).Assembly.GetName().Version;            
         }
 
         private void OkButton_Click(object sender, EventArgs e)
@@ -40,6 +43,11 @@ namespace Contralto
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             System.Diagnostics.Process.Start("mailto:joshd@livingcomputermuseum.org");
+        }
+
+        private void OnSiteLinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("http://www.livingcomputermuseum.org");
         }
     }
 }

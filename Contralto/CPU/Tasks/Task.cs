@@ -19,6 +19,7 @@ using System;
 
 using Contralto.Memory;
 using Contralto.Logging;
+using System.IO;
 
 namespace Contralto.CPU
 {
@@ -143,8 +144,7 @@ namespace Contralto.CPU
                 ushort nextModifier;
                 _loadR = false;
                 _loadS = false;
-                _rSelect = 0;
-                _srSelect = 0;
+                _rSelect = 0;                
                 _busData = 0;
                 _softReset = false;
 
@@ -158,16 +158,16 @@ namespace Contralto.CPU
                 {                    
                     if (!_cpu._system.MemoryBus.Ready(instruction.MemoryOperation))
                     {
-                        // Suspend operation for this cycle.
+                        // Suspend operation for this cycle.                       
                         return InstructionCompletion.MemoryWait;
                     }
                 }
-
+              
                 // If we have a modified next field from the last instruction, make sure it gets applied to this one.
                 nextModifier = _nextModifier;
                 _nextModifier = 0;
 
-                _srSelect = _rSelect = instruction.RSELECT;                
+                _rSelect = instruction.RSELECT;                
 
                 // Give tasks the chance to modify parameters early on (like RSELECT)
                 ExecuteSpecialFunction2Early(instruction);
@@ -193,11 +193,11 @@ namespace Contralto.CPU
 
                         case BusSource.TaskSpecific1:
                         case BusSource.TaskSpecific2:
-                            _busData = GetBusSource((int)instruction.BS);        // task specific -- call into specific implementation
+                            _busData = GetBusSource(instruction);        // task specific -- call into specific implementation
                             break;
 
                         case BusSource.ReadMD:
-                            _busData = _cpu._system.MemoryBus.ReadMD();
+                            _busData = _cpu._system.MemoryBus.ReadMD();                         
                             break;
 
                         case BusSource.ReadMouse:                            
@@ -218,7 +218,7 @@ namespace Contralto.CPU
                             if ((_cpu._ir & 0x300) != 0)
                             {
                                 // sign extend if necessary
-                                if ((_cpu._ir & 0x80) == 0x80)
+                                if ((_cpu._ir & 0x80) != 0)
                                 {
                                     _busData |= (0xff00);
                                 }
@@ -311,7 +311,7 @@ namespace Contralto.CPU
                         _cpu._system.MemoryBus.LoadMAR(
                             aluData, 
                             _taskType, 
-                            _systemType == SystemType.AltoI ? false : instruction.F2 == SpecialFunction2.StoreMD);                      
+                            _systemType == SystemType.AltoI ? false : instruction.F2 == SpecialFunction2.StoreMD);                                        
                         break;
 
                     case SpecialFunction1.Task:
@@ -366,7 +366,7 @@ namespace Contralto.CPU
                     case SpecialFunction2.BusEq0:
                         if (_busData == 0)
                         {
-                            _nextModifier = 1;
+                            _nextModifier |= 1;
                         }
                         break;
 
@@ -380,14 +380,14 @@ namespace Contralto.CPU
 
                     case SpecialFunction2.Bus:
                         // Select bits 6-15 (bits 0-9 in modern parlance) of the bus
-                        _nextModifier = (ushort)(_busData & 0x3ff);
+                        _nextModifier |= (ushort)(_busData & 0x3ff);
                         break;
 
                     case SpecialFunction2.ALUCY:
                         // ALUC0 is the carry produced by the ALU during the most recent microinstruction
                         // that loaded L.  It is *not* the carry produced during the execution of the microinstruction
                         // that contains the ALUCY function.
-                        _nextModifier = _cpu._aluC0;
+                        _nextModifier |= _cpu._aluC0;
                         break;
 
                     case SpecialFunction2.StoreMD:
@@ -446,7 +446,7 @@ namespace Contralto.CPU
                         //
                         if ((short)Shifter.Output < 0)
                         {
-                            _nextModifier = 1;
+                            _nextModifier |= 1;
                         }
                         break;
 
@@ -454,7 +454,7 @@ namespace Contralto.CPU
                         // See note above.
                         if (Shifter.Output == 0)
                         {
-                            _nextModifier = 1;
+                            _nextModifier |= 1;
                         }
                         break;
                 }
@@ -472,7 +472,7 @@ namespace Contralto.CPU
                 // Do writeback to selected S register from M
                 if (_loadS)
                 {
-                    _cpu._s[_rb][_srSelect] = _cpu._m;
+                    _cpu._s[_rb][instruction.RSELECT] = _cpu._m;
                 }
 
                 // Load T
@@ -546,7 +546,7 @@ namespace Contralto.CPU
             /// </summary>
             /// <param name="bs"></param>
             /// <returns></returns>
-            protected virtual ushort GetBusSource(int bs)
+            protected virtual ushort GetBusSource(MicroInstruction instruction)
             {
                 // Nothing by default.
                 return 0;
@@ -631,8 +631,7 @@ namespace Contralto.CPU
             // these could be encapsulated in an object and passed to subclass implementations?            
             protected ushort _busData;          // Data placed onto the bus (ANDed from multiple sources)
             protected ushort _nextModifier;     // Bits ORed onto the NEXT field of the current instruction
-            protected uint _rSelect;            // RSELECT field from current instruction, potentially modified by task
-            protected uint _srSelect;           // RSELECT field as used by S register access (not modified in the same way as normal _rSelect).
+            protected uint _rSelect;            // RSELECT field from current instruction, potentially modified by task            
             protected bool _loadS;              // Whether to load S from M at and of cycle
             protected bool _loadR;              // Whether to load R from shifter at end of cycle.
             protected bool _rdRam;              // Whether to load uCode RAM onto the bus during the next cycle.

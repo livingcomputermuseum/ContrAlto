@@ -16,6 +16,7 @@
 */
 
 using Contralto.CPU;
+using Contralto.Logging;
 using System;
 using System.Collections.Generic;
 
@@ -23,7 +24,7 @@ namespace Contralto.Memory
 {
     public enum MemoryOperation
     {
-        None,
+        None,        
         LoadAddress,
         Read,
         Store
@@ -76,9 +77,10 @@ namespace Contralto.Memory
         {
             _memoryCycle = 0;
             _memoryAddress = 0;
-            _memoryData = 0;
-            _doubleWordStore = false;
-            _doubleWordMixed = false;
+            _memoryDataLow = 0;
+            _memoryDataHigh = 0;
+            _firstWordStored = false;
+            _firstWordRead = false;
             _memoryOperationActive = false;
             _extendedMemoryReference = false;            
         }
@@ -88,9 +90,19 @@ namespace Contralto.Memory
             get { return _memoryAddress; }
         }
 
-        public ushort MD
+        public ushort MDLow
         {
-            get { return _memoryData; }
+            get { return _memoryDataLow; }
+        }
+
+        public ushort MDHigh
+        {
+            get { return _memoryDataHigh; }
+        }
+
+        public ushort MDWrite
+        {
+            get { return _memoryDataWrite; }
         }
 
         public int Cycle
@@ -134,27 +146,26 @@ namespace Contralto.Memory
                 {
                     ClockAltoII();
                 }                
-            }
+            }            
         }
-
+         
         private void ClockAltoI()
         {
             switch (_memoryCycle)
             {
                 case 4:
                     // Buffered read of single word
-                    _memoryData = ReadFromBus(_memoryAddress, _task, _extendedMemoryReference);
+                    _memoryDataLow = ReadFromBus(_memoryAddress, _task, _extendedMemoryReference);
                     break;
 
                 case 5:
                     // Buffered read of double-word
-                    _memoryData2 = ReadFromBus((ushort)(_memoryAddress | 1), _task, _extendedMemoryReference);
+                    _memoryDataHigh = ReadFromBus((ushort)(_memoryAddress | 1), _task, _extendedMemoryReference);
                     break;
 
                 case 7:
                     // End of memory operation
-                    _memoryOperationActive = false;
-                    _doubleWordStore = false;
+                    _memoryOperationActive = false;                    
                     break;
             }
         }
@@ -165,18 +176,17 @@ namespace Contralto.Memory
             {
                 case 3:
                     // Buffered read of single word
-                    _memoryData = ReadFromBus(_memoryAddress, _task, _extendedMemoryReference);
+                    _memoryDataLow = ReadFromBus(_memoryAddress, _task, _extendedMemoryReference);
                     break;
 
                 case 4:
                     // Buffered read of double-word
-                    _memoryData2 = ReadFromBus((ushort)(_memoryAddress ^ 1), _task, _extendedMemoryReference);
+                    _memoryDataHigh = ReadFromBus((ushort)(_memoryAddress ^ 1), _task, _extendedMemoryReference);
                     break;
 
-                case 5:
+                case 6:
                     // End of memory operation
-                    _memoryOperationActive = false;
-                    _doubleWordStore = false;
+                    _memoryOperationActive = false;                    
                     break;
             }
         }
@@ -198,7 +208,7 @@ namespace Contralto.Memory
                     case MemoryOperation.Store:
                         if (_systemType == SystemType.AltoI)
                         {
-                            // // Store operations take place on cycles 5 and 6
+                            // Store operations take place on cycles 5 and 6
                             return _memoryCycle > 4;
                         }
                         else
@@ -220,6 +230,13 @@ namespace Contralto.Memory
 
         public void LoadMAR(ushort address, TaskType task, bool extendedMemoryReference)
         {
+            //
+            // This seems like as good a place as any to point out an oddity --
+            // The Hardware Reference (Section 2, page 7) notes:
+            //   "MAR<- cannot be invoked in the same instruction as <-MD of a previous access."
+            // This rule is broken by the Butte microcode used by BravoX.  It appears to expect that
+            // the MAR load takes place after MD has been read, which makes sense.
+            //            
             if (_memoryOperationActive)
             {
                 // This should not happen; CPU implementation should check whether the operation is possible 
@@ -229,13 +246,14 @@ namespace Contralto.Memory
             else
             {
                 _memoryOperationActive = true;
-                _doubleWordStore = false;
-                _doubleWordMixed = false;
+                _firstWordStored = false;
+                _firstWordRead = false;
                 _memoryAddress = address;
                 _extendedMemoryReference = extendedMemoryReference;
                 _task = task;
-                _memoryCycle = 1;                                    
-            }
+                _memoryCycle = 1;
+            }                                 
+            
         }        
 
         public ushort ReadMD()
@@ -264,15 +282,15 @@ namespace Contralto.Memory
                     case 3:
                     case 4:
                         // This should not happen; CPU should check whether the operation is possible using Ready and stall if not.
-                        throw new InvalidOperationException("Invalid ReadMR request during cycle 3 or 4 of memory operation.");
+                        throw new InvalidOperationException("Invalid ReadMD request during cycle 3 or 4 of memory operation.");
 
                     case 5:
                         // Single word read                       
-                        return _memoryData;
+                        return _memoryDataLow;
 
                     case 6:
                         // Double word read, return other half of double word.
-                        return _memoryData2;                                         
+                        return _memoryDataHigh;                                         
 
                     default:
                         // Invalid state.
@@ -299,11 +317,16 @@ namespace Contralto.Memory
                     case 3:
                     case 4:
                         // This should not happen; CPU should check whether the operation is possible using Ready and stall if not.
-                        throw new InvalidOperationException("Invalid ReadMR request during cycle 3 or 4 of memory operation.");
+                        throw new InvalidOperationException("Invalid ReadMD request during cycle 3 or 4 of memory operation.");
 
                     case 5:
-                        // Single word read                       
-                        return _memoryData;
+                        // Single word read.
+                        //   If this is memory cycle 5 of a double-word *store* (started in cycle 3) then the second word can be *read* here.
+                        //   (An example of this is provided in the hardware ref, section 2, pg 8. and is done by the Ethernet microcode on 
+                        //   the Alto II, see the code block starting at address 0224 -- EPLOC (600) is loaded with the interface status, 
+                        //   EBLOC (601) is read and OR'd with NWW in the same memory op.)                
+                        _firstWordRead = true;                        
+                        return _firstWordStored ? _memoryDataHigh : _memoryDataLow;
 
                     // ***
                     // NB: Handler for double-word read (cycle 6) is in the "else" clause below; this is kind of a hack.
@@ -315,21 +338,15 @@ namespace Contralto.Memory
                 }
             }
             else
-            {                                
-                // memory state machine not running, just return last latched contents.
+            {
+                //
+                // Memory state machine not running, just return last latched contents.
                 // ("Because the Alto II latches memory contents, it is possible to execute _MD anytime after
                 // cycle 5 of a reference and obtain the results of the read operation")
-                // If this is memory cycle 6 we will return the last half of the doubleword to complete a double-word read.
-                if (_memoryCycle == 6 || (_memoryCycle == 5 && _doubleWordMixed))
-                {                    
-                    _doubleWordMixed = false;                 
-                    return _memoryData2;
-                }
-                else
-                {
-                    _doubleWordMixed = false;                    
-                    return _memoryData;
-                }
+                // We will return the last half of the doubleword to complete a double-word read.
+                // (If the first half hasn't yet been read, we return the first half instead...)
+                //                
+                return _firstWordRead ? _memoryDataHigh : _memoryDataLow;                
             }            
         }
 
@@ -346,6 +363,17 @@ namespace Contralto.Memory
                     LoadMDAltoII(data);
                 }                
             }
+            else
+            {
+                //
+                // This is illegal behavior but we won't throw here;
+                // ST80 will cause this, for example, if you run it in a 1K CRAM configuration.
+                // Because it expects 3K CRAM, it jumps into the middle of ROM1 and weird things happen.
+                // We don't want to kill the emulator when this happens, but we will log the result.
+                //
+                Log.Write(LogType.Warning, LogComponent.Memory,
+                    "Unexpected microcode behavior -- LoadMD while memory inactive (cycle {0}).", _memoryCycle);
+            }
         }
 
         private void LoadMDAltoI(ushort data)
@@ -356,25 +384,24 @@ namespace Contralto.Memory
                 case 2:
                 case 3:
                 case 4:                
-                    // TODO: good microcode should never do this
+                    // Good microcode should never do this
                     throw new InvalidOperationException("Unexpected microcode behavior -- LoadMD during incorrect memory cycle.");
 
                 case 5:
 
-                    _memoryData = data; // Only really necessary to show in debugger
-                                        // Start of doubleword write:
+                    _memoryDataWrite = data;
+                    // Start of doubleword write:
                     WriteToBus(_memoryAddress, data, _task, _extendedMemoryReference);
-                    _doubleWordStore = true;
-                    _doubleWordMixed = true;
+                    _firstWordStored = true;
                     break;
 
                 case 6:
-                    if (!_doubleWordStore)
+                    if (!_firstWordStored)
                     {
                         throw new InvalidOperationException("Unexpected microcode behavior -- LoadMD on cycle 6, no LoadMD on cycle 5.");
                     }
 
-                    _memoryData = data; // Only really necessary to show in debugger                                 
+                    _memoryDataWrite = data;
                     ushort actualAddress = (ushort)(_memoryAddress | 1);
 
                     WriteToBus(actualAddress, data, _task, _extendedMemoryReference);
@@ -388,25 +415,35 @@ namespace Contralto.Memory
             switch (_memoryCycle)
             {
                 case 1:
-                case 2:
-                case 5:
-                    // TODO: good microcode should never do this
-                    throw new InvalidOperationException("Unexpected microcode behavior -- LoadMD during incorrect memory cycle.");
+                case 2:                
+                    // Good microcode should never do this
+                    throw new InvalidOperationException(
+                        String.Format("Unexpected microcode behavior -- LoadMD during incorrect memory cycle {0}.", _memoryCycle));
 
                 case 3:
-
-                    _memoryData = data; // Only really necessary to show in debugger
-                                        // Start of doubleword write:
+                    _memoryDataWrite = data;
+                    // Start of doubleword write:
                     WriteToBus(_memoryAddress, data, _task, _extendedMemoryReference);
-                    _doubleWordStore = true;
-                    _doubleWordMixed = true;
+                    _firstWordStored = true;                    
                     break;
 
                 case 4:
-                    _memoryData = data; // Only really necessary to show in debugger                                 
-                    ushort actualAddress = _doubleWordStore ? (ushort)(_memoryAddress ^ 1) : _memoryAddress;
-
+                    _memoryDataWrite = data;
+                    ushort actualAddress = _firstWordStored ? (ushort)(_memoryAddress ^ 1) : _memoryAddress;                    
                     WriteToBus(actualAddress, data, _task, _extendedMemoryReference);
+                    break;
+
+                case 5:
+                    //
+                    // This case is not documented in the HW ref. The ALU portion of MADTEST executes an instruction
+                    // including an <-MD Bus Source (ANDed with Constant value) and an MD<- F2, which makes
+                    // very little sense.  Since the read can't be accomplished until cycle 5, the instruction
+                    // is blocked until then.  MADTEST doesn't seem to care what the result is, and I can't find
+                    // any other code that uses microcode in this way.
+                    // For now, this is a no-op.
+                    //
+                    Log.Write(LogType.Warning, LogComponent.Memory,
+                        "Unexpected microcode behavior -- LoadMD during cycle 5.");
                     break;
             }
 
@@ -490,13 +527,16 @@ namespace Contralto.Memory
         private TaskType _task;
 
         // Buffered read data (on cycles 3 and 4)
-        private ushort _memoryData;
-        private ushort _memoryData2;
+        private ushort _memoryDataLow;
+        private ushort _memoryDataHigh;
 
-        // Indicates a double-word store (started on cycle 3)
-        private bool _doubleWordStore;
+        // Write data (used for debugger UI only)
+        private ushort _memoryDataWrite;
 
-        // Indicates a mixed double-word store/load (started in cycle 3)
-        private bool _doubleWordMixed;
+        // Indicates that the first word of a double-word store has taken place (started on cycle 3)
+        private bool _firstWordStored;
+
+        // Indicates tghat the first word of a double-word read has taken place (started on cycle 5)
+        private bool _firstWordRead;
     }
 }

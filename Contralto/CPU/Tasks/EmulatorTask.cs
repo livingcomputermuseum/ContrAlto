@@ -51,16 +51,16 @@ namespace Contralto.CPU
                 throw new InvalidOperationException("The emulator task is always in wakeup state.");
             }
 
-            protected override ushort GetBusSource(int bs)
+            protected override ushort GetBusSource(MicroInstruction instruction)
             {
-                EmulatorBusSource ebs = (EmulatorBusSource)bs;
+                EmulatorBusSource ebs = (EmulatorBusSource)instruction.BS;
 
                 switch (ebs)
                 {
                     case EmulatorBusSource.ReadSLocation:
-                        if (_srSelect != 0)
+                        if (instruction.RSELECT != 0)
                         {
-                            return _cpu._s[_rb][_srSelect];
+                            return _cpu._s[_rb][instruction.RSELECT];
                         }
                         else
                         {
@@ -77,7 +77,7 @@ namespace Contralto.CPU
                         return 0xffff;       // Technically this is an "undefined value," we're defining it as -1.
 
                     default:
-                        throw new InvalidOperationException(String.Format("Unhandled bus source {0}", bs));
+                        throw new InvalidOperationException(String.Format("Unhandled bus source {0}", instruction.BS));
                 }
             }
 
@@ -220,7 +220,7 @@ namespace Contralto.CPU
 
                         // "IR<- also merges bus bits 0, 5, 6 and 7 into NEXT[6-9] which does a first level
                         // instruction dispatch."                                                
-                        _nextModifier = (ushort)(((_busData & 0x8000) >> 12) | ((_busData & 0x0700) >> 8));
+                        _nextModifier |= (ushort)(((_busData & 0x8000) >> 12) | ((_busData & 0x0700) >> 8));
 
                         // "IR<- clears SKIP"
                         _skip = 0;
@@ -247,11 +247,11 @@ namespace Contralto.CPU
                         //                                         
                         if ((_cpu._ir & 0x8000) != 0)
                         {
-                            _nextModifier = (ushort)(3 - ((_cpu._ir & 0xc0) >> 6));
+                            _nextModifier |= (ushort)(3 - ((_cpu._ir & 0xc0) >> 6));
                         }
                         else
                         {
-                            _nextModifier = ControlROM.ACSourceROM[((_cpu._ir & 0x7f00) >> 8) + 0x80];
+                            _nextModifier |= ControlROM.ACSourceROM[((_cpu._ir & 0x7f00) >> 8) + 0x80];
                         }                                              
                         break;
 
@@ -279,12 +279,12 @@ namespace Contralto.CPU
                         if ((_cpu._ir & 0x8000) != 0)
                         {
                             // 3-IR[8-9] (shift field of arithmetic instruction)
-                            _nextModifier = (ushort)(3 - ((_cpu._ir & 0xc0) >> 6));
+                            _nextModifier |= (ushort)(3 - ((_cpu._ir & 0xc0) >> 6));
                         }
                         else
                         {                            
                             // Use the PROM.                            
-                            _nextModifier = ControlROM.ACSourceROM[((_cpu._ir & 0x7f00) >> 8)];                                                       
+                            _nextModifier |= ControlROM.ACSourceROM[((_cpu._ir & 0x7f00) >> 8)];                                                       
                         }
                                            
                         break;

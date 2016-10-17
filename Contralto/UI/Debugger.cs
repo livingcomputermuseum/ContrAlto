@@ -125,12 +125,12 @@ namespace Contralto
             _otherRegs.Rows[1].Cells[1].Value = Conversion.ToOctal(_system.CPU.T, 6);
             _otherRegs.Rows[2].Cells[1].Value = Conversion.ToOctal(_system.CPU.M, 6);
             _otherRegs.Rows[3].Cells[1].Value = Conversion.ToOctal(_system.CPU.IR, 6);
-            _otherRegs.Rows[4].Cells[1].Value = Conversion.ToOctal(_system.CPU.ALUC0, 1);
-            //_otherRegs.Rows[4].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.Carry, 1);
-            //_otherRegs.Rows[4].Cells[1].Value = OctalHelpers.ToOctal(_system.CPU.Skip, 1);
+            _otherRegs.Rows[4].Cells[1].Value = Conversion.ToOctal(_system.CPU.ALUC0, 1);            
             _otherRegs.Rows[5].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.MAR, 6);
-            _otherRegs.Rows[6].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.MD, 6);
-            _otherRegs.Rows[7].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.Cycle & 0x3f, 2);
+            _otherRegs.Rows[6].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.MDLow, 6);
+            _otherRegs.Rows[7].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.MDHigh, 6);
+            _otherRegs.Rows[8].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.MDWrite, 6);
+            _otherRegs.Rows[9].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.Cycle & 0x3f, 2);
 
             // Reserved memory locations
             for (int i = 0; i < _reservedMemoryEntries.Length; i++)
@@ -247,11 +247,11 @@ namespace Contralto
             _otherRegs.Rows.Add("T", "0");
             _otherRegs.Rows.Add("M", "0");
             _otherRegs.Rows.Add("IR", "0");
-            _otherRegs.Rows.Add("ALUC0", "0");
-            //_otherRegs.Rows.Add("CARRY", "0");
-            //_otherRegs.Rows.Add("SKIP", "0");
+            _otherRegs.Rows.Add("ALUC0", "0");            
             _otherRegs.Rows.Add("MAR", "0");
-            _otherRegs.Rows.Add("MD", "0");
+            _otherRegs.Rows.Add("←MDL", "0");
+            _otherRegs.Rows.Add("←MDH", "0");
+            _otherRegs.Rows.Add("MD←", "0");
             _otherRegs.Rows.Add("MCycle", "0");
 
             for (int i = 0; i < _reservedMemoryEntries.Length; i++)

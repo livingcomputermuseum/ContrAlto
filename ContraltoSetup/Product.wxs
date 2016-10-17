@@ -17,10 +17,24 @@
 -->
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="CE5F3D08-3BD6-4BDF-9C64-0C2B852B899C" Name="ContrAlto" Language="1033" Version="1.0.0.0" Manufacturer="Living Computer Museum" UpgradeCode="38d6b09f-6e7b-4854-844a-5d4ab707a357">
-		<Package Id="*" InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+	<Product Id="CE5F3D08-3BD6-4BDF-9C64-0C2B852B899C" Name="ContrAlto" Language="1033" Version="1.1.0" Manufacturer="Living Computer Museum" UpgradeCode="38d6b09f-6e7b-4854-844a-5d4ab707a357">
+		<Package Id="*" InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />		
 
-		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <Upgrade Id="38d6b09f-6e7b-4854-844a-5d4ab707a357">
+      <UpgradeVersion OnlyDetect="yes" Property="SELFFOUND"
+          Minimum="1.1.0" IncludeMinimum="yes"
+          Maximum="1.1.0" IncludeMaximum="yes" />
+      <UpgradeVersion OnlyDetect="yes" Property="NEWERFOUND"
+          Minimum="1.1.0" IncludeMinimum="no" />
+    </Upgrade>
+
+    <CustomAction Id="AlreadyUpdated" Error="[ProductName] 1.0 has already been updated to 1.1.0 or newer." />
+    <CustomAction Id="NoDowngrade" Error="A later version of [ProductName] is already installed." />
+
+    <InstallExecuteSequence>
+      <Custom Action="AlreadyUpdated" After="FindRelatedProducts">SELFFOUND</Custom>
+      <Custom Action="NoDowngrade" After="FindRelatedProducts">NEWERFOUND</Custom>
+    </InstallExecuteSequence>
 
     <Media Id="1" Cabinet="ContrAlto.cab" EmbedCab="yes"/>
 
