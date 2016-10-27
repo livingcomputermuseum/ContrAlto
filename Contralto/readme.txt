@@ -1,4 +1,4 @@
-﻿Readme.txt for Contralto v0.1:
+﻿Readme.txt for Contralto v1.1:
 
 1. Introduction and Overview
 ============================
@@ -439,14 +439,14 @@ Reserved Memory:
 At the moment, the following issues are known and being worked on.  If you find
 an issue not listed here, see section 7.0 to report a new bug.
 
-- BravoX does not run, trapping into SWAT with "DSt" as a diagnostic.
+- Smalltalk-80 does not run.
 
 
 7.0 Reporting Bugs
 ==================
 
 If you believe you have found a new issue (or have a feature request) please
-send an e-mail to joshd@livingcomputermuseum.org with a subject line starting
+send an e-mail to joshd@livingcomputers.org with a subject line starting
 with "ContrAlto Bug".
 
 When you send a report, please be as specific and detailed as possible:
@@ -481,7 +481,7 @@ the Computer History Museum.
 
 V1.1
 ----
-- A few minor performance tweaks, adding to a 5% speed increase.
+- A few minor performance tweaks, adding to a 10-15% speed increase.
 - Switched back to targeting .NET 4.5.3 rather than 4.6; this works better under Mono
   and avoids odd issues on Windows machines running pre-4.6 frameworks.
 - Microcode disassembly improved slightly, annotated microcode source updated.

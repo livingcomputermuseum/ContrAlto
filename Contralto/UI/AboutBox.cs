@@ -34,20 +34,15 @@ namespace Contralto
         {
             this.Close();
         }
-
-        private void label2_Click(object sender, EventArgs e)
-        {
-
-        }
-
+        
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            System.Diagnostics.Process.Start("mailto:joshd@livingcomputermuseum.org");
+            System.Diagnostics.Process.Start("mailto:joshd@livingcomputers.org");
         }
 
         private void OnSiteLinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            System.Diagnostics.Process.Start("http://www.livingcomputermuseum.org");
+            System.Diagnostics.Process.Start("http://www.livingcomputers.org");
         }
     }
 }

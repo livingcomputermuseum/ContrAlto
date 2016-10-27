@@ -96,8 +96,8 @@ namespace Contralto
 
         private static void PrintHerald()
         {
-            Console.WriteLine("ContrAlto v1.1 (c) 2015, 2016 Living Computer Museum.");            
-            Console.WriteLine("Bug reports to joshd@livingcomputermuseum.org");
+            Console.WriteLine("ContrAlto v1.1 (c) 2015, 2016 Living Computers: Museum+Labs.");            
+            Console.WriteLine("Bug reports to joshd@livingcomputers.org");
             Console.WriteLine();
         }      
 

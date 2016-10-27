@@ -52,12 +52,11 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(41, 59);
+            this.label2.Location = new System.Drawing.Point(20, 59);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(46, 13);
             this.label2.TabIndex = 1;
             this.label2.Text = "(c) 2016";
-            this.label2.Click += new System.EventHandler(this.label2_Click);
             // 
             // label3
             // 
@@ -70,7 +69,7 @@
             // 
             // OkButton
             // 
-            this.OkButton.Location = new System.Drawing.Point(87, 363);
+            this.OkButton.Location = new System.Drawing.Point(78, 363);
             this.OkButton.Name = "OkButton";
             this.OkButton.Size = new System.Drawing.Size(75, 23);
             this.OkButton.TabIndex = 3;
@@ -80,7 +79,7 @@
             // 
             // label4
             // 
-            this.label4.Location = new System.Drawing.Point(12, 320);
+            this.label4.Location = new System.Drawing.Point(19, 320);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(224, 18);
             this.label4.TabIndex = 4;
@@ -89,12 +88,12 @@
             // emailLink
             // 
             this.emailLink.AutoSize = true;
-            this.emailLink.Location = new System.Drawing.Point(41, 338);
+            this.emailLink.Location = new System.Drawing.Point(55, 338);
             this.emailLink.Name = "emailLink";
-            this.emailLink.Size = new System.Drawing.Size(168, 13);
+            this.emailLink.Size = new System.Drawing.Size(134, 13);
             this.emailLink.TabIndex = 5;
             this.emailLink.TabStop = true;
-            this.emailLink.Text = "joshd@livingcomputermuseum.org";
+            this.emailLink.Text = "joshd@livingcomputers.org";
             this.emailLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel1_LinkClicked);
             // 
             // pictureBox1
@@ -110,12 +109,12 @@
             // websiteLink
             // 
             this.websiteLink.AutoSize = true;
-            this.websiteLink.Location = new System.Drawing.Point(84, 60);
+            this.websiteLink.Location = new System.Drawing.Point(65, 59);
             this.websiteLink.Name = "websiteLink";
-            this.websiteLink.Size = new System.Drawing.Size(126, 13);
+            this.websiteLink.Size = new System.Drawing.Size(163, 13);
             this.websiteLink.TabIndex = 7;
             this.websiteLink.TabStop = true;
-            this.websiteLink.Text = "Living Computer Museum";
+            this.websiteLink.Text = "Living Computers: Museum+Labs";
             this.websiteLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.OnSiteLinkClicked);
             // 
             // AboutBox

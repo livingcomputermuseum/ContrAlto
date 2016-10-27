@@ -17,7 +17,7 @@
 -->
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="CE5F3D08-3BD6-4BDF-9C64-0C2B852B899C" Name="ContrAlto" Language="1033" Version="1.1.0" Manufacturer="Living Computer Museum" UpgradeCode="38d6b09f-6e7b-4854-844a-5d4ab707a357">
+	<Product Id="CE5F3D08-3BD6-4BDF-9C64-0C2B852B899C" Name="ContrAlto" Language="1033" Version="1.1.0" Manufacturer="Living Computers: Museum+Labs" UpgradeCode="38d6b09f-6e7b-4854-844a-5d4ab707a357">
 		<Package Id="*" InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />		
 
     <Upgrade Id="38d6b09f-6e7b-4854-844a-5d4ab707a357">
@@ -63,7 +63,7 @@
 	<Fragment>
 		<Directory Id="TARGETDIR" Name="SourceDir">
 			<Directory Id="ProgramFilesFolder">
-        <Directory Id="LCM" Name="Living Computer Museum">
+        <Directory Id="LCM" Name="Living Computers">
 				  <Directory Id="INSTALLFOLDER" Name="Contralto">
             <Directory Id="ROMFOLDER" Name="ROM">
               <Directory Id="ROMFOLDERALTOI" Name="AltoI"/>
@@ -77,7 +77,7 @@
           <Directory Id="ProgramMenuDir" Name="ContrAlto">
               <Component Id="ProgramMenuDir" Guid="007ADB59-BCE4-43CB-9AEC-DD5962136A7D">
                   <RemoveFolder Id="ProgramMenuDir" On="uninstall"/>
-                  <RegistryValue Root="HKCU" Key="Software\Living Computer Museum\ContrAlto" Type="string" Value="" KeyPath="yes" />
+                  <RegistryValue Root="HKCU" Key="Software\Living Computers\ContrAlto" Type="string" Value="" KeyPath="yes" />
               </Component>
           </Directory>
       </Directory>

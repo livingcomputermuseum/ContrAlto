@@ -47,17 +47,11 @@ namespace Contralto
 
             _cpu = new AltoCPU(this);
 
-
             // Attach memory-mapped devices to the bus
             _memBus.AddDevice(_mem);
             _memBus.AddDevice(_keyboard);
             _memBus.AddDevice(_mouse);
-            _memBus.AddDevice(_musicInterface);
-
-            // Register devices that need clocks
-            _clockableDevices = new List<IClockable>();            
-            _clockableDevices.Add(_memBus);                    
-            _clockableDevices.Add(_cpu);
+            _memBus.AddDevice(_musicInterface);            
 
             Reset();           
         }
@@ -106,16 +100,12 @@ namespace Contralto
 
         public void SingleStep()
         {
-            // Run every device that needs attention for a single clock cycle.
-            int count = _clockableDevices.Count;
-            for (int i = 0; i < count; i++)
-            {
-                _clockableDevices[i].Clock();
-            }
-            
-            _scheduler.Clock();
+            // Run every device that needs attention for a single clock cycle.           
+            _memBus.Clock();
+            _cpu.Clock();
 
-            _clocks++;
+            // Clock the scheduler
+            _scheduler.Clock();
         }
 
         public void LoadDrive(int drive, string path)
@@ -252,8 +242,5 @@ namespace Contralto
         private Music _musicInterface;
 
         private Scheduler _scheduler;
-        private ulong _clocks;
-
-        private List<IClockable> _clockableDevices;
     }
 }

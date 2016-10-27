@@ -41,8 +41,7 @@ namespace Contralto.IO
             Reset();
 
             _fifoTransmitWakeupEvent = new Event(_fifoTransmitDuration, null, OutputFifoCallback);
-
-
+                       
             // Attach real Ethernet device if user has specified one, otherwise leave unattached; output data
             // will go into a bit-bucket.
             try
@@ -73,12 +72,12 @@ namespace Contralto.IO
             _outputData = new ushort[4096];
 
             _nextPackets = new Queue<MemoryStream>();
+
+            _inputPollEvent = new Event(_inputPollPeriod, null, InputHandler);
         }
 
         public void Reset()
         {
-            _inputPollEvent = null;
-
             ResetInterface();            
         }
 
@@ -165,14 +164,7 @@ namespace Contralto.IO
                 _system.CPU.BlockTask(TaskType.Ethernet);
             }
 
-            Log.Write(LogComponent.EthernetController, "Interface reset.");
-         
-            if (_inputPollEvent == null)
-            {
-                // Kick off the input poll event which will run forever.
-                _inputPollEvent = new Event(_inputPollPeriod, null, InputHandler);
-                _system.Scheduler.Schedule(_inputPollEvent);
-            }
+            Log.Write(LogComponent.EthernetController, "Interface reset.");                    
         }
 
         public ushort ReadInputFifo(bool lookOnly)
@@ -353,12 +345,20 @@ namespace Contralto.IO
                 Log.Write(LogComponent.EthernetController, "Receiver initializing, dropping current activity.");                
                 _incomingPacket = null;
                 _incomingPacketLength = 0;                
-            }
+            }            
 
             _inputState = InputState.ReceiverWaiting;
             _iBusy = true;            
 
             _system.CPU.BlockTask(TaskType.Ethernet);
+
+            // Schedule the first input wakeup if the receiver is off or done.
+            if (!_inputPollActive)
+            {
+                _inputPollEvent.TimestampNsec = _inputPollPeriod;
+                _system.Scheduler.Schedule(_inputPollEvent);
+                _inputPollActive = true;
+            }
 
             Log.Write(LogComponent.EthernetController, "Receiver initialized.");            
         }
@@ -409,7 +409,7 @@ namespace Contralto.IO
         /// <param name="skewNsec"></param>
         /// <param name="context"></param>
         private void InputHandler(ulong timeNsec, ulong skewNsec, object context)
-        {
+        {            
             switch(_inputState)
             {
                 case InputState.ReceiverOff:
@@ -425,6 +425,7 @@ namespace Contralto.IO
                         Log.Write(LogComponent.EthernetPacket, "Receiver is off, ignoring incoming packet from packet queue.");
                     }
                     _receiverLock.ExitReadLock();
+                    _inputPollActive = false;
                     break;
 
                 case InputState.ReceiverWaiting:
@@ -462,7 +463,7 @@ namespace Contralto.IO
 
                         // Move to the Receiving state.
                         _inputState = InputState.Receiving;
-                    }                    
+                    }                           
                     _receiverLock.ExitReadLock();
                     break;
 
@@ -502,6 +503,8 @@ namespace Contralto.IO
                         _system.CPU.WakeupTask(TaskType.Ethernet);
 
                         Log.Write(LogComponent.EthernetController, "Receive complete.");
+
+                        _inputPollActive = false;
                     }                   
 
                     // Wake up the Ethernet task to process data if we have
@@ -515,13 +518,17 @@ namespace Contralto.IO
 
                 case InputState.ReceiverDone:
                     // Nothing, we just wait in this state for the receiver to be reset by the microcode.
+                    _inputPollActive = false;
                     break;
 
             }
 
-            // Schedule the next wakeup.                
-            _inputPollEvent.TimestampNsec = _inputPollPeriod - skewNsec;
-            _system.Scheduler.Schedule(_inputPollEvent);            
+            // Schedule the next wakeup.     
+            if (_inputPollActive)
+            {
+                _inputPollEvent.TimestampNsec = _inputPollPeriod - skewNsec;
+                _system.Scheduler.Schedule(_inputPollEvent);
+            }           
         }      
 
         private Queue<ushort> _fifo;
@@ -549,6 +556,7 @@ namespace Contralto.IO
         // Receive:
         private ulong _inputPollPeriod = 5400;       // ~5400 nsec to receive 1 word at 3mbit
         private Event _inputPollEvent;
+        private bool _inputPollActive;
 
         // Input states
         private enum InputState

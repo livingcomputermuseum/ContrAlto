@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("ContrAlto")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Living Computer Museum")]
+[assembly: AssemblyCompany("Living Computers: Museum+Labs")]
 [assembly: AssemblyProduct("ContrAlto")]
-[assembly: AssemblyCopyright("Copyright © Living Computer Museum 2016")]
+[assembly: AssemblyCopyright("Copyright © Living Computers: Museum+Labs 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
