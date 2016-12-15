@@ -88,8 +88,7 @@ namespace Contralto
         {
             // Initialize things to defaults.            
             HostAddress = 0x22;
-
-            AlternateBootType = AlternateBootType.Disk;
+            
             BootAddress = 0;
             BootFile = 0;
 
@@ -112,6 +111,13 @@ namespace Contralto
             }
 
             ReadConfiguration();
+
+            // Special case: On first startup, AlternateBoot will come back as "None" which
+            // is an invalid UI setting; default to Ethernet in this case.
+            if (AlternateBootType == AlternateBootType.None)
+            {
+                AlternateBootType = AlternateBootType.Ethernet;
+            }
         }
 
         /// <summary>

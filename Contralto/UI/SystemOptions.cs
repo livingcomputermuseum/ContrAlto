@@ -132,6 +132,7 @@ namespace Contralto.UI
 
                 // Add all interfaces that PCAP knows about.
                 case PacketInterfaceType.EthernetEncapsulation:
+                    if (Configuration.HostRawEthernetInterfacesAvailable)
                     {
                         foreach (LivePacketDevice device in LivePacketDevice.AllLocalMachine)
                         {                            

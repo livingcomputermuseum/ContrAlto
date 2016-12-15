@@ -37,8 +37,7 @@ namespace Contralto.IO
 
             _receiverLock = new System.Threading.ReaderWriterLockSlim();
 
-            _fifo = new Queue<ushort>();
-            Reset();
+            _fifo = new Queue<ushort>();            
 
             _fifoTransmitWakeupEvent = new Event(_fifoTransmitDuration, null, OutputFifoCallback);
                        
@@ -74,10 +73,17 @@ namespace Contralto.IO
             _nextPackets = new Queue<MemoryStream>();
 
             _inputPollEvent = new Event(_inputPollPeriod, null, InputHandler);
+
+            Reset();
         }
 
         public void Reset()
-        {
+        {            
+            _nextPackets.Clear();            
+            _inputPollActive = false;
+            _countdownWakeup = false;
+            _outputIndex = 0;
+
             ResetInterface();            
         }
 
