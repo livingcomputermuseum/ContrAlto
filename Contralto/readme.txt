@@ -489,6 +489,7 @@ V1.1
   them all as TRAPs.
 - Fixed serious bugs in memory state machine, BravoX now runs.
 - Fixed minor bug in Constant ROM selection.
+- Raw Ethernet packets sent as broadcasts (matching IFS encapsulation behavior)
 
 V1.0
 ----
