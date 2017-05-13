@@ -37,13 +37,15 @@ namespace Contralto
             _scheduler = new Scheduler();
             
             _memBus = new MemoryBus();
-            _mem = new Memory.Memory();            
+            _mem = new Memory.Memory();
             _keyboard = new Keyboard();
             _diskController = new DiskController(this);
             _displayController = new DisplayController(this);
             _mouse = new Mouse();
             _ethernetController = new EthernetController(this);
-            _musicInterface = new Music(this);
+            _orbitController = new OrbitController(this);
+            _audioDAC = new AudioDAC(this);
+            _organKeyboard = new OrganKeyboard(this);
 
             _cpu = new AltoCPU(this);
 
@@ -51,9 +53,10 @@ namespace Contralto
             _memBus.AddDevice(_mem);
             _memBus.AddDevice(_keyboard);
             _memBus.AddDevice(_mouse);
-            _memBus.AddDevice(_musicInterface);            
+            _memBus.AddDevice(_audioDAC);
+            _memBus.AddDevice(_organKeyboard);
 
-            Reset();           
+            Reset();
         }
 
         public void Reset()
@@ -70,9 +73,9 @@ namespace Contralto
             _mouse.Reset();
             _cpu.Reset();
             _ethernetController.Reset();
-            _musicInterface.Reset();
+            _orbitController.Reset();            
 
-            UCodeMemory.Reset();            
+            UCodeMemory.Reset();
         }
 
         /// <summary>
@@ -81,7 +84,7 @@ namespace Contralto
         /// <param name="d"></param>
         public void AttachDisplay(IAltoDisplay d)
         {
-            _displayController.AttachDisplay(d);           
+            _displayController.AttachDisplay(d);
         }
 
         public void DetachDisplay()
@@ -96,11 +99,16 @@ namespace Contralto
             {
                 _ethernetController.HostInterface.Shutdown();
             }
+
+            //
+            // Allow the DAC to flush its output
+            //
+            _audioDAC.Shutdown();
         }
 
         public void SingleStep()
         {
-            // Run every device that needs attention for a single clock cycle.           
+            // Run every device that needs attention for a single clock cycle.
             _memBus.Clock();
             _cpu.Clock();
 
@@ -224,6 +232,11 @@ namespace Contralto
             get { return _ethernetController; }
         }
 
+        public OrbitController OrbitController
+        {
+            get { return _orbitController; }
+        }
+
         public Scheduler Scheduler
         {
             get { return _scheduler; }
@@ -239,7 +252,9 @@ namespace Contralto
         private DiskController _diskController;
         private DisplayController _displayController;
         private EthernetController _ethernetController;
-        private Music _musicInterface;
+        private OrbitController _orbitController;
+        private AudioDAC _audioDAC;
+        private OrganKeyboard _organKeyboard;
 
         private Scheduler _scheduler;
     }

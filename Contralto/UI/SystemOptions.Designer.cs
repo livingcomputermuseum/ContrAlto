@@ -30,6 +30,7 @@
         {
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.AltoI1KROMRadioButton = new System.Windows.Forms.RadioButton();
             this.AltoII3KRAMRadioButton = new System.Windows.Forms.RadioButton();
             this.AltoII2KROMRadioButton = new System.Windows.Forms.RadioButton();
             this.label1 = new System.Windows.Forms.Label();
@@ -49,13 +50,21 @@
             this.InterlaceDisplayCheckBox = new System.Windows.Forms.CheckBox();
             this.DialogOKButton = new System.Windows.Forms.Button();
             this.DialogCancelButton = new System.Windows.Forms.Button();
-            this.AltoI1KROMRadioButton = new System.Windows.Forms.RadioButton();
+            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.EnableDACCheckBox = new System.Windows.Forms.CheckBox();
+            this.DACOptionsGroupBox = new System.Windows.Forms.GroupBox();
+            this.EnableDACCaptureCheckBox = new System.Windows.Forms.CheckBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.DACOutputCapturePathTextBox = new System.Windows.Forms.TextBox();
+            this.BrowseButton = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.HostInterfaceGroupBox.SuspendLayout();
             this.tabPage3.SuspendLayout();
+            this.tabPage4.SuspendLayout();
+            this.DACOptionsGroupBox.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -63,6 +72,7 @@
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
+            this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Location = new System.Drawing.Point(3, 5);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -83,6 +93,17 @@
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "CPU";
             this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // AltoI1KROMRadioButton
+            // 
+            this.AltoI1KROMRadioButton.AutoSize = true;
+            this.AltoI1KROMRadioButton.Location = new System.Drawing.Point(14, 30);
+            this.AltoI1KROMRadioButton.Name = "AltoI1KROMRadioButton";
+            this.AltoI1KROMRadioButton.Size = new System.Drawing.Size(214, 17);
+            this.AltoI1KROMRadioButton.TabIndex = 4;
+            this.AltoI1KROMRadioButton.TabStop = true;
+            this.AltoI1KROMRadioButton.Text = "Alto I, 1K Control ROM, 1K Control RAM";
+            this.AltoI1KROMRadioButton.UseVisualStyleBackColor = true;
             // 
             // AltoII3KRAMRadioButton
             // 
@@ -266,36 +287,98 @@
             this.InterlaceDisplayCheckBox.Text = "Interlaced Display (headache mode)";
             this.InterlaceDisplayCheckBox.UseVisualStyleBackColor = true;
             // 
-            // OKButton
+            // DialogOKButton
             // 
             this.DialogOKButton.Location = new System.Drawing.Point(211, 239);
-            this.DialogOKButton.Name = "OKButton";
+            this.DialogOKButton.Name = "DialogOKButton";
             this.DialogOKButton.Size = new System.Drawing.Size(75, 23);
             this.DialogOKButton.TabIndex = 1;
             this.DialogOKButton.Text = "OK";
             this.DialogOKButton.UseVisualStyleBackColor = true;
             this.DialogOKButton.Click += new System.EventHandler(this.OKButton_Click);
             // 
-            // CancelButton
+            // DialogCancelButton
             // 
             this.DialogCancelButton.Location = new System.Drawing.Point(292, 239);
-            this.DialogCancelButton.Name = "CancelButton";
+            this.DialogCancelButton.Name = "DialogCancelButton";
             this.DialogCancelButton.Size = new System.Drawing.Size(75, 23);
             this.DialogCancelButton.TabIndex = 2;
             this.DialogCancelButton.Text = "Cancel";
             this.DialogCancelButton.UseVisualStyleBackColor = true;
             this.DialogCancelButton.Click += new System.EventHandler(this.CancelButton_Click);
             // 
-            // AltoI1KROMRadioButton
+            // tabPage4
             // 
-            this.AltoI1KROMRadioButton.AutoSize = true;
-            this.AltoI1KROMRadioButton.Location = new System.Drawing.Point(14, 30);
-            this.AltoI1KROMRadioButton.Name = "AltoI1KROMRadioButton";
-            this.AltoI1KROMRadioButton.Size = new System.Drawing.Size(214, 17);
-            this.AltoI1KROMRadioButton.TabIndex = 4;
-            this.AltoI1KROMRadioButton.TabStop = true;
-            this.AltoI1KROMRadioButton.Text = "Alto I, 1K Control ROM, 1K Control RAM";
-            this.AltoI1KROMRadioButton.UseVisualStyleBackColor = true;
+            this.tabPage4.Controls.Add(this.DACOptionsGroupBox);
+            this.tabPage4.Controls.Add(this.EnableDACCheckBox);
+            this.tabPage4.Location = new System.Drawing.Point(4, 22);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage4.Size = new System.Drawing.Size(360, 201);
+            this.tabPage4.TabIndex = 3;
+            this.tabPage4.Text = "DAC";
+            this.tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // EnableDACCheckBox
+            // 
+            this.EnableDACCheckBox.AutoSize = true;
+            this.EnableDACCheckBox.Location = new System.Drawing.Point(19, 22);
+            this.EnableDACCheckBox.Name = "EnableDACCheckBox";
+            this.EnableDACCheckBox.Size = new System.Drawing.Size(275, 17);
+            this.EnableDACCheckBox.TabIndex = 0;
+            this.EnableDACCheckBox.Text = "Enable Audio DAC (Used by Smalltalk Music System)";
+            this.EnableDACCheckBox.UseVisualStyleBackColor = true;
+            this.EnableDACCheckBox.CheckedChanged += new System.EventHandler(this.OnEnableDACCheckboxChanged);
+            // 
+            // DACOptionsGroupBox
+            // 
+            this.DACOptionsGroupBox.Controls.Add(this.BrowseButton);
+            this.DACOptionsGroupBox.Controls.Add(this.DACOutputCapturePathTextBox);
+            this.DACOptionsGroupBox.Controls.Add(this.label2);
+            this.DACOptionsGroupBox.Controls.Add(this.EnableDACCaptureCheckBox);
+            this.DACOptionsGroupBox.Location = new System.Drawing.Point(15, 52);
+            this.DACOptionsGroupBox.Name = "DACOptionsGroupBox";
+            this.DACOptionsGroupBox.Size = new System.Drawing.Size(335, 139);
+            this.DACOptionsGroupBox.TabIndex = 1;
+            this.DACOptionsGroupBox.TabStop = false;
+            this.DACOptionsGroupBox.Text = "DAC options";
+            // 
+            // EnableDACCaptureCheckBox
+            // 
+            this.EnableDACCaptureCheckBox.AutoSize = true;
+            this.EnableDACCaptureCheckBox.Location = new System.Drawing.Point(18, 28);
+            this.EnableDACCaptureCheckBox.Name = "EnableDACCaptureCheckBox";
+            this.EnableDACCaptureCheckBox.Size = new System.Drawing.Size(156, 17);
+            this.EnableDACCaptureCheckBox.TabIndex = 0;
+            this.EnableDACCaptureCheckBox.Text = "Enable DAC output capture";
+            this.EnableDACCaptureCheckBox.UseVisualStyleBackColor = true;
+            this.EnableDACCaptureCheckBox.CheckedChanged += new System.EventHandler(this.EnableDACCaptureCheckBox_CheckedChanged);
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(16, 58);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(105, 13);
+            this.label2.TabIndex = 1;
+            this.label2.Text = "Output capture path:";
+            // 
+            // DACOutputCapturePathTextBox
+            // 
+            this.DACOutputCapturePathTextBox.Location = new System.Drawing.Point(127, 55);
+            this.DACOutputCapturePathTextBox.Name = "DACOutputCapturePathTextBox";
+            this.DACOutputCapturePathTextBox.Size = new System.Drawing.Size(110, 20);
+            this.DACOutputCapturePathTextBox.TabIndex = 2;
+            // 
+            // BrowseButton
+            // 
+            this.BrowseButton.Location = new System.Drawing.Point(251, 53);
+            this.BrowseButton.Name = "BrowseButton";
+            this.BrowseButton.Size = new System.Drawing.Size(75, 23);
+            this.BrowseButton.TabIndex = 3;
+            this.BrowseButton.Text = "Browse...";
+            this.BrowseButton.UseVisualStyleBackColor = true;
+            this.BrowseButton.Click += new System.EventHandler(this.BrowseButton_Click);
             // 
             // SystemOptions
             // 
@@ -320,6 +403,10 @@
             this.HostInterfaceGroupBox.PerformLayout();
             this.tabPage3.ResumeLayout(false);
             this.tabPage3.PerformLayout();
+            this.tabPage4.ResumeLayout(false);
+            this.tabPage4.PerformLayout();
+            this.DACOptionsGroupBox.ResumeLayout(false);
+            this.DACOptionsGroupBox.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -348,5 +435,12 @@
         private System.Windows.Forms.RadioButton UDPRadioButton;
         private System.Windows.Forms.RadioButton NoEncapsulationRadioButton;
         private System.Windows.Forms.RadioButton AltoI1KROMRadioButton;
+        private System.Windows.Forms.TabPage tabPage4;
+        private System.Windows.Forms.GroupBox DACOptionsGroupBox;
+        private System.Windows.Forms.CheckBox EnableDACCheckBox;
+        private System.Windows.Forms.CheckBox EnableDACCaptureCheckBox;
+        private System.Windows.Forms.Button BrowseButton;
+        private System.Windows.Forms.TextBox DACOutputCapturePathTextBox;
+        private System.Windows.Forms.Label label2;
     }
 }

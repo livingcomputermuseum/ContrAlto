@@ -125,7 +125,7 @@ namespace Contralto
             _otherRegs.Rows[1].Cells[1].Value = Conversion.ToOctal(_system.CPU.T, 6);
             _otherRegs.Rows[2].Cells[1].Value = Conversion.ToOctal(_system.CPU.M, 6);
             _otherRegs.Rows[3].Cells[1].Value = Conversion.ToOctal(_system.CPU.IR, 6);
-            _otherRegs.Rows[4].Cells[1].Value = Conversion.ToOctal(_system.CPU.ALUC0, 1);            
+            _otherRegs.Rows[4].Cells[1].Value = Conversion.ToOctal(_system.CPU.ALUC0, 1);
             _otherRegs.Rows[5].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.MAR, 6);
             _otherRegs.Rows[6].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.MDLow, 6);
             _otherRegs.Rows[7].Cells[1].Value = Conversion.ToOctal(_system.MemoryBus.MDHigh, 6);
@@ -241,13 +241,13 @@ namespace Contralto
             _memoryData.RowCount = 65536;
             _ram0SourceViewer.RowCount = 1024;
             _ram1SourceViewer.RowCount = 1024;
-            _ram2SourceViewer.RowCount = 1024;            
+            _ram2SourceViewer.RowCount = 1024;
 
             _otherRegs.Rows.Add("L", "0");
             _otherRegs.Rows.Add("T", "0");
             _otherRegs.Rows.Add("M", "0");
             _otherRegs.Rows.Add("IR", "0");
-            _otherRegs.Rows.Add("ALUC0", "0");            
+            _otherRegs.Rows.Add("ALUC0", "0");
             _otherRegs.Rows.Add("MAR", "0");
             _otherRegs.Rows.Add("←MDL", "0");
             _otherRegs.Rows.Add("←MDH", "0");
@@ -279,7 +279,7 @@ namespace Contralto
                 sb.AppendFormat("{0}:{1} {2}\r\n",
                     Conversion.ToOctal(i, 6),
                    _memoryData.Rows[i].Cells[2].Value,
-                   _memoryData.Rows[i].Cells[3].Value);                
+                   _memoryData.Rows[i].Cells[3].Value);
             }
 
             Clipboard.SetText(sb.ToString());
@@ -583,7 +583,7 @@ namespace Contralto
             string[] taskText =
             {
                 "EM",   // 0 - emulator
-                String.Empty,
+                "OR",   // 1 - orbit
                 String.Empty,
                 String.Empty,
                 "KS",   // 4 - disk sector
@@ -615,7 +615,7 @@ namespace Contralto
             Color[] taskColors =
             {
                 Color.LightBlue,    // 0 - emulator
-                Color.LightGray,    // 1 - unused
+                Color.LightGoldenrodYellow,    // 1 - orbit
                 Color.LightGray,    // 2 - unused
                 Color.LightGray,    // 3 - unused
                 Color.LightGreen,   // 4 - disk sector
@@ -671,6 +671,10 @@ namespace Contralto
                     {
                         case "EM":
                             Task = TaskType.Emulator;
+                            break;
+
+                        case "OR":
+                            Task = TaskType.Orbit;
                             break;
 
                         case "SE":

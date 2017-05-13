@@ -195,6 +195,29 @@ namespace Contralto.CPU
     }
 
     /// <summary>
+    /// Orbit (print rasterizer) from OrbitGuide.press
+    /// </summary>
+    enum OrbitF1
+    {
+        OrbitBlock = 3,
+        OrbitDeltaWC = 12,
+        OrbitDBCWidthRead = 13,
+        OrbitOutputData = 14,
+        OrbitStatus = 15,
+    }
+
+    enum OrbitF2
+    {
+        OrbitDBCWidthSet = 8,
+        OrbitXY = 9,
+        OrbitHeight = 10,
+        OrbitFontData = 11,
+        OrbitInk = 12,
+        OrbitControl = 13,
+        OrbitROSCommand = 14,
+    }
+
+    /// <summary>
     /// MicroInstruction encapsulates the decoding of a microinstruction word.
     /// It also caches precomputed metadata related to the microinstruction that
     /// help speed microcode execution.

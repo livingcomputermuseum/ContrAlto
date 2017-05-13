@@ -25,6 +25,7 @@ namespace Contralto.CPU
     {
         Invalid = -1,
         Emulator = 0,
+        Orbit = 1,
         DiskSector = 4,
         Ethernet = 7,
         MemoryRefresh = 8,
@@ -52,6 +53,7 @@ namespace Contralto.CPU
             _tasks[(int)TaskType.MemoryRefresh] = new MemoryRefreshTask(this);
             _tasks[(int)TaskType.Ethernet] = new EthernetTask(this);
             _tasks[(int)TaskType.Parity] = new ParityTask(this);
+            _tasks[(int)TaskType.Orbit] = new OrbitTask(this);
 
             Reset();
         }
@@ -151,9 +153,9 @@ namespace Contralto.CPU
                     if (_currentTask != _nextTask)
                     {
                         _currentTask = _nextTask;
-                        _currentTask.FirstInstructionAfterSwitch = true;                                            
-                        _currentTask.OnTaskSwitch();                        
-                    }                                              
+                        _currentTask.FirstInstructionAfterSwitch = true;
+                        _currentTask.OnTaskSwitch();
+                    }
                     break;
 
                 case InstructionCompletion.MemoryWait:
@@ -198,7 +200,7 @@ namespace Contralto.CPU
             // Unsure if there is a deeper issue here or if there are other reset semantics
             // in play that are not understood.
             //
-            WakeupTask(CPU.TaskType.DiskSector);                      
+            WakeupTask(CPU.TaskType.DiskSector);
         }
 
         /// <summary>

@@ -88,7 +88,7 @@ namespace Contralto.CPU
                 {
                     case EmulatorF1.RSNF:
                         //   
-                        // Early:                     
+                        // Early:
                         // "...decoded by the Ethernet interface, which gates the host address wired on the
                         // backplane onto BUS[8-15].  BUS[0-7] is not driven and will therefore be -1.  If
                         // no Ethernet interface is present, BUS will be -1.
@@ -122,7 +122,7 @@ namespace Contralto.CPU
                         break;
 
                     case EmulatorF1.STARTF:
-                        // Dispatch function to Ethernet I/O based on contents of AC0.                        
+                        // Dispatch function to Ethernet I/O based on contents of AC0.
                         if ((_busData & 0x8000) != 0)
                         {
                             // 
@@ -134,28 +134,35 @@ namespace Contralto.CPU
                             // field at the end of the cycle, setting this flag causes the main Task
                             // implementation to skip updating _mpc at the end of this instruction.
                             _softReset = true;
-                        }                        
+                        }
                         else if(_busData != 0)
                         {
                             //
                             // Dispatch to the appropriate device.
-                            // The Ethernet controller is the only common device that is documented
-                            // to have used STARTF, so we'll just go there directly; if other
-                            // hardware is determined to be worth emulating we'll put together a more flexible dispatch.
                             //
-                            if (_busData < 4)
+                            switch(_busData)
                             {
-                                _cpu._system.EthernetController.STARTF(_busData);
-                            }
-                            else
-                            {
-                                Log.Write(Logging.LogType.Warning, Logging.LogComponent.EmulatorTask, "STARTF for non-Ethernet device (code {0})",
-                                    Conversion.ToOctal(_busData));                                
+                                case 1:
+                                case 2:
+                                case 3:
+                                    // Ethernet
+                                    _cpu._system.EthernetController.STARTF(_busData);
+                                    break;
+
+                                case 4:
+                                    // Orbit
+                                    _cpu._system.OrbitController.STARTF(_busData);
+                                    break;
+
+                                default:
+                                    Log.Write(Logging.LogType.Warning, Logging.LogComponent.EmulatorTask, "STARTF for non-Ethernet device (code {0})",
+                                        Conversion.ToOctal(_busData));
+                                    break;
                             }
                         }
                         break;
 
-                    case EmulatorF1.SWMODE:                        
+                    case EmulatorF1.SWMODE:
                         _swMode = true;
                         break;
 
@@ -167,14 +174,14 @@ namespace Contralto.CPU
                         _wrtRam = true;
                         break;
 
-                    case EmulatorF1.LoadESRB:                        
+                    case EmulatorF1.LoadESRB:
                         _rb = (ushort)((_busData & 0xe) >> 1);
 
                         if (_rb != 0 && _systemType != SystemType.ThreeKRam)
                         {
                             // Force bank 0 for machines with only 1K RAM.
-                            _rb = 0;                            
-                        }                        
+                            _rb = 0;
+                        }
                         break;
 
                     default:

@@ -145,13 +145,13 @@ namespace Contralto.IO
             }
 
             AltoKeyBit bits = _keyMap[key];
-            _keyWords[bits.Word] |= _keyMap[key].Bitmask;
+            _keyWords[bits.Word] |= bits.Bitmask;
         }
 
         public void KeyUp(AltoKey key)
         {
             AltoKeyBit bits = _keyMap[key];
-            _keyWords[bits.Word] &= (ushort)~_keyMap[key].Bitmask;
+            _keyWords[bits.Word] &= (ushort)~bits.Bitmask;
         }
 
         public void PressBootKeys(ushort bootAddress, bool netBoot)

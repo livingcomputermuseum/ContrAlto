@@ -20,6 +20,7 @@ using PcapDotNet.Core;
 using PcapDotNet.Core.Extensions;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.NetworkInformation;
 using System.Windows.Forms;
 
@@ -40,6 +41,9 @@ namespace Contralto.UI
         /// </summary>
         private void PopulateUI()
         {
+            //
+            // System Tab
+            //
             _selectedSystemType = Configuration.SystemType;            
             _selectedInterfaceType = Configuration.HostPacketInterfaceType;
 
@@ -62,9 +66,15 @@ namespace Contralto.UI
                     break;
             }
 
+            //
+            // Display Tab
+            //
             InterlaceDisplayCheckBox.Checked = Configuration.InterlaceDisplay;
             ThrottleSpeedCheckBox.Checked = Configuration.ThrottleSpeed;
 
+            //
+            // Ethernet Tab
+            //
             AltoEthernetAddressTextBox.Text = Conversion.ToOctal(Configuration.HostAddress);
 
             if (!Configuration.HostRawEthernetInterfacesAvailable)
@@ -94,7 +104,16 @@ namespace Contralto.UI
                     break;
             }                                                    
 
-            PopulateNetworkAdapterList(Configuration.HostPacketInterfaceType);                       
+            PopulateNetworkAdapterList(Configuration.HostPacketInterfaceType);
+
+            //
+            // DAC Tab
+            //
+            EnableDACCheckBox.Checked = Configuration.EnableAudioDAC;
+            DACOptionsGroupBox.Enabled = Configuration.EnableAudioDAC;
+
+            DACOutputCapturePathTextBox.Text = Configuration.AudioDACCapturePath;
+            EnableDACCaptureCheckBox.Checked = Configuration.EnableAudioDACCapture;
         }
 
         private void PopulateNetworkAdapterList(PacketInterfaceType encapType)
@@ -249,7 +268,18 @@ namespace Contralto.UI
 
             // Display
             Configuration.InterlaceDisplay = InterlaceDisplayCheckBox.Checked;
-            Configuration.ThrottleSpeed = ThrottleSpeedCheckBox.Checked;            
+            Configuration.ThrottleSpeed = ThrottleSpeedCheckBox.Checked;
+
+            // DAC
+            Configuration.EnableAudioDAC = EnableDACCheckBox.Checked;
+            Configuration.EnableAudioDACCapture = EnableDACCaptureCheckBox.Checked;
+            Configuration.AudioDACCapturePath = DACOutputCapturePathTextBox.Text;
+
+            // Validate that the output folder exists, if not, warn the user
+            if (Configuration.EnableAudioDACCapture && !Directory.Exists(Configuration.AudioDACCapturePath))
+            {
+                MessageBox.Show("Warning: the specified DAC output capture path does not exist or is inaccessible.");
+            }
 
             this.Close();
 
@@ -263,6 +293,37 @@ namespace Contralto.UI
         private PacketInterfaceType _selectedInterfaceType;
         private SystemType _selectedSystemType;
 
+        private void BrowseButton_Click(object sender, EventArgs e)
+        {
+            BrowseForDACOutputFolder();
+        }
 
+        private void BrowseForDACOutputFolder()
+        {
+            FolderBrowserDialog folderDialog = new FolderBrowserDialog();
+            folderDialog.Description = "Choose a folder to store captured DAC audio.";
+            folderDialog.ShowNewFolderButton = true;
+
+            if (folderDialog.ShowDialog() == DialogResult.OK)
+            {
+                DACOutputCapturePathTextBox.Text = folderDialog.SelectedPath;
+            }
+        }
+
+        private void OnEnableDACCheckboxChanged(object sender, EventArgs e)
+        {
+            DACOptionsGroupBox.Enabled = Configuration.EnableAudioDAC;
+        }
+
+        private void EnableDACCaptureCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (EnableDACCaptureCheckBox.Checked == true && String.IsNullOrWhiteSpace(DACOutputCapturePathTextBox.Text))
+            {
+                //
+                // When enabled and no output folder is set, force the user to choose an output folder.
+                //
+                BrowseForDACOutputFolder();
+            }
+        }
     }
 }

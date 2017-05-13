@@ -494,8 +494,9 @@ namespace Contralto.CPU
                 {
                     _cpu._l = aluData;
 
-                    // Only RAM-related tasks can modify M.  (Currently only the Emulator.)
-                    if (_taskType == TaskType.Emulator)
+                    // Only RAM-related tasks can modify M.
+                    if (_taskType == TaskType.Emulator ||
+                        _taskType == TaskType.Orbit)
                     {
                         _cpu._m = aluData;
                     }

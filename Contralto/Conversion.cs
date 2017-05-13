@@ -40,7 +40,7 @@ namespace Contralto
 
         public static string ToOctal(int i, int digits)
         {
-            string octalString = Convert.ToString(i, 8);            
+            string octalString = Convert.ToString(i, 8);
             return new String('0', digits - octalString.Length) + octalString;
         }
 
@@ -48,6 +48,11 @@ namespace Contralto
         /// Conversion from millseconds to nanoseconds
         /// </summary>
         public static readonly ulong MsecToNsec = 1000000;
+
+        /// <summary>
+        /// Conversion from nanoseconds to milliseconds
+        /// </summary>
+        public static readonly double NsecToMsec = 0.000001;
 
         /// <summary>
         /// Conversion from microseconds to nanoseconds

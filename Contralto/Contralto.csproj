@@ -94,6 +94,10 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NAudio, Version=1.8.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.1.8.0\lib\net35\NAudio.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="PcapDotNet.Base, Version=1.0.2.21699, Culture=neutral, PublicKeyToken=4b6f3e583145a652, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>pcap\PcapDotNet.Base.dll</HintPath>
@@ -121,8 +125,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CPU\Tasks\OrbitTask.cs" />
     <Compile Include="HighResTimer.cs" />
-    <Compile Include="IO\Music.cs" />
+    <Compile Include="IO\DoverROS.cs" />
+    <Compile Include="IO\AudioDAC.cs" />
+    <Compile Include="IO\OrbitController.cs" />
+    <Compile Include="IO\OrganKeyboard.cs" />
     <Compile Include="IO\UDPEncapsulation.cs" />
     <Compile Include="IO\IPacketEncapsulation.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -271,6 +279,7 @@
     <None Include="Disk\xmst76.dsk44">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

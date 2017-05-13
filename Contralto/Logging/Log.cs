@@ -45,7 +45,10 @@ namespace Contralto.Logging
         HostNetworkInterface = 0x2000,
         EthernetPacket = 0x4000,
         Configuration = 0x8000,
-        Music = 0x10000,
+        DAC = 0x10000,
+        Organ = 0x20000,
+        Orbit = 0x40000,
+        DoverROS = 0x80000,
 
         Debug = 0x40000000,
         All =   0x7fffffff
@@ -73,7 +76,7 @@ namespace Contralto.Logging
         static Log()
         {
             // TODO: make configurable
-            _components = LogComponent.None; // LogComponent.HostNetworkInterface | LogComponent.EthernetPacket; // | LogComponent.HostEthernet | LogComponent.EthernetController; // LogComponent.DiskController | LogComponent.DiskSectorTask | LogComponent.Debug | LogComponent.CPU; // LogComponent.EthernetController; // | LogComponent.Microcode | LogComponent.Memory | LogComponent.CPU;
+            _components = LogComponent.DAC;
             _type = LogType.Normal | LogType.Warning | LogType.Error | LogType.Verbose;
 
             //_logStream = new StreamWriter("log.txt");

@@ -185,6 +185,21 @@ namespace Contralto
         /// </summary>
         public static bool ThrottleSpeed;
 
+        /// <summary>
+        /// Whether to enable the DAC used for the Smalltalk music system.
+        /// </summary>
+        public static bool EnableAudioDAC;
+
+        /// <summary>
+        /// Whether to enable capture of the DAC output to file.
+        /// </summary>
+        public static bool EnableAudioDACCapture;
+
+        /// <summary>
+        /// The path to store DAC capture (if enabled).
+        /// </summary>
+        public static string AudioDACCapturePath;
+
         public static string GetAltoIRomPath(string romFileName)
         {
             return Path.Combine("ROM", "AltoI", romFileName);               
@@ -198,7 +213,7 @@ namespace Contralto
         public static string GetRomPath(string romFileName)
         {
             return Path.Combine("ROM", romFileName);
-        }        
+        }       
 
         /// <summary>
         /// Reads the current configuration file from the app's configuration.
@@ -218,6 +233,9 @@ namespace Contralto
             BootFile = (ushort)Properties.Settings.Default["BootFile"];
             InterlaceDisplay = (bool)Properties.Settings.Default["InterlaceDisplay"];
             ThrottleSpeed = (bool)Properties.Settings.Default["ThrottleSpeed"];
+            EnableAudioDAC = (bool)Properties.Settings.Default["EnableAudioDAC"];
+            EnableAudioDACCapture = (bool)Properties.Settings.Default["EnableAudioDACCapture"];
+            AudioDACCapturePath = (string)Properties.Settings.Default["AudioDACCapturePath"];
         }
 
         /// <summary>
@@ -236,6 +254,9 @@ namespace Contralto
             Properties.Settings.Default["BootFile"] = BootFile;
             Properties.Settings.Default["InterlaceDisplay"] = InterlaceDisplay;
             Properties.Settings.Default["ThrottleSpeed"] = ThrottleSpeed;
+            Properties.Settings.Default["EnableAudioDAC"] = EnableAudioDAC;
+            Properties.Settings.Default["EnableAudioDACCapture"] = EnableAudioDACCapture;
+            Properties.Settings.Default["AudioDACCapturePath"] = AudioDACCapturePath;
 
             Properties.Settings.Default.Save();
         }

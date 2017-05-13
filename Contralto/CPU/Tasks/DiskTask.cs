@@ -16,7 +16,6 @@
 */
 
 using Contralto.IO;
-using Contralto.Logging;
 using System;
 
 namespace Contralto.CPU
@@ -100,7 +99,7 @@ namespace Contralto.CPU
 
                     case DiskF1.LoadKSTAT:
                         // "KSTAT[12-15] are loaded from BUS[12-15].  (Actually BUS[13] is ORed onto
-                        //  KSTAT[13].)"                        
+                        //  KSTAT[13].)"
                         
                         // From the schematic (and ucode source, based on the values it actually uses for BUS[13]), BUS[13]
                         // is also inverted.  So there's that, too.
@@ -109,7 +108,7 @@ namespace Contralto.CPU
                         int modifiedBusData = (_busData & 0xb) | ((~_busData) & 0x4);
 
                         // OR in BUS[12-15] after masking in KSTAT[13] so it is ORed in properly.    
-                        _diskController.KSTAT = (ushort)(((_diskController.KSTAT & 0xfff4)) | modifiedBusData);                                               
+                        _diskController.KSTAT = (ushort)(((_diskController.KSTAT & 0xfff4)) | modifiedBusData);
                         break;
 
                     case DiskF1.STROBE:
@@ -127,9 +126,9 @@ namespace Contralto.CPU
 
                 switch (df2)
                 {
-                    case DiskF2.INIT:                        
-                        _nextModifier |= GetInitModifier();                        
-                        break;                                          
+                    case DiskF2.INIT:
+                        _nextModifier |= GetInitModifier();
+                        break;
 
                     case DiskF2.RWC:
                         // "NEXT<-NEXT OR (IF current record to be written THEN 3 ELSE IF
