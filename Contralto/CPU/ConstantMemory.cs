@@ -178,18 +178,18 @@ namespace Contralto.CPU
        
         private static RomFile[] _constantRomsAltoI =
            {
-                new RomFile(Configuration.GetAltoIRomPath("c0_23.BIN"), 0x000, 12),
-                new RomFile(Configuration.GetAltoIRomPath("c1_23.BIN"), 0x000, 8),
-                new RomFile(Configuration.GetAltoIRomPath("c2_23.BIN"), 0x000, 4),
-                new RomFile(Configuration.GetAltoIRomPath("c3_23.BIN"), 0x000, 0),
+                new RomFile(Configuration.GetAltoIRomPath("C0_23.BIN"), 0x000, 12),
+                new RomFile(Configuration.GetAltoIRomPath("C1_23.BIN"), 0x000, 8),
+                new RomFile(Configuration.GetAltoIRomPath("C2_23.BIN"), 0x000, 4),
+                new RomFile(Configuration.GetAltoIRomPath("C3_23.BIN"), 0x000, 0),
             };
 
         private static RomFile[] _constantRomsAltoII =
             {
-                new RomFile(Configuration.GetAltoIIRomPath("c0"), 0x000, 12),
-                new RomFile(Configuration.GetAltoIIRomPath("c1"), 0x000, 8),
-                new RomFile(Configuration.GetAltoIIRomPath("c2"), 0x000, 4),
-                new RomFile(Configuration.GetAltoIIRomPath("c3"), 0x000, 0),
+                new RomFile(Configuration.GetAltoIIRomPath("C0"), 0x000, 12),
+                new RomFile(Configuration.GetAltoIIRomPath("C1"), 0x000, 8),
+                new RomFile(Configuration.GetAltoIIRomPath("C2"), 0x000, 4),
+                new RomFile(Configuration.GetAltoIIRomPath("C3"), 0x000, 0),
             };
 
         private static RomFile _acSourceRoms = new RomFile(Configuration.GetRomPath("ACSOURCE.NEW"), 0x000, 0);

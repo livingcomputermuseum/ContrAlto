@@ -30,6 +30,12 @@ namespace Contralto.Display
     public interface IAltoDisplay
     {
         /// <summary>
+        /// Attach the AltoSystem to this display instance.
+        /// </summary>
+        /// <param name="system"></param>
+        void AttachSystem(AltoSystem system);
+
+        /// <summary>
         /// Renders a word's worth of data to the specified scanline and word offset.
         /// </summary>
         /// <param name="scanline"></param>

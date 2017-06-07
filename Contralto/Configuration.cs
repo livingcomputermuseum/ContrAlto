@@ -18,6 +18,7 @@
 using Contralto.Logging;
 using System;
 using System.IO;
+using System.Reflection;
 
 namespace Contralto
 {
@@ -86,13 +87,13 @@ namespace Contralto
     {
         static Configuration()
         {
-            // Initialize things to defaults.            
+            // Initialize things to defaults.
             HostAddress = 0x22;
             
             BootAddress = 0;
             BootFile = 0;
 
-            SystemType = SystemType.TwoKRom;
+            SystemType = SystemType.OneKRom;
 
             InterlaceDisplay = false;
 
@@ -202,7 +203,7 @@ namespace Contralto
 
         public static string GetAltoIRomPath(string romFileName)
         {
-            return Path.Combine("ROM", "AltoI", romFileName);               
+            return Path.Combine("ROM", "AltoI", romFileName);
         }
 
         public static string GetAltoIIRomPath(string romFileName)
@@ -216,26 +217,29 @@ namespace Contralto
         }       
 
         /// <summary>
-        /// Reads the current configuration file from the app's configuration.
-        /// 
-        /// TODO: use reflection to do this.
+        /// Reads the current configuration file from the appropriate place.
         /// </summary>
         public static void ReadConfiguration()
-        {
-            Drive0Image = (string)Properties.Settings.Default["Drive0Image"];
-            Drive1Image = (string)Properties.Settings.Default["Drive1Image"];            
-            SystemType = (SystemType)Properties.Settings.Default["SystemType"];
-            HostAddress = (byte)Properties.Settings.Default["HostAddress"];
-            HostPacketInterfaceName = (string)Properties.Settings.Default["HostPacketInterfaceName"];
-            HostPacketInterfaceType = (PacketInterfaceType)Properties.Settings.Default["HostPacketInterfaceType"];
-            AlternateBootType = (AlternateBootType)Properties.Settings.Default["AlternateBootType"];
-            BootAddress = (ushort)Properties.Settings.Default["BootAddress"];
-            BootFile = (ushort)Properties.Settings.Default["BootFile"];
-            InterlaceDisplay = (bool)Properties.Settings.Default["InterlaceDisplay"];
-            ThrottleSpeed = (bool)Properties.Settings.Default["ThrottleSpeed"];
-            EnableAudioDAC = (bool)Properties.Settings.Default["EnableAudioDAC"];
-            EnableAudioDACCapture = (bool)Properties.Settings.Default["EnableAudioDACCapture"];
-            AudioDACCapturePath = (string)Properties.Settings.Default["AudioDACCapturePath"];
+        {            
+            if (Configuration.Platform == PlatformType.Windows
+                && Program.StartupArgs.Length == 0)
+            {
+                //
+                // By default, on Windows we use the app Settings functionality
+                // to store settings in the registry on a per-user basis.
+                // If a configuration file is specified, we will use it instead.
+                //
+                ReadConfigurationWindows();
+            }
+            else
+            {
+                //
+                // On UNIX platforms we read in a configuration file.
+                // This is mostly because Mono's support for Properties.Settings
+                // is broken in inexplicable ways and I'm tired of fighting with it.
+                //
+                ReadConfigurationUnix();
+            }
         }
 
         /// <summary>
@@ -243,22 +247,220 @@ namespace Contralto
         /// </summary>
         public static void WriteConfiguration()
         {
-            Properties.Settings.Default["Drive0Image"] = Drive0Image;
-            Properties.Settings.Default["Drive1Image"] = Drive1Image;
-            Properties.Settings.Default["SystemType"] = (int)SystemType;
-            Properties.Settings.Default["HostAddress"] = HostAddress;
-            Properties.Settings.Default["HostPacketInterfaceName"] = HostPacketInterfaceName;
-            Properties.Settings.Default["HostPacketInterfaceType"] = (int)HostPacketInterfaceType;
-            Properties.Settings.Default["AlternateBootType"] = (int)AlternateBootType;
-            Properties.Settings.Default["BootAddress"] = BootAddress;
-            Properties.Settings.Default["BootFile"] = BootFile;
-            Properties.Settings.Default["InterlaceDisplay"] = InterlaceDisplay;
-            Properties.Settings.Default["ThrottleSpeed"] = ThrottleSpeed;
-            Properties.Settings.Default["EnableAudioDAC"] = EnableAudioDAC;
-            Properties.Settings.Default["EnableAudioDACCapture"] = EnableAudioDACCapture;
-            Properties.Settings.Default["AudioDACCapturePath"] = AudioDACCapturePath;
+            if (Configuration.Platform == PlatformType.Windows)
+            {
+                WriteConfigurationWindows();
+            }
+            else
+            {
+                //
+                // At the moment the configuration files are read-only
+                // on UNIX platforms.
+                //
+            }
+        }
 
+        private static void ReadConfigurationWindows()
+        {
+            Properties.Settings.Default.AudioDACCapturePath = Properties.Settings.Default.AudioDACCapturePath;
+            Drive0Image = Properties.Settings.Default.Drive0Image;
+            Drive1Image = Properties.Settings.Default.Drive1Image;
+            SystemType = (SystemType)Properties.Settings.Default.SystemType;
+            HostAddress = Properties.Settings.Default.HostAddress;
+            HostPacketInterfaceName = Properties.Settings.Default.HostPacketInterfaceName;
+            HostPacketInterfaceType = (PacketInterfaceType)Properties.Settings.Default.HostPacketInterfaceType;
+            AlternateBootType = (AlternateBootType)Properties.Settings.Default.AlternateBootType;
+            BootAddress = Properties.Settings.Default.BootAddress;
+            BootFile = Properties.Settings.Default.BootFile;
+            InterlaceDisplay = Properties.Settings.Default.InterlaceDisplay;
+            ThrottleSpeed = Properties.Settings.Default.ThrottleSpeed;
+            EnableAudioDAC = Properties.Settings.Default.EnableAudioDAC;
+            EnableAudioDACCapture = Properties.Settings.Default.EnableAudioDACCapture;
+            AudioDACCapturePath = Properties.Settings.Default.AudioDACCapturePath;
+        }
+
+        private static void WriteConfigurationWindows()
+        {
+            Properties.Settings.Default.Drive0Image = Drive0Image;
+            Properties.Settings.Default.Drive1Image = Drive1Image;
+            Properties.Settings.Default.SystemType = (int)SystemType;
+            Properties.Settings.Default.HostAddress = HostAddress;
+            Properties.Settings.Default.HostPacketInterfaceName = HostPacketInterfaceName;
+            Properties.Settings.Default.HostPacketInterfaceType = (int)HostPacketInterfaceType;
+            Properties.Settings.Default.AlternateBootType = (int)AlternateBootType;
+            Properties.Settings.Default.BootAddress = BootAddress;
+            Properties.Settings.Default.BootFile = BootFile;
+            Properties.Settings.Default.InterlaceDisplay = InterlaceDisplay;
+            Properties.Settings.Default.ThrottleSpeed = ThrottleSpeed;
+            Properties.Settings.Default.EnableAudioDAC = EnableAudioDAC;
+            Properties.Settings.Default.EnableAudioDACCapture = EnableAudioDACCapture;
+            Properties.Settings.Default.AudioDACCapturePath = AudioDACCapturePath;
+            Properties.Settings.Default.AudioDACCapturePath = Properties.Settings.Default.AudioDACCapturePath;
             Properties.Settings.Default.Save();
+        }
+
+        private static void ReadConfigurationUnix()
+        {
+            string configFilePath = null;
+
+            if (Program.StartupArgs.Length > 0)
+            {
+                configFilePath = Program.StartupArgs[0];
+            }
+            else
+            {
+                // No config file specified, default.
+                configFilePath = "Contralto.cfg";
+            }
+
+            //
+            // Check that the configuration file exists.
+            // If not, we will warn the user and use default settings.
+            //
+            if (!File.Exists(configFilePath))
+            {
+                Console.WriteLine("Configuration file {0} does not exist or cannot be accessed.  Using default settings.", configFilePath);
+                return;
+            }
+
+            using (StreamReader configStream = new StreamReader(configFilePath))
+            {
+                //
+                // Config file consists of text lines containing name / value pairs:
+                //      <Name>=<Value>
+                // Whitespace is ignored.
+                //
+                int lineNumber = 0;
+                while (!configStream.EndOfStream)
+                {
+                    lineNumber++;
+                    string line = configStream.ReadLine().Trim();
+
+                    if (string.IsNullOrEmpty(line))
+                    {
+                        // Empty line, ignore.
+                        continue;
+                    }
+
+                    if (line.StartsWith("#"))
+                    {
+                        // Comment to EOL, ignore.
+                        continue;
+                    }
+
+                    // Find the '=' separating tokens and ensure there are just two.
+                    string[] tokens = line.Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    if (tokens.Length < 2)
+                    {
+                        Console.WriteLine(
+                            "{0} line {1}: Invalid syntax.", configFilePath, lineNumber);
+                        continue;
+                    }
+
+                    string parameter = tokens[0].Trim();
+                    string value = tokens[1].Trim();
+
+                    // Reflect over the public, static properties in this class and see if the parameter matches one of them
+                    // If not, it's an error, if it is then we attempt to coerce the value to the correct type.
+                    System.Reflection.FieldInfo[] info = typeof(Configuration).GetFields(BindingFlags.Public | BindingFlags.Static);
+
+                    bool bMatch = false;
+                    foreach (FieldInfo field in info)
+                    {
+                        // Case-insensitive compare.
+                        if (field.Name.ToLowerInvariant() == parameter.ToLowerInvariant())
+                        {
+                            bMatch = true;
+
+                            //
+                            // Switch on the type of the field and attempt to convert the value to the appropriate type.
+                            // At this time we support only strings and integers.
+                            //
+                            try
+                            {
+                                switch (field.FieldType.Name)
+                                {
+                                    case "Int32":
+                                        {
+                                            int v = Convert.ToInt32(value, 8);
+                                            field.SetValue(null, v);
+                                        }
+                                        break;
+
+                                    case "UInt16":
+                                        {
+                                            UInt16 v = Convert.ToUInt16(value, 8);
+                                            field.SetValue(null, v);
+                                        }
+                                        break;
+
+                                    case "Byte":
+                                        {
+                                            byte v = Convert.ToByte(value, 8);
+                                            field.SetValue(null, v);
+                                        }
+                                        break;
+
+                                    case "String":
+                                        {
+                                            field.SetValue(null, value);
+                                        }
+                                        break;
+
+                                    case "Boolean":
+                                        {
+                                            bool v = bool.Parse(value);
+                                            field.SetValue(null, v);
+                                        }
+                                        break;
+
+                                    case "SystemType":
+                                        {
+                                            field.SetValue(null, Enum.Parse(typeof(SystemType), value, true));
+                                        }
+                                        break;
+
+                                    case "PacketInterfaceType":
+                                        {
+                                            field.SetValue(null, Enum.Parse(typeof(PacketInterfaceType), value, true));
+                                        }
+                                        break;
+
+                                    case "AlternateBootType":
+                                        {
+                                            field.SetValue(null, Enum.Parse(typeof(AlternateBootType), value, true));
+                                        }
+                                        break;
+
+                                    case "LogType":
+                                        {
+                                            field.SetValue(null, Enum.Parse(typeof(LogType), value, true));
+                                        }
+                                        break;
+
+                                    case "LogComponent":
+                                        {
+                                            field.SetValue(null, Enum.Parse(typeof(LogComponent), value, true));
+                                        }
+                                        break;
+                                }
+                            }
+                            catch
+                            {
+                                Console.WriteLine(
+                                    "{0} line {1}: Value '{2}' is invalid for parameter '{3}'.", configFilePath, lineNumber, value, parameter);
+                            }
+                        }
+                    }
+
+                    if (!bMatch)
+                    {
+                        Console.WriteLine(
+                            "{0} line {1}: Unknown configuration parameter '{2}'.", configFilePath, lineNumber, parameter);
+                    }
+                }
+            }
         }
     }
 

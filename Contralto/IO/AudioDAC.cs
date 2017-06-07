@@ -82,8 +82,12 @@ namespace Contralto.IO
         /// <param name="data"></param>
         public void Load(int address, ushort data, TaskType task, bool extendedMemory)
         {
-            if (Configuration.EnableAudioDAC)
-            {               
+            //
+            // This is only supported on Windows platforms at this time.
+            //
+            if (Configuration.EnableAudioDAC &&
+                Configuration.Platform == PlatformType.Windows)
+            {
                 // Ensure we have a sink for audio output capture if so configured.
                 if (Configuration.EnableAudioDACCapture && _waveFile == null)
                 {

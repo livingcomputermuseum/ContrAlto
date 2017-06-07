@@ -107,7 +107,11 @@
         <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Core.dll"/>
         <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Core.Extensions.dll"/>
         <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Packets.dll"/>
-      
+        
+        <!-- SDL2-CS libs - at this time we don't use SDL2 on Windows but the SDL2-CS wrapper
+             still must be present.  -->
+        <File Source="$(var.Contralto.TargetDir)\SDL2-CS.dll"/>
+        
         <!-- NAudio libs -->
         <File Source="$(var.Contralto.TargetDir)\NAudio.dll"/>
       </Component>

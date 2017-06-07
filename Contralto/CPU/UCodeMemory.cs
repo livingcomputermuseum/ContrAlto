@@ -447,24 +447,24 @@ namespace Contralto.CPU
         private static RomFile[] _uCodeRomsAltoII =
        {
             // first K (standard uCode)
-            new RomFile(Configuration.GetAltoIIRomPath("u55"), 0x000, 28),
-            new RomFile(Configuration.GetAltoIIRomPath("u64"), 0x000, 24),
-            new RomFile(Configuration.GetAltoIIRomPath("u65"), 0x000, 20),
-            new RomFile(Configuration.GetAltoIIRomPath("u63"), 0x000, 16),
-            new RomFile(Configuration.GetAltoIIRomPath("u53"), 0x000, 12),
-            new RomFile(Configuration.GetAltoIIRomPath("u60"), 0x000, 8),
-            new RomFile(Configuration.GetAltoIIRomPath("u61"), 0x000, 4),
-            new RomFile(Configuration.GetAltoIIRomPath("u62"), 0x000, 0),
+            new RomFile(Configuration.GetAltoIIRomPath("U55"), 0x000, 28),
+            new RomFile(Configuration.GetAltoIIRomPath("U64"), 0x000, 24),
+            new RomFile(Configuration.GetAltoIIRomPath("U65"), 0x000, 20),
+            new RomFile(Configuration.GetAltoIIRomPath("U63"), 0x000, 16),
+            new RomFile(Configuration.GetAltoIIRomPath("U53"), 0x000, 12),
+            new RomFile(Configuration.GetAltoIIRomPath("U60"), 0x000, 8),
+            new RomFile(Configuration.GetAltoIIRomPath("U61"), 0x000, 4),
+            new RomFile(Configuration.GetAltoIIRomPath("U62"), 0x000, 0),
 
             // second K (MESA 5.0)
-            new RomFile(Configuration.GetAltoIIRomPath("u54"), 0x400, 28),
-            new RomFile(Configuration.GetAltoIIRomPath("u74"), 0x400, 24),
-            new RomFile(Configuration.GetAltoIIRomPath("u75"), 0x400, 20),
-            new RomFile(Configuration.GetAltoIIRomPath("u73"), 0x400, 16),
-            new RomFile(Configuration.GetAltoIIRomPath("u52"), 0x400, 12),
-            new RomFile(Configuration.GetAltoIIRomPath("u70"), 0x400, 8),
-            new RomFile(Configuration.GetAltoIIRomPath("u71"), 0x400, 4),
-            new RomFile(Configuration.GetAltoIIRomPath("u72"), 0x400, 0)
+            new RomFile(Configuration.GetAltoIIRomPath("U54"), 0x400, 28),
+            new RomFile(Configuration.GetAltoIIRomPath("U74"), 0x400, 24),
+            new RomFile(Configuration.GetAltoIIRomPath("U75"), 0x400, 20),
+            new RomFile(Configuration.GetAltoIIRomPath("U73"), 0x400, 16),
+            new RomFile(Configuration.GetAltoIIRomPath("U52"), 0x400, 12),
+            new RomFile(Configuration.GetAltoIIRomPath("U70"), 0x400, 8),
+            new RomFile(Configuration.GetAltoIIRomPath("U71"), 0x400, 4),
+            new RomFile(Configuration.GetAltoIIRomPath("U72"), 0x400, 0)
         };
 
 

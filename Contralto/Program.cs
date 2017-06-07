@@ -16,6 +16,7 @@
 */
 
 using Contralto.IO;
+using Contralto.SdlUI;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
@@ -27,11 +28,22 @@ namespace Contralto
         [STAThread]
         static void Main(string[] args)
         {
+            //
+            // Check for command-line arguments. 
+            // We expect at most one argument, specifying a configuration file to load.
+            //
+            StartupArgs = args;
+            if (args.Length > 1)
+            {
+                Console.WriteLine("usage: Contralto <config file>");
+                return;
+            }
+
             // Handle command-line args
             PrintHerald();
 
             // See if WinPCap is installed and working
-            TestPCap();                   
+            TestPCap();
 
             _system = new AltoSystem();
 
@@ -69,13 +81,32 @@ namespace Contralto
             //
             // Invoke the main UI window; this will run until the user closes it, at which
             // point we are done.
-            //                        
-            using (AltoWindow mainWindow = new AltoWindow())
-            {                
-                mainWindow.AttachSystem(_system);
-                Application.Run(mainWindow);
-            }            
-        } 
+            //
+
+            if (Configuration.Platform == PlatformType.Windows)
+            {
+                using (AltoWindow mainWindow = new AltoWindow())
+                {
+                    mainWindow.AttachSystem(_system);
+                    Application.Run(mainWindow);
+                }
+            }
+            else
+            {
+                using (SdlAltoWindow mainWindow = new SdlAltoWindow())
+                {
+                    // Invoke the command-line console
+                    SdlConsole console = new SdlConsole(_system);
+                    console.Run(mainWindow);
+
+                    // Start the SDL display running.
+                    mainWindow.AttachSystem(_system);
+                    mainWindow.Run();
+                }
+            }
+        }
+
+        public static string[] StartupArgs;
 
         private static void OnProcessExit(object sender, EventArgs e)
         {
@@ -86,6 +117,8 @@ namespace Contralto
             //
             _system.CommitDiskPack(0);
             _system.CommitDiskPack(1);
+            
+            _system.Shutdown();
 
             //
             // Commit current configuration to disk
@@ -96,25 +129,32 @@ namespace Contralto
 
         private static void PrintHerald()
         {
-            Console.WriteLine("ContrAlto v1.1 (c) 2015, 2016 Living Computers: Museum+Labs.");            
+            Console.WriteLine("ContrAlto v1.2 (c) 2015-2017 Living Computers: Museum+Labs.");            
             Console.WriteLine("Bug reports to joshd@livingcomputers.org");
             Console.WriteLine();
         }      
 
         private static void TestPCap()
         {
-            // Just try enumerating interfaces, if this fails for any reason we assume
-            // PCap is not properly installed.
-            try
+            if (Configuration.Platform == PlatformType.Windows)
             {
-                List<EthernetInterface> interfaces = EthernetInterface.EnumerateDevices();
-                Configuration.HostRawEthernetInterfacesAvailable = true;
+                // Just try enumerating interfaces, if this fails for any reason we assume
+                // PCap is not properly installed.
+                try
+                {
+                    List<EthernetInterface> interfaces = EthernetInterface.EnumerateDevices();
+                    Configuration.HostRawEthernetInterfacesAvailable = true;
+                }
+                catch
+                {
+                    Configuration.HostRawEthernetInterfacesAvailable = false;
+                }
             }
-            catch
+            else
             {
-                Configuration.HostRawEthernetInterfacesAvailable = false;                
+                Configuration.HostRawEthernetInterfacesAvailable = false;
             }
-        }       
+        }
 
         private static AltoSystem _system;        
     }
