@@ -364,10 +364,12 @@ namespace Contralto.SdlUI
         private void MouseDown(byte button, int x, int y)
         {
             //
-            // OS X issue: we get mousedown events when the window title
-            // is clicked, sometimes.  So ignore those.
+            // OS X Sierra issue: we get mousedown events when the window title
+            // is clicked, sometimes.  These always show up with a Y coordinate
+            // of zero.  So ignore those only for mouse-capture purposes as
+            // a workaround.
             //
-            if (x < 0 || y < 0)
+            if (!_mouseCaptured && (x <= 0 || y <= 0))
             {
                 return;
             }
