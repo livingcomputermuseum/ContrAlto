@@ -538,7 +538,7 @@ namespace Contralto.SdlUI
             _keyMap.Add(SDL.SDL_Keycode.SDLK_BACKSLASH, AltoKey.BSlash);
             _keyMap.Add(SDL.SDL_Keycode.SDLK_SLASH, AltoKey.FSlash);
             _keyMap.Add(SDL.SDL_Keycode.SDLK_EQUALS, AltoKey.Plus);
-            _keyMap.Add(SDL.SDL_Keycode.SDLK_UNDERSCORE, AltoKey.Minus);
+            _keyMap.Add(SDL.SDL_Keycode.SDLK_MINUS, AltoKey.Minus);
 
             _keyMap.Add(SDL.SDL_Keycode.SDLK_ESCAPE, AltoKey.ESC);
             _keyMap.Add(SDL.SDL_Keycode.SDLK_DELETE, AltoKey.DEL);
