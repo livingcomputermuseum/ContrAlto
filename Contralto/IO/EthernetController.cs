@@ -62,9 +62,10 @@ namespace Contralto.IO
                         break;
                 }
             }
-            catch
-            {
+            catch(Exception e)
+            {                
                 _hostInterface = null;
+                Log.Write(LogComponent.HostNetworkInterface, "Unable to configure network interface.  Error {0}", e.Message);
             }
 
             // More words than the Alto will ever send.

@@ -15,20 +15,18 @@
     along with ContrAlto.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SharpPcap;
+using SharpPcap.WinPcap;
+using SharpPcap.LibPcap;
+using SharpPcap.AirPcap;
+using PacketDotNet;
 
-using PcapDotNet.Base;
-using PcapDotNet.Core;
-using PcapDotNet.Core.Extensions;
-using PcapDotNet.Packets;
-using PcapDotNet.Packets.Ethernet;
-using System.IO;
+using System;
+using System.Net.NetworkInformation;
+
+
 using Contralto.Logging;
-using System.Threading;
+
 
 namespace Contralto.IO
 {
@@ -39,29 +37,17 @@ namespace Contralto.IO
     {
         public EthernetInterface(string name, string description)
         {
-            Name = name;
-            Description = description;            
-        }
-
-        public static List<EthernetInterface> EnumerateDevices()
-        {
-            List<EthernetInterface> interfaces = new List<EthernetInterface>();
-
-            foreach (LivePacketDevice device in LivePacketDevice.AllLocalMachine)
-            {
-                interfaces.Add(new EthernetInterface(device.Name, device.Description));
-            }
-
-            return interfaces;
-        }
+            Name = name;            
+            Description = description;
+        }        
 
         public override string ToString()
         {
             return String.Format("{0} ({1})", Name, Description);
         }
 
-        public string Name;
-        public string Description;        
+        public string Name;        
+        public string Description;
     }    
 
     /// <summary>
@@ -73,20 +59,35 @@ namespace Contralto.IO
     public class HostEthernetEncapsulation : IPacketEncapsulation
     {
         public HostEthernetEncapsulation(string name)
-        {
+        {            
             // Find the specified device by name
-            foreach (LivePacketDevice device in LivePacketDevice.AllLocalMachine)
+            foreach (ICaptureDevice device in CaptureDeviceList.Instance)
             {
-                if (device.GetNetworkInterface().Name.ToLowerInvariant() == Configuration.HostPacketInterfaceName.ToLowerInvariant())
+                if (device is WinPcapDevice)
                 {
-                    AttachInterface(device);
-                    break;                 
+                    //
+                    // We use the friendly name to make it easier to specify in config files.
+                    //
+                    if (((WinPcapDevice)device).Interface.FriendlyName.ToLowerInvariant() == name.ToLowerInvariant())
+                    {
+                        AttachInterface(device);
+                        break;
+                    }
+                }
+                else
+                {
+                    if (device.Name.ToLowerInvariant() == name.ToLowerInvariant())
+                    {
+                        AttachInterface(device);
+                        break;
+                    }
                 }
             }
 
             if (_interface == null)
             {
-                throw new InvalidOperationException("Specified ethernet interface does not exist or is not compatible with WinPCAP.");
+                Log.Write(LogComponent.HostNetworkInterface, "Specified ethernet interface does not exist or is not compatible with ContrAlto.");
+                throw new InvalidOperationException("Specified ethernet interface does not exist or is not compatible with ContrAlto.");
             }
         }
 
@@ -95,20 +96,31 @@ namespace Contralto.IO
             _callback = callback;
 
             // Now that we have a callback we can start receiving stuff.
-            Open(false /* not promiscuous */, int.MaxValue);
+            Open(false /* not promiscuous */, 0);
             BeginReceive();
         }
 
         public void Shutdown()
         {
-            if (_communicator != null)
+            if (_interface != null)
             {
-                _communicator.Break();
-            }
-
-            if (_receiveThread != null)
-            {
-                _receiveThread.Abort();
+                try
+                {
+                    if (_interface.Started)
+                    {
+                        _interface.StopCapture();
+                    }
+                }
+                catch
+                {
+                    // Eat exceptions.  The Pcap libs seem to throw on StopCapture on
+                    // Unix platforms, we don't really care about them (since we're shutting down anyway)
+                    // but this prevents debug spew from appearing on the console.
+                }
+                finally
+                {
+                    _interface.Close();
+                }
             }
         }
 
@@ -159,50 +171,48 @@ namespace Contralto.IO
                 Conversion.ToOctal(destinationHost),
                 length);
 
-            MacAddress destinationMac = new MacAddress(_10mbitBroadcast);
-            MacAddress sourceMac = new MacAddress((UInt48)(_10mbitMACPrefix | Configuration.HostAddress));
+            _10mbitMACPrefix[5] = Configuration.HostAddress;    // Stuff our current Alto host address into the 10mbit MAC
 
-            // Build the outgoing packet; place the source/dest addresses, type field and the raw data.                
-            EthernetLayer ethernetLayer = new EthernetLayer
-            {
-                Source = sourceMac,
-                Destination = destinationMac,
-                EtherType = (EthernetType)_3mbitFrameType,
-            };
+            EthernetPacket p = new EthernetPacket(
+                new PhysicalAddress(_10mbitMACPrefix),          // Source address
+                _10mbitBroadcast,                               // Destnation (broadcast)
+                (EthernetPacketType)_3mbitFrameType);
 
-            PayloadLayer payloadLayer = new PayloadLayer
-            {
-                Data = new Datagram(packetBytes),
-            };
-
-            PacketBuilder builder = new PacketBuilder(ethernetLayer, payloadLayer);
+            p.PayloadData = packetBytes;
 
             // Send it over the 'net!
-            _communicator.SendPacket(builder.Build(DateTime.Now));
+            _interface.SendPacket(p);
 
             Log.Write(LogComponent.HostNetworkInterface, "Encapsulated 3mbit packet sent.");
         }
 
-        private void ReceiveCallback(Packet p)
+        private void ReceiveCallback(object sender, CaptureEventArgs e)
         {
             //
             // Filter out packets intended for the emulator, forward them on, drop everything else.
             //
-            if ((int)p.Ethernet.EtherType == _3mbitFrameType &&                                                 // encapsulated 3mbit frames            
-                (p.Ethernet.Source.ToValue() != (UInt48)(_10mbitMACPrefix | Configuration.HostAddress)))        // and not sent by this emulator                
+            if (e.Packet.LinkLayerType == PacketDotNet.LinkLayers.Ethernet)
             {
-                Log.Write(LogComponent.HostNetworkInterface, "Received encapsulated 3mbit packet.");
-                _callback(p.Ethernet.Payload.ToMemoryStream());
-            }
-            else
-            {
-                // Not for us, discard the packet.                
+                EthernetPacket packet = (EthernetPacket)PacketDotNet.Packet.ParsePacket(PacketDotNet.LinkLayers.Ethernet, e.Packet.Data);
+
+                _10mbitMACPrefix[5] = Configuration.HostAddress;
+
+                if ((int)packet.Type == _3mbitFrameType &&                                                                  // encapsulated 3mbit frames
+                    (packet.SourceHwAddress != new System.Net.NetworkInformation.PhysicalAddress(_10mbitMACPrefix)))        // and not sent by this emulator
+                {
+                    Log.Write(LogComponent.HostNetworkInterface, "Received encapsulated 3mbit packet.");
+                    _callback(new System.IO.MemoryStream(packet.PayloadData));
+                }
+                else
+                {
+                    // Not for us, discard the packet.
+                }
             }
         }
 
-        private void AttachInterface(LivePacketDevice iface)
+        private void AttachInterface(ICaptureDevice iface)
         {
-            _interface = iface;            
+            _interface = iface;
 
             if (_interface == null)
             {
@@ -214,10 +224,18 @@ namespace Contralto.IO
 
         private void Open(bool promiscuous, int timeout)
         {
-            _communicator = _interface.Open(65536, promiscuous ? PacketDeviceOpenAttributes.MaximumResponsiveness | PacketDeviceOpenAttributes.Promiscuous : PacketDeviceOpenAttributes.MaximumResponsiveness, timeout);
-
-            // Set this to 1 so we'll get packets as soon as they arrive, no buffering.
-            _communicator.SetKernelMinimumBytesToCopy(1);
+            if (_interface is WinPcapDevice)
+            {
+                ((WinPcapDevice)_interface).Open(promiscuous ? OpenFlags.MaxResponsiveness | OpenFlags.Promiscuous : OpenFlags.MaxResponsiveness, timeout);
+            }
+            else if (_interface is LibPcapLiveDevice)
+            {
+                ((LibPcapLiveDevice)_interface).Open(promiscuous ? DeviceMode.Promiscuous : DeviceMode.Normal, timeout);
+            }
+            else if (_interface is AirPcapDevice)
+            {
+                ((AirPcapDevice)_interface).Open(promiscuous ? OpenFlags.MaxResponsiveness | OpenFlags.Promiscuous : OpenFlags.MaxResponsiveness, timeout);
+            }            
 
             Log.Write(LogComponent.HostNetworkInterface, "Host interface opened and receiving packets.");
         }
@@ -227,38 +245,23 @@ namespace Contralto.IO
         /// </summary>
         private void BeginReceive()
         {
-            // Kick off receive thread.   
-            _receiveThread = new Thread(ReceiveThread);
-            _receiveThread.Start();
+            // Kick off receiver.
+            _interface.OnPacketArrival += ReceiveCallback;
+            _interface.StartCapture();
         }
 
-        private void ReceiveThread()
-        {
-            // Just call ReceivePackets, that's it.  This will never return.
-            // (probably need to make this more elegant so we can tear down the thread
-            // properly.)
-            Log.Write(LogComponent.HostNetworkInterface, "Receiver thread started.");
-
-            _communicator.ReceivePackets(-1, ReceiveCallback);            
-        }       
-
-        private LivePacketDevice _interface;
-        private PacketCommunicator _communicator;
+        private ICaptureDevice _interface;
         private ReceivePacketDelegate _callback;
-
-
-        // Thread used for receive
-        private Thread _receiveThread;
 
         private const int _3mbitFrameType = 0xbeef;     // easy to identify, ostensibly unused by anything of any import        
 
         /// <summary>
         /// On output, these bytes are prepended to the Alto's 3mbit (1 byte) address to form a full
         /// 6 byte Ethernet MAC.
-        /// On input, ethernet frames are checked for this prefix
+        /// On input, ethernet frames are checked for this prefix.
         /// </summary>
-        private UInt48 _10mbitMACPrefix = 0x0000aa010200;  // 00-00-AA is the Xerox vendor code, used just to be cute.  
+        private byte[] _10mbitMACPrefix = { 0x00, 0x00, 0xaa, 0x01, 0x02, 0x00 };  // 00-00-AA is the Xerox vendor code, used just to be cute.  
 
-        private UInt48 _10mbitBroadcast = (UInt48)0xffffffffffff;             
+        private PhysicalAddress _10mbitBroadcast = new PhysicalAddress(new byte[] { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }); 
     }   
 }

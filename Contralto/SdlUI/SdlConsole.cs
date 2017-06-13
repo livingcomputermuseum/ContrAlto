@@ -154,7 +154,7 @@ namespace Contralto.SdlUI
         {
             if (_controller.IsRunning)
             {
-                Console.WriteLine("Alto is already running.  Use 'stop' to stop the Alto first.");
+                _controller.Reset(AlternateBootType.Disk);
             }
             else
             {
@@ -169,10 +169,10 @@ namespace Contralto.SdlUI
         {
             if (_controller.IsRunning)
             {
-                Console.WriteLine("Alto is already running.  Use 'stop' to stop the Alto first.");
+                _controller.Reset(AlternateBootType.Ethernet);
             }
             else
-            {                
+            {
                 _controller.StartExecution(AlternateBootType.Ethernet);
             }
 

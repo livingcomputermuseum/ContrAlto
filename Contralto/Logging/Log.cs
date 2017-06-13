@@ -75,11 +75,9 @@ namespace Contralto.Logging
     {
         static Log()
         {
-            // TODO: make configurable
-            _components = LogComponent.DAC;
-            _type = LogType.Normal | LogType.Warning | LogType.Error | LogType.Verbose;
+            _components = Configuration.LogComponents;
+            _type = Configuration.LogTypes;
 
-            //_logStream = new StreamWriter("log.txt");
         }
 
         public static LogComponent LogComponents
@@ -110,11 +108,6 @@ namespace Contralto.Logging
                 // My log has something to tell you...
                 // TODO: color based on type, etc.
                 Console.WriteLine(component.ToString() + ": " + message, args);
-
-                if (_logStream != null)
-                {
-                    _logStream.WriteLine(component.ToString() + ": " + message, args);
-                }
             }
         }
 #else
@@ -132,6 +125,5 @@ namespace Contralto.Logging
 
         private static LogComponent _components;
         private static LogType _type;
-        private static StreamWriter _logStream;
     }
 }

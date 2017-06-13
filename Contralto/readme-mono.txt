@@ -282,8 +282,8 @@ Drive0Image and Drive1Image:  Specifies a disk image to be loaded into the
 HostPacketInterfaceType:  Specifies the type of interface to be used on the 
               host for Ethernet emulation.  One of:
     - UDPEncapsulation: Transmits Alto Ethernet packets over UDP broadcasts
-    - RAWEncapsulation: Transmits Alto Ethernet packets over raw Ethernet packets.
-            (not yet available on Unix / OS X platforms.)
+    - EthernetEncapsulation: Transmits Alto Ethernet packets over raw Ethernet packets.
+            (See Section 4.1 for configuration details)
     - None: No packet encapsulation.
 
 HostPacketInterfaceName:  Specifies the name of the host network interface
@@ -294,6 +294,24 @@ BootAddress: The address to use with a Keyboard Disk Boot (See section 5.0)
 BootFile:    The file number to use with a Keyboard Net Boot (again, Section 5.0)
 AlternateBootType:  The type of boot to default to (Section 5.0)
 
+
+4.1 Ethernet Encapsulation Setup
+================================
+
+Encapsulation of Alto (3mbit) Ethernet packets in Ethernet broadcasts is supported
+on Linux and OS X using libpcap.  While it is tested and works well, it may require some extra
+configuration on your system before it will work properly for you.
+
+- Ensure that the latest libpcap libraries are installed.  These should be present by default
+  on OS X; on other platforms check your distribution's documentation for details.
+
+- On many systems, libpcap requires additional privileges in order to capture packets.
+  You can either run ContrAlto as root, or setuid ContrAlto to root.  Depending on
+  your operating system, there may be other options.  See (for example)
+  http://www.tcpdump.org/manpages/pcap.3pcap.html.
+
+- You may need to modify SharpPcap.dll.config to point to the specific libpcap 
+  version you have installed on your system.
 
 5.0 Console Interface
 =====================
@@ -388,7 +406,7 @@ At the moment, the following issues are known and being worked on.  If you find
 an issue not listed here, see section 7.0 to report a new bug.
 
 - Smalltalk-80 does not run.
-- Audio and RAW ethernet packets are not available on Unix / OS X.
+- Audio is not available on Unix / OS X.
 
 
 7.0 Reporting Bugs
@@ -424,6 +442,9 @@ Contributions are welcome!
 ContrAlto would not have been possible without the amazing preservation work of 
 the Computer History Museum.
 
+Ethernet encapsulation is provided courtesy of SharpPcap, a WinPcap/LibPcap wrapper.
+See: https://github.com/chmorgan/sharppcap.
+
 Audio output and capture on Windows is provided using the NAudio libraries, see:
 https://github.com/naudio/NAudio.
 
@@ -442,6 +463,7 @@ V1.2
 - Initial implementation of Orbit rasterization device; Dover ROS is implemented
   but not working properly.
 - Added ability to load a configuration file at startup
+- Switched to cross-platform SharpPcap library for Ethernet encapsulation.
 
 V1.1
 ----

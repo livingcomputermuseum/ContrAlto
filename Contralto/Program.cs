@@ -40,10 +40,7 @@ namespace Contralto
             }
 
             // Handle command-line args
-            PrintHerald();
-
-            // See if WinPCap is installed and working
-            TestPCap();
+            PrintHerald();           
 
             _system = new AltoSystem();
 
@@ -133,29 +130,7 @@ namespace Contralto
             Console.WriteLine("Bug reports to joshd@livingcomputers.org");
             Console.WriteLine();
         }      
-
-        private static void TestPCap()
-        {
-            if (Configuration.Platform == PlatformType.Windows)
-            {
-                // Just try enumerating interfaces, if this fails for any reason we assume
-                // PCap is not properly installed.
-                try
-                {
-                    List<EthernetInterface> interfaces = EthernetInterface.EnumerateDevices();
-                    Configuration.HostRawEthernetInterfacesAvailable = true;
-                }
-                catch
-                {
-                    Configuration.HostRawEthernetInterfacesAvailable = false;
-                }
-            }
-            else
-            {
-                Configuration.HostRawEthernetInterfacesAvailable = false;
-            }
-        }
-
+        
         private static AltoSystem _system;        
     }
 }

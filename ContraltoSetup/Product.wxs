@@ -17,18 +17,18 @@
 -->
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="CE5F3D08-3BD6-4BDF-9C64-0C2B852B899C" Name="ContrAlto" Language="1033" Version="1.1.0" Manufacturer="Living Computers: Museum+Labs" UpgradeCode="38d6b09f-6e7b-4854-844a-5d4ab707a357">
-		<Package Id="*" InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />		
+  <Product Id="CE5F3D08-3BD6-4BDF-9C64-0C2B852B899C" Name="ContrAlto" Language="1033" Version="1.1.0" Manufacturer="Living Computers: Museum+Labs" UpgradeCode="38d6b09f-6e7b-4854-844a-5d4ab707a357">
+    <Package Id="*" InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
     <Upgrade Id="38d6b09f-6e7b-4854-844a-5d4ab707a357">
       <UpgradeVersion OnlyDetect="yes" Property="SELFFOUND"
-          Minimum="1.1.0" IncludeMinimum="yes"
-          Maximum="1.1.0" IncludeMaximum="yes" />
+          Minimum="1.2.0" IncludeMinimum="yes"
+          Maximum="1.2.0" IncludeMaximum="yes" />
       <UpgradeVersion OnlyDetect="yes" Property="NEWERFOUND"
-          Minimum="1.1.0" IncludeMinimum="no" />
+          Minimum="1.2.0" IncludeMinimum="no" />
     </Upgrade>
 
-    <CustomAction Id="AlreadyUpdated" Error="[ProductName] 1.0 has already been updated to 1.1.0 or newer." />
+    <CustomAction Id="AlreadyUpdated" Error="[ProductName] 1.1 has already been updated to 1.2.0 or newer." />
     <CustomAction Id="NoDowngrade" Error="A later version of [ProductName] is already installed." />
 
     <InstallExecuteSequence>
@@ -38,8 +38,8 @@
 
     <Media Id="1" Cabinet="ContrAlto.cab" EmbedCab="yes"/>
 
-		<Feature Id="ProductFeature" Title="ContrAlto" Description="The ContrAlto Alto Emulator" Level="1" ConfigurableDirectory="INSTALLFOLDER">
-			<ComponentGroupRef Id="ProductComponents" />
+    <Feature Id="ProductFeature" Title="ContrAlto" Description="The ContrAlto Alto Emulator" Level="1" ConfigurableDirectory="INSTALLFOLDER">
+      <ComponentGroupRef Id="ProductComponents" />
       <ComponentGroupRef Id="MicrocodeComponentsShared" />
       <ComponentGroupRef Id="MicrocodeComponentsAltoI" />
       <ComponentGroupRef Id="MicrocodeComponentsAltoII" />
@@ -47,7 +47,7 @@
       <ComponentGroupRef Id="DiskComponents" /> -->
       <ComponentGroupRef Id="CodeComponents" /> 
       <ComponentRef Id="ProgramMenuDir" />
-		</Feature>
+    </Feature>
   
     <Icon Id="ContrAlto.exe" SourceFile="$(var.Contralto.TargetPath)"/>
     
@@ -58,13 +58,13 @@
     
     <WixVariable Id="WixUILicenseRtf" Value="EULA.rtf" />
     
-	</Product>
+  </Product>
 
-	<Fragment>
-		<Directory Id="TARGETDIR" Name="SourceDir">
-			<Directory Id="ProgramFilesFolder">
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
         <Directory Id="LCM" Name="Living Computers">
-				  <Directory Id="INSTALLFOLDER" Name="Contralto">
+          <Directory Id="INSTALLFOLDER" Name="Contralto">
             <Directory Id="ROMFOLDER" Name="ROM">
               <Directory Id="ROMFOLDERALTOI" Name="AltoI"/>
               <Directory Id="ROMFOLDERALTOII" Name="AltoII"/>
@@ -72,7 +72,7 @@
             <Directory Id="DISASSEMBLYFOLDER" Name="Disassembly"/>
           </Directory>
         </Directory>
-			</Directory>
+      </Directory>
       <Directory Id="ProgramMenuFolder" Name="Programs">
           <Directory Id="ProgramMenuDir" Name="ContrAlto">
               <Component Id="ProgramMenuDir" Guid="007ADB59-BCE4-43CB-9AEC-DD5962136A7D">
@@ -90,12 +90,12 @@
           </Component>
         </Directory>
       </Directory> -->
-		</Directory>
+    </Directory>
   </Fragment>
 
-	<Fragment>
-		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-			<!-- Main Contralto EXE and dependencies-->
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <!-- Main Contralto EXE and dependencies-->
       <Component Id="ContraltoExecutable" Guid="0AF4F077-3858-4CEA-A3CD-CF8585F98AAA">
         <File Id="exe" Name="ContrAlto.exe" Source="$(var.Contralto.TargetPath)" KeyPath="yes">
           <Shortcut Id="shortcut" Directory="ProgramMenuDir" Name="ContrAlto"
@@ -103,10 +103,8 @@
         </File>        
         
         <!-- PCAP libs -->
-        <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Base.dll"/>
-        <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Core.dll"/>
-        <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Core.Extensions.dll"/>
-        <File Source="$(var.Contralto.TargetDir)\PcapDotNet.Packets.dll"/>
+        <File Source="$(var.Contralto.TargetDir)\PacketDotNet.dll"/>
+        <File Source="$(var.Contralto.TargetDir)\SharpPcap.dll"/>
         
         <!-- SDL2-CS libs - at this time we don't use SDL2 on Windows but the SDL2-CS wrapper
              still must be present.  -->
@@ -120,7 +118,7 @@
           <Shortcut Id="docshortcut" Directory="ProgramMenuDir" Name="ContrAlto Readme" Advertise="yes" />
         </File>
       </Component>
-		</ComponentGroup>
+    </ComponentGroup>
 
     <ComponentGroup Id="MicrocodeComponentsShared" Directory="ROMFOLDER">
       <!-- Microcode and other ROM files shared between all Alto revisions -->
@@ -225,6 +223,6 @@
         <File Id="MesaROM" Name="MesaROM.mu" Source="$(var.Contralto.TargetDir)\Disassembly\MesaROM.mu"/>
       </Component>
     </ComponentGroup>
-	</Fragment>
+  </Fragment>
 
 </Wix>

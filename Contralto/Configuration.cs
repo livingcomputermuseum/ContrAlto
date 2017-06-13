@@ -111,6 +111,9 @@ namespace Contralto
                     break;
             }
 
+            // See if PCap is available.
+            TestPCap();
+
             ReadConfiguration();
 
             // Special case: On first startup, AlternateBoot will come back as "None" which
@@ -201,6 +204,17 @@ namespace Contralto
         /// </summary>
         public static string AudioDACCapturePath;
 
+        /// <summary>
+        /// The components to enable debug logging for.
+        /// </summary>
+        public static LogComponent LogComponents;
+
+        /// <summary>
+        /// The types of logging to enable.
+        /// </summary>
+        public static LogType LogTypes;
+        
+
         public static string GetAltoIRomPath(string romFileName)
         {
             return Path.Combine("ROM", "AltoI", romFileName);
@@ -262,7 +276,7 @@ namespace Contralto
 
         private static void ReadConfigurationWindows()
         {
-            Properties.Settings.Default.AudioDACCapturePath = Properties.Settings.Default.AudioDACCapturePath;
+            AudioDACCapturePath = Properties.Settings.Default.AudioDACCapturePath;
             Drive0Image = Properties.Settings.Default.Drive0Image;
             Drive1Image = Properties.Settings.Default.Drive1Image;
             SystemType = (SystemType)Properties.Settings.Default.SystemType;
@@ -462,6 +476,23 @@ namespace Contralto
                 }
             }
         }
+
+        private static void TestPCap()
+        {         
+            // Just try enumerating interfaces, if this fails for any reason we assume
+            // PCap is not properly installed.
+            try
+            {
+                SharpPcap.CaptureDeviceList devices = SharpPcap.CaptureDeviceList.Instance;
+                Configuration.HostRawEthernetInterfacesAvailable = true;
+            }
+            catch
+            {
+                Configuration.HostRawEthernetInterfacesAvailable = false;
+            }         
+        }
+
+
     }
 
 }

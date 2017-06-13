@@ -247,19 +247,9 @@ encapsulation.  ContrAlto can encapsulate the Alto's 3mbit ("experimental")
 Ethernet packets in either UDP datagrams or raw Ethernet packets on a network
 interface on the "host" computer (the computer running ContrAlto).
 
-Raw packet encapsulation requires WinPCAP and the Microsoft Visual C++ 2010 
-redistributable to be installed; these can be acquired from:
+Raw packet encapsulation requires WinPCAP libraries to be installed.  See:
+http://www.winpcap.org/.
 
-http://www.winpcap.org/
-and
-http://www.microsoft.com/en-us/download/details.aspx?id=5555
-
-ContrAlto uses binaries from the Pcap.NET project to expose WinPCAP
-functionality to the emulator:
-
-https://github.com/PcapDotNet/Pcap.Net
-
-Pcap.NET is released under the BSD license.
 
 4.2.1 Host Address
 ------------------
@@ -443,8 +433,8 @@ CPU Registers:
 
 General Registers:
          Shows the contents of the 32 R and 32 S registers (in octal).  
-		 (The extra 7 sets of R and S registers on 3K CRAM machines are not yet
-		 displayed.)
+         (The extra 7 sets of R and S registers on 3K CRAM machines are not yet
+         displayed.)
          
 Reserved Memory:
          Shows the contents of most "well known" memory locations.  See the
@@ -493,6 +483,9 @@ Contributions are welcome!
 ContrAlto would not have been possible without the amazing preservation work of 
 the Computer History Museum.
 
+Ethernet encapsulation is provided courtesy of SharpPcap, a WinPcap/LibPcap wrapper.
+See: https://github.com/chmorgan/sharppcap.
+
 Audio output and capture on Windows is provided using the NAudio libraries, see:
 https://github.com/naudio/NAudio.
 
@@ -511,6 +504,7 @@ V1.2
 - Initial implementation of Orbit rasterization device; Dover ROS is implemented
   but not working properly.
 - Added ability to load a configuration file at startup
+- Switched to cross-platform SharpPcap library for Ethernet encapsulation.
 
 V1.1
 ----

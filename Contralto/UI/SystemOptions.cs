@@ -16,10 +16,9 @@
 */
 
 using Contralto.IO;
-using PcapDotNet.Core;
-using PcapDotNet.Core.Extensions;
+using SharpPcap;
+using SharpPcap.WinPcap;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net.NetworkInformation;
 using System.Windows.Forms;
@@ -79,7 +78,7 @@ namespace Contralto.UI
 
             if (!Configuration.HostRawEthernetInterfacesAvailable)
             {
-                // If PCAP isn't installed, the RAW Ethernet option is not available.           
+                // If PCAP isn't installed, the RAW Ethernet option is not available.
                 RawEthernetRadioButton.Enabled = false;
 
                 // Ensure the option isn't set in the configuration.
@@ -102,7 +101,7 @@ namespace Contralto.UI
                 case PacketInterfaceType.None:
                     NoEncapsulationRadioButton.Checked = true;
                     break;
-            }                                                    
+            }
 
             PopulateNetworkAdapterList(Configuration.HostPacketInterfaceType);
 
@@ -153,22 +152,21 @@ namespace Contralto.UI
                 case PacketInterfaceType.EthernetEncapsulation:
                     if (Configuration.HostRawEthernetInterfacesAvailable)
                     {
-                        foreach (LivePacketDevice device in LivePacketDevice.AllLocalMachine)
-                        {                            
-                            EthernetInterfaceListBox.Items.Add(new EthernetInterface(device.GetNetworkInterface().Name, device.GetNetworkInterface().Description));                                                            
-                        }                        
-                    }                    
+                        foreach (WinPcapDevice device in CaptureDeviceList.Instance)
+                        {
+                            EthernetInterfaceListBox.Items.Add(new EthernetInterface(device.Interface.FriendlyName, device.Interface.Description));                        
+                        }
+                    }
                     break;
 
                 case PacketInterfaceType.None:
                     // Add nothing.
                     break;
-            }            
-            
+            }
 
             //
             // Select the one that is already selected (if any)
-            //            
+            //
             EthernetInterfaceListBox.SelectedIndex = 0;
 
             if (!string.IsNullOrEmpty(Configuration.HostPacketInterfaceName))
