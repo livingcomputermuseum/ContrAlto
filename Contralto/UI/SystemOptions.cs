@@ -113,6 +113,15 @@ namespace Contralto.UI
 
             DACOutputCapturePathTextBox.Text = Configuration.AudioDACCapturePath;
             EnableDACCaptureCheckBox.Checked = Configuration.EnableAudioDACCapture;
+
+            //
+            // Printing Tab
+            //
+            PrintOutputPathTextBox.Text = Configuration.PrintOutputPath;
+            EnablePrintingCheckBox.Checked = Configuration.EnablePrinting;                        
+            PrintingOptionsGroupBox.Enabled = Configuration.EnablePrinting;
+            ReversePageOrderCheckBox.Checked = Configuration.ReversePageOrder;
+
         }
 
         private void PopulateNetworkAdapterList(PacketInterfaceType encapType)
@@ -273,10 +282,21 @@ namespace Contralto.UI
             Configuration.EnableAudioDACCapture = EnableDACCaptureCheckBox.Checked;
             Configuration.AudioDACCapturePath = DACOutputCapturePathTextBox.Text;
 
-            // Validate that the output folder exists, if not, warn the user
+            // Printing
+            Configuration.EnablePrinting = EnablePrintingCheckBox.Checked;
+            Configuration.PrintOutputPath = PrintOutputPathTextBox.Text;
+            Configuration.ReversePageOrder = ReversePageOrderCheckBox.Checked;
+
+            // Validate that the DAC output folder exists, if not, warn the user
             if (Configuration.EnableAudioDACCapture && !Directory.Exists(Configuration.AudioDACCapturePath))
             {
-                MessageBox.Show("Warning: the specified DAC output capture path does not exist or is inaccessible.");
+                MessageBox.Show("Warning: The specified DAC output capture path does not exist or is inaccessible.");
+            }
+
+            // Validate that the Print output folder exists, if not, warn the user
+            if (Configuration.EnablePrinting && !Directory.Exists(Configuration.PrintOutputPath))
+            {
+                MessageBox.Show("Warning: The specified Print output path does not exist or is inaccessible.");
             }
 
             this.Close();
@@ -306,11 +326,15 @@ namespace Contralto.UI
             {
                 DACOutputCapturePathTextBox.Text = folderDialog.SelectedPath;
             }
-        }
+            else
+            {
+                EnableDACCaptureCheckBox.Checked = false;
+            }
+        }        
 
         private void OnEnableDACCheckboxChanged(object sender, EventArgs e)
         {
-            DACOptionsGroupBox.Enabled = Configuration.EnableAudioDAC;
+            DACOptionsGroupBox.Enabled = EnableDACCheckBox.Checked;
         }
 
         private void EnableDACCaptureCheckBox_CheckedChanged(object sender, EventArgs e)
@@ -318,9 +342,37 @@ namespace Contralto.UI
             if (EnableDACCaptureCheckBox.Checked == true && String.IsNullOrWhiteSpace(DACOutputCapturePathTextBox.Text))
             {
                 //
-                // When enabled and no output folder is set, force the user to choose an output folder.
+                // When DAC enabled and no output folder is set, force the user to choose an output folder.
                 //
                 BrowseForDACOutputFolder();
+            }
+        }
+
+        private void BrowseForPrintOutputFolder()
+        {
+            FolderBrowserDialog folderDialog = new FolderBrowserDialog();
+            folderDialog.Description = "Choose a folder to store PDFs of print output.";
+            folderDialog.ShowNewFolderButton = true;
+
+            if (folderDialog.ShowDialog() == DialogResult.OK)
+            {
+                PrintOutputPathTextBox.Text = folderDialog.SelectedPath;
+            }
+            else
+            {
+                EnablePrintingCheckBox.Checked = false;
+            }
+        }
+
+        private void EnablePrintingCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            PrintingOptionsGroupBox.Enabled = EnablePrintingCheckBox.Checked;            
+            if (EnablePrintingCheckBox.Checked == true && String.IsNullOrWhiteSpace(PrintOutputPathTextBox.Text))
+            {
+                //
+                // When Printing enabled and no output folder is set, force the user to choose an output folder.
+                //
+                BrowseForPrintOutputFolder();
             }
         }
     }

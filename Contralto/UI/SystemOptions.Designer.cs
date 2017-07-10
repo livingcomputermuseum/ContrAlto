@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.OptionsTabs = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.AltoI1KROMRadioButton = new System.Windows.Forms.RadioButton();
             this.AltoII3KRAMRadioButton = new System.Windows.Forms.RadioButton();
@@ -48,16 +48,23 @@
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.ThrottleSpeedCheckBox = new System.Windows.Forms.CheckBox();
             this.InterlaceDisplayCheckBox = new System.Windows.Forms.CheckBox();
+            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.DACOptionsGroupBox = new System.Windows.Forms.GroupBox();
+            this.BrowseButton = new System.Windows.Forms.Button();
+            this.DACOutputCapturePathTextBox = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.EnableDACCaptureCheckBox = new System.Windows.Forms.CheckBox();
+            this.EnableDACCheckBox = new System.Windows.Forms.CheckBox();
             this.DialogOKButton = new System.Windows.Forms.Button();
             this.DialogCancelButton = new System.Windows.Forms.Button();
-            this.tabPage4 = new System.Windows.Forms.TabPage();
-            this.EnableDACCheckBox = new System.Windows.Forms.CheckBox();
-            this.DACOptionsGroupBox = new System.Windows.Forms.GroupBox();
-            this.EnableDACCaptureCheckBox = new System.Windows.Forms.CheckBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.DACOutputCapturePathTextBox = new System.Windows.Forms.TextBox();
-            this.BrowseButton = new System.Windows.Forms.Button();
-            this.tabControl1.SuspendLayout();
+            this.PrintingTab = new System.Windows.Forms.TabPage();
+            this.PrintingOptionsGroupBox = new System.Windows.Forms.GroupBox();
+            this.button1 = new System.Windows.Forms.Button();
+            this.PrintOutputPathTextBox = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.EnablePrintingCheckBox = new System.Windows.Forms.CheckBox();
+            this.ReversePageOrderCheckBox = new System.Windows.Forms.CheckBox();
+            this.OptionsTabs.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -65,19 +72,22 @@
             this.tabPage3.SuspendLayout();
             this.tabPage4.SuspendLayout();
             this.DACOptionsGroupBox.SuspendLayout();
+            this.PrintingTab.SuspendLayout();
+            this.PrintingOptionsGroupBox.SuspendLayout();
             this.SuspendLayout();
             // 
-            // tabControl1
+            // OptionsTabs
             // 
-            this.tabControl1.Controls.Add(this.tabPage1);
-            this.tabControl1.Controls.Add(this.tabPage2);
-            this.tabControl1.Controls.Add(this.tabPage3);
-            this.tabControl1.Controls.Add(this.tabPage4);
-            this.tabControl1.Location = new System.Drawing.Point(3, 5);
-            this.tabControl1.Name = "tabControl1";
-            this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(368, 227);
-            this.tabControl1.TabIndex = 0;
+            this.OptionsTabs.Controls.Add(this.tabPage1);
+            this.OptionsTabs.Controls.Add(this.tabPage2);
+            this.OptionsTabs.Controls.Add(this.tabPage3);
+            this.OptionsTabs.Controls.Add(this.tabPage4);
+            this.OptionsTabs.Controls.Add(this.PrintingTab);
+            this.OptionsTabs.Location = new System.Drawing.Point(3, 5);
+            this.OptionsTabs.Name = "OptionsTabs";
+            this.OptionsTabs.SelectedIndex = 0;
+            this.OptionsTabs.Size = new System.Drawing.Size(368, 227);
+            this.OptionsTabs.TabIndex = 0;
             // 
             // tabPage1
             // 
@@ -101,7 +111,6 @@
             this.AltoI1KROMRadioButton.Name = "AltoI1KROMRadioButton";
             this.AltoI1KROMRadioButton.Size = new System.Drawing.Size(214, 17);
             this.AltoI1KROMRadioButton.TabIndex = 4;
-            this.AltoI1KROMRadioButton.TabStop = true;
             this.AltoI1KROMRadioButton.Text = "Alto I, 1K Control ROM, 1K Control RAM";
             this.AltoI1KROMRadioButton.UseVisualStyleBackColor = true;
             // 
@@ -112,7 +121,6 @@
             this.AltoII3KRAMRadioButton.Name = "AltoII3KRAMRadioButton";
             this.AltoII3KRAMRadioButton.Size = new System.Drawing.Size(236, 17);
             this.AltoII3KRAMRadioButton.TabIndex = 3;
-            this.AltoII3KRAMRadioButton.TabStop = true;
             this.AltoII3KRAMRadioButton.Text = "Alto II XM, 1K Control ROM, 3K Control RAM";
             this.AltoII3KRAMRadioButton.UseVisualStyleBackColor = true;
             this.AltoII3KRAMRadioButton.CheckedChanged += new System.EventHandler(this.OnSystemTypeCheckChanged);
@@ -124,7 +132,6 @@
             this.AltoII2KROMRadioButton.Name = "AltoII2KROMRadioButton";
             this.AltoII2KROMRadioButton.Size = new System.Drawing.Size(236, 17);
             this.AltoII2KROMRadioButton.TabIndex = 2;
-            this.AltoII2KROMRadioButton.TabStop = true;
             this.AltoII2KROMRadioButton.Text = "Alto II XM, 2K Control ROM, 1K Control RAM";
             this.AltoII2KROMRadioButton.UseVisualStyleBackColor = true;
             this.AltoII2KROMRadioButton.CheckedChanged += new System.EventHandler(this.OnSystemTypeCheckChanged);
@@ -141,6 +148,7 @@
             // AltoII1KROMRadioButton
             // 
             this.AltoII1KROMRadioButton.AutoSize = true;
+            this.AltoII1KROMRadioButton.Checked = true;
             this.AltoII1KROMRadioButton.Location = new System.Drawing.Point(14, 53);
             this.AltoII1KROMRadioButton.Name = "AltoII1KROMRadioButton";
             this.AltoII1KROMRadioButton.Size = new System.Drawing.Size(236, 17);
@@ -287,6 +295,79 @@
             this.InterlaceDisplayCheckBox.Text = "Interlaced Display (headache mode)";
             this.InterlaceDisplayCheckBox.UseVisualStyleBackColor = true;
             // 
+            // tabPage4
+            // 
+            this.tabPage4.Controls.Add(this.DACOptionsGroupBox);
+            this.tabPage4.Controls.Add(this.EnableDACCheckBox);
+            this.tabPage4.Location = new System.Drawing.Point(4, 22);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage4.Size = new System.Drawing.Size(360, 201);
+            this.tabPage4.TabIndex = 3;
+            this.tabPage4.Text = "DAC";
+            this.tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // DACOptionsGroupBox
+            // 
+            this.DACOptionsGroupBox.Controls.Add(this.BrowseButton);
+            this.DACOptionsGroupBox.Controls.Add(this.DACOutputCapturePathTextBox);
+            this.DACOptionsGroupBox.Controls.Add(this.label2);
+            this.DACOptionsGroupBox.Controls.Add(this.EnableDACCaptureCheckBox);
+            this.DACOptionsGroupBox.Location = new System.Drawing.Point(15, 52);
+            this.DACOptionsGroupBox.Name = "DACOptionsGroupBox";
+            this.DACOptionsGroupBox.Size = new System.Drawing.Size(335, 139);
+            this.DACOptionsGroupBox.TabIndex = 1;
+            this.DACOptionsGroupBox.TabStop = false;
+            this.DACOptionsGroupBox.Text = "DAC options";
+            // 
+            // BrowseButton
+            // 
+            this.BrowseButton.Location = new System.Drawing.Point(251, 53);
+            this.BrowseButton.Name = "BrowseButton";
+            this.BrowseButton.Size = new System.Drawing.Size(75, 23);
+            this.BrowseButton.TabIndex = 3;
+            this.BrowseButton.Text = "Browse...";
+            this.BrowseButton.UseVisualStyleBackColor = true;
+            this.BrowseButton.Click += new System.EventHandler(this.BrowseButton_Click);
+            // 
+            // DACOutputCapturePathTextBox
+            // 
+            this.DACOutputCapturePathTextBox.Location = new System.Drawing.Point(127, 55);
+            this.DACOutputCapturePathTextBox.Name = "DACOutputCapturePathTextBox";
+            this.DACOutputCapturePathTextBox.Size = new System.Drawing.Size(110, 20);
+            this.DACOutputCapturePathTextBox.TabIndex = 2;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(16, 58);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(105, 13);
+            this.label2.TabIndex = 1;
+            this.label2.Text = "Output capture path:";
+            // 
+            // EnableDACCaptureCheckBox
+            // 
+            this.EnableDACCaptureCheckBox.AutoSize = true;
+            this.EnableDACCaptureCheckBox.Location = new System.Drawing.Point(18, 28);
+            this.EnableDACCaptureCheckBox.Name = "EnableDACCaptureCheckBox";
+            this.EnableDACCaptureCheckBox.Size = new System.Drawing.Size(156, 17);
+            this.EnableDACCaptureCheckBox.TabIndex = 0;
+            this.EnableDACCaptureCheckBox.Text = "Enable DAC output capture";
+            this.EnableDACCaptureCheckBox.UseVisualStyleBackColor = true;
+            this.EnableDACCaptureCheckBox.CheckedChanged += new System.EventHandler(this.EnableDACCaptureCheckBox_CheckedChanged);
+            // 
+            // EnableDACCheckBox
+            // 
+            this.EnableDACCheckBox.AutoSize = true;
+            this.EnableDACCheckBox.Location = new System.Drawing.Point(19, 22);
+            this.EnableDACCheckBox.Name = "EnableDACCheckBox";
+            this.EnableDACCheckBox.Size = new System.Drawing.Size(275, 17);
+            this.EnableDACCheckBox.TabIndex = 0;
+            this.EnableDACCheckBox.Text = "Enable Audio DAC (Used by Smalltalk Music System)";
+            this.EnableDACCheckBox.UseVisualStyleBackColor = true;
+            this.EnableDACCheckBox.CheckedChanged += new System.EventHandler(this.OnEnableDACCheckboxChanged);
+            // 
             // DialogOKButton
             // 
             this.DialogOKButton.Location = new System.Drawing.Point(211, 239);
@@ -307,78 +388,76 @@
             this.DialogCancelButton.UseVisualStyleBackColor = true;
             this.DialogCancelButton.Click += new System.EventHandler(this.CancelButton_Click);
             // 
-            // tabPage4
+            // PrintingTab
             // 
-            this.tabPage4.Controls.Add(this.DACOptionsGroupBox);
-            this.tabPage4.Controls.Add(this.EnableDACCheckBox);
-            this.tabPage4.Location = new System.Drawing.Point(4, 22);
-            this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage4.Size = new System.Drawing.Size(360, 201);
-            this.tabPage4.TabIndex = 3;
-            this.tabPage4.Text = "DAC";
-            this.tabPage4.UseVisualStyleBackColor = true;
+            this.PrintingTab.Controls.Add(this.PrintingOptionsGroupBox);
+            this.PrintingTab.Controls.Add(this.EnablePrintingCheckBox);
+            this.PrintingTab.Location = new System.Drawing.Point(4, 22);
+            this.PrintingTab.Name = "PrintingTab";
+            this.PrintingTab.Padding = new System.Windows.Forms.Padding(3);
+            this.PrintingTab.Size = new System.Drawing.Size(360, 201);
+            this.PrintingTab.TabIndex = 4;
+            this.PrintingTab.Text = "Printing";
+            this.PrintingTab.UseVisualStyleBackColor = true;
             // 
-            // EnableDACCheckBox
+            // PrintingOptionsGroupBox
             // 
-            this.EnableDACCheckBox.AutoSize = true;
-            this.EnableDACCheckBox.Location = new System.Drawing.Point(19, 22);
-            this.EnableDACCheckBox.Name = "EnableDACCheckBox";
-            this.EnableDACCheckBox.Size = new System.Drawing.Size(275, 17);
-            this.EnableDACCheckBox.TabIndex = 0;
-            this.EnableDACCheckBox.Text = "Enable Audio DAC (Used by Smalltalk Music System)";
-            this.EnableDACCheckBox.UseVisualStyleBackColor = true;
-            this.EnableDACCheckBox.CheckedChanged += new System.EventHandler(this.OnEnableDACCheckboxChanged);
+            this.PrintingOptionsGroupBox.Controls.Add(this.ReversePageOrderCheckBox);
+            this.PrintingOptionsGroupBox.Controls.Add(this.button1);
+            this.PrintingOptionsGroupBox.Controls.Add(this.PrintOutputPathTextBox);
+            this.PrintingOptionsGroupBox.Controls.Add(this.label5);
+            this.PrintingOptionsGroupBox.Location = new System.Drawing.Point(14, 52);
+            this.PrintingOptionsGroupBox.Name = "PrintingOptionsGroupBox";
+            this.PrintingOptionsGroupBox.Size = new System.Drawing.Size(335, 139);
+            this.PrintingOptionsGroupBox.TabIndex = 3;
+            this.PrintingOptionsGroupBox.TabStop = false;
+            this.PrintingOptionsGroupBox.Text = "Printing options";
             // 
-            // DACOptionsGroupBox
+            // button1
             // 
-            this.DACOptionsGroupBox.Controls.Add(this.BrowseButton);
-            this.DACOptionsGroupBox.Controls.Add(this.DACOutputCapturePathTextBox);
-            this.DACOptionsGroupBox.Controls.Add(this.label2);
-            this.DACOptionsGroupBox.Controls.Add(this.EnableDACCaptureCheckBox);
-            this.DACOptionsGroupBox.Location = new System.Drawing.Point(15, 52);
-            this.DACOptionsGroupBox.Name = "DACOptionsGroupBox";
-            this.DACOptionsGroupBox.Size = new System.Drawing.Size(335, 139);
-            this.DACOptionsGroupBox.TabIndex = 1;
-            this.DACOptionsGroupBox.TabStop = false;
-            this.DACOptionsGroupBox.Text = "DAC options";
+            this.button1.Location = new System.Drawing.Point(254, 24);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 3;
+            this.button1.Text = "Browse...";
+            this.button1.UseVisualStyleBackColor = true;
             // 
-            // EnableDACCaptureCheckBox
+            // PrintOutputPathTextBox
             // 
-            this.EnableDACCaptureCheckBox.AutoSize = true;
-            this.EnableDACCaptureCheckBox.Location = new System.Drawing.Point(18, 28);
-            this.EnableDACCaptureCheckBox.Name = "EnableDACCaptureCheckBox";
-            this.EnableDACCaptureCheckBox.Size = new System.Drawing.Size(156, 17);
-            this.EnableDACCaptureCheckBox.TabIndex = 0;
-            this.EnableDACCaptureCheckBox.Text = "Enable DAC output capture";
-            this.EnableDACCaptureCheckBox.UseVisualStyleBackColor = true;
-            this.EnableDACCaptureCheckBox.CheckedChanged += new System.EventHandler(this.EnableDACCaptureCheckBox_CheckedChanged);
+            this.PrintOutputPathTextBox.Location = new System.Drawing.Point(113, 25);
+            this.PrintOutputPathTextBox.Name = "PrintOutputPathTextBox";
+            this.PrintOutputPathTextBox.Size = new System.Drawing.Size(125, 20);
+            this.PrintOutputPathTextBox.TabIndex = 2;
             // 
-            // label2
+            // label5
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(16, 58);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(105, 13);
-            this.label2.TabIndex = 1;
-            this.label2.Text = "Output capture path:";
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(19, 28);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(88, 13);
+            this.label5.TabIndex = 1;
+            this.label5.Text = "PDF output path:";
             // 
-            // DACOutputCapturePathTextBox
+            // EnablePrintingCheckBox
             // 
-            this.DACOutputCapturePathTextBox.Location = new System.Drawing.Point(127, 55);
-            this.DACOutputCapturePathTextBox.Name = "DACOutputCapturePathTextBox";
-            this.DACOutputCapturePathTextBox.Size = new System.Drawing.Size(110, 20);
-            this.DACOutputCapturePathTextBox.TabIndex = 2;
+            this.EnablePrintingCheckBox.AutoSize = true;
+            this.EnablePrintingCheckBox.Location = new System.Drawing.Point(19, 22);
+            this.EnablePrintingCheckBox.Name = "EnablePrintingCheckBox";
+            this.EnablePrintingCheckBox.Size = new System.Drawing.Size(211, 17);
+            this.EnablePrintingCheckBox.TabIndex = 2;
+            this.EnablePrintingCheckBox.Text = "Enable Printing (via Orbit / Dover ROS)";
+            this.EnablePrintingCheckBox.UseVisualStyleBackColor = true;
+            this.EnablePrintingCheckBox.CheckedChanged += new System.EventHandler(this.EnablePrintingCheckBox_CheckedChanged);
             // 
-            // BrowseButton
+            // ReversePageOrderCheckBox
             // 
-            this.BrowseButton.Location = new System.Drawing.Point(251, 53);
-            this.BrowseButton.Name = "BrowseButton";
-            this.BrowseButton.Size = new System.Drawing.Size(75, 23);
-            this.BrowseButton.TabIndex = 3;
-            this.BrowseButton.Text = "Browse...";
-            this.BrowseButton.UseVisualStyleBackColor = true;
-            this.BrowseButton.Click += new System.EventHandler(this.BrowseButton_Click);
+            this.ReversePageOrderCheckBox.AutoSize = true;
+            this.ReversePageOrderCheckBox.Location = new System.Drawing.Point(22, 51);
+            this.ReversePageOrderCheckBox.Name = "ReversePageOrderCheckBox";
+            this.ReversePageOrderCheckBox.Size = new System.Drawing.Size(158, 17);
+            this.ReversePageOrderCheckBox.TabIndex = 4;
+            this.ReversePageOrderCheckBox.Text = "Reverse Output Page Order";
+            this.ReversePageOrderCheckBox.UseVisualStyleBackColor = true;
             // 
             // SystemOptions
             // 
@@ -387,12 +466,12 @@
             this.ClientSize = new System.Drawing.Size(371, 271);
             this.Controls.Add(this.DialogCancelButton);
             this.Controls.Add(this.DialogOKButton);
-            this.Controls.Add(this.tabControl1);
+            this.Controls.Add(this.OptionsTabs);
             this.Name = "SystemOptions";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "System Options";
-            this.tabControl1.ResumeLayout(false);
+            this.OptionsTabs.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
             this.tabPage2.ResumeLayout(false);
@@ -407,13 +486,17 @@
             this.tabPage4.PerformLayout();
             this.DACOptionsGroupBox.ResumeLayout(false);
             this.DACOptionsGroupBox.PerformLayout();
+            this.PrintingTab.ResumeLayout(false);
+            this.PrintingTab.PerformLayout();
+            this.PrintingOptionsGroupBox.ResumeLayout(false);
+            this.PrintingOptionsGroupBox.PerformLayout();
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabControl OptionsTabs;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.RadioButton AltoII3KRAMRadioButton;
         private System.Windows.Forms.RadioButton AltoII2KROMRadioButton;
@@ -442,5 +525,12 @@
         private System.Windows.Forms.Button BrowseButton;
         private System.Windows.Forms.TextBox DACOutputCapturePathTextBox;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TabPage PrintingTab;
+        private System.Windows.Forms.GroupBox PrintingOptionsGroupBox;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.TextBox PrintOutputPathTextBox;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.CheckBox EnablePrintingCheckBox;
+        private System.Windows.Forms.CheckBox ReversePageOrderCheckBox;
     }
 }

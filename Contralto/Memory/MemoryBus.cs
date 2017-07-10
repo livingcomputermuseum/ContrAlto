@@ -78,9 +78,8 @@ namespace Contralto.Memory
             _memoryCycle = 0;
             _memoryAddress = 0;
             _memoryDataLow = 0;
-            _memoryDataHigh = 0;
-            _firstWordStored = false;
-            _firstWordRead = false;
+            _memoryDataHigh = 0;            
+            _firstWord = false;
             _memoryOperationActive = false;
             _extendedMemoryReference = false;            
         }
@@ -186,7 +185,7 @@ namespace Contralto.Memory
 
                 case 6:
                     // End of memory operation
-                    _memoryOperationActive = false;                    
+                    _memoryOperationActive = false;
                     break;
             }
         }
@@ -245,14 +244,18 @@ namespace Contralto.Memory
             }
             else
             {
-                _memoryOperationActive = true;
-                _firstWordStored = false;
-                _firstWordRead = false;
+                _memoryOperationActive = true;                
+                _firstWord = false;
                 _memoryAddress = address;
                 _extendedMemoryReference = extendedMemoryReference;
                 _task = task;
+
+                //
+                // Memory cycle 1 is the instruction in which a MAR<- is executed, 
+                // per the convention in the Alto HW ref.
+                //
                 _memoryCycle = 1;
-            }                                 
+            }
             
         }        
 
@@ -285,12 +288,12 @@ namespace Contralto.Memory
                         throw new InvalidOperationException("Invalid ReadMD request during cycle 3 or 4 of memory operation.");
 
                     case 5:
-                        // Single word read                       
+                        // Single word read
                         return _memoryDataLow;
 
                     case 6:
                         // Double word read, return other half of double word.
-                        return _memoryDataHigh;                                         
+                        return _memoryDataHigh;
 
                     default:
                         // Invalid state.
@@ -324,12 +327,15 @@ namespace Contralto.Memory
                         //   If this is memory cycle 5 of a double-word *store* (started in cycle 3) then the second word can be *read* here.
                         //   (An example of this is provided in the hardware ref, section 2, pg 8. and is done by the Ethernet microcode on 
                         //   the Alto II, see the code block starting at address 0224 -- EPLOC (600) is loaded with the interface status, 
-                        //   EBLOC (601) is read and OR'd with NWW in the same memory op.)                
-                        _firstWordRead = true;                        
-                        return _firstWordStored ? _memoryDataHigh : _memoryDataLow;
+                        //   EBLOC (601) is read and OR'd with NWW in the same memory op.)                                        
+                        ushort memData = _firstWord ? _memoryDataHigh : _memoryDataLow;
+
+                        _firstWord = !_firstWord;
+
+                        return memData;
 
                     // ***
-                    // NB: Handler for double-word read (cycle 6) is in the "else" clause below; this is kind of a hack.
+                    // NB: Handler for double-word read (cycles 6 and later) is in the "else" clause below; this is kind of a hack.
                     // ***
 
                     default:
@@ -341,12 +347,19 @@ namespace Contralto.Memory
             {
                 //
                 // Memory state machine not running, just return last latched contents.
-                // ("Because the Alto II latches memory contents, it is possible to execute _MD anytime after
+                // ("Because the Alto II latches memory contents, it is possible to execute <-MD anytime after
                 // cycle 5 of a reference and obtain the results of the read operation")
-                // We will return the last half of the doubleword to complete a double-word read.
-                // (If the first half hasn't yet been read, we return the first half instead...)
-                //                
-                return _firstWordRead ? _memoryDataHigh : _memoryDataLow;                
+                // We will return the proper half of the word as in cycle 5.
+                //
+                // Note that the Orbit character transfer microcode will occasionally do a double-word read in memory 
+                // cycles 6 and 7, not 5 and 6, and still expect the correct 32-bit double-word to be read...
+                // 
+                ushort memData;
+                
+                memData = _firstWord ? _memoryDataHigh : _memoryDataLow;
+                
+                _firstWord = !_firstWord;
+                return memData;
             }            
         }
 
@@ -392,11 +405,11 @@ namespace Contralto.Memory
                     _memoryDataWrite = data;
                     // Start of doubleword write:
                     WriteToBus(_memoryAddress, data, _task, _extendedMemoryReference);
-                    _firstWordStored = true;
+                    _firstWord = !_firstWord;
                     break;
 
                 case 6:
-                    if (!_firstWordStored)
+                    if (!_firstWord)
                     {
                         throw new InvalidOperationException("Unexpected microcode behavior -- LoadMD on cycle 6, no LoadMD on cycle 5.");
                     }
@@ -405,6 +418,8 @@ namespace Contralto.Memory
                     ushort actualAddress = (ushort)(_memoryAddress | 1);
 
                     WriteToBus(actualAddress, data, _task, _extendedMemoryReference);
+
+                    _firstWord = !_firstWord;
                     break;
             }
 
@@ -424,13 +439,14 @@ namespace Contralto.Memory
                     _memoryDataWrite = data;
                     // Start of doubleword write:
                     WriteToBus(_memoryAddress, data, _task, _extendedMemoryReference);
-                    _firstWordStored = true;                    
+                    _firstWord = !_firstWord;
                     break;
 
                 case 4:
                     _memoryDataWrite = data;
-                    ushort actualAddress = _firstWordStored ? (ushort)(_memoryAddress ^ 1) : _memoryAddress;                    
+                    ushort actualAddress = _firstWord ? (ushort)(_memoryAddress ^ 1) : _memoryAddress;                    
                     WriteToBus(actualAddress, data, _task, _extendedMemoryReference);
+                    _firstWord = !_firstWord;
                     break;
 
                 case 5:
@@ -533,10 +549,9 @@ namespace Contralto.Memory
         // Write data (used for debugger UI only)
         private ushort _memoryDataWrite;
 
-        // Indicates that the first word of a double-word store has taken place (started on cycle 3)
-        private bool _firstWordStored;
 
-        // Indicates tghat the first word of a double-word read has taken place (started on cycle 5)
-        private bool _firstWordRead;
+        // Indicates which word of a double-word read or write was last read (or written).
+        // true if the first word was processed; false otherwise.
+        private bool _firstWord;
     }
 }

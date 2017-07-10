@@ -250,10 +250,10 @@ namespace Contralto.CPU
             //
 
             // Load T
+            bool loadTFromALU = false;
             if (instruction.LoadT)
             {
-                // Does this operation change the source for T?
-                bool loadTFromALU = false;
+                // Does this operation change the source for T?                
                 switch (instruction.ALUF)
                 {
                     case AluFunction.Bus:
@@ -275,11 +275,18 @@ namespace Contralto.CPU
             {
                 if (string.IsNullOrEmpty(load))
                 {
+                    // T not loaded at all, L loaded from ALU
                     load = String.Format("L← {0}", operation);
+                }
+                else if (loadTFromALU)
+                {
+                    // T loaded from ALU, L loaded from ALU
+                    load = String.Format("L← {0}", load);
                 }
                 else
                 {
-                    load = String.Format("L← {0}", load);
+                    // T loaded from bus source, L loaded from ALU
+                    load = String.Format("L← {0}, {1}", operation, load);
                 }
             }
 
@@ -287,8 +294,8 @@ namespace Contralto.CPU
             if (loadR)
             {
                 load = String.Format("$R{0}← {1}", 
-                    Conversion.ToOctal((int)rSelect), 
-                    load != String.Empty ? load : operation);
+                    Conversion.ToOctal((int)rSelect),
+                    !string.IsNullOrEmpty(load) ? load : operation);
             }
 
             // Do writeback to selected S register from M
@@ -307,7 +314,18 @@ namespace Contralto.CPU
                 }
             }
 
-            if (!string.IsNullOrEmpty(load))
+            // Test for a NOP-like instruction.
+            if (!instruction.LoadL && 
+                !instruction.LoadT && 
+                !loadR && 
+                !loadS && 
+                instruction.F1 == SpecialFunction1.None &&
+                instruction.F2 == SpecialFunction2.None &&
+                instruction.ALUF == AluFunction.Bus)
+            {
+                disassembly.AppendFormat("NOP :{0}", Conversion.ToOctal(instruction.NEXT));
+            }
+            else if (!string.IsNullOrEmpty(load))
             {
                 disassembly.AppendFormat("{0}{1}{2} :{3}", 
                     f1, 
@@ -333,7 +351,8 @@ namespace Contralto.CPU
             switch(task)
             {
                 case TaskType.Emulator:
-                    return DisassembleEmulatorBusSource(instruction, out loadS);                    
+                case TaskType.Orbit:
+                    return DisassembleEmulatorBusSource(instruction, out loadS);
 
                 default:
                     loadS = false;
@@ -346,7 +365,10 @@ namespace Contralto.CPU
             switch (task)
             {
                 case TaskType.Emulator:
-                    return DisassembleEmulatorSpecialFunction1(instruction);                    
+                    return DisassembleEmulatorSpecialFunction1(instruction);
+
+                case TaskType.Orbit:
+                    return DisassembleOrbitSpecialFunction1(instruction);                    
 
                 default:
                     return String.Format("F1 {0}", Conversion.ToOctal((int)instruction.F1));
@@ -358,7 +380,10 @@ namespace Contralto.CPU
             switch (task)
             {
                 case TaskType.Emulator:
-                    return DisassembleEmulatorSpecialFunction2(instruction);                    
+                    return DisassembleEmulatorSpecialFunction2(instruction);
+
+                case TaskType.Orbit:
+                    return DisassembleOrbitSpecialFunction2(instruction);                    
 
                 default:
                     return String.Format("F2 {0}", Conversion.ToOctal((int)instruction.F2));
@@ -373,7 +398,15 @@ namespace Contralto.CPU
             {
                 case EmulatorBusSource.ReadSLocation:
                     loadS = false;
-                    return String.Format("$S{0}", Conversion.ToOctal((int)instruction.RSELECT));
+
+                    if (instruction.RSELECT == 0)
+                    {
+                        return "M";
+                    }
+                    else
+                    {
+                        return String.Format("$S{0}", Conversion.ToOctal((int)instruction.RSELECT));
+                    }
 
                 case EmulatorBusSource.LoadSLocation:
                     loadS = true;
@@ -415,7 +448,7 @@ namespace Contralto.CPU
                     return "STARTF ";
 
                 default:
-                    return String.Format("F1 {0}", Conversion.ToOctal((int)ef1));
+                    return String.Format("Emulator F1 {0}", Conversion.ToOctal((int)ef1));
             }
 
         }
@@ -448,7 +481,62 @@ namespace Contralto.CPU
                     return "IDISP ";
 
                 default:
-                    return String.Format("F2 {0}", Conversion.ToOctal((int)ef2));
+                    return String.Format("Emulator F2 {0}", Conversion.ToOctal((int)ef2));
+            }
+        }
+
+        private static string DisassembleOrbitSpecialFunction1(MicroInstruction instruction)
+        {
+            OrbitF1 of1 = (OrbitF1)instruction.F1;
+
+            switch(of1)
+            {
+                case OrbitF1.OrbitBlock:
+                    return "OrbitBlock ";
+
+                case OrbitF1.OrbitDeltaWC:
+                    return "←OrbitDeltaWC ";
+
+                case OrbitF1.OrbitDBCWidthRead:
+                    return "←OrbitDBCWidthRead ";
+
+                case OrbitF1.OrbitStatus:
+                    return "←OrbitStatus ";
+
+                default:
+                    return String.Format("Orbit F1 {0}", Conversion.ToOctal((int)of1));
+            }
+        }
+
+        private static string DisassembleOrbitSpecialFunction2(MicroInstruction instruction)
+        {
+            OrbitF2 of2 = (OrbitF2)instruction.F2;
+
+            switch (of2)
+            {
+                case OrbitF2.OrbitDBCWidthSet:
+                    return "OrbitDBCWidthSet← ";
+
+                case OrbitF2.OrbitXY:
+                    return "OrbitXY← ";
+
+                case OrbitF2.OrbitHeight:
+                    return "OrbitHeight← ";
+
+                case OrbitF2.OrbitFontData:
+                    return "OrbitFontData← ";
+
+                case OrbitF2.OrbitInk:
+                    return "OrbitInk← ";
+
+                case OrbitF2.OrbitControl:
+                    return "OrbitControl← ";
+
+                case OrbitF2.OrbitROSCommand:
+                    return "OrbitROSCommand← ";                
+
+                default:
+                    return String.Format("Orbit F2 {0}", Conversion.ToOctal((int)of2));
             }
         }
     }

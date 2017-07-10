@@ -33,24 +33,10 @@ namespace Contralto.CPU
                 _wakeup = false;
             }
 
-            public override void OnTaskSwitch()
-            {
-                // We put ourselves back to sleep immediately once we've started running.
-                //_wakeup = false;
-            }
-
             protected override void ExecuteBlock()
             {
-                //_wakeup = false;
                 _cpu._system.OrbitController.Stop();
-            }
-
-            protected override InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
-            {
-                // TODO: get rid of polling.
-                //_wakeup = _cpu._system.OrbitController.Wakeup;
-                return base.ExecuteInstruction(instruction);
-            }
+            }            
 
             protected override ushort GetBusSource(MicroInstruction instruction)
             {
@@ -80,7 +66,7 @@ namespace Contralto.CPU
                         // "When an S register is being loaded from M, the processor bus receives an
                         // undefined value rather than being set to zero."
                         _loadS = true;
-                        return 0x0;       // Technically this is an "undefined value," we're defining it as -1.
+                        return 0xffff;       // Technically this is an "undefined value," we're defining it as -1.
 
                     default:
                         throw new InvalidOperationException(String.Format("Unhandled bus source {0}", instruction.BS));

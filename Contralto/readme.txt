@@ -21,13 +21,14 @@ ContrAlto currently emulates the following Alto hardware:
                on the host machine)
    - Standard Keyboard/Mouse/Video
    - Audio DAC (used with the Smalltalk Music System)
+   - The Orbit raster hardware, Dover Raster Output Scanner and Dover print
+     engine, which provides 384dpi print output (currently PDF only)
 
 1.2 What's Not
 --------------
 
 At this time, ContrAlto does not support more exotic hardware such as Trident 
-disks, printers or audio using the utility port, the Orbit printer interface, or the 
-keyset input device.
+disks, printers or audio using the utility port or the keyset input device.
 
 
 2.0 Requirements
@@ -297,11 +298,12 @@ The "Interlaced Display" checkbox attempts to simulate the Alto's original
 interlaced display.  Depending on your monitor and the speed of your computer
 this may or may not work well.
 
+
 4.4 DAC
 -------
 
 The DAC tab provides options controlling the Audio DAC used by the Smalltalk
-Music System.  The "Enable Audio DAC" does what you'd expect -- it enables
+Music System.  "Enable Audio DAC" does what you'd expect -- it enables
 or disables audio output (and audio capture).  If this option is enabled,
 the "DAC Options" fields become available.
 
@@ -313,7 +315,26 @@ directory.  If the Alto is restarted or if ContrAlto exits, this file will
 be closed.  WAV files created by ContrAlto are 16-bit, mono at 13Khz.
 
 
-4.5 Alternate ("keyboard") Boots
+4.5 Printing
+------------
+
+The Printing tab provides options for the Orbit / Dover print system emulation.
+The "Enable Printing" checkbox enables or disables print output.  If this option
+is enabled, the "Printing Options" fields become available.
+
+The "PDF output path" specifies the folder that output PDFs are written to.
+When the Alto prints a new document, a new PDF file will be created in this
+directory containing the printer's output.
+
+The "Reverse Output Page Order" checkbox controls the order in which pages are
+written to the PDF -- due to the way the original Dover printer worked, most
+Alto software printed pages in reverse order (i.e. the last page printed
+first) so that the pages didn't have to be reshuffled when picked up from the
+tray.  By default, leaving this box checked is probably what you want, but
+if your documents come out backwards, uncheck it.
+
+
+4.6 Alternate ("keyboard") Boots
 --------------------------------
 
 The Alto allowed the specification of alternate boot addresses by holding down
@@ -493,9 +514,17 @@ On Unix and OS X, display and keyboard/mouse input is provided through SDL, see:
 https://www.libsdl.org/ and is accessed using the SDL2# wrapper, see:
 https://github.com/flibitijibibo/SDL2-CS.
 
+PDF generation is provided by the iTextSharp library, see: https://github.com/itext.
+
 
 10.0 Change History
 ===================
+
+V1.2.1
+------
+- Completed implementation of Orbit, Dover ROS and Dover print engine.
+- Bugfixes to memory state machine around overlapped double-word reads/writes.
+  Smalltalk-80 now runs, as does Spruce.
 
 V1.2
 ----

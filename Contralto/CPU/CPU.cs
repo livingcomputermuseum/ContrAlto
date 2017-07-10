@@ -160,7 +160,7 @@ namespace Contralto.CPU
 
                 case InstructionCompletion.MemoryWait:
                     // We were waiting for memory on this cycle, we do nothing
-                    // (no task switch even if one is pending) in this case.                    
+                    // (no task switch even if one is pending) in this case.
                     break;
             }            
         }
@@ -187,13 +187,13 @@ namespace Contralto.CPU
             UCodeMemory.LoadBanksFromRMR(_rmr);
 
             // Reset RMR after reset.
-            _rmr = 0x0;         
+            _rmr = 0xffff;
           
             // Start in Emulator
             _currentTask = _tasks[0];
 
             //
-            // TODO:
+            // TODO: 
             // This is a hack of sorts, it ensures that the sector task initializes
             // itself as soon as the Emulator task yields after the reset.  (CopyDisk is broken otherwise due to the
             // sector task stomping over the KBLK CopyDisk sets up after the reset.  This is a race of sorts.)
@@ -201,6 +201,7 @@ namespace Contralto.CPU
             // in play that are not understood.
             //
             WakeupTask(CPU.TaskType.DiskSector);
+            BlockTask(CPU.TaskType.DiskWord);
         }
 
         /// <summary>
@@ -250,7 +251,20 @@ namespace Contralto.CPU
         public Task NextTask
         {
             get { return _nextTask; }
-        }        
+        }
+
+        public bool InternalBreak
+        {
+            get
+            {
+                return _internalBreak;
+            }
+
+            set
+            {
+                _internalBreak = value;
+            }
+        }
 
         private void TaskSwitch()
         {            
@@ -295,6 +309,8 @@ namespace Contralto.CPU
         private Task[] _tasks = new Task[16];                
 
         // The system this CPU belongs to
-        private AltoSystem _system;        
+        private AltoSystem _system;
+
+        private bool _internalBreak;
     }
 }

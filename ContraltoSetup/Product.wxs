@@ -112,6 +112,9 @@
         
         <!-- NAudio libs -->
         <File Source="$(var.Contralto.TargetDir)\NAudio.dll"/>
+        
+        <!-- iTextSharp libs -->
+        <File Source="$(var.Contralto.TargetDir)\itextsharp.dll"/>
       </Component>
       <Component Id="ContraltoReadme" Guid="0AF4F077-3858-4CEA-A3CD-CF8585F98AAB">
         <File Id="readme" Name="readme.txt" Source="$(var.Contralto.TargetDir)\readme.txt">

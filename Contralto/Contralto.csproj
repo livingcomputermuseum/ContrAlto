@@ -97,6 +97,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="itextsharp, Version=5.5.11.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <HintPath>..\packages\iTextSharp.5.5.11\lib\itextsharp.dll</HintPath>
+    </Reference>
     <Reference Include="NAudio, Version=1.8.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\NAudio.1.8.0\lib\net35\NAudio.dll</HintPath>
       <Private>True</Private>
@@ -127,6 +130,9 @@
     <Compile Include="IO\AudioDAC.cs" />
     <Compile Include="IO\OrbitController.cs" />
     <Compile Include="IO\OrganKeyboard.cs" />
+    <Compile Include="IO\Printing\IPageSink.cs" />
+    <Compile Include="IO\Printing\NullPageSink.cs" />
+    <Compile Include="IO\Printing\PdfPageSink.cs" />
     <Compile Include="IO\UDPEncapsulation.cs" />
     <Compile Include="IO\IPacketEncapsulation.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

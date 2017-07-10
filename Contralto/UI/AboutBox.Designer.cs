@@ -52,11 +52,11 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(20, 59);
+            this.label2.Location = new System.Drawing.Point(6, 58);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(46, 13);
+            this.label2.Size = new System.Drawing.Size(76, 13);
             this.label2.TabIndex = 1;
-            this.label2.Text = "(c) 2016";
+            this.label2.Text = "(c) 2016, 2017";
             // 
             // label3
             // 
@@ -109,7 +109,7 @@
             // websiteLink
             // 
             this.websiteLink.AutoSize = true;
-            this.websiteLink.Location = new System.Drawing.Point(65, 59);
+            this.websiteLink.Location = new System.Drawing.Point(80, 59);
             this.websiteLink.Name = "websiteLink";
             this.websiteLink.Size = new System.Drawing.Size(163, 13);
             this.websiteLink.TabIndex = 7;

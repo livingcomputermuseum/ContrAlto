@@ -115,8 +115,8 @@ namespace Contralto.IO
                 if ((_kDataWrite & 0x1) != 0)
                 {
                     // Restore operation to cyl. 0:
-                    InitSeek(0);
-                }              
+                    _restore = true;
+                }
             }
         }
 
@@ -145,7 +145,7 @@ namespace Contralto.IO
                 
                 if (_sendAdr & (_kDataWrite & 0x2) != 0)
                 {
-                    _seeking = false;                                                           
+                    _seeking = false;
                 }
 
             }
@@ -244,6 +244,7 @@ namespace Contralto.IO
             _kDataWriteLatch = false;
             _sendAdr = false;
             _seeking = false;
+            _restore = false;
 
             _wdInhib = true;
             _xferOff = true;
@@ -311,7 +312,7 @@ namespace Contralto.IO
             _kDataRead = 0;
 
             // Load new sector in
-            SelectedDrive.Sector = _sector;            
+            SelectedDrive.Sector = _sector;
 
             // Only wake up if not actively seeking.
             if ((_kStat & STROBE) == 0)
@@ -417,7 +418,7 @@ namespace Contralto.IO
         public void Strobe()
         {
             //
-            // "Initiates a disk seek operation.  The KDATA register must have been loaded previously,
+            // "Initiates a disk seek [or restore] operation.  The KDATA register must have been loaded previously,
             // and the SENDADR bit of the KCOMM register previously set to 1."
             //            
 
@@ -431,7 +432,14 @@ namespace Contralto.IO
 
             Log.Write(LogComponent.DiskController, "STROBE: Seek initialized.");
 
-            InitSeek((_kDataWrite & 0x0ff8) >> 3);            
+            if (_restore)
+            {
+                InitSeek(0);
+            }
+            else
+            {
+                InitSeek((_kDataWrite & 0x0ff8) >> 3);
+            }
         }
 
         private void InitSeek(int destCylinder)
@@ -636,7 +644,8 @@ namespace Contralto.IO
             {
                 // clear Seek bit
                 _kStat &= (ushort)~STROBE;
-                _seeking = false;                
+                _seeking = false;
+                _restore = false;
 
                 Log.Write(LogComponent.DiskController, "Seek to {0} completed.", SelectedDrive.Cylinder);
             }
@@ -704,6 +713,7 @@ namespace Contralto.IO
         private ulong _seekDuration;
         private Event _seekEvent;
         private bool _seeking;
+        private bool _restore;
 
         // Selected disk
         private int _disk;

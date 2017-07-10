@@ -242,8 +242,6 @@ namespace Contralto
             get { return _scheduler; }
         }
 
-        public int _novaInst;        
-
         private AltoCPU _cpu;
         private MemoryBus _memBus;
         private Memory.Memory _mem;

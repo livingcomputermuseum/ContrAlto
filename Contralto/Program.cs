@@ -15,10 +15,8 @@
     along with ContrAlto.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using Contralto.IO;
 using Contralto.SdlUI;
 using System;
-using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace Contralto
@@ -121,16 +119,15 @@ namespace Contralto
             // Commit current configuration to disk
             //
             Configuration.WriteConfiguration();
-
         }
 
         private static void PrintHerald()
         {
-            Console.WriteLine("ContrAlto v1.2 (c) 2015-2017 Living Computers: Museum+Labs.");            
+            Console.WriteLine("ContrAlto v{0} (c) 2015-2017 Living Computers: Museum+Labs.", typeof(Program).Assembly.GetName().Version);
             Console.WriteLine("Bug reports to joshd@livingcomputers.org");
             Console.WriteLine();
         }      
         
-        private static AltoSystem _system;        
+        private static AltoSystem _system;
     }
 }

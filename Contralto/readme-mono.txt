@@ -20,13 +20,14 @@ ContrAlto currently emulates the following Alto hardware:
    - Ethernet (encapsulated in UDP datagrams on the host machine)
    - Standard Keyboard/Mouse/Video
    - Audio DAC (used with the Smalltalk Music System)
+   - The Orbit raster hardware, Dover Raster Output Scanner and Dover print
+     engine, which provides 384dpi print output (currently PDF only)
 
 1.2 What's Not
 --------------
 
 At this time, ContrAlto does not support more exotic hardware such as Trident 
-disks, printers or audio using the utility port, the Orbit printer interface, or the 
-keyset input device.
+disks, printers or audio using the utility port, or the keyset input device.
 
 The Audio DAC is technically emulated, but output is not connected to an audio
 device on non-Windows platforms at this time.
@@ -263,6 +264,11 @@ An example configuration file looks something like:
     BootFile = 0
     AlternateBootType = Ethernet
 
+    # Printing options
+    EnablePrinting = true
+    PrintOutputPath = .
+    ReversePageOrder = true
+
 
 The following parameters are configurable:
 
@@ -293,6 +299,19 @@ HostPacketInterfaceName:  Specifies the name of the host network interface
 BootAddress: The address to use with a Keyboard Disk Boot (See section 5.0)
 BootFile:    The file number to use with a Keyboard Net Boot (again, Section 5.0)
 AlternateBootType:  The type of boot to default to (Section 5.0)
+
+EnablePrinting:     Enables or disables printing via the emulated Orbit / Dover interface.
+
+PrintOutputPath:    Specifies the folder that output PDFs are written to. When the  Alto 
+                    prints a new document, a new PDF file will be created in this
+                    directory containing the printer's output.
+
+ReversePageOrder:   Controls the order in which pages are written to the PDF -- due to 
+                    the way the original Dover printer worked, most Alto software printed 
+                    documents in reverse order (i.e. the last page printed first) so 
+                    that the pages didn't have to be reshuffled when picked up from the
+                    tray.  By default, leaving this box checked is probably what you want, 
+                    but if your documents come out backwards, uncheck it.
 
 
 4.1 Ethernet Encapsulation Setup
@@ -452,9 +471,16 @@ On Unix and OS X, display and keyboard/mouse input is provided through SDL, see:
 https://www.libsdl.org/ and is accessed using the SDL2# wrapper, see:
 https://github.com/flibitijibibo/SDL2-CS.
 
+PDF generation is provided by the iTextSharp library, see: https://github.com/itext.
 
 10.0 Change History
 ===================
+
+V1.2.1
+------
+- Completed implementation of Orbit, Dover ROS and Dover print engine.
+- Bugfixes to memory state machine around overlapped double-word reads/writes.
+  Smalltalk-80 now runs, as does Spruce.
 
 V1.2
 ----

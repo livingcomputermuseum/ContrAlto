@@ -205,6 +205,21 @@ namespace Contralto
         public static string AudioDACCapturePath;
 
         /// <summary>
+        /// Whether to enable printing via the Orbit / DoverROS interface.
+        /// </summary>
+        public static bool EnablePrinting;
+
+        /// <summary>
+        /// Path for print output.
+        /// </summary>
+        public static string PrintOutputPath;
+
+        /// <summary>
+        /// Whether to reverse the page order when printing.
+        /// </summary>
+        public static bool ReversePageOrder;
+
+        /// <summary>
         /// The components to enable debug logging for.
         /// </summary>
         public static LogComponent LogComponents;
@@ -291,6 +306,9 @@ namespace Contralto
             EnableAudioDAC = Properties.Settings.Default.EnableAudioDAC;
             EnableAudioDACCapture = Properties.Settings.Default.EnableAudioDACCapture;
             AudioDACCapturePath = Properties.Settings.Default.AudioDACCapturePath;
+            EnablePrinting = Properties.Settings.Default.EnablePrinting;
+            PrintOutputPath = Properties.Settings.Default.PrintOutputPath;
+            ReversePageOrder = Properties.Settings.Default.ReversePageOrder;
         }
 
         private static void WriteConfigurationWindows()
@@ -308,8 +326,10 @@ namespace Contralto
             Properties.Settings.Default.ThrottleSpeed = ThrottleSpeed;
             Properties.Settings.Default.EnableAudioDAC = EnableAudioDAC;
             Properties.Settings.Default.EnableAudioDACCapture = EnableAudioDACCapture;
-            Properties.Settings.Default.AudioDACCapturePath = AudioDACCapturePath;
-            Properties.Settings.Default.AudioDACCapturePath = Properties.Settings.Default.AudioDACCapturePath;
+            Properties.Settings.Default.AudioDACCapturePath = AudioDACCapturePath;            
+            Properties.Settings.Default.EnablePrinting = EnablePrinting;
+            Properties.Settings.Default.PrintOutputPath = PrintOutputPath;
+            Properties.Settings.Default.ReversePageOrder = ReversePageOrder;
             Properties.Settings.Default.Save();
         }
 

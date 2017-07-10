@@ -202,5 +202,41 @@ namespace Contralto.Properties {
                 this["AudioDACCapturePath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EnablePrinting {
+            get {
+                return ((bool)(this["EnablePrinting"]));
+            }
+            set {
+                this["EnablePrinting"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string PrintOutputPath {
+            get {
+                return ((string)(this["PrintOutputPath"]));
+            }
+            set {
+                this["PrintOutputPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ReversePageOrder {
+            get {
+                return ((bool)(this["ReversePageOrder"]));
+            }
+            set {
+                this["ReversePageOrder"] = value;
+            }
+        }
     }
 }

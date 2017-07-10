@@ -1,9 +1,21 @@
-﻿using Contralto.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿/*  
+    This file is part of ContrAlto.
+
+    ContrAlto is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    ContrAlto is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with ContrAlto.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+using Contralto.Logging;
 
 namespace Contralto.IO
 {
@@ -17,12 +29,10 @@ namespace Contralto.IO
         public OrbitController(AltoSystem system)
         {
             _system = system;
-
             _ros = new DoverROS(system);
-
             _refreshEvent = new Event(_refreshInterval, null, RefreshCallback);           
 
-            Reset();
+            Reset();            
         }
 
         public bool RefreshTimerExpired
@@ -48,10 +58,7 @@ namespace Contralto.IO
         public void Reset()
         {
             //
-            // A Reset performs at least the following functions:
-            // FA <- 0, SLOTTAKE <- 0, band buffer A is assigned
-            // to the image buffer, the status and control dialogs
-            // with the adapter are reset.
+            // Reset to power-up (or reboot) defaults.
             //
             _fa = 0;
             _slottake = false;
@@ -71,9 +78,45 @@ namespace Contralto.IO
             _behind = false;
 
             _stableROS = true;
+            _badROS = false;            
+
+            Log.Write(LogComponent.Orbit, "Orbit system reset.");
+            UpdateWakeup();
+        }
+
+        private void OrbitReset()
+        {
+            //
+            // A Reset performs at least the following functions:
+            // FA <- 0, SLOTTAKE <- 0, band buffer A is assigned
+            // to the image buffer, the status and control dialogs
+            // with the adapter are reset.
+            //
+            _fa = 0;
+            _slottake = false;
+
+            _image = _a;
+            _output = _b;
+            _incon = false;
+
+            _outputY = 0;
+            _outputX = 0;
+            
+            // Cleared "by reseting [sic] Orbit"
+            _iacs = false;
+
+            // Cleared by a buffer switch or an Orbit reset
+            _goAway = false;
+
+            _refresh = false;
+
+            _behind = false;
+
+            _stableROS = true;
             _badROS = false;
 
-            Log.Write(LogComponent.Orbit, "Orbit reset.");            
+            Log.Write(LogComponent.Orbit, "Orbit reset.");
+            UpdateWakeup();
         }
 
         public bool Wakeup
@@ -86,16 +129,35 @@ namespace Contralto.IO
             }
         }
 
+        private void UpdateWakeup()
+        {
+            if (_system.CPU == null)
+                return;
+
+            if (Wakeup)
+            {
+                _system.CPU.WakeupTask(CPU.TaskType.Orbit);
+                Log.Write(LogComponent.Orbit, "Orbit wakeup.");
+            }
+            else
+            {
+                _system.CPU.BlockTask(CPU.TaskType.Orbit);
+                Log.Write(LogComponent.Orbit, "Orbit block.");
+            }
+        }
+
         public void STARTF(ushort value)
         {
             // Kick off the refresh timer if it's not already pending
 
             // Wake up task, etc.
             _run = true;
-            _system.CPU.WakeupTask(CPU.TaskType.Orbit);
 
             // "IACS is cleared by StartIO(4)"
             _iacs = false;
+
+            // per microcode, GOAWAY is cleared
+            _goAway = false;
 
             if (!_refreshRunning)
             {
@@ -105,15 +167,16 @@ namespace Contralto.IO
             }
 
             Log.Write(LogComponent.Orbit, "Orbit started.");
+
+            UpdateWakeup();
         }
 
         public void Stop()
         {
             _run = false;
 
-            _system.CPU.BlockTask(CPU.TaskType.Orbit);
-
-            //Log.Write(LogComponent.Orbit, "Orbit blocked.");
+            Log.Write(LogComponent.Orbit, "Orbit stopped.");
+            UpdateWakeup();
         }
 
         public void Control(ushort value)
@@ -133,7 +196,7 @@ namespace Contralto.IO
             //
             if ((value & 0x1) != 0)
             {
-                Reset();
+                OrbitReset();
             }
 
             //
@@ -156,11 +219,9 @@ namespace Contralto.IO
             {
                 _fa = auxControl;
 
-                _outputY = _fa;
-
                 // "The setting of FA provided by the Alto is examined only when
                 // Orbit reads out the last 16 bits of a scanline..."
-                // (So we *should* leave _outputY alone here).
+                // (So we should leave _outputY alone here).
             }
             else
             {
@@ -173,7 +234,6 @@ namespace Contralto.IO
             if ((value & 0x8) != 0)
             {
                 _goAway = true;
-                _system.CPU.BlockTask(CPU.TaskType.Orbit);
             }
 
             //
@@ -195,11 +255,13 @@ namespace Contralto.IO
             if ((value & 0xc0) == 0xc0)
             {
                 _slottake = true;
-            }
+            }            
 
             Log.Write(LogComponent.Orbit,
                "Set Control: aux {0}, reset {1} refresh {2} which {3} goaway {4} behind {5} slottake {6}",
                     auxControl, (value & 0x1) != 0, (value & 0x2) != 0, (value & 0x4) != 0, _goAway, _behind, _slottake);
+
+            UpdateWakeup();
         }
 
         public void SetHeight(ushort value)
@@ -258,10 +320,10 @@ namespace Contralto.IO
             _cx = _x;
             _cy = _y;
 
-            _scanlines = (_x + (_width + 1) < 16) ? (_width + 1): 16 - _x;
-
             Log.Write(LogComponent.Orbit,
                "Set DBCWidth: DeltaBC {0}, Width {1}", _deltaBC, _width);
+
+            UpdateWakeup();
         }
 
         public void WriteFontData(ushort value)
@@ -277,9 +339,12 @@ namespace Contralto.IO
             if (!_iacs)
             {
                 Log.Write(LogType.Error, 
-                    LogComponent.Orbit, "Unxpected OrbitFontData while IACS false.");
+                    LogComponent.Orbit, "Unexpected OrbitFontData while IACS false.");
                 return;
             }
+
+            Log.Write(LogComponent.Orbit,
+                "Font Data: {0}", Conversion.ToOctal(value));
 
             //
             // We insert the word one bit at a time; this is more costly
@@ -290,15 +355,16 @@ namespace Contralto.IO
             if (_firstWord)
             {
                 startBit = 15 - _deltaBC;
+                _firstWord = false;
             }
-
+            
             for(int i = startBit; i >=0 ;i--)
             {
                 int bitValue = (value & (0x1 << i)) == 0 ? 0 : 1;
 
                 if (bitValue != 0 && _cy < 4096)        // clip to end of band
                 {
-                    SetImageRasterBit(_cx, _cy, bitValue);
+                    SetImageRasterBit(_cx, _cy);
                 }
 
                 _cy++;
@@ -316,15 +382,24 @@ namespace Contralto.IO
                     {
                         _iacs = false;
 
-                        Log.Write(LogComponent.DoverROS, "Image band completed.");
+                        //
+                        // A height of 1024 is used by the refresh microcode to refresh the Orbit memory.
+                        // We log this separately to make debugging more clear.
+                        //
+                        if (_height == 1024)
+                        {
+                            Log.Write(LogComponent.Orbit, "Image band completed (refresh).");
+                        }
+                        else
+                        {
+                            Log.Write(LogComponent.Orbit, "Image band completed.");
+                        }
+
+                        UpdateWakeup();
                         break;
                     }
                 }
             }
-
-            _firstWord = false;
-            Log.Write(LogComponent.Orbit,
-               "Font Data: {0}", Conversion.ToOctal(value));
         }
 
         public void WriteInkData(ushort value)
@@ -387,7 +462,7 @@ namespace Contralto.IO
         public ushort GetDBCWidth()
         {
             Log.Write(LogComponent.Orbit,
-                "Delta DBCWidth {0},{1}", _deltaBCEnd % 16, _width);
+                "Delta DBCWidth {0},{1}", _deltaBCEnd % 16, _width);           
 
             return (ushort)((_deltaBCEnd << 12) | (_width & 0xfff));
         }
@@ -417,7 +492,7 @@ namespace Contralto.IO
             }
 
             Log.Write(LogComponent.Orbit,
-                "OrbitStatus {0}", Conversion.ToOctal(result));
+                "OrbitStatus, address {0}, {1}", _statusAddress, Conversion.ToOctal(result));
 
             return (ushort)result;
         }
@@ -425,7 +500,7 @@ namespace Contralto.IO
         private ushort GetOutputData()
         {
             //
-            // Basically, the function OrbitOutputData reads 16 bits from the output buffer
+            // "Basically, the function OrbitOutputData reads 16 bits from the output buffer
             // into the Alto.  
             //
             //  The programmer (or emulator author) needs to be aware of two tricky details
@@ -437,7 +512,7 @@ namespace Contralto.IO
             //      The usual convention is to read out this one last word.  This leaves the first
             //      word of the new buffer in ROB.
             //
-            //  2. The output band buffer will not be refreshed ... (not a concern here)
+            //  2. The output band buffer will not be refreshed ... [not a concern here]"
             //
 
             // Return the last value from ROB
@@ -456,7 +531,7 @@ namespace Contralto.IO
 
             if (_outputY == 256)
             {
-                Log.Write(LogComponent.DoverROS,
+                Log.Write(LogComponent.Orbit,
                     "OutputData - scanline {0} completed", _outputX);
 
                 _outputY = _fa;
@@ -466,7 +541,7 @@ namespace Contralto.IO
                 {
                     // Done reading output band -- swap buffers!
 
-                    Log.Write(LogComponent.DoverROS,
+                    Log.Write(LogComponent.Orbit,
                         "OutputData - buffer read completed.");
 
                     SwapBuffers();
@@ -494,23 +569,22 @@ namespace Contralto.IO
             // the Alto is now behind the consumer...
             //
             if (!_goAway)
-            {
-                Console.WriteLine("BEHIND");
+            {                
                 _behind = true;
             }
             else
             {
                 // "The buffer switch will turn off GOAWAY and consequently
                 //  allow wakeups again."
-                _goAway = false;
-                _system.CPU.WakeupTask(CPU.TaskType.Orbit);
+                _goAway = false;             
+                UpdateWakeup();
             }
 
             // Flip buffer bit
             _incon = !_incon;
         }
 
-        private void SetImageRasterBit(int x, int y, int bitValue)
+        private void SetImageRasterBit(int x, int y)
         {
             // Pick out the word we're interested in
             int wordAddress = y >> 4;
@@ -526,21 +600,22 @@ namespace Contralto.IO
         {
             _refresh = true;
 
-            //Log.Write(LogComponent.Orbit, "Refresh signal raised.");
+            Log.Write(LogComponent.Orbit, "Refresh signal raised.");
 
             if (_run)
             {
-                _system.CPU.WakeupTask(CPU.TaskType.Orbit);
-
                 // do it again
                 _refreshEvent.TimestampNsec = _refreshInterval;
                 _system.Scheduler.Schedule(_refreshEvent);
             }
             else
             {
-                //Log.Write(LogComponent.Orbit, "RUN deasserted, Refresh aborted.");
+                Log.Write(LogComponent.Orbit, "RUN deasserted, Refresh aborted.");
                 _refreshRunning = false;
+                _refresh = false;
             }
+
+            UpdateWakeup();
         }
 
         // Run status
@@ -553,9 +628,7 @@ namespace Contralto.IO
         private int _width;     // raster width of character
         private int _bitCount;  // count of processed bits; used to calculate DeltaWC.
         private int _deltaBC;   // bit of first word to start with
-        private int _deltaBCEnd; // number of bits left in last word rasterized
-
-        private int _scanlines;
+        private int _deltaBCEnd; // number of bits left in last word rasterized        
 
         // FA -- "First Address" of each scanline -- a value between
         // 0 and 255 indicating the starting word to be read by the
@@ -630,7 +703,7 @@ namespace Contralto.IO
         private readonly ulong _refreshInterval = 2 * Conversion.MsecToNsec;   // 2ms in nsec
 
         //
-        // The ROS we talk to to get raster onto a "page"
+        // The ROS we talk to to get raster onto a page.
         //
         private DoverROS _ros;
 

@@ -1,11 +1,24 @@
-﻿using Contralto.Logging;
+﻿/*  
+    This file is part of ContrAlto.
+
+    ContrAlto is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    ContrAlto is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with ContrAlto.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
+using Contralto.IO.Printing;
+using Contralto.Logging;
 using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Contralto.IO
 {
@@ -22,18 +35,28 @@ namespace Contralto.IO
     }
 
     /// <summary>
-    /// Encapsulates the logic for both the ROS and the printer portions of the
-    /// print pipeline.
+    /// Encapsulates the logic for both the ROS (Raster Output Scanner) hardware and
+    /// the Dover print engine.
+    /// 
+    /// These two should probably be separated out in the event that we want to support
+    /// other kinds of printers.
+    /// 
+    /// The Dover print engine support is currently very hand-wavy as the documentation
+    /// isn't extremely specific on some details and we're emulating a mechanical construct
+    /// moving papers past sensors, etc.  It mostly works but it has some rough edges.
+    /// In particular the "Cold Start" mechanic is not well understood.  Many parameters
+    /// are currently ignored (some for good reason; we don't need to emulate the actual
+    /// laser scanning and polygon rotation in order to create a bitmap, for example) but
+    /// some of them might be put to good use.
+    /// 
+    /// None of the diagnostic switches or options are implemented.
     /// </summary>
     public class DoverROS
     {
         public DoverROS(AltoSystem system)
         {
-            _system = system;
-
-            _cs5Event = new Event(0, null, ColdStartCallback);
-            _innerLoopEvent = new Event(0, null, InnerLoopCallback);
-            _pageBuffer = new Bitmap(4096, 4096, PixelFormat.Format1bppIndexed);
+            _system = system;            
+            _printEngineEvent = new Event(0, null, PrintEngineCallback);
 
             Reset();
         }
@@ -54,9 +77,8 @@ namespace Contralto.IO
 
             _packetsOK = true;
 
-            _state = PrintState.ColdStart;
-            _innerLoopState = InnerLoopState.Idle;
-            _coldStartState = ColdStartState.SendVideoLow;
+            _state = PrintState.Idle;
+            _runoutCount = 0;
         }
 
         public void RecvCommand(ushort commandWord)
@@ -83,27 +105,40 @@ namespace Contralto.IO
                     _extendVideo = (argument & 0x20) != 0;
                     _motorScale = (argument & 0x1c0) >> 6;
                     _bitScale = (argument & 0xe00) >> 9;
+
+                    Log.Write(LogComponent.DoverROS, "TestMode {0} CommandBeamOn {1} CommandLocal {2} TestPageSync {3} ExtendVideo {4} MotorScale {5} BitScale {6}",
+                        _testMode,
+                        _commandBeamOn,
+                        _commandLocal,
+                        _testPageSync,
+                        _extendVideo,
+                        _motorScale,
+                        _bitScale);
                     break;
 
                 case AdapterCommand.SetBitClockRegister:
                     _bitClock = argument;
+                    Log.Write(LogComponent.DoverROS, "BitClock set to {0}", argument);
                     break;
 
                 case AdapterCommand.SetMotorSpeedRegister:
                     _motorSpeed = argument;
+                    Log.Write(LogComponent.DoverROS, "MotorSpeed set to {0}", argument);
                     break;
 
                 case AdapterCommand.SetLineSyncDelayRegister:
                     _lineSyncDelay = argument;
+                    Log.Write(LogComponent.DoverROS, "LineSyncDelay set to {0}", argument);
                     break;
 
                 case AdapterCommand.SetPageSyncDelayRegister:
                     _pageSyncDelay = argument;
+                    Log.Write(LogComponent.DoverROS, "PageSyncDelay set to {0}", argument);
                     break;
 
                 case AdapterCommand.ExternalCommand1:
 
-                    bool lastPrintRequest = (_externalCommand1 & 0x1) != 0;
+                    bool lastPrintRequest = (_externalCommand1 & 0x1) == 0;
 
                     _externalCommand1 = argument;
 
@@ -113,7 +148,7 @@ namespace Contralto.IO
                     // sheets.
                     //
                     Log.Write(LogComponent.DoverROS, "ExternalCommand1 written {0}", argument);
-                    if (lastPrintRequest && (_externalCommand1 & 0x1) == 0)
+                    if (lastPrintRequest && (_externalCommand1 & 0x1) != 0)
                     {
                         PrintRequest();
                     }
@@ -121,6 +156,7 @@ namespace Contralto.IO
 
                 case AdapterCommand.ExternalCommand2:
                     _videoGate = argument;
+                    Log.Write(LogComponent.DoverROS, "VideoGate set to {0}", argument);
                     break;
 
                 default:
@@ -164,8 +200,6 @@ namespace Contralto.IO
                     value |= (_local ? 0x2000 : 0);
                     value |= (_beamEnable ? 0x1000 : 0);
                     value |= (_statusBeamOn ? 0x0800 : 0);
-
-                    //Log.Write(LogComponent.DoverROS, "ROS word 0 bits 0-15: {0}", Conversion.ToOctal(value));
                     break;
 
                 case 1:
@@ -255,6 +289,24 @@ namespace Contralto.IO
                     //
                     value |= (_lineCount << 12);
                     value |= _videoGate;
+
+                    //
+                    // LineCount is not well documented anywhere in the hardware documentation
+                    // available.  It is related to the motion of the laser as it sweeps across
+                    // the page.  The source code for Spruce (SprucePrinDover.bcpl)
+                    // has this to say:
+                    // "A check, designed chiefly for Dover, verifies that the laser is on and the polygon is
+                    //  scanning (SOS/EOS are seeing things), by making sure that the low four bits of the line
+                    //  count (indicated in status word) are  changing. The code reads the line count, waits
+                    //  approximately the time needed for four scan lines (generous margin), then reads the
+                    //  count again, reporting a problem if the values are equal."
+                    //
+
+                    //
+                    // Indeed, if this value does not increment, Spruce fails with a
+                    // "Laser appears to be off" error.
+                    // We fudge this here.
+                    _lineCount++;
                     break;
 
                 case 8:
@@ -270,9 +322,7 @@ namespace Contralto.IO
                     // 8 - LS4 (adequate paper in tray)
                     // 11 - LaserOn
                     // 13 - ReadyTemp
-                    value |= 0x214;
-
-                    Log.Write(LogComponent.DoverROS, "Dover bits 0-15: {0}", Conversion.ToOctal(value));
+                    value |= 0x0094;
                     break;
 
                 case 9:
@@ -284,8 +334,7 @@ namespace Contralto.IO
                     // These are:
                     // 5 - ACMonitor
                     // 13 - LS24 & LS31
-
-                    value |= 0x2004;
+                    value |= 0x0404;
 
                     Log.Write(LogComponent.DoverROS, "Dover bits 16-31: {0}", Conversion.ToOctal(value));
                     break;
@@ -302,6 +351,7 @@ namespace Contralto.IO
 
                 default:
                     Log.Write(LogComponent.DoverROS, "Unhandled ROS status word {0}", wordNumber);
+                    value = 0xffff;
                     break;
             }
 
@@ -310,301 +360,388 @@ namespace Contralto.IO
 
         private void PrintRequest()
         {
-            switch(_state)
+            switch (_state)
             {
-                case PrintState.ColdStart:
-
+                case PrintState.Idle:
                     if (!_printMode)
                     {
+                        _state = PrintState.ColdStart;
                         _printMode = true;
-                        _sendVideo = false;
+                        _sendVideo = true;
+                        _keepGoing = false;
+                        _runoutCount = 0;
 
-                        // Queue a 250ms event to fire CS-5(0).
-                        // and 990ms item to cancel printing if a second
-                        // print-request isn't received.
-                        _innerLoopState = InnerLoopState.CS5;
-                        _innerLoopEvent.TimestampNsec = (ulong)(120 * Conversion.MsecToNsec);
-                        _system.Scheduler.Schedule(_innerLoopEvent);
+                        ClearPageRaster();
 
-                        Log.Write(LogComponent.DoverROS, "Cold Start initialized at {0}ms -- CS-5(0) in 250ms.", _system.Scheduler.CurrentTimeNsec * Conversion.NsecToMsec);
+                        //
+                        // Calculate a few things based on ROS parameters
+                        //
+                        // PageSyncDelay is (4096-n/i) where n is the number of
+                        // scan-lines to pass up after receiving PageSync from the engine
+                        // before starting SendVideo.  i is 1 for Dover II, and 4 for older
+                        // ones.
+                        // We assume a Dover I here.
+                        _sendVideoStartScanline = 4 * (4096 - _pageSyncDelay);
+
+                        //
+                        // VideoGate is (4096-n/4) where n is the number of scan-lines to
+                        // pass up after SendVideo starts before stopping SendVideo.
+                        _sendVideoEndScanline = 4 * (4096 - _videoGate) + _sendVideoStartScanline;
+
+                        Log.Write(LogComponent.DoverROS, "SendVideo start {0}, end {1}",
+                            _sendVideoStartScanline,
+                            _sendVideoEndScanline);
+
+                        //
+                        // Start printing engine running.
+                        //
+                        _printEngineEvent.TimestampNsec = _printEngineTimestepInterval;
+                        _system.Scheduler.Schedule(_printEngineEvent);
+                        _printEngineTimestep = -375;        // Start 250ms before the first CS-5
+
+                        //
+                        // Start output
+                        //
+                        InitializePrintOutput();                        
+
+                        Log.Write(LogComponent.DoverROS, "Cold Start initialized.  Engine started.");
                     }
                     else
                     {
-                        Log.Write(LogComponent.DoverROS, "PrintRequest received in cold start at {0}ms.", _system.Scheduler.CurrentTimeNsec * Conversion.NsecToMsec);
-                        _keepGoing = true;
+                        Log.Write(LogComponent.DoverROS, "Unexpected PrintRequest with PrintMode active during Idle.");
                     }
+
+                    break;
+
+                case PrintState.ColdStart:
+                    Log.Write(LogComponent.DoverROS, "PrintRequest received in cold start.");
+                    _keepGoing = true;
                     break;
 
                 case PrintState.InnerLoop:
                     if (!_printMode)
                     {
                         // PrintRequest too late.
-                        Log.Write(LogComponent.DoverROS, "PrintRequest too late.  Ignoring.");
+                        Log.Write(LogComponent.DoverROS, "PrintRequest too late during Inner Loop.  Ignoring.");
                     }
                     else
                     {
-                        if (_innerLoopState != InnerLoopState.Idle)
-                        {
-                            Log.Write(LogComponent.DoverROS, "PrintRequest received in inner loop.");
-                            _keepGoing = true;
-                        }
-                        else
-                        {
-                            // 
-                            // Currently idle:  Kick off the first round of the inner loop.
-                            // Queue a PageSyncDelay (250ms) event to pulse SendVideo
-                            // after the pulse, gather video raster from Orbit
-                            //
-                            Log.Write(LogComponent.DoverROS, "PrintRequest received, starting inner loop.");
-                            _innerLoopState = InnerLoopState.CS5;
-                            _innerLoopEvent.TimestampNsec = 120 * Conversion.MsecToNsec;
-                            _system.Scheduler.Schedule(_innerLoopEvent);
-                        }
+                        Log.Write(LogComponent.DoverROS, "PrintRequest during inner loop.  Continuing.");
+                        _keepGoing = true;
                     }
                     break;
 
                 case PrintState.Runout:
-                    Log.Write(LogComponent.DoverROS, "Runout.");
-                    break;
-
-            }
-
-        }
-
-        private void InnerLoopCallback(ulong timestampNsec, ulong delta, object context)
-        {
-            switch(_innerLoopState)
-            {
-                case InnerLoopState.CS5:
-                    _countH = false;
-                    _sendVideo = false;
-
-                    // Keep SendVideo low for 125ms
-                    _innerLoopState = InnerLoopState.SendVideo;
-                    _innerLoopEvent.TimestampNsec = 125 * Conversion.MsecToNsec;
-                    _system.Scheduler.Schedule(_innerLoopEvent);
-
-                    Log.Write(LogComponent.DoverROS, "Inner loop: CS5");
-                    break;
-
-                case InnerLoopState.SendVideo:
-                    _sendVideo = true;
-
-                    _innerLoopState = InnerLoopState.ReadBands;
-                    _readBands = 0;
-
-                    // time for one band of 16 scanlines to be read (approx.)
-                    _innerLoopEvent.TimestampNsec = (ulong)(0.2 * Conversion.MsecToNsec);
-                    _system.Scheduler.Schedule(_innerLoopEvent);
-
-                    Log.Write(LogComponent.DoverROS, "Inner loop: SendVideo");
-                    break;
-
-                case InnerLoopState.ReadBands:
-                    // Assume 3000 scanlines for an 8.5" sheet of paper at 350dpi.
-                    // If the Orbit is allowing us to read the output buffer then
-                    // we will do so, otherwise we emit nothing.
-                    if (_readBands > 3000)
+                    if (!_printMode)
                     {
-                        if (_state == PrintState.ColdStart)
-                        {
-                            _innerLoopState = InnerLoopState.ColdStartEnd;
-                        }
-                        else
-                        {
-                            _innerLoopState = InnerLoopState.CountH;
-                        }
+                        // PrintRequest too late.
+                        Log.Write(LogComponent.DoverROS, "PrintRequest too late during Runout.  Ignoring.");
                     }
                     else
                     {
-                        if (_system.OrbitController.SLOTTAKE)
+                        Log.Write(LogComponent.DoverROS, "PrintRequest during Runout.  Moving to Inner Loop.");
+                        _state = PrintState.InnerLoop;                        
+                        _keepGoing = true;
+                        _runoutCount = 0;
+                    }
+                    break;
+            }
+        }
+
+        private void InitializePrintOutput()
+        {
+            //
+            // Select the appropriate output based on the configuration.
+            // For now it's either PDF or nothing.
+            //
+            if (Configuration.EnablePrinting)
+            {
+                _pageOutput = new PdfPageSink();
+            }
+            else
+            {
+                _pageOutput = new NullPageSink();
+            }
+
+            _pageOutput.StartDoc();
+        }
+
+        /// <summary>
+        /// This is invoked for every scanline that passes under the virtual print path.
+        /// At each scanline flags are updated and raster data is pulled from the Orbit and
+        /// copied to the page as necessary.
+        /// </summary>
+        /// <param name="timestampNsec"></param>
+        /// <param name="delta"></param>
+        /// <param name="context"></param>
+        private void PrintEngineCallback(ulong timestampNsec, ulong delta, object context)
+        {
+            Log.Write(LogComponent.DoverROS, "Scanline {0} (sendvideo {1})", _printEngineTimestep, _sendVideo);
+            switch (_state)
+            {
+                case PrintState.ColdStart:
+                    {
+                        // Go through the motions but don't rasterize anything
+                        //
+                        // The Cold-start loop starts 250ms before the first CS-5 signal.                        
+                        if (_printEngineTimestep >= 0 && _printEngineTimestep < _sendVideoStartScanline)
                         {
-                            // Read in 16 scanlines of data -- this is 256x16 words
-                            for (int y = 0; y < 16; y++)
+                            _sendVideo = false;
+                        }
+                        else
+                        {
+                            _sendVideo = true;
+                        }
+
+
+                        if (_printEngineTimestep >= 0 && 
+                            _printEngineTimestep < _sendVideoEndScanline)
+                        {
+                            // Pull rasters one scanline at a time out of Orbit,
+                            // since we're in cold-start, these are discarded.
+                            if (_system.OrbitController.SLOTTAKE)
                             {
+                                // Read in one scanline of data -- this is 256 words
                                 for (int x = 0; x < 256 - _system.OrbitController.FA; x++)
                                 {
                                     ushort word = _system.OrbitController.GetOutputDataROS();
 
-                                    _pageData[(_readBands + y) * 512 + x * 2] = (byte)(word & 0xff);
-                                    _pageData[(_readBands + y) * 512 + x * 2 + 1] = (byte)(word >> 8);
-
-                                 
+                                    // The assumption is that during this phase the Alto will just
+                                    // be sending zeroes, log if this assumption does not hold...
+                                    //
+                                    if (word != 0)
+                                    {
+                                        Log.Write(LogComponent.DoverROS, "Read non-zero orbit data during cold-start {0}", Conversion.ToOctal(word));
+                                    }
                                 }
+
+                                Log.Write(LogComponent.DoverROS, "Read cold-start band {0}", _readBands);
+                            }
+                            else
+                            {
+                                // Nothing right now
+                                Log.Write(LogComponent.DoverROS, "No bands available from Orbit.");
                             }
 
-                            Log.Write(LogComponent.DoverROS, "Read bands {0}", _readBands);
+                            _readBands++;
+                        }
+
+                        if (_printEngineTimestep >= 3136)
+                        {
+                            // After appx. 896ms (3136 scanlines) the first Count-H is raised.
+                            _countH = true;
+                        }
+
+                        _printEngineTimestep++;
+
+                        if (_printEngineTimestep >= 3500)
+                        {
+                            // End of cold-start "page."
+                            _readBands = 0;
+                            _printEngineTimestep = 0;
+                            _countH = false;
+                            ClearPageRaster();
+
+                            if (_keepGoing)
+                            {
+                                // 
+                                // We got a PrintRequest during ColdStart, so we'll continue to the next page.
+                                //
+                                Log.Write(LogComponent.DoverROS, "End of Cold Start, switching to Inner Loop.");
+                                _state = PrintState.InnerLoop;
+                            }
+                            else
+                            {
+                                //
+                                // No PrintRequest, we will switch to Runout and begin shutting down.
+                                //
+                                Log.Write(LogComponent.DoverROS, "End of Cold Start, switching to Runout.");
+                                _state = PrintState.Runout;
+                            }
+
+                            _keepGoing = false;
+                        }
+
+                        _printEngineEvent.TimestampNsec = _printEngineTimestepInterval;
+                        _system.Scheduler.Schedule(_printEngineEvent);
+                    }
+                    break;
+
+                case PrintState.InnerLoop:
+                    {
+                        //
+                        // Inner loop starts with CS-5 (timestep 0).
+                        // After which there is a delay (PageSyncDelay) before
+                        // SendVideo goes high and we can start reading raster data.
+                        if (_printEngineTimestep < _sendVideoStartScanline)
+                        {
+                            _sendVideo = false;
                         }
                         else
                         {
-                            // Nothing right now
-                            Log.Write(LogComponent.DoverROS, "No bands available from Orbit.");
+                            _sendVideo = true;
                         }
 
-                        _readBands += 16;
-
-                        if (_readBands > 2500 && !_countH)
+                        if (_printEngineTimestep >= 0 && 
+                            _printEngineTimestep < _sendVideoEndScanline)
                         {
+                            // Video gate : pull rasters one scanline at a time out of Orbit.
+                            if (_system.OrbitController.SLOTTAKE)
+                            {
+                                // Read in one scanline's worth of data
+                                int scanlineWordCount = 256 - _system.OrbitController.FA;
+                                for (int x = 0; x < scanlineWordCount; x++)
+                                {
+                                    ushort word = _system.OrbitController.GetOutputDataROS();
+                                    
+                                    int pageDataIndex = _readBands * scanlineWordCount * 2 + x * 2;
+                                    _pageData[pageDataIndex] = (byte)(~word >> 8);
+                                    _pageData[pageDataIndex + 1] = (byte)(~word & 0xff);
+                                }
+
+                                Log.Write(LogComponent.DoverROS, "Read band {0}", _readBands);
+                            }
+                            else
+                            {
+                                // Nothing right now
+                                Log.Write(LogComponent.DoverROS, "No bands available from Orbit.");
+                            }
+
+                            _readBands++;
+                        }
+
+                        if (_printEngineTimestep >= 3136)
+                        {
+                            // After appx. 896ms (3136 scanlines) Count-H is raised.
                             _countH = true;
-                            Log.Write(LogComponent.DoverROS, "Enabling CountH");
+                        }
+
+                        _printEngineTimestep++;
+
+                        if (_printEngineTimestep >= 3500)
+                        {
+                            //
+                            // Send page rasters to the print output.
+                            //
+                            _pageOutput.AddPage(_pageData, _readBands, (256 - _system.OrbitController.FA) * 16);
+
+                            ClearPageRaster();
+
+                            // End of page.
+                            _countH = false;
+                            _readBands = 0;
+                            _printEngineTimestep = 0;
+
+                            if (_keepGoing)
+                            {
+                                //
+                                // A PrintRequest was recieved during the Inner Loop, so we'll keep going to the next page.
+                                Log.Write(LogComponent.DoverROS, "End of Page, continuing in Inner Loop.");
+                                _state = PrintState.InnerLoop;
+                            }
+                            else
+                            {
+                                Log.Write(LogComponent.DoverROS, "End of Page, switching to Runout.");
+                                _state = PrintState.Runout;
+                            }
+
+                            _keepGoing = false;
+                        }
+
+                        _printEngineEvent.TimestampNsec = _printEngineTimestepInterval;
+                        _system.Scheduler.Schedule(_printEngineEvent);
+
+                    }
+                    break;
+
+                case PrintState.Runout:
+                    {
+                        //
+                        // SendVideo still gets toggled during Runout.  CountH is
+                        // toggled by paper moving past a sensor, which does not happen
+                        // during runout.
+                        //
+                        if (_printEngineTimestep < _sendVideoStartScanline)
+                        {
+                            _sendVideo = false;
+                        }
+                        else
+                        {
+                            _sendVideo = true;
+                        }
+
+                        _printEngineTimestep++;
+
+                        if (_printEngineTimestep >= 3500)
+                        {
+
+                            // End of runout cycle.
+                            _countH = false;
+                            _printEngineTimestep = 0;
+
+                            if (_keepGoing)
+                            {
+                                Log.Write(LogComponent.DoverROS, "End of Runout cycle {0}, continuing in Inner Loop.", _runoutCount);
+                                _state = PrintState.InnerLoop;
+                            }
+                            else
+                            {
+                                Log.Write(LogComponent.DoverROS, "End of Runout cycle {0}.", _runoutCount);
+                                _state = PrintState.Runout;
+                            }
+
+                            _keepGoing = false;
+
+                            _runoutCount++;
+                        }
+
+                        if (_runoutCount > 7)
+                        {
+                            // Just shut off.
+                            _state = PrintState.Idle;
+                            _printMode = false;
+                            _countH = false;
+                            _sendVideo = false;
+
+                            //
+                            // Finish the output.
+                            //
+                            _pageOutput.EndDoc();
+
+                            Log.Write(LogComponent.DoverROS, "Runout: shutting down, switching to Idle state.  Output completed.");
+                        }
+                        else
+                        {
+                            //
+                            // Go around for another Runout cycle.
+                            _printEngineEvent.TimestampNsec = _printEngineTimestepInterval;
+                            _system.Scheduler.Schedule(_printEngineEvent);
                         }
                     }
-
-                    // time for one band of 16 scanlines to be read (approx.)
-                    _innerLoopEvent.TimestampNsec = (ulong)(0.2 * Conversion.MsecToNsec);
-                    _system.Scheduler.Schedule(_innerLoopEvent);
-                    break;
-
-                case InnerLoopState.CountH:
-                    _countH = false;
-
-                    if (_keepGoing)
-                    {
-                        // PrintRequest during ColdStart -- move to Inner loop
-                        _keepGoing = false;
-                        _state = PrintState.InnerLoop;
-                        _innerLoopState = InnerLoopState.CS5;
-                        Log.Write(LogComponent.DoverROS, "PrintRequest during ColdStart -- moving to inner loop.");
-                    }
-                    else
-                    {
-                        _innerLoopState = InnerLoopState.Idle;
-                        Log.Write(LogComponent.DoverROS, "No PrintRequest during ColdStart -- idling.");
-                    }
-
-                   
-                    break;
-
-                case InnerLoopState.ColdStartEnd:
-                    if (_keepGoing)
-                    {
-                        //
-                        // Got a PrintRequest during cold start, start the inner loop.
-                        //
-                        _keepGoing = false;
-                        _state = PrintState.InnerLoop;
-                        _innerLoopState = InnerLoopState.CS5;
-                        Log.Write(LogComponent.DoverROS, "Inner loop: CountH -- continuing");
-                    }
-                    else
-                    {
-                        //
-                        // No Print Request; idle and shut down.
-                        //
-                        _innerLoopState = InnerLoopState.Idle;
-                        Log.Write(LogComponent.DoverROS, "Inner loop: CountH -- idling");
-                    }
-
-                    // Debug: Put picture in image
-                    /*
-                    BitmapData data = _pageBuffer.LockBits(_pageRect, ImageLockMode.WriteOnly, PixelFormat.Format1bppIndexed);
-
-                    IntPtr ptr = data.Scan0;
-                    System.Runtime.InteropServices.Marshal.Copy(_pageData, 0, ptr, _pageData.Length);
-
-                    _pageBuffer.UnlockBits(data);
-
-                    EncoderParameters p = new EncoderParameters(1);
-                    p.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 100L);
-
-                    _pageBuffer.Save(String.Format("c:\\temp\\raster{0}.png", _rasterNum++), GetEncoderForFormat(ImageFormat.Png), p);
-                    */
-
-                    _innerLoopEvent.TimestampNsec = (ulong)(150 * Conversion.MsecToNsec);
-                    _system.Scheduler.Schedule(_innerLoopEvent);
-
-                    _innerLoopEvent.TimestampNsec = (ulong)(150 * Conversion.MsecToNsec);
-                    _system.Scheduler.Schedule(_innerLoopEvent);
-                    break;
-
-                case InnerLoopState.Idle:
-                    _countH = false;
-                    _sendVideo = false;
-                    _printMode = false;
-                    _state = PrintState.ColdStart;
-                    Log.Write(LogComponent.DoverROS, "Inner loop: Idle");
                     break;
             }
         }
 
-        private void ColdStartCallback(ulong timestampNsec, ulong delta, object context)
+        private void ClearPageRaster()
         {
-            switch (_coldStartState)
+            //
+            // reset to white
+            //
+            for(int i=0;i<_pageData.Length;i++)
             {
-                case ColdStartState.SendVideoLow:
-                    _sendVideo = false;
-
-                    // Keep SendVideo low for 125ms
-                    _coldStartState = ColdStartState.SendVideoHigh;
-                    _cs5Event.TimestampNsec = 125 * Conversion.MsecToNsec;
-                    _system.Scheduler.Schedule(_cs5Event);
-
-                    Log.Write(LogComponent.DoverROS, "Cold start: toggle SendVideo low");
-                    break;
-
-                case ColdStartState.SendVideoHigh:
-                    _sendVideo = true;
-
-                    _coldStartState = ColdStartState.Timeout;
-                    _cs5Event.TimestampNsec = 800 * Conversion.MsecToNsec;
-                    _system.Scheduler.Schedule(_cs5Event);
-
-                    Log.Write(LogComponent.DoverROS, "Cold start: toggle SendVideo high");
-                    break;
-
-                case ColdStartState.Timeout:
-                    if (_state == PrintState.ColdStart)
-                    {
-                        // Never moved from ColdStart, Alto never sent another PageRequest.
-                        Log.Write(LogComponent.DoverROS, "Cold start timeout. Aborting.");
-                        _sendVideo = false;
-                        _printMode = false;
-                    }
-                    break;
+                _pageData[i] = 0xff;
             }
-        }
-
-        private ImageCodecInfo GetEncoderForFormat(ImageFormat format)
-        {
-            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageDecoders();
-
-            foreach (ImageCodecInfo codec in codecs)
-            {
-                if (codec.FormatID == format.Guid)
-                {
-                    return codec;
-                }
-            }
-            return null;
         }
 
         private enum PrintState
         {
-            ColdStart = 0,
+            Idle = 0,
+            ColdStart,
             InnerLoop,
             Runout
         }
 
-        private enum ColdStartState
-        {
-            SendVideoLow,
-            SendVideoHigh,
-            Timeout
-        }
-
-        private enum InnerLoopState
-        {
-            Idle = 0,
-            CS5,
-            SendVideo,
-            ReadBands,
-            CountH,
-            ColdStartEnd,
-        }
-
         private PrintState _state;
-        private InnerLoopState _innerLoopState;
-        private ColdStartState _coldStartState;
 
         private bool _keepGoing;
         private int _readBands;
@@ -653,8 +790,8 @@ namespace Contralto.IO
         private bool _switch4;
 
         // ID and serial number
-        private ushort _id;
-        private ushort _serialNumber;
+        private ushort _id = 0;
+        private ushort _serialNumber = 0;
 
         //
         // Dover specific status that we care to report.
@@ -671,15 +808,35 @@ namespace Contralto.IO
         //
         private bool _countH;
 
+        /// <summary>
+        /// Number of passes through the Runout state.
+        /// </summary>
+        private int _runoutCount;
+
 
         // Events to drive the print state machine
-        //
-        private Event _cs5Event;        
-        private Event _innerLoopEvent;
+        //          
+        private Event _printEngineEvent;
 
-        private byte[] _pageData = new byte[4096 * 512];
-        private Rectangle _pageRect = new Rectangle(0, 0, 4096, 4096);
-        private Bitmap _pageBuffer;
+        private int _printEngineTimestep;
+        private int _sendVideoStartScanline;
+        private int _sendVideoEndScanline;
+
+
+        /// <summary>
+        /// The timeslice for a single engine step (one scanline).
+        /// There are (in theory) 2975 scanlines per 8.5" page (at 350dpi) which moves
+        /// through the engine in 850ms.  
+        /// 
+        /// The cycle time for an entire page is 1000ms, which we pretend
+        /// is 3500 scanline times.
+        /// 
+        /// </summary>
+        private ulong _printEngineTimestepInterval = (ulong)((1000.0 / 3500.0) * Conversion.MsecToNsec);
+
+        private byte[] _pageData = new byte[3500 * 512];
         private int _rasterNum;
+
+        private IPageSink _pageOutput;
     }
 }

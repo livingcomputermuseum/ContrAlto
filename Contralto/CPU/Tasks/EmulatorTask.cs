@@ -111,7 +111,7 @@ namespace Contralto.CPU
                         // bus specifies the initial mode of task 15, the highest priority task(recall that task i starts at location i; the
                         // reset mode register determines only which microinstruction bank will be used at the outset). A task will
                         // commence in ROM0 if its associated bit in the reset mode register contains the value 1; otherwise it will
-                        // start in RAM0.Upon initial power - up of the Alto, and after each reset operation, the reset mode register
+                        // start in RAM0.  Upon initial power-up of the Alto, and after each reset operation, the reset mode register
                         // is automatically set to all ones, corresponding to starting all tasks in ROM0."
                         //
                         _cpu._rmr = _busData;
@@ -125,11 +125,7 @@ namespace Contralto.CPU
                         // Dispatch function to Ethernet I/O based on contents of AC0.
                         if ((_busData & 0x8000) != 0)
                         {
-                            // 
-                            // BOOT (soft-reset) operation.
-                            // Reset the CPU using the current RMR (start tasks in RAM or ROM as specified.)
-                            _cpu.SoftReset();
-
+                            
                             // Since this is a soft reset, we don't want MPC to be taken from the NEXT
                             // field at the end of the cycle, setting this flag causes the main Task
                             // implementation to skip updating _mpc at the end of this instruction.
@@ -150,7 +146,7 @@ namespace Contralto.CPU
                                     break;
 
                                 case 4:
-                                    // Orbit
+                                    // Orbit                                    
                                     _cpu._system.OrbitController.STARTF(_busData);
                                     break;
 

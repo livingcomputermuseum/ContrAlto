@@ -142,13 +142,14 @@ namespace Contralto.CPU
                 bool swMode = false;                
                 ushort aluData;
                 ushort nextModifier;
+                bool softReset = _softReset;
                 _loadR = false;
                 _loadS = false;
                 _rSelect = 0;                
                 _busData = 0;
                 _softReset = false;
 
-                Shifter.Reset();                
+                Shifter.Reset();
 
                 //
                 // Wait for memory state machine if a memory operation is requested by this instruction and
@@ -197,10 +198,10 @@ namespace Contralto.CPU
                             break;
 
                         case BusSource.ReadMD:
-                            _busData = _cpu._system.MemoryBus.ReadMD();                         
+                            _busData = _cpu._system.MemoryBus.ReadMD();
                             break;
 
-                        case BusSource.ReadMouse:                            
+                        case BusSource.ReadMouse:
                             // "BUS[12-15]<-MOUSE; BUS[0-13]<- -1"
                             // (Note -- BUS[0-13] appears to be a typo, and should likely be BUS[0-11]).
                             _busData = (ushort)(_cpu._system.Mouse.PollMouseBits() | 0xfff0);
@@ -533,9 +534,13 @@ namespace Contralto.CPU
                 // Select next address, using the address modifier from the last instruction.
                 // (Unless a soft reset occurred during this instruction)
                 //
-                if (!_softReset)
+                if (!softReset)
                 {
                     _mpc = (ushort)(instruction.NEXT | nextModifier);
+                }
+                else
+                {
+                    _cpu.SoftReset();
                 }
 
                 _firstInstructionAfterSwitch = false;
