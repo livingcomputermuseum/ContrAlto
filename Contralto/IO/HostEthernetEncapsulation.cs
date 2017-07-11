@@ -89,6 +89,9 @@ namespace Contralto.IO
                 Log.Write(LogComponent.HostNetworkInterface, "Specified ethernet interface does not exist or is not compatible with ContrAlto.");
                 throw new InvalidOperationException("Specified ethernet interface does not exist or is not compatible with ContrAlto.");
             }
+
+            _10mbitMACPrefix[5] = Configuration.HostAddress;    // Stuff our current Alto host address into the 10mbit MAC
+            _10mbitSourceAddress = new PhysicalAddress(_10mbitMACPrefix);
         }
 
         public void RegisterReceiveCallback(ReceivePacketDelegate callback)
@@ -171,11 +174,11 @@ namespace Contralto.IO
                 Conversion.ToOctal(destinationHost),
                 length);
 
-            _10mbitMACPrefix[5] = Configuration.HostAddress;    // Stuff our current Alto host address into the 10mbit MAC
+            UpdateSourceAddress();
 
             EthernetPacket p = new EthernetPacket(
-                new PhysicalAddress(_10mbitMACPrefix),          // Source address
-                _10mbitBroadcast,                               // Destnation (broadcast)
+                _10mbitSourceAddress,       // Source address
+                _10mbitBroadcast,           // Destnation (broadcast)
                 (EthernetPacketType)_3mbitFrameType);
 
             p.PayloadData = packetBytes;
@@ -191,14 +194,14 @@ namespace Contralto.IO
             //
             // Filter out packets intended for the emulator, forward them on, drop everything else.
             //
-            if (e.Packet.LinkLayerType == PacketDotNet.LinkLayers.Ethernet)
+            if (e.Packet.LinkLayerType == LinkLayers.Ethernet)
             {
-                EthernetPacket packet = (EthernetPacket)PacketDotNet.Packet.ParsePacket(PacketDotNet.LinkLayers.Ethernet, e.Packet.Data);
+                EthernetPacket packet = (EthernetPacket)Packet.ParsePacket(LinkLayers.Ethernet, e.Packet.Data);
 
-                _10mbitMACPrefix[5] = Configuration.HostAddress;
+                UpdateSourceAddress();
 
-                if ((int)packet.Type == _3mbitFrameType &&                                                                  // encapsulated 3mbit frames
-                    (packet.SourceHwAddress != new System.Net.NetworkInformation.PhysicalAddress(_10mbitMACPrefix)))        // and not sent by this emulator
+                if ((int)packet.Type == _3mbitFrameType &&                          // encapsulated 3mbit frames
+                    (!packet.SourceHwAddress.Equals(_10mbitSourceAddress)))         // and not sent by this emulator
                 {
                     Log.Write(LogComponent.HostNetworkInterface, "Received encapsulated 3mbit packet.");
                     _callback(new System.IO.MemoryStream(packet.PayloadData));
@@ -207,6 +210,17 @@ namespace Contralto.IO
                 {
                     // Not for us, discard the packet.
                 }
+            }
+        }
+
+        private void UpdateSourceAddress()
+        {
+            // Ensure our host MAC address is in sync with any configuration changes
+            // TODO: having a Configuration Changed event would make this less ugly.
+            if (Configuration.HostAddress != _10mbitSourceAddress.GetAddressBytes()[5])
+            {
+                _10mbitMACPrefix[5] = Configuration.HostAddress;            // Stuff our current Alto host address into the 10mbit MAC
+                _10mbitSourceAddress = new PhysicalAddress(_10mbitMACPrefix);
             }
         }
 
@@ -262,6 +276,7 @@ namespace Contralto.IO
         /// </summary>
         private byte[] _10mbitMACPrefix = { 0x00, 0x00, 0xaa, 0x01, 0x02, 0x00 };  // 00-00-AA is the Xerox vendor code, used just to be cute.  
 
+        private PhysicalAddress _10mbitSourceAddress;
         private PhysicalAddress _10mbitBroadcast = new PhysicalAddress(new byte[] { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }); 
     }   
 }
