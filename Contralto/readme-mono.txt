@@ -1,4 +1,4 @@
-﻿Readme-mono.txt for Contralto v1.2:
+﻿Readme-mono.txt for Contralto v1.2.1:
 
 1. Introduction and Overview
 ============================
@@ -424,7 +424,6 @@ specifying the file to be net booted.
 At the moment, the following issues are known and being worked on.  If you find
 an issue not listed here, see section 7.0 to report a new bug.
 
-- Smalltalk-80 does not run.
 - Audio is not available on Unix / OS X.
 
 

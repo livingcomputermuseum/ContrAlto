@@ -1,4 +1,4 @@
-﻿Readme.txt for Contralto v1.2:
+﻿Readme.txt for Contralto v1.2.1:
 
 1. Introduction and Overview
 ============================
@@ -465,10 +465,8 @@ Reserved Memory:
 6.0 Known Issues
 ================
 
-At the moment, the following issues are known and being worked on.  If you find
-an issue not listed here, see section 7.0 to report a new bug.
-
-- Smalltalk-80 does not run.
+At the moment, there are no major known issues.  If you encounter any, please
+see the next section!
 
 
 7.0 Reporting Bugs
