@@ -139,13 +139,13 @@ namespace Contralto.CPU
             protected virtual InstructionCompletion ExecuteInstruction(MicroInstruction instruction)
             {
                 InstructionCompletion completion = InstructionCompletion.Normal;
-                bool swMode = false;                
+                bool swMode = false;
                 ushort aluData;
                 ushort nextModifier;
                 bool softReset = _softReset;
                 _loadR = false;
                 _loadS = false;
-                _rSelect = 0;                
+                _rSelect = 0;
                 _busData = 0;
                 _softReset = false;
 
@@ -159,7 +159,7 @@ namespace Contralto.CPU
                 {                    
                     if (!_cpu._system.MemoryBus.Ready(instruction.MemoryOperation))
                     {
-                        // Suspend operation for this cycle.                       
+                        // Suspend operation for this cycle.
                         return InstructionCompletion.MemoryWait;
                     }
                 }
@@ -247,6 +247,12 @@ namespace Contralto.CPU
                 {
                     _busData &= instruction.ConstantValue;
                 }
+
+                //
+                // Let F2s that need to modify bus data before the ALU runs do their thing.
+                // (This is used by the Trident KDTA special functions)
+                //
+                ExecuteSpecialFunction2PostBusSource(instruction);
 
                 //
                 // If there was a RDRAM operation last cycle, we AND in the uCode RAM data here.
@@ -487,7 +493,7 @@ namespace Contralto.CPU
                     // address register... which is loaded from the ALU output whenver T is loaded
                     // from its source."
                     //
-                    UCodeMemory.LoadControlRAMAddress(aluData);                    
+                    UCodeMemory.LoadControlRAMAddress(aluData);
                 }
 
                 // Load L (and M) from ALU outputs.
@@ -496,8 +502,7 @@ namespace Contralto.CPU
                     _cpu._l = aluData;
 
                     // Only RAM-related tasks can modify M.
-                    if (_taskType == TaskType.Emulator ||
-                        _taskType == TaskType.Orbit)
+                    if (_ramTask)
                     {
                         _cpu._m = aluData;
                     }
@@ -588,6 +593,16 @@ namespace Contralto.CPU
             }
 
             /// <summary>
+            /// Executes after bus sources are selected but before the ALU.  Used to allow Task-specific F2s that need to 
+            /// modify bus data to do so.
+            /// </summary>
+            /// <param name="f2"></param>
+            protected virtual void ExecuteSpecialFunction2PostBusSource(MicroInstruction instruction)
+            {
+                // Nothing by default.
+            }
+
+            /// <summary>
             /// Executes after the ALU has run but before the shifter runs, provides task-specific implementations 
             /// the opportunity to handle task-specific F2s.
             /// </summary>
@@ -628,6 +643,14 @@ namespace Contralto.CPU
             /// Cache the system type.
             /// </summary>
             protected SystemType _systemType;
+
+            //
+            // Task metadata:
+            //
+
+            // Whether this task is RAM-enabled or not
+            // (can access S registers, etc.)
+            protected bool _ramTask;
 
             //
             // Per uInstruction Task Data:

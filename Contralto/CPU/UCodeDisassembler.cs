@@ -229,7 +229,13 @@ namespace Contralto.CPU
                     break;
 
                 case SpecialFunction2.StoreMD:
-                    if (instruction.F1 != SpecialFunction1.LoadMAR)
+                    // Special case for Trident
+                    if ((task == TaskType.TridentInput || task == TaskType.TridentOutput) &&
+                        instruction.BS == BusSource.None)
+                    {
+                        f2 = "MD← KDTA ";
+                    }
+                    else if (instruction.F1 != SpecialFunction1.LoadMAR)
                     {
                         f2 = "MD← ";
                     }
@@ -352,6 +358,8 @@ namespace Contralto.CPU
             {
                 case TaskType.Emulator:
                 case TaskType.Orbit:
+                case TaskType.TridentInput:
+                case TaskType.TridentOutput:
                     return DisassembleEmulatorBusSource(instruction, out loadS);
 
                 default:
@@ -368,7 +376,7 @@ namespace Contralto.CPU
                     return DisassembleEmulatorSpecialFunction1(instruction);
 
                 case TaskType.Orbit:
-                    return DisassembleOrbitSpecialFunction1(instruction);                    
+                    return DisassembleOrbitSpecialFunction1(instruction);
 
                 default:
                     return String.Format("F1 {0}", Conversion.ToOctal((int)instruction.F1));
@@ -383,7 +391,11 @@ namespace Contralto.CPU
                     return DisassembleEmulatorSpecialFunction2(instruction);
 
                 case TaskType.Orbit:
-                    return DisassembleOrbitSpecialFunction2(instruction);                    
+                    return DisassembleOrbitSpecialFunction2(instruction);
+
+                case TaskType.TridentInput:
+                case TaskType.TridentOutput:
+                    return DisassembleTridentSpecialFunction2(instruction);
 
                 default:
                     return String.Format("F2 {0}", Conversion.ToOctal((int)instruction.F2));
@@ -537,6 +549,39 @@ namespace Contralto.CPU
 
                 default:
                     return String.Format("Orbit F2 {0}", Conversion.ToOctal((int)of2));
+            }
+        }
+
+        private static string DisassembleTridentSpecialFunction2(MicroInstruction instruction)
+        {
+            TridentF2 tf2 = (TridentF2)instruction.F2;
+
+            switch (tf2)
+            {
+                case TridentF2.EMPTY:
+                    return "EMPTY ";
+
+                case TridentF2.KTAG:
+                    return "KTAG← ";
+
+                case TridentF2.ReadKDTA:
+                    return "←KDTA ";
+
+                case TridentF2.RESET:
+                    return "RESET ";
+
+                case TridentF2.STATUS:
+                    return "STATUS ";
+
+                case TridentF2.WAIT:
+                case TridentF2.WAIT2:
+                    return "WAIT ";
+
+                case TridentF2.WriteKDTA:
+                    return "KDTA← ";
+
+                default:
+                    return String.Format("Trident F2 {0}", Conversion.ToOctal((int)tf2));
             }
         }
     }

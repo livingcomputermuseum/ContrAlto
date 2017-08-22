@@ -42,16 +42,17 @@ namespace Contralto
 
             _system = new AltoSystem();
 
+            // Load disks specified by configuration
             if (!String.IsNullOrEmpty(Configuration.Drive0Image))
             {
                 try
                 {
-                    _system.LoadDrive(0, Configuration.Drive0Image);
+                    _system.LoadDiabloDrive(0, Configuration.Drive0Image, false);
                 }
                 catch(Exception e)
                 {
-                    Console.WriteLine("Could not load image '{0}' for drive 0.  Error '{1}'.", Configuration.Drive0Image, e.Message);
-                    _system.UnloadDrive(0);
+                    Console.WriteLine("Could not load image '{0}' for Diablo drive 0.  Error '{1}'.", Configuration.Drive0Image, e.Message);
+                    _system.UnloadDiabloDrive(0);
                 }
             }
 
@@ -59,12 +60,32 @@ namespace Contralto
             {
                 try
                 {
-                    _system.LoadDrive(1, Configuration.Drive1Image);
+                    _system.LoadDiabloDrive(1, Configuration.Drive1Image, false);
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Could not load image '{0}' for drive 1.  Error '{1}'.", Configuration.Drive1Image, e.Message);
-                    _system.UnloadDrive(1);
+                    Console.WriteLine("Could not load image '{0}' for Diablo drive 1.  Error '{1}'.", Configuration.Drive1Image, e.Message);
+                    _system.UnloadDiabloDrive(1);
+                }
+            }
+
+
+            if (Configuration.TridentImages != null)
+            {                
+                for (int i = 0; i < Math.Min(8, Configuration.TridentImages.Count); i++)
+                {
+                    try
+                    {
+                        if (!String.IsNullOrWhiteSpace(Configuration.TridentImages[i]))
+                        {
+                            _system.LoadTridentDrive(i, Configuration.TridentImages[i], false);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Could not load image '{0}' for Trident drive {1}.  Error '{2}'.", Configuration.TridentImages[i], i, e.Message);
+                        _system.UnloadTridentDrive(i);
+                    }
                 }
             }
 
@@ -106,13 +127,7 @@ namespace Contralto
         private static void OnProcessExit(object sender, EventArgs e)
         {
             Console.WriteLine("Exiting...");
-
-            //
-            // Save disk contents
-            //
-            _system.CommitDiskPack(0);
-            _system.CommitDiskPack(1);
-            
+                        
             _system.Shutdown();
 
             //

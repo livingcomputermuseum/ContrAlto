@@ -26,6 +26,7 @@ namespace Contralto.CPU
         Invalid = -1,
         Emulator = 0,
         Orbit = 1,
+        TridentOutput = 3,
         DiskSector = 4,
         Ethernet = 7,
         MemoryRefresh = 8,
@@ -35,6 +36,7 @@ namespace Contralto.CPU
         DisplayVertical = 12,
         Parity = 13,
         DiskWord = 14,
+        TridentInput = 15,
     }
 
     public partial class AltoCPU : IClockable
@@ -54,6 +56,8 @@ namespace Contralto.CPU
             _tasks[(int)TaskType.Ethernet] = new EthernetTask(this);
             _tasks[(int)TaskType.Parity] = new ParityTask(this);
             _tasks[(int)TaskType.Orbit] = new OrbitTask(this);
+            _tasks[(int)TaskType.TridentInput] = new TridentTask(this, true);
+            _tasks[(int)TaskType.TridentOutput] = new TridentTask(this, false);
 
             Reset();
         }
@@ -182,7 +186,7 @@ namespace Contralto.CPU
                     _tasks[i].SoftReset();
                 }
             }
-            
+
             Log.Write(LogComponent.CPU, "Silent Boot; microcode banks initialized to {0}", Conversion.ToOctal(_rmr));            
             UCodeMemory.LoadBanksFromRMR(_rmr);
 
@@ -202,6 +206,9 @@ namespace Contralto.CPU
             //
             WakeupTask(CPU.TaskType.DiskSector);
             BlockTask(CPU.TaskType.DiskWord);
+
+            BlockTask(CPU.TaskType.TridentInput);
+            BlockTask(CPU.TaskType.TridentOutput);
         }
 
         /// <summary>

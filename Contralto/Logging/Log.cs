@@ -49,6 +49,9 @@ namespace Contralto.Logging
         Organ = 0x20000,
         Orbit = 0x40000,
         DoverROS = 0x80000,
+        TridentTask = 0x100000,
+        TridentController = 0x200000,
+        TridentDisk = 0x400000,
 
         Debug = 0x40000000,
         All =   0x7fffffff
@@ -77,7 +80,7 @@ namespace Contralto.Logging
         {
             _components = Configuration.LogComponents;
             _type = Configuration.LogTypes;
-
+            _logIndex = 0;
         }
 
         public static LogComponent LogComponents
@@ -107,7 +110,8 @@ namespace Contralto.Logging
                 //
                 // My log has something to tell you...
                 // TODO: color based on type, etc.
-                Console.WriteLine(component.ToString() + ": " + message, args);
+                Console.WriteLine(_logIndex.ToString() + ": " + component.ToString() + ": " + message, args);
+                _logIndex++;
             }
         }
 #else
@@ -125,5 +129,6 @@ namespace Contralto.Logging
 
         private static LogComponent _components;
         private static LogType _type;
+        private static long _logIndex;
     }
 }

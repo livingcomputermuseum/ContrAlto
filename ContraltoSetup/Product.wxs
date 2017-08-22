@@ -194,10 +194,10 @@
         <File Id="u36_23" Name="36_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\36_23.BIN"/>
         <File Id="u37_23" Name="37_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\37_23.BIN"/>
 
-        <File Id="C0_23" Name="C1_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoII\C0"/>
-        <File Id="C1_23" Name="C2_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoII\C1"/>
-        <File Id="C2_23" Name="C3_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoII\C2"/>
-        <File Id="C3_23" Name="C4_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoII\C3"/>        
+        <File Id="C0_23" Name="C0_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\C0_23.BIN"/>
+        <File Id="C1_23" Name="C1_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\C1_23.BIN"/>
+        <File Id="C2_23" Name="C2_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\C2_23.BIN"/>
+        <File Id="C3_23" Name="C3_23.BIN" Source="$(var.Contralto.TargetDir)\ROM\AltoI\C3_23.BIN"/>        
       </Component>
     </ComponentGroup>
     

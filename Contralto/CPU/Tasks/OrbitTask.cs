@@ -31,6 +31,9 @@ namespace Contralto.CPU
             {
                 _taskType = TaskType.Orbit;
                 _wakeup = false;
+
+                // The Orbit task is RAM-related.
+                _ramTask = true;
             }
 
             protected override void ExecuteBlock()

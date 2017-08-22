@@ -62,6 +62,8 @@ namespace Contralto
 
             ReleaseMouse();
 
+            CreateTridentMenu();
+
             SystemStatusLabel.Text = _systemStoppedText;
             DiskStatusLabel.Text = String.Empty;
 
@@ -95,8 +97,16 @@ namespace Contralto
             _controller.ErrorCallback += OnExecutionError;
 
             // Update disk image UI info
+            // Diablo disks:
             Drive0ImageName.Text = _system.DiskController.Drives[0].IsLoaded ? Path.GetFileName(_system.DiskController.Drives[0].Pack.PackName) : _noImageLoadedText;
             Drive1ImageName.Text = _system.DiskController.Drives[1].IsLoaded ? Path.GetFileName(_system.DiskController.Drives[1].Pack.PackName) : _noImageLoadedText;
+
+            // Trident disks
+            for (int i = 0; i < _tridentImageNames.Count; i++)
+            {
+                TridentDrive drive = _system.TridentController.Drives[i];
+                _tridentImageNames[i].Text = drive.IsLoaded ? Path.GetFileName(drive.Pack.PackName) : _noImageLoadedText;
+            }
         }       
 
         /// <summary>
@@ -129,7 +139,7 @@ namespace Contralto
 
         private void OnSystemDrive0LoadClick(object sender, EventArgs e)
         {
-            string path = ShowImageLoadDialog(0);
+            string path = ShowImageLoadDialog(0, false);
 
             if (String.IsNullOrEmpty(path))
             {
@@ -138,9 +148,7 @@ namespace Contralto
 
             try
             {
-                // Commit loaded pack back to disk
-                _system.CommitDiskPack(0);
-                _system.LoadDrive(0, path);
+                _system.LoadDiabloDrive(0, path, false);
                 Drive0ImageName.Text = System.IO.Path.GetFileName(path);
                 Configuration.Drive0Image = path;
             }
@@ -154,15 +162,14 @@ namespace Contralto
 
         private void OnSystemDrive0UnloadClick(object sender, EventArgs e)
         {
-            _system.CommitDiskPack(0);
-            _system.UnloadDrive(0);
+            _system.UnloadDiabloDrive(0);
             Drive0ImageName.Text = _noImageLoadedText;
             Configuration.Drive0Image = String.Empty;
         }
 
-        private void OnSystemDrive1LoadClick(object sender, EventArgs e)
+        private void OnSystemDrive0NewClick(object sender, EventArgs e)
         {
-            string path = ShowImageLoadDialog(1);
+            string path = ShowImageNewDialog(0, false);
 
             if (String.IsNullOrEmpty(path))
             {
@@ -171,9 +178,30 @@ namespace Contralto
 
             try
             {
-                // Commit loaded pack back to disk                
-                _system.CommitDiskPack(1);
-                _system.LoadDrive(1, path);
+                _system.LoadDiabloDrive(0, path, true);
+                Drive0ImageName.Text = System.IO.Path.GetFileName(path);
+                Configuration.Drive0Image = path;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    String.Format("An error occurred while creating new disk image: {0}", ex.Message),
+                    "Image creation error", MessageBoxButtons.OK);
+            }
+        }
+
+        private void OnSystemDrive1LoadClick(object sender, EventArgs e)
+        {
+            string path = ShowImageLoadDialog(1, false);
+
+            if (String.IsNullOrEmpty(path))
+            {
+                return;
+            }
+
+            try
+            {
+                _system.LoadDiabloDrive(1, path, false);
                 Drive1ImageName.Text = System.IO.Path.GetFileName(path);
                 Configuration.Drive1Image = path;
             }
@@ -186,11 +214,90 @@ namespace Contralto
         }
 
         private void OnSystemDrive1UnloadClick(object sender, EventArgs e)
-        {
-            _system.CommitDiskPack(1);
-            _system.UnloadDrive(1);
+        {            
+            _system.UnloadDiabloDrive(1);
             Drive1ImageName.Text = _noImageLoadedText;
             Configuration.Drive1Image = String.Empty;
+        }
+
+
+        private void OnSystemDrive1NewClick(object sender, EventArgs e)
+        {
+            string path = ShowImageNewDialog(1, false);
+
+            if (String.IsNullOrEmpty(path))
+            {
+                return;
+            }
+
+            try
+            {
+                _system.LoadDiabloDrive(1, path, true);
+                Drive0ImageName.Text = System.IO.Path.GetFileName(path);
+                Configuration.Drive0Image = path;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    String.Format("An error occurred while creating new disk image: {0}", ex.Message),
+                    "Image creation error", MessageBoxButtons.OK);
+            }
+        }
+
+        private void OnTridentLoadClick(object sender, EventArgs e)
+        {
+            int drive = (int)((ToolStripDropDownItem)sender).Tag;
+            string path = ShowImageLoadDialog(drive, true);
+
+            if (String.IsNullOrEmpty(path))
+            {
+                return;
+            }
+
+            try
+            {
+                _system.LoadTridentDrive(drive, path, false);
+                _tridentImageNames[drive].Text = System.IO.Path.GetFileName(path);
+                Configuration.TridentImages[drive] = path;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    String.Format("An error occurred while loading Trident image: {0}", ex.Message),
+                    "Image load error", MessageBoxButtons.OK);
+            }
+        }
+
+        private void OnTridentUnloadClick(object sender, EventArgs e)
+        {
+            int drive = (int)((ToolStripDropDownItem)sender).Tag;
+            _system.UnloadTridentDrive(drive);
+            _tridentImageNames[drive].Text = _noImageLoadedText;
+            Configuration.TridentImages[drive] = String.Empty;
+        }
+
+        private void OnTridentNewClick(object sender, EventArgs e)
+        {
+            int drive = (int)((ToolStripDropDownItem)sender).Tag;
+            string path = ShowImageNewDialog(drive, true);
+
+            if (String.IsNullOrEmpty(path))
+            {
+                return;
+            }
+
+            try
+            {
+                _system.LoadTridentDrive(drive, path, true);
+                _tridentImageNames[drive].Text = System.IO.Path.GetFileName(path);
+                Configuration.TridentImages[drive] = path;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    String.Format("An error occurred while creating new Trident image: {0}", ex.Message),
+                    "Image creation error", MessageBoxButtons.OK);
+            }
         }
 
         private void OnAlternateBootOptionsClicked(object sender, EventArgs e)
@@ -311,16 +418,40 @@ namespace Contralto
             DialogResult = DialogResult.OK;            
         }
 
-        private string ShowImageLoadDialog(int drive)
+        private string ShowImageLoadDialog(int drive, bool trident)
         {
             OpenFileDialog fileDialog = new OpenFileDialog();
 
-            fileDialog.DefaultExt = "dsk";
-            fileDialog.Filter = "Alto Disk Images (*.dsk, *.dsk44)|*.dsk;*.dsk44|Diablo 31 Disk Images (*.dsk)|*.dsk|Diablo 44 Disk Images (*.dsk44)|*.dsk44|All Files (*.*)|*.*";
+            fileDialog.DefaultExt = trident ? "dsk80" : "dsk";
+            fileDialog.Filter = trident ? _tridentFilter : _diabloFilter;
             fileDialog.Multiselect = false;
             fileDialog.CheckFileExists = true;
             fileDialog.CheckPathExists = true;
-            fileDialog.Title = String.Format("Select image to load into drive {0}", drive);
+            fileDialog.Title = String.Format("Select image to load into {0} drive {1}", trident ? "Trident" : "Diablo", drive);
+
+            DialogResult res = fileDialog.ShowDialog();
+
+            if (res == DialogResult.OK)
+            {
+                return fileDialog.FileName;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private string ShowImageNewDialog(int drive, bool trident)
+        {
+            SaveFileDialog fileDialog = new SaveFileDialog();
+
+            fileDialog.DefaultExt = trident ? "dsk80" : "dsk";
+            fileDialog.Filter = trident ? _tridentFilter : _diabloFilter;
+            fileDialog.CheckFileExists = false;
+            fileDialog.CheckPathExists = true;
+            fileDialog.OverwritePrompt = true;
+            fileDialog.ValidateNames = true;
+            fileDialog.Title = String.Format("Select path for new {0} image for drive {1}", trident ? "Trident" : "Diablo", drive);
 
             DialogResult res = fileDialog.ShowDialog();
 
@@ -965,6 +1096,47 @@ namespace Contralto
             return null;
         }
 
+        private void CreateTridentMenu()
+        {
+            //
+            // Add eight sub-menus, one per drive.
+            //
+            _tridentImageNames = new List<ToolStripMenuItem>(8);
+
+            for (int i=0;i<8;i++)
+            {
+                // Parent menu item
+                ToolStripMenuItem tridentMenu = new ToolStripMenuItem(String.Format("Drive {0}", i));
+
+                // Children:
+                // - Load
+                // - Unload
+                // - New
+                // - Pack Name (disabled)
+                //
+                ToolStripMenuItem loadMenu = new ToolStripMenuItem("Load...", null, OnTridentLoadClick);
+                loadMenu.Tag = i;
+
+                ToolStripMenuItem unloadMenu = new ToolStripMenuItem("Unload", null, OnTridentUnloadClick);
+                unloadMenu.Tag = i;
+
+                ToolStripMenuItem newMenu = new ToolStripMenuItem("New...", null, OnTridentNewClick);
+                newMenu.Tag = i;
+
+                ToolStripMenuItem imageMenu = new ToolStripMenuItem(_noImageLoadedText);
+                imageMenu.Tag = i;
+                imageMenu.Enabled = false;
+                _tridentImageNames.Add(imageMenu);
+
+                tridentMenu.DropDownItems.Add(loadMenu);
+                tridentMenu.DropDownItems.Add(unloadMenu);
+                tridentMenu.DropDownItems.Add(newMenu);
+                tridentMenu.DropDownItems.Add(imageMenu);
+
+                TridentToolStripMenuItem.DropDownItems.Add(tridentMenu);
+            }
+        }
+
 
         // Display related data.
         // Note: display is actually 606 pixels wide, but that's not an even multiple of 8, so we round up.
@@ -1015,10 +1187,17 @@ namespace Contralto
         private Image _diskWriteImage;
         private Image _diskSeekImage;
 
+        // Trident menu items for disk names
+        private List<ToolStripMenuItem> _tridentImageNames;
+
         // strings.  TODO: move to resource
         private const string _noImageLoadedText = "<no image loaded>";
         private const string _systemStoppedText = "Alto Stopped.";
         private const string _systemRunningText = "Alto Running.";
-        private const string _systemErrorText = "Alto Stopped due to error.  See Debugger.";        
+        private const string _systemErrorText = "Alto Stopped due to error.  See Debugger.";
+        private const string _diabloFilter = "Alto Diablo Disk Images (*.dsk, *.dsk44)|*.dsk;*.dsk44|Diablo 31 Disk Images (*.dsk)|*.dsk|Diablo 44 Disk Images (*.dsk44)|*.dsk44|All Files (*.*)|*.*";
+        private const string _tridentFilter = "Alto Trident Disk Images (*.dsk80, *.dsk300)|*.dsk80;*.dsk300|Trident T80 Disk Images (*.dsk80)|*.dsk80|Trident T300 Disk Images (*.dsk300)|*.dsk300|All Files (*.*)|*.*";
+
+
     }                 
 }

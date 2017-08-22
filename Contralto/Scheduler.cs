@@ -15,6 +15,7 @@
     along with ContrAlto.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System;
 using System.Collections.Generic;
 
 
@@ -120,6 +121,13 @@ namespace Contralto
         /// <returns></returns>
         public Event Schedule(Event e)
         {
+#if DEBUG
+            if (_schedule.Contains(e))
+            {
+                throw new InvalidOperationException("Can't do that, time will bend.");
+            }
+#endif
+
             e.TimestampNsec += _currentTimeNsec;
             _schedule.Push(e);
 
@@ -161,6 +169,11 @@ namespace Contralto
             {
                 return _top;                
             }
+        }
+
+        public bool Contains(Event e)
+        {
+            return _queue.Contains(e);
         }
 
         public void Push(Event e)

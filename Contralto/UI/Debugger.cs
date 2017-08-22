@@ -598,7 +598,7 @@ namespace Contralto
                 "EM",   // 0 - emulator
                 "OR",   // 1 - orbit
                 String.Empty,
-                String.Empty,
+                "TO",   // 3 - trident output
                 "KS",   // 4 - disk sector
                 String.Empty,
                 String.Empty,
@@ -610,7 +610,7 @@ namespace Contralto
                 "DV",   // 12 - display vertical
                 "PA",   // 13 - parity
                 "KW",   // 14 - disk word
-                String.Empty,
+                "TI",   // 15 - trident input
             };
 
             if (task == TaskType.Invalid)
@@ -630,7 +630,7 @@ namespace Contralto
                 Color.LightBlue,    // 0 - emulator
                 Color.LightGoldenrodYellow,    // 1 - orbit
                 Color.LightGray,    // 2 - unused
-                Color.LightGray,    // 3 - unused
+                Color.LightCoral,   // 3 - trident output
                 Color.LightGreen,   // 4 - disk sector
                 Color.LightGray,    // 5 - unused
                 Color.LightGray,    // 6 - unused
@@ -638,11 +638,11 @@ namespace Contralto
                 Color.LightSeaGreen,// 8 - memory refresh
                 Color.LightYellow,  // 9 - display word
                 Color.LightPink,    // 10 - cursor
-                Color.Chartreuse, // 11 - display horizontal
+                Color.Chartreuse,   // 11 - display horizontal
                 Color.LightCoral,   // 12 - display vertical
                 Color.LightSteelBlue, // 13 - parity
                 Color.Gray,         // 14 - disk word
-                Color.LightGray,    // 15 - unused
+                Color.LightSteelBlue, // 15 - trident output
             };
 
             if (task == TaskType.Invalid)

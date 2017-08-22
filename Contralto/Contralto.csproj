@@ -125,7 +125,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CPU\Tasks\OrbitTask.cs" />
+    <Compile Include="CPU\Tasks\TridentTask.cs" />
     <Compile Include="HighResTimer.cs" />
+    <Compile Include="IO\TridentDrive.cs" />
     <Compile Include="IO\DoverROS.cs" />
     <Compile Include="IO\AudioDAC.cs" />
     <Compile Include="IO\OrbitController.cs" />
@@ -133,6 +135,7 @@
     <Compile Include="IO\Printing\IPageSink.cs" />
     <Compile Include="IO\Printing\NullPageSink.cs" />
     <Compile Include="IO\Printing\PdfPageSink.cs" />
+    <Compile Include="IO\TridentController.cs" />
     <Compile Include="IO\UDPEncapsulation.cs" />
     <Compile Include="IO\IPacketEncapsulation.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -199,7 +202,7 @@
     <Compile Include="IClockable.cs" />
     <Compile Include="IO\DiabloDrive.cs" />
     <Compile Include="IO\DiskController.cs" />
-    <Compile Include="IO\DiabloPack.cs" />
+    <Compile Include="IO\DiskPack.cs" />
     <Compile Include="IO\EthernetController.cs" />
     <Compile Include="IO\HostEthernetEncapsulation.cs" />
     <Compile Include="IO\Keyboard.cs" />

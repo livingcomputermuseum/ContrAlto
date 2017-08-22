@@ -46,6 +46,7 @@ namespace Contralto
             _orbitController = new OrbitController(this);
             _audioDAC = new AudioDAC(this);
             _organKeyboard = new OrganKeyboard(this);
+            _tridentController = new TridentController(this);
 
             _cpu = new AltoCPU(this);
 
@@ -73,7 +74,8 @@ namespace Contralto
             _mouse.Reset();
             _cpu.Reset();
             _ethernetController.Reset();
-            _orbitController.Reset();            
+            _orbitController.Reset();
+            _tridentController.Reset();
 
             UCodeMemory.Reset();
         }
@@ -104,6 +106,17 @@ namespace Contralto
             // Allow the DAC to flush its output
             //
             _audioDAC.Shutdown();
+
+            //
+            // Save disk contents
+            //
+            _diskController.CommitDisk(0);
+            _diskController.CommitDisk(1);
+
+            for (int i = 0; i < 8; i++)
+            {
+                _tridentController.CommitDisk(i);
+            }
         }
 
         public void SingleStep()
@@ -116,72 +129,130 @@ namespace Contralto
             _scheduler.Clock();
         }
 
-        public void LoadDrive(int drive, string path)
+        public void LoadDiabloDrive(int drive, string path, bool newImage)
         {
             if (drive < 0 || drive > 1)
             {
                 throw new InvalidOperationException("drive must be 0 or 1.");
             }
 
-            DiabloDiskType type;
+            //
+            // Commit the current disk first
+            //
+            _diskController.CommitDisk(drive);
+
+            DiskGeometry geometry;
 
             //
             // We select the disk type based on the file extension.  Very elegant.
             //
             switch(Path.GetExtension(path).ToLowerInvariant())
             {
+                case ".dsk":
+                    geometry = DiskGeometry.Diablo31;
+                    break;
+
                 case ".dsk44":
-                    type = DiabloDiskType.Diablo44;
+                    geometry = DiskGeometry.Diablo44;
                     break;
 
                 default:
-                    type = DiabloDiskType.Diablo31;
+                    geometry = DiskGeometry.Diablo31;
                     break;
-            }                
+            }
 
-            DiabloPack newPack = new DiabloPack(type);
 
-            using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-            {                
-                newPack.Load(fs, path, false);
-                fs.Close();                
+            IDiskPack newPack;
+
+            if (newImage)
+            {
+                newPack = InMemoryDiskPack.CreateEmpty(geometry, path);
+            }
+            else
+            {
+                newPack = InMemoryDiskPack.Load(geometry, path);
             }
 
             _diskController.Drives[drive].LoadPack(newPack);
         }
 
-        public void UnloadDrive(int drive)
+        public void UnloadDiabloDrive(int drive)
         {
             if (drive < 0 || drive > 1)
             {
                 throw new InvalidOperationException("drive must be 0 or 1.");
             }
 
+            //
+            // Commit the current disk first
+            //
+            _diskController.CommitDisk(drive);
+
             _diskController.Drives[drive].UnloadPack();
         }
 
-        //
-        // Disk handling
-        //
-        public void CommitDiskPack(int driveId)
+        public void LoadTridentDrive(int drive, string path, bool newImage)
         {
-            DiabloDrive drive = _diskController.Drives[driveId];
-            if (drive.IsLoaded)
+            if (drive < 0 || drive > 8)
             {
-                using (FileStream fs = new FileStream(drive.Pack.PackName, FileMode.Create, FileAccess.Write))
-                {
-                    try
-                    {
-                        drive.Pack.Save(fs);
-                    }
-                    catch (Exception e)
-                    {
-                        // TODO: this does not really belong here.
-                        System.Windows.Forms.MessageBox.Show(String.Format("Unable to save disk {0}'s contents.  Error {0}.  Any changes have been lost.", e.Message), "Disk save error");
-                    }
-                }
+                throw new InvalidOperationException("drive must be between 0 and 7.");
             }
+
+            //
+            // Commit the current disk first
+            //
+            _tridentController.CommitDisk(drive);
+
+            DiskGeometry geometry;
+
+            //
+            // We select the disk type based on the file extension.  Very elegant.
+            //
+            switch (Path.GetExtension(path).ToLowerInvariant())
+            {
+                case ".t80":
+                    geometry = DiskGeometry.TridentT80;
+                    break;
+
+                case ".t300":                
+                    geometry = DiskGeometry.TridentT300;
+                    break;
+
+                default:
+                    geometry = DiskGeometry.TridentT80;
+                    break;
+            }
+
+
+            IDiskPack newPack;
+
+            if (newImage)
+            {
+                newPack = FileBackedDiskPack.CreateEmpty(geometry, path);
+            }
+            else
+            {
+                newPack = FileBackedDiskPack.Load(geometry, path);
+            }
+
+            _tridentController.Drives[drive].LoadPack(newPack);
         }
+
+        public void UnloadTridentDrive(int drive)
+        {
+            if (drive < 0 || drive > 7)
+            {
+                throw new InvalidOperationException("drive must be between 0 and 7.");
+            }
+
+            //
+            // Commit the current disk first
+            //
+            _tridentController.CommitDisk(drive);
+
+            _tridentController.Drives[drive].UnloadPack();
+        }
+
 
         public void PressBootKeys(AlternateBootType bootType)
         {
@@ -237,6 +308,11 @@ namespace Contralto
             get { return _orbitController; }
         }
 
+        public TridentController TridentController
+        {
+            get { return _tridentController; }
+        }
+
         public Scheduler Scheduler
         {
             get { return _scheduler; }
@@ -253,6 +329,7 @@ namespace Contralto
         private OrbitController _orbitController;
         private AudioDAC _audioDAC;
         private OrganKeyboard _organKeyboard;
+        private TridentController _tridentController;
 
         private Scheduler _scheduler;
     }

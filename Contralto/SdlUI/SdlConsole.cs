@@ -187,11 +187,8 @@ namespace Contralto.SdlUI
                 throw new InvalidOperationException("Drive specification out of range.");
             }
 
-            // Save current drive contents.
-            _system.CommitDiskPack(drive);
-
             // Load the new pack.
-            _system.LoadDrive(drive, path);
+            _system.LoadDiabloDrive(drive, path, false);
             Console.WriteLine("Drive {0} loaded.", drive);
 
             return CommandResult.Normal;
@@ -205,11 +202,8 @@ namespace Contralto.SdlUI
                 throw new InvalidOperationException("Drive specification out of range.");
             }
 
-            // Save current drive contents.
-            _system.CommitDiskPack(drive);
-
             // Unload the current pack.
-            _system.UnloadDrive(drive);
+            _system.UnloadDiabloDrive(drive);
             Console.WriteLine("Drive {0} unloaded.", drive);
 
             return CommandResult.Normal;
@@ -236,7 +230,60 @@ namespace Contralto.SdlUI
             }
 
             return CommandResult.Normal;
-        }       
+        }
+
+        [DebuggerFunction("load trident", "Loads the specified trident drive with the requested disk image.", "<drive> <path>")]
+        private CommandResult LoadTrident(ushort drive, string path)
+        {
+            if (drive > 7)
+            {
+                throw new InvalidOperationException("Drive specification out of range.");
+            }
+
+            // Load the new pack.
+            _system.LoadTridentDrive(drive, path, false);
+            Console.WriteLine("Trident {0} loaded.", drive);
+
+            return CommandResult.Normal;
+        }
+
+        [DebuggerFunction("unload trident", "Unloads the specified trident drive.", "<drive>")]
+        private CommandResult UnloadTrident(ushort drive)
+        {
+            if (drive > 7)
+            {
+                throw new InvalidOperationException("Drive specification out of range.");
+            }
+
+            // Unload the current pack.
+            _system.UnloadTridentDrive(drive);
+            Console.WriteLine("Trident {0} unloaded.", drive);
+
+            return CommandResult.Normal;
+        }
+
+        [DebuggerFunction("show trident", "Displays the contents of the specified trident drive.", "<drive>")]
+        private CommandResult ShowTrident(ushort drive)
+        {
+            if (drive > 7)
+            {
+                throw new InvalidOperationException("Drive specification out of range.");
+            }
+
+            // Save current drive contents.
+            if (_system.TridentController.Drives[drive].IsLoaded)
+            {
+                Console.WriteLine("Trident {0} contains image {1}",
+                    drive,
+                    _system.TridentController.Drives[drive].Pack.PackName);
+            }
+            else
+            {
+                Console.WriteLine("Trident {0} is not loaded.", drive);
+            }
+
+            return CommandResult.Normal;
+        }
 
         [DebuggerFunction("show system type", "Displays the Alto system type.")]
         private CommandResult ShowSystemType()

@@ -360,8 +360,13 @@ namespace Contralto.UI
             }
             else
             {
-                EnablePrintingCheckBox.Checked = false;
+                EnablePrintingCheckBox.Checked = string.IsNullOrEmpty(PrintOutputPathTextBox.Text) ? false : true;
             }
+        }
+
+        private void OnPrintOutputBrowseButtonClicked(object sender, EventArgs e)
+        {
+            BrowseForPrintOutputFolder();
         }
 
         private void EnablePrintingCheckBox_CheckedChanged(object sender, EventArgs e)
@@ -374,6 +379,6 @@ namespace Contralto.UI
                 //
                 BrowseForPrintOutputFolder();
             }
-        }
+        }        
     }
 }

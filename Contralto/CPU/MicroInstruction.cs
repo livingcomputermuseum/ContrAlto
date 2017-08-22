@@ -218,6 +218,21 @@ namespace Contralto.CPU
     }
 
     /// <summary>
+    /// Trident disk controller, from the microcode.
+    /// </summary>
+    enum TridentF2
+    {
+        ReadKDTA = 6,
+        STATUS = 8,
+        KTAG = 10,
+        WriteKDTA = 11,
+        WAIT = 12,          // These two are identical in function
+        WAIT2 = 13,
+        RESET = 14,
+        EMPTY = 15,
+    }
+
+    /// <summary>
     /// MicroInstruction encapsulates the decoding of a microinstruction word.
     /// It also caches precomputed metadata related to the microinstruction that
     /// help speed microcode execution.

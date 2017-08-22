@@ -17,6 +17,7 @@
 
 using Contralto.Logging;
 using System;
+using System.Collections.Specialized;
 using System.IO;
 using System.Reflection;
 
@@ -114,13 +115,29 @@ namespace Contralto
             // See if PCap is available.
             TestPCap();
 
-            ReadConfiguration();
+            try
+            {
+                ReadConfiguration();
+            }
+            catch
+            {
+                Console.WriteLine("Warning: unable to load configuration.  Assuming default settings.");
+            }
 
             // Special case: On first startup, AlternateBoot will come back as "None" which
             // is an invalid UI setting; default to Ethernet in this case.
             if (AlternateBootType == AlternateBootType.None)
             {
                 AlternateBootType = AlternateBootType.Ethernet;
+            }
+
+            //
+            // If configuration specifies fewer than 8 Trident disks, we need to pad the list out to 8 with empty entries.
+            //
+            int start = TridentImages.Count;
+            for (int i = start; i < 8; i++)
+            {
+                TridentImages.Add(String.Empty);
             }
         }
 
@@ -143,6 +160,11 @@ namespace Contralto
         /// The currently loaded image for Drive 1
         /// </summary>
         public static string Drive1Image;
+
+        /// <summary>
+        /// The currently loaded images for the Trident controller.
+        /// </summary>
+        public static StringCollection TridentImages;
 
         /// <summary>
         /// The Ethernet host address for this Alto
@@ -294,6 +316,7 @@ namespace Contralto
             AudioDACCapturePath = Properties.Settings.Default.AudioDACCapturePath;
             Drive0Image = Properties.Settings.Default.Drive0Image;
             Drive1Image = Properties.Settings.Default.Drive1Image;
+            TridentImages = Properties.Settings.Default.TridentImages;
             SystemType = (SystemType)Properties.Settings.Default.SystemType;
             HostAddress = Properties.Settings.Default.HostAddress;
             HostPacketInterfaceName = Properties.Settings.Default.HostPacketInterfaceName;
@@ -308,13 +331,14 @@ namespace Contralto
             AudioDACCapturePath = Properties.Settings.Default.AudioDACCapturePath;
             EnablePrinting = Properties.Settings.Default.EnablePrinting;
             PrintOutputPath = Properties.Settings.Default.PrintOutputPath;
-            ReversePageOrder = Properties.Settings.Default.ReversePageOrder;
+            ReversePageOrder = Properties.Settings.Default.ReversePageOrder;            
         }
 
         private static void WriteConfigurationWindows()
         {
             Properties.Settings.Default.Drive0Image = Drive0Image;
             Properties.Settings.Default.Drive1Image = Drive1Image;
+            Properties.Settings.Default.TridentImages = TridentImages;
             Properties.Settings.Default.SystemType = (int)SystemType;
             Properties.Settings.Default.HostAddress = HostAddress;
             Properties.Settings.Default.HostPacketInterfaceName = HostPacketInterfaceName;
@@ -476,6 +500,21 @@ namespace Contralto
                                     case "LogComponent":
                                         {
                                             field.SetValue(null, Enum.Parse(typeof(LogComponent), value, true));
+                                        }
+                                        break;
+
+                                    case "StringCollection":
+                                        {
+                                            // value is expected to be a comma-delimited set.
+                                            StringCollection sc = new StringCollection();
+                                            string[] strings = value.Split(',');
+
+                                            foreach(string s in strings)
+                                            {
+                                                sc.Add(s);
+                                            }
+
+                                            field.SetValue(null, sc);
                                         }
                                         break;
                                 }

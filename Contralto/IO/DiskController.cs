@@ -230,7 +230,24 @@ namespace Contralto.IO
         public DiskActivityType LastDiskActivity
         {
             get { return _lastDiskActivity; }
-        } 
+        }
+
+        public void CommitDisk(int driveId)
+        {           
+            DiabloDrive drive = _drives[driveId];
+            if (drive.IsLoaded)
+            {
+                try
+                {
+                    drive.Pack.Save();
+                }
+                catch (Exception e)
+                {
+                    // TODO: this does not really belong here.
+                    System.Windows.Forms.MessageBox.Show(String.Format("Unable to save Diablo disk {0}'s contents.  Error {0}.  Any changes have been lost.", e.Message), "Disk save error");
+                }
+            }
+        }
 
         public void Reset()
         {
@@ -322,7 +339,7 @@ namespace Contralto.IO
                 Log.Write(LogType.Verbose, LogComponent.DiskController, "KDATA is {0}", Conversion.ToOctal(_kDataWrite));                
                 _system.CPU.WakeupTask(CPU.TaskType.DiskSector);
 
-                // Reset SECLATE                
+                // Reset SECLATE
                 _seclate = false;
                 _seclateEnable = true;
                 _kStat &= (ushort)~SECLATE;

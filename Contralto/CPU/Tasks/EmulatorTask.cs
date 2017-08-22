@@ -33,6 +33,9 @@ namespace Contralto.CPU
 
                 // The Wakeup signal is always true for the Emulator task.
                 _wakeup = true;
+
+                // The Emulator is a RAM-related task.
+                _ramTask = true;
             }
 
             public override void Reset()
@@ -138,20 +141,26 @@ namespace Contralto.CPU
                             //
                             switch(_busData)
                             {
-                                case 1:
-                                case 2:
-                                case 3:
+                                case 0x01:
+                                case 0x02:
+                                case 0x03:
                                     // Ethernet
                                     _cpu._system.EthernetController.STARTF(_busData);
                                     break;
 
-                                case 4:
-                                    // Orbit                                    
+                                case 0x04:
+                                    // Orbit
                                     _cpu._system.OrbitController.STARTF(_busData);
                                     break;
 
+                                case 0x10:
+                                case 0x20:
+                                    // Trident start
+                                    _cpu._system.TridentController.STARTF(_busData);
+                                    break;
+
                                 default:
-                                    Log.Write(Logging.LogType.Warning, Logging.LogComponent.EmulatorTask, "STARTF for non-Ethernet device (code {0})",
+                                    Log.Write(Logging.LogType.Warning, Logging.LogComponent.EmulatorTask, "STARTF for unknown device (code {0})",
                                         Conversion.ToOctal(_busData));
                                     break;
                             }
@@ -163,6 +172,8 @@ namespace Contralto.CPU
                         break;
 
                     case EmulatorF1.RDRAM:
+                        // TODO: move RDRAM, WRTRAM and S-register BS stuff into the main Task implementation,
+                        // guarded by a check of _ramTask.
                         _rdRam = true;
                         break;
 

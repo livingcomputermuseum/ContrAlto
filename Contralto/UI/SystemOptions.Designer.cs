@@ -55,15 +55,15 @@
             this.label2 = new System.Windows.Forms.Label();
             this.EnableDACCaptureCheckBox = new System.Windows.Forms.CheckBox();
             this.EnableDACCheckBox = new System.Windows.Forms.CheckBox();
-            this.DialogOKButton = new System.Windows.Forms.Button();
-            this.DialogCancelButton = new System.Windows.Forms.Button();
             this.PrintingTab = new System.Windows.Forms.TabPage();
             this.PrintingOptionsGroupBox = new System.Windows.Forms.GroupBox();
+            this.ReversePageOrderCheckBox = new System.Windows.Forms.CheckBox();
             this.button1 = new System.Windows.Forms.Button();
             this.PrintOutputPathTextBox = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.EnablePrintingCheckBox = new System.Windows.Forms.CheckBox();
-            this.ReversePageOrderCheckBox = new System.Windows.Forms.CheckBox();
+            this.DialogOKButton = new System.Windows.Forms.Button();
+            this.DialogCancelButton = new System.Windows.Forms.Button();
             this.OptionsTabs.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
@@ -368,26 +368,6 @@
             this.EnableDACCheckBox.UseVisualStyleBackColor = true;
             this.EnableDACCheckBox.CheckedChanged += new System.EventHandler(this.OnEnableDACCheckboxChanged);
             // 
-            // DialogOKButton
-            // 
-            this.DialogOKButton.Location = new System.Drawing.Point(211, 239);
-            this.DialogOKButton.Name = "DialogOKButton";
-            this.DialogOKButton.Size = new System.Drawing.Size(75, 23);
-            this.DialogOKButton.TabIndex = 1;
-            this.DialogOKButton.Text = "OK";
-            this.DialogOKButton.UseVisualStyleBackColor = true;
-            this.DialogOKButton.Click += new System.EventHandler(this.OKButton_Click);
-            // 
-            // DialogCancelButton
-            // 
-            this.DialogCancelButton.Location = new System.Drawing.Point(292, 239);
-            this.DialogCancelButton.Name = "DialogCancelButton";
-            this.DialogCancelButton.Size = new System.Drawing.Size(75, 23);
-            this.DialogCancelButton.TabIndex = 2;
-            this.DialogCancelButton.Text = "Cancel";
-            this.DialogCancelButton.UseVisualStyleBackColor = true;
-            this.DialogCancelButton.Click += new System.EventHandler(this.CancelButton_Click);
-            // 
             // PrintingTab
             // 
             this.PrintingTab.Controls.Add(this.PrintingOptionsGroupBox);
@@ -413,6 +393,16 @@
             this.PrintingOptionsGroupBox.TabStop = false;
             this.PrintingOptionsGroupBox.Text = "Printing options";
             // 
+            // ReversePageOrderCheckBox
+            // 
+            this.ReversePageOrderCheckBox.AutoSize = true;
+            this.ReversePageOrderCheckBox.Location = new System.Drawing.Point(22, 51);
+            this.ReversePageOrderCheckBox.Name = "ReversePageOrderCheckBox";
+            this.ReversePageOrderCheckBox.Size = new System.Drawing.Size(158, 17);
+            this.ReversePageOrderCheckBox.TabIndex = 4;
+            this.ReversePageOrderCheckBox.Text = "Reverse Output Page Order";
+            this.ReversePageOrderCheckBox.UseVisualStyleBackColor = true;
+            // 
             // button1
             // 
             this.button1.Location = new System.Drawing.Point(254, 24);
@@ -421,6 +411,7 @@
             this.button1.TabIndex = 3;
             this.button1.Text = "Browse...";
             this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.OnPrintOutputBrowseButtonClicked);
             // 
             // PrintOutputPathTextBox
             // 
@@ -449,15 +440,25 @@
             this.EnablePrintingCheckBox.UseVisualStyleBackColor = true;
             this.EnablePrintingCheckBox.CheckedChanged += new System.EventHandler(this.EnablePrintingCheckBox_CheckedChanged);
             // 
-            // ReversePageOrderCheckBox
+            // DialogOKButton
             // 
-            this.ReversePageOrderCheckBox.AutoSize = true;
-            this.ReversePageOrderCheckBox.Location = new System.Drawing.Point(22, 51);
-            this.ReversePageOrderCheckBox.Name = "ReversePageOrderCheckBox";
-            this.ReversePageOrderCheckBox.Size = new System.Drawing.Size(158, 17);
-            this.ReversePageOrderCheckBox.TabIndex = 4;
-            this.ReversePageOrderCheckBox.Text = "Reverse Output Page Order";
-            this.ReversePageOrderCheckBox.UseVisualStyleBackColor = true;
+            this.DialogOKButton.Location = new System.Drawing.Point(211, 239);
+            this.DialogOKButton.Name = "DialogOKButton";
+            this.DialogOKButton.Size = new System.Drawing.Size(75, 23);
+            this.DialogOKButton.TabIndex = 1;
+            this.DialogOKButton.Text = "OK";
+            this.DialogOKButton.UseVisualStyleBackColor = true;
+            this.DialogOKButton.Click += new System.EventHandler(this.OKButton_Click);
+            // 
+            // DialogCancelButton
+            // 
+            this.DialogCancelButton.Location = new System.Drawing.Point(292, 239);
+            this.DialogCancelButton.Name = "DialogCancelButton";
+            this.DialogCancelButton.Size = new System.Drawing.Size(75, 23);
+            this.DialogCancelButton.TabIndex = 2;
+            this.DialogCancelButton.Text = "Cancel";
+            this.DialogCancelButton.UseVisualStyleBackColor = true;
+            this.DialogCancelButton.Click += new System.EventHandler(this.CancelButton_Click);
             // 
             // SystemOptions
             // 
