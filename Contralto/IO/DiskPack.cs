@@ -447,7 +447,7 @@ namespace Contralto.IO
                         for (int head = 0; head < _geometry.Heads; head++)
                         {
                             for (int sector = 0; sector < _geometry.Sectors; sector++)
-                            {                               
+                            {
                                 _sectors[cylinder, head, sector].WriteToStream(imageStream);
                             }
                         }
@@ -601,9 +601,8 @@ namespace Contralto.IO
 
         private long GetOffsetForSector(int cylinder, int head, int sector)
         {
-            int sectorNumber = (cylinder * _geometry.Heads * _geometry.Sectors) +
-                               (head * _geometry.Sectors) +
-                               sector;
+            int sectorNumber = (cylinder * _geometry.Heads + head) * _geometry.Sectors +        // total sectors for current track
+                               sector;  // + current sector
 
             return sectorNumber * _geometry.SectorGeometry.GetSectorSizeBytes();
         }

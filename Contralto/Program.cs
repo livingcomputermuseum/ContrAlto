@@ -128,7 +128,7 @@ namespace Contralto
         {
             Console.WriteLine("Exiting...");
                         
-            _system.Shutdown();
+            _system.Shutdown(false /* don't commit disks */);
 
             //
             // Commit current configuration to disk

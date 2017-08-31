@@ -29,6 +29,8 @@ namespace Contralto.IO
         public TridentDrive(AltoSystem system)
         {
             _system = system;
+
+            _seekEvent = new Event(0, null, SeekCallback);
             Reset();
         }
 
@@ -37,6 +39,8 @@ namespace Contralto.IO
             _sector = 0;
             _cylinder = 0;
             _head = 0;
+
+            _notReady = false;
 
             UpdateTrackCache();
         }
@@ -82,6 +86,11 @@ namespace Contralto.IO
             get { return _pack != null; }
         }
 
+        public bool NotReady
+        {
+            get { return _notReady; }
+        }
+
         public IDiskPack Pack
         {
             get { return _pack; }
@@ -123,6 +132,45 @@ namespace Contralto.IO
         {
             get { return false; }
         }
+
+        public bool Seek(int destCylinder)
+        {
+            if (destCylinder > _pack.Geometry.Cylinders - 1)
+            {
+                Log.Write(LogType.Error, LogComponent.TridentController, "Specified cylinder {0} is out of range.  Seek aborted, device check raised.", destCylinder);                
+                return false;
+            }
+
+            int currentCylinder = _cylinder;
+            if (destCylinder != currentCylinder)
+            {
+                // Do a seek.
+                _notReady = true;
+
+                _destCylinder = destCylinder;
+
+                //
+                // I can't find a specific formula for seek timing; the Century manual says:
+                // "Positioning time for seeking to the next cylinder is normally 6ms, and
+                //  for full seeks (814 cylinder differerence) it is 55ms."
+                //
+                // I'm just going to fudge this for now and assume a linear ramp; this is not
+                // accurate but it's not all that important.
+                //
+                _seekDuration = (ulong)((6.0 + 0.602 * Math.Abs(currentCylinder - destCylinder)) * Conversion.MsecToNsec);
+
+                Log.Write(LogComponent.TridentController, "Commencing seek from {0} to {1}.  Seek time is {2}ns", destCylinder, currentCylinder, _seekDuration);
+
+                _seekEvent.TimestampNsec = _seekDuration;
+                _system.Scheduler.Schedule(_seekEvent);
+            }
+            else
+            {
+                Log.Write(LogComponent.TridentController, "Seek is a no-op.");
+            }
+
+            return true;
+        }        
 
         public ushort ReadHeader(int wordOffset)
         {
@@ -223,6 +271,14 @@ namespace Contralto.IO
             }
         }
 
+        private void SeekCallback(ulong timeNsec, ulong skewNsec, object context)
+        {
+            Log.Write(LogComponent.TridentDisk, "Seek to {0} complete.", _destCylinder);
+
+            Cylinder = _destCylinder;
+            _notReady = false;
+        }
+
         //
         // Sector management.  We load in an entire track's worth of sectors at a time.
         // When the head or cylinder changes, UpdateTrackCache must be called.
@@ -275,6 +331,15 @@ namespace Contralto.IO
 
         // The pack loaded into the drive
         IDiskPack _pack;
+
+        // Drive status
+        private bool _notReady;
+
+        // Seek status and control
+        private static ulong _seekDuration;
+        private Event _seekEvent;
+        private int _destCylinder;
+
 
         //
         // The track cache

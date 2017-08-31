@@ -126,7 +126,14 @@ namespace Contralto.CPU
             /// <returns>An InstructionCompletion indicating whether this instruction calls for a task switch or not.</returns>
             public InstructionCompletion ExecuteNext()
             {                
-                MicroInstruction instruction = UCodeMemory.GetInstruction(_mpc, _taskType);                             
+                MicroInstruction instruction = UCodeMemory.GetInstruction(_mpc, _taskType);
+
+                /*
+                if (_taskType == TaskType.Emulator && UCodeMemory.GetBank(_taskType) == MicrocodeBank.RAM0)
+                {
+                    Console.WriteLine("{0}: {1}", Conversion.ToOctal(_mpc), UCodeDisassembler.DisassembleInstruction(instruction, _taskType));
+                }*/
+
                 return ExecuteInstruction(instruction);
             }
 
@@ -313,12 +320,12 @@ namespace Contralto.CPU
                         // Do nothing.  Well, that was easy.
                         break;
 
-                    case SpecialFunction1.LoadMAR:  
+                    case SpecialFunction1.LoadMAR:
                         // Do MAR or XMAR reference based on whether F2 is MD<- (for Alto IIs), indicating an extended memory reference.
                         _cpu._system.MemoryBus.LoadMAR(
-                            aluData, 
-                            _taskType, 
-                            _systemType == SystemType.AltoI ? false : instruction.F2 == SpecialFunction2.StoreMD);                                        
+                            aluData,
+                            _taskType,
+                            _systemType == SystemType.AltoI ? false : instruction.F2 == SpecialFunction2.StoreMD);
                         break;
 
                     case SpecialFunction1.Task:

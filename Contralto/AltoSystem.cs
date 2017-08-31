@@ -94,7 +94,7 @@ namespace Contralto
             _displayController.DetachDisplay();
         }
 
-        public void Shutdown()
+        public void Shutdown(bool commitDisks)
         {
             // Kill any host interface threads that are running.
             if (_ethernetController.HostInterface != null)
@@ -107,15 +107,18 @@ namespace Contralto
             //
             _audioDAC.Shutdown();
 
-            //
-            // Save disk contents
-            //
-            _diskController.CommitDisk(0);
-            _diskController.CommitDisk(1);
-
-            for (int i = 0; i < 8; i++)
+            if (commitDisks)
             {
-                _tridentController.CommitDisk(i);
+                //
+                // Save disk contents
+                //
+                _diskController.CommitDisk(0);
+                _diskController.CommitDisk(1);
+
+                for (int i = 0; i < 8; i++)
+                {
+                    _tridentController.CommitDisk(i);
+                }
             }
         }
 
@@ -210,11 +213,11 @@ namespace Contralto
             //
             switch (Path.GetExtension(path).ToLowerInvariant())
             {
-                case ".t80":
+                case ".dsk80":
                     geometry = DiskGeometry.TridentT80;
                     break;
 
-                case ".t300":                
+                case ".dsk300":
                     geometry = DiskGeometry.TridentT300;
                     break;
 
@@ -228,11 +231,11 @@ namespace Contralto
 
             if (newImage)
             {
-                newPack = FileBackedDiskPack.CreateEmpty(geometry, path);
+                newPack = InMemoryDiskPack.CreateEmpty(geometry, path);
             }
             else
             {
-                newPack = FileBackedDiskPack.Load(geometry, path);
+                newPack = InMemoryDiskPack.Load(geometry, path);
             }
 
             _tridentController.Drives[drive].LoadPack(newPack);
@@ -271,6 +274,11 @@ namespace Contralto
         public AltoCPU CPU
         {
             get { return _cpu; }
+        }
+
+        public Memory.Memory Memory
+        {
+            get { return _mem; }
         }
 
         public MemoryBus MemoryBus

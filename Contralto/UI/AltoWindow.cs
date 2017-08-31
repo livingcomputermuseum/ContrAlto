@@ -408,7 +408,7 @@ namespace Contralto
             // Halt the system and detach our display              
             _controller.StopExecution();
             _system.DetachDisplay();
-            _system.Shutdown();
+            _system.Shutdown(true /* commit disk contents */);
 
             //
             // Commit current configuration to disk

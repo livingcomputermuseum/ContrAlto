@@ -70,15 +70,15 @@ namespace Contralto.CPU
                         break;
 
                     case BusSource.ReadMD:
-                        source = "←MD ";
+                        source = "<-MD ";
                         break;
 
                     case BusSource.ReadMouse:
-                        source = "←MOUSE ";
+                        source = "<-MOUSE ";
                         break;
 
                     case BusSource.ReadDisp:
-                        source = "←DISP ";
+                        source = "<-DISP ";
                         break;
                 }
             }           
@@ -164,11 +164,11 @@ namespace Contralto.CPU
 
                     if (instruction.F2 == SpecialFunction2.StoreMD)
                     {
-                        f1 = "XMAR← ";
+                        f1 = "XMAR<- ";
                     }
                     else
                     {
-                        f1 = "MAR← ";
+                        f1 = "MAR<- ";
                     }
                     break;
 
@@ -181,15 +181,15 @@ namespace Contralto.CPU
                     break;
 
                 case SpecialFunction1.LLSH1:
-                    f1 = "←L LSH 1 ";
+                    f1 = "<-L LSH 1 ";
                     break;
 
                 case SpecialFunction1.LRSH1:
-                    f1 = "←L RSH 1 ";
+                    f1 = "<-L RSH 1 ";
                     break;
 
                 case SpecialFunction1.LLCY8:
-                    f1 = "←L LCY 8 ";
+                    f1 = "<-L LCY 8 ";
                     break;
 
                 case SpecialFunction1.Constant:
@@ -233,11 +233,11 @@ namespace Contralto.CPU
                     if ((task == TaskType.TridentInput || task == TaskType.TridentOutput) &&
                         instruction.BS == BusSource.None)
                     {
-                        f2 = "MD← KDTA ";
+                        f2 = "MD<- KDTA ";
                     }
                     else if (instruction.F1 != SpecialFunction1.LoadMAR)
                     {
-                        f2 = "MD← ";
+                        f2 = "MD<- ";
                     }
                     break;
 
@@ -273,7 +273,7 @@ namespace Contralto.CPU
                         break;
                 }
 
-                load = String.Format("T← {0}", loadTFromALU ? operation : source);
+                load = String.Format("T<- {0}", loadTFromALU ? operation : source);
             }
 
             // Load L (and M) from ALU
@@ -282,24 +282,24 @@ namespace Contralto.CPU
                 if (string.IsNullOrEmpty(load))
                 {
                     // T not loaded at all, L loaded from ALU
-                    load = String.Format("L← {0}", operation);
+                    load = String.Format("L<- {0}", operation);
                 }
                 else if (loadTFromALU)
                 {
                     // T loaded from ALU, L loaded from ALU
-                    load = String.Format("L← {0}", load);
+                    load = String.Format("L<- {0}", load);
                 }
                 else
                 {
                     // T loaded from bus source, L loaded from ALU
-                    load = String.Format("L← {0}, {1}", operation, load);
+                    load = String.Format("L<- {0}, {1}", operation, load);
                 }
             }
 
             // Do writeback to selected R register from shifter output
             if (loadR)
             {
-                load = String.Format("$R{0}← {1}", 
+                load = String.Format("$R{0}<- {1}", 
                     Conversion.ToOctal((int)rSelect),
                     !string.IsNullOrEmpty(load) ? load : operation);
             }
@@ -309,12 +309,12 @@ namespace Contralto.CPU
             {
                 if (string.IsNullOrEmpty(load))
                 {
-                    load = String.Format("$S{0}← M",
+                    load = String.Format("$S{0}<- M",
                          Conversion.ToOctal((int)rSelect));
                 }
                 else
                 {
-                    load = String.Format("$S{0}← M, {1}",
+                    load = String.Format("$S{0}<- M, {1}",
                         Conversion.ToOctal((int)rSelect),
                         load);
                 }
@@ -448,10 +448,10 @@ namespace Contralto.CPU
                     return "RDRAM ";
 
                 case EmulatorF1.LoadRMR:
-                    return "RMR← ";
+                    return "RMR<- ";
 
                 case EmulatorF1.LoadESRB:
-                    return "ESRB← ";
+                    return "ESRB<- ";
 
                 case EmulatorF1.RSNF:
                     return "RSNF ";
@@ -481,13 +481,13 @@ namespace Contralto.CPU
                     return "MAGIC ";
 
                 case EmulatorF2.LoadDNS:
-                    return "DNS← ";
+                    return "DNS<- ";
 
                 case EmulatorF2.BUSODD:
                     return "BUSODD ";
 
                 case EmulatorF2.LoadIR:
-                    return "IR← ";
+                    return "IR<- ";
 
                 case EmulatorF2.IDISP:
                     return "IDISP ";
@@ -507,13 +507,13 @@ namespace Contralto.CPU
                     return "OrbitBlock ";
 
                 case OrbitF1.OrbitDeltaWC:
-                    return "←OrbitDeltaWC ";
+                    return "<-OrbitDeltaWC ";
 
                 case OrbitF1.OrbitDBCWidthRead:
-                    return "←OrbitDBCWidthRead ";
+                    return "<-OrbitDBCWidthRead ";
 
                 case OrbitF1.OrbitStatus:
-                    return "←OrbitStatus ";
+                    return "<-OrbitStatus ";
 
                 default:
                     return String.Format("Orbit F1 {0}", Conversion.ToOctal((int)of1));
@@ -527,25 +527,25 @@ namespace Contralto.CPU
             switch (of2)
             {
                 case OrbitF2.OrbitDBCWidthSet:
-                    return "OrbitDBCWidthSet← ";
+                    return "OrbitDBCWidthSet<- ";
 
                 case OrbitF2.OrbitXY:
-                    return "OrbitXY← ";
+                    return "OrbitXY<- ";
 
                 case OrbitF2.OrbitHeight:
-                    return "OrbitHeight← ";
+                    return "OrbitHeight<- ";
 
                 case OrbitF2.OrbitFontData:
-                    return "OrbitFontData← ";
+                    return "OrbitFontData<- ";
 
                 case OrbitF2.OrbitInk:
-                    return "OrbitInk← ";
+                    return "OrbitInk<- ";
 
                 case OrbitF2.OrbitControl:
-                    return "OrbitControl← ";
+                    return "OrbitControl<- ";
 
                 case OrbitF2.OrbitROSCommand:
-                    return "OrbitROSCommand← ";                
+                    return "OrbitROSCommand<- ";                
 
                 default:
                     return String.Format("Orbit F2 {0}", Conversion.ToOctal((int)of2));
@@ -562,10 +562,10 @@ namespace Contralto.CPU
                     return "EMPTY ";
 
                 case TridentF2.KTAG:
-                    return "KTAG← ";
+                    return "KTAG<- ";
 
                 case TridentF2.ReadKDTA:
-                    return "←KDTA ";
+                    return "<-KDTA ";
 
                 case TridentF2.RESET:
                     return "RESET ";
@@ -578,7 +578,7 @@ namespace Contralto.CPU
                     return "WAIT ";
 
                 case TridentF2.WriteKDTA:
-                    return "KDTA← ";
+                    return "KDTA<- ";
 
                 default:
                     return String.Format("Trident F2 {0}", Conversion.ToOctal((int)tf2));

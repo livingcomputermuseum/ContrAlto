@@ -190,6 +190,9 @@ namespace Contralto.CPU
             Log.Write(LogComponent.CPU, "Silent Boot; microcode banks initialized to {0}", Conversion.ToOctal(_rmr));            
             UCodeMemory.LoadBanksFromRMR(_rmr);
 
+            // Booting / soft-reset of the Alto resets the XM bank registers to zero.
+            _system.Memory.SoftReset();
+
             // Reset RMR after reset.
             _rmr = 0xffff;
           

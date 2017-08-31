@@ -56,24 +56,42 @@ namespace Contralto.Memory
             get { return _memTop; }
         }
 
+        /// <summary>
+        /// Full reset, clears all memory.
+        /// </summary>
         public void Reset()
         {
             // 4 64K banks, regardless of system type.  (Alto Is just won't use the extra memory.)
             _mem = new ushort[0x40000];
             _xmBanks = new ushort[16];
+            _xmBanksAlternate = new int[16];
+            _xmBanksNormal = new int[16];
+        }
+
+        /// <summary>
+        /// Soft reset, clears XM bank registers.
+        /// </summary>
+        public void SoftReset()
+        {
+            _xmBanks = new ushort[16];
+            _xmBanksAlternate = new int[16];
+            _xmBanksNormal = new int[16];
         }
 
         public ushort Read(int address, TaskType task, bool extendedMemory)
         {
             // Check for XM registers; this occurs regardless of XM flag since it's in the I/O page.
             if (address >= _xmBanksStart && address < _xmBanksStart + 16)
-            {                
+            {
+                // NB: While not specified in documentatino, some code (IFS in particular) relies on the fact that
+                // the upper 12 bits of the bank registers are all 1s.
                 return (ushort)(0xfff0 | _xmBanks[address - _xmBanksStart]);
             }
             else
             {                   
                 address += 0x10000 * GetBankNumber(task, extendedMemory);
-                return _mem[address];                
+
+                return _mem[address];
             }
         }
 
@@ -81,17 +99,22 @@ namespace Contralto.Memory
         {
             // Check for XM registers; this occurs regardless of XM flag since it's in the I/O page.
             if (address >= _xmBanksStart && address < _xmBanksStart + 16)
-            {                
+            {
                 _xmBanks[address - _xmBanksStart] = data;
+
+                // Precalc bank numbers to speed memory accesses that use them
+                _xmBanksAlternate[address - _xmBanksStart] = data & 0x3;
+                _xmBanksNormal[address - _xmBanksStart] = (data & 0xc) >> 2;
+
                 Log.Write(LogComponent.Memory, "XM register for task {0} set to bank {1} (normal), {2} (xm)",
                     (TaskType)(address - _xmBanksStart),
                     (data & 0xc) >> 2,
-                    (data & 0x3));                
+                    (data & 0x3));
             }
             else
             {
                 address += 0x10000 * GetBankNumber(task, extendedMemory);              
-                _mem[address] = data;               
+                _mem[address] = data;
             }
         }
 
@@ -102,7 +125,7 @@ namespace Contralto.Memory
 
         private int GetBankNumber(TaskType task, bool extendedMemory)
         {
-            return extendedMemory ? (_xmBanks[(int)task]) & 0x3 : ((_xmBanks[(int)task]) & 0xc) >> 2;
+            return extendedMemory ? _xmBanksAlternate[(int)task] : _xmBanksNormal[(int)task];
         }
 
         private readonly MemoryRange[] _addresses;
@@ -112,6 +135,8 @@ namespace Contralto.Memory
 
         private ushort[] _mem;
 
-        private ushort[] _xmBanks;
+        private ushort[] _xmBanks;        
+        private int[] _xmBanksAlternate;
+        private int[] _xmBanksNormal;
     }
 }

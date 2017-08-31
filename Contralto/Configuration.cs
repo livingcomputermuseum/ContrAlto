@@ -134,6 +134,11 @@ namespace Contralto
             //
             // If configuration specifies fewer than 8 Trident disks, we need to pad the list out to 8 with empty entries.
             //
+            if (TridentImages == null)
+            {
+                TridentImages = new StringCollection();
+            }
+
             int start = TridentImages.Count;
             for (int i = start; i < 8; i++)
             {

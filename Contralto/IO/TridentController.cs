@@ -38,6 +38,11 @@ namespace Contralto.IO
         {
             _system = system;
 
+            //
+            // We initialize 16 drives even though the
+            // controller only technically supports 8.
+            // TODO: detail
+            //
             _drives = new TridentDrive[16];
 
             for(int i=0;i<_drives.Length;i++)
@@ -55,9 +60,7 @@ namespace Contralto.IO
             _seekIncomplete = false;
             _headOverflow = false;
             _deviceCheck = false;
-            _notSelected = false;
-            _notOnline = false;
-            _notReady = false;
+            _notSelected = false;            
             _sectorOverflow = false;
             _outputLate = false;
             _inputLate = false;
@@ -79,7 +82,6 @@ namespace Contralto.IO
 
             _sectorEvent = new Event(0, null, SectorCallback);
             _outputFifoEvent = new Event(0, null, OutputFifoCallback);
-            _seekEvent = new Event(0, null, SeekCallback);
             _readWordEvent = new Event(0, null, ReadWordCallback);
 
             // And schedule the first sector pulse.
@@ -95,8 +97,6 @@ namespace Contralto.IO
             _headOverflow = false;
             _deviceCheck = false;
             _notSelected = false;
-            _notOnline = false;
-            _notReady = false;
             _sectorOverflow = false;
             _outputLate = false;
             _inputLate = false;
@@ -249,7 +249,7 @@ namespace Contralto.IO
                     (_headOverflow ?            0x4000 : 0) |
                     (_deviceCheck ?             0x2000 : 0) |
                     (_notSelected ?             0x1000 : 0) |
-                    (_notOnline ?               0x0800 : 0) |
+                    (NotOnline() ?              0x0800 : 0) |
                     (NotReady() ?               0x0400 : 0) |
                     (_sectorOverflow ?          0x0200 : 0) |
                     (_outputLate ?              0x0100 : 0) |
@@ -287,7 +287,14 @@ namespace Contralto.IO
 
         private bool NotReady()
         {
-            return _notReady | !SelectedDrive.IsLoaded;
+            return SelectedDrive.NotReady | 
+                    !SelectedDrive.IsLoaded | 
+                    _selectedDrive > 7;
+        }
+
+        private bool NotOnline()
+        {
+            return _selectedDrive < 8 ? !SelectedDrive.IsLoaded : true;
         }
 
         private void WriteOutputFifo(int value)
@@ -550,7 +557,21 @@ namespace Contralto.IO
                                 break;
 
                             case 3:     // Set Drive
+                                // We take all four drive-select bits even though only 8 drives are actually supported.
+                                // The high bit is used by many trident utilities to select an invalid drive to test for
+                                // the presence of the 8-drive multiplexer.
                                 _selectedDrive = fifoWord & 0xf;
+
+                                if (_selectedDrive > 7)
+                                {
+                                    _system.CPU.BlockTask(TaskType.TridentOutput);
+                                    _notSelected = true;
+                                }
+                                else
+                                {
+                                    _notSelected = false;
+                                }
+
                                 Log.Write(LogComponent.TridentController, "Command is Set Drive {0}", _selectedDrive);
                                 break;
                         }
@@ -636,48 +657,7 @@ namespace Contralto.IO
 
         private void InitSeek(int destCylinder)
         {
-            if (destCylinder > SelectedDrive.Pack.Geometry.Cylinders - 1)
-            {
-                Log.Write(LogType.Error, LogComponent.TridentController, "Specified cylinder {0} is out of range.  Seek aborted.", destCylinder);
-                _deviceCheck = true;
-                return;
-            }
-
-            int currentCylinder = SelectedDrive.Cylinder;
-            if (destCylinder != currentCylinder)
-            {
-                // Do a seek.
-                _notReady = true;
-                
-                _destCylinder = destCylinder;
-
-                //
-                // I can't find a specific formula for seek timing; the Century manual says:
-                // "Positioning time for seeking to the next cylinder is normally 6ms, and
-                //  for full seeks (814 cylinder differerence) it is 55ms."
-                //
-                // I'm just going to fudge this for now and assume a linear ramp; this is not
-                // accurate but it's not all that important.
-                //
-                _seekDuration = (ulong)((6.0 + 0.602 * Math.Abs(currentCylinder - destCylinder)) * Conversion.MsecToNsec);
-
-                Log.Write(LogComponent.TridentController, "Commencing seek from {0} to {1}.  Seek time is {2}ns", destCylinder, currentCylinder, _seekDuration);
-
-                _seekEvent.TimestampNsec = _seekDuration;
-                _system.Scheduler.Schedule(_seekEvent);
-            }
-            else
-            {
-                Log.Write(LogComponent.TridentController, "Seek is a no-op.");
-            }
-        }
-
-        private void SeekCallback(ulong timeNsec, ulong skewNsec, object context)
-        {
-            Log.Write(LogComponent.TridentDisk, "Seek to {0} complete.", _destCylinder);
-
-            SelectedDrive.Cylinder = _destCylinder;
-            _notReady = false;
+            _deviceCheck = !SelectedDrive.Seek(destCylinder);
         }
 
         private void InitRead()
@@ -786,7 +766,7 @@ namespace Contralto.IO
             }
             else
             {
-                Log.Write(LogComponent.TridentController, "CHS {0}/{1}/{2} {3} read complete.", SelectedDrive.Cylinder, SelectedDrive.Head, _sector, _sectorBlock);                
+                Log.Write(LogComponent.TridentController, "CHS {0}/{1}/{2} {3} read from drive {4} complete.", SelectedDrive.Cylinder, SelectedDrive.Head, _sector, _sectorBlock, _selectedDrive);
                 _readState = ReadState.Idle;
 
                 _sectorBlock++;
@@ -847,7 +827,7 @@ namespace Contralto.IO
             _writeWordCount--;
             if (_writeWordCount <= 0)
             {
-                Log.Write(LogComponent.TridentController, "CHS {0}/{1}/{2} {3} write complete. {4} words written.", SelectedDrive.Cylinder, SelectedDrive.Head, _sector, _sectorBlock, _writeIndex);                
+                Console.WriteLine( "CHS {0}/{1}/{2} {3} write to drive {4} complete. {5} words written.", SelectedDrive.Cylinder, SelectedDrive.Head, _sector, _sectorBlock, _selectedDrive, _writeIndex);
                 _writeState = WriteState.Idle;
                 _writeIndex = 0;
 
@@ -857,18 +837,23 @@ namespace Contralto.IO
         }
 
         private void SectorCallback(ulong timeNsec, ulong skewNsec, object context)
-        {            
+        {
             // Move to the next sector.
-            _sector = (_sector + 1) % 9;
-            SelectedDrive.Sector = _sector;
-
-            // Reset to the first block (header) in the sector.
-            _sectorBlock = SectorBlock.Header;
-
-            // Wake up the Output task if RunEnable is true and the drive is ready.
             if (_runEnable && !NotReady())
             {
+                _sector = (_sector + 1) % 9;
+                SelectedDrive.Sector = _sector;
+
+                // Reset to the first block (header) in the sector.
+                _sectorBlock = SectorBlock.Header;
+
+                // Wake up the Output task         
                 _system.CPU.WakeupTask(TaskType.TridentOutput);
+            }
+            else
+            {
+                // Keep the output task asleep.
+                _system.CPU.BlockTask(TaskType.TridentOutput);
             }
 
             //
@@ -894,6 +879,7 @@ namespace Contralto.IO
         {
             get { return _drives[_selectedDrive]; }
         }
+        
 
         //
         // Input FIFO semantics
@@ -1033,9 +1019,7 @@ namespace Contralto.IO
         private bool _seekIncomplete;
         private bool _headOverflow;
         private bool _deviceCheck;
-        private bool _notSelected;
-        private bool _notOnline;
-        private bool _notReady;
+        private bool _notSelected;        
         private bool _sectorOverflow;
         private bool _outputLate;
         private bool _inputLate;
@@ -1044,20 +1028,13 @@ namespace Contralto.IO
         private bool _offset;     
 
         // Current sector
-        private int _sector;        
+        private int _sector;
 
         /// <summary>
         /// Drive timings
         /// </summary>
         private static ulong _sectorDuration = (ulong)((16.66666 / 9.0) * Conversion.MsecToNsec);      // time in nsec for one sector -- 9 sectors, 16.66ms per rotation
-        private Event _sectorEvent;
-
-        //
-        // Seek timings
-        //
-        private static ulong _seekDuration = (6 * Conversion.MsecToNsec);
-        private Event _seekEvent;
-        private int _destCylinder;
+        private Event _sectorEvent;        
 
         // Output FIFO.  This is actually 17-bits wide (the 17th bit is the Tag bit).
         private Queue<int> _outputFifo;

@@ -87,7 +87,7 @@ namespace Contralto.SdlUI
             //
             _controller.StopExecution();
 
-            _system.Shutdown();
+            _system.Shutdown(true /* commit disk contents */);
 
             //
             // The Alto window was closed, shut down the CLI.
