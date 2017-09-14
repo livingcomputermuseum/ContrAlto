@@ -1,4 +1,4 @@
-﻿Readme-mono.txt for Contralto v1.2.1:
+﻿Readme-mono.txt for Contralto v1.2.2:
 
 1. Introduction and Overview
 ============================
