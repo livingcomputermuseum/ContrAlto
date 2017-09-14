@@ -209,6 +209,21 @@ namespace Contralto.SdlUI
             return CommandResult.Normal;
         }
 
+        [DebuggerFunction("new disk", "Creates and loads a new image for the specified drive.", "<drive>")]
+        private CommandResult NewDisk(ushort drive, string path)
+        {
+            if (drive > 1)
+            {
+                throw new InvalidOperationException("Drive specification out of range.");
+            }
+
+            // Unload the current pack.
+            _system.LoadDiabloDrive(drive, path, true);
+            Console.WriteLine("Drive {0} created and loaded.", drive);
+
+            return CommandResult.Normal;
+        }
+
         [DebuggerFunction("show disk", "Displays the contents of the specified drive.", "<drive>")]
         private CommandResult ShowDisk(ushort drive)
         {
@@ -258,6 +273,21 @@ namespace Contralto.SdlUI
             // Unload the current pack.
             _system.UnloadTridentDrive(drive);
             Console.WriteLine("Trident {0} unloaded.", drive);
+
+            return CommandResult.Normal;
+        }
+
+        [DebuggerFunction("new trident", "Creates and loads a new image for the specified drive.", "<drive>")]
+        private CommandResult NewTrident(ushort drive, string path)
+        {
+            if (drive > 7)
+            {
+                throw new InvalidOperationException("Drive specification out of range.");
+            }
+
+            // Unload the current pack.
+            _system.LoadTridentDrive(drive, path, true);
+            Console.WriteLine("Trident {0} created and loaded.", drive);
 
             return CommandResult.Normal;
         }

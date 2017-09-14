@@ -196,19 +196,36 @@ namespace Contralto.IO
             //
             if (e.Packet.LinkLayerType == LinkLayers.Ethernet)
             {
-                EthernetPacket packet = (EthernetPacket)Packet.ParsePacket(LinkLayers.Ethernet, e.Packet.Data);
-
-                UpdateSourceAddress();
-
-                if ((int)packet.Type == _3mbitFrameType &&                          // encapsulated 3mbit frames
-                    (!packet.SourceHwAddress.Equals(_10mbitSourceAddress)))         // and not sent by this emulator
+                //
+                // We wrap this in a try/catch; on occasion Packet.ParsePacket fails due to a bug
+                // in the PacketDotNet library.
+                //
+                EthernetPacket packet = null;
+                try
                 {
-                    Log.Write(LogComponent.HostNetworkInterface, "Received encapsulated 3mbit packet.");
-                    _callback(new System.IO.MemoryStream(packet.PayloadData));
+                    packet = (EthernetPacket)Packet.ParsePacket(LinkLayers.Ethernet, e.Packet.Data);
                 }
-                else
+                catch (Exception ex)
                 {
-                    // Not for us, discard the packet.
+                    // Just eat this, log a message.
+                    Log.Write(LogType.Error, LogComponent.HostNetworkInterface, "Failed to parse 3mbit packet.  Exception {0}", ex.Message);
+                    packet = null;
+                }
+
+                if (packet != null)
+                {
+                    UpdateSourceAddress();
+
+                    if ((int)packet.Type == _3mbitFrameType &&                          // encapsulated 3mbit frames
+                        (!packet.SourceHwAddress.Equals(_10mbitSourceAddress)))         // and not sent by this emulator
+                    {
+                        Log.Write(LogComponent.HostNetworkInterface, "Received encapsulated 3mbit packet.");
+                        _callback(new System.IO.MemoryStream(packet.PayloadData));
+                    }
+                    else
+                    {
+                        // Not for us, discard the packet.
+                    }
                 }
             }
         }

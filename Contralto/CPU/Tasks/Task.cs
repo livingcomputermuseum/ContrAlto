@@ -211,7 +211,7 @@ namespace Contralto.CPU
                         case BusSource.ReadMouse:
                             // "BUS[12-15]<-MOUSE; BUS[0-13]<- -1"
                             // (Note -- BUS[0-13] appears to be a typo, and should likely be BUS[0-11]).
-                            _busData = (ushort)(_cpu._system.Mouse.PollMouseBits() | 0xfff0);
+                            _busData = (ushort)(_cpu._system.MouseAndKeyset.PollMouseBits() | 0xfff0);
                             break;
 
                         case BusSource.ReadDisp:

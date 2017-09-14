@@ -19,15 +19,18 @@ ContrAlto currently emulates the following Alto hardware:
    - Two Diablo Model 31 or 44 drives
    - Ethernet (encapsulated in UDP datagrams on the host machine)
    - Standard Keyboard/Mouse/Video
+   - Alto Keyset (5-key chording keyboard)
    - Audio DAC (used with the Smalltalk Music System)
    - The Orbit raster hardware, Dover Raster Output Scanner and Dover print
      engine, which provides 384dpi print output (currently PDF only)
+   - The Trident Disk Controller (TriCon) and up to eight T-80 or T-300 
+     drives
 
 1.2 What's Not
 --------------
 
-At this time, ContrAlto does not support more exotic hardware such as Trident 
-disks, printers or audio using the utility port, or the keyset input device.
+At this time, ContrAlto does not support more exotic hardware such as printers 
+or audio using the utility port.
 
 The Audio DAC is technically emulated, but output is not connected to an audio
 device on non-Windows platforms at this time.
@@ -143,8 +146,16 @@ Blank-Bottom   F3
 DEL            Del
 LOCK           F4
 
+3.1.3 Keyset
+------------
 
-3.1.3 Disk Packs
+A 5-key chording keyboard referred to as the "keyset" was a standard peripheral
+in the early days of the Alto.  (It never caught on.)  The 5 keys on the keyset
+are mapped to F5-F9 on your keyboard, with F5 corresponding to the leftmost key
+and F9 corresponding to the rightmost.
+
+
+3.1.4 Disk Packs
 ----------------
 
 A real Alto uses large 14" disk packs for disk storage, each containing
@@ -153,8 +164,8 @@ data.  ContrAlto uses files, referred to as "disk images" or just "images"
 that contain a bit-for-bit copy of these original packs.  These are a lot 
 easier to use with a modern PC.
 
-Disk images can be loaded and unloaded via the "Load Disk" command.  (See Section
-5 for details on this and other commands.)
+Disk images can be loaded and unloaded via the "Load Disk" and "Unload Disk" 
+commands.  (See Section 5 for details on this and other commands.)
 
 If you modify the contents of a loaded disk (for example creating new files or
 deleting existing ones) the changes will be written back out to the disk image
@@ -166,14 +177,30 @@ ContrAlto does not come with any disk images, however an assortment of Alto
 programs can be found on Bitsavers.org, at 
 http://www.bitsavers.org/bits/Xerox/Alto/disk_images/.  Images include:
 
-AllGames.dsk   -  A collection of games and toys for the Alto
-Bcpl.dsk       -  A set of BCPL development tools
-Diags.dsk      -  Diagnostic tools
-NonProg.dsk    -  The "Non-Programmer's Disk," containing Bravo
-Xmsmall.dsk    -  Smalltalk-76
+AllGames.dsk    -  A collection of games and toys for the Alto
+chm/Bcpl.dsk    -  A set of BCPL development tools
+chm/Diags.dsk   -  Diagnostic tools
+chm/Bravox.dsk	-  The BravoX word processing environment
+chm/Xmsmall.dsk -  Smalltalk-76
 
 
-3.1.4 Startup, Reset and Shutdown
+3.1.5 Trident Disk Packs
+------------------------
+
+Some Altos were used as file or print servers and needed greater storage 
+capacity than the Diablo drives could provide.  These Altos used a special 
+controller, referred to as the Trident (or TriCon) which could control up to
+eight Century (later Xerox) T-80 or T-300 drives with a capacity of 80 or
+300 megabytes, respectively.
+
+ContrAlto can emulate a Trident controller and up to eight T-80 or T-300 drives
+(in any combination.)  Like the Diablo, the contents of these disk packs are 
+stored in image files.  These are loaded, unloaded, or created using the 
+"Load Trident," "Unload Trident" commands.  (See Section 5 for
+details on this and other commands.)
+
+
+3.1.5 Startup, Reset and Shutdown
 ---------------------------------
 
 The system can be started at any time by using the "Start" command, though
@@ -372,11 +399,25 @@ Start With Keyboard Net Boot - Starts the emulated Alto with the keyboard ethern
                                either in the configuration file or by the Set Keyboard Net Boot File
                                command.
 
-Load Disk <drive> <path> - Loads the specified drive (0 or 1) with the requested disk image.
+Load Disk <drive> <path> - Loads the specified Diablo drive (0 or 1) with the requested disk image.
 
-Unload Disk <drive> - Unloads the specified drive (0 or 1).  Changes to disk contents are saved.
+Unload Disk <drive> - Unloads the specified Diablo drive (0 or 1).  Changes to disk contents are saved.
 
-Show Disk <drive> - Displays the currently loaded image for the specified drive (0 or 1).
+Create Disk <drive> - Creates a new (empty) disk image and loads the specified Diablo drive with it.
+
+Show Disk <drive> - Displays the currently loaded image for the specified Diablo drive (0 or 1).
+
+Load Trident <drive> <path> - Loads the specified Trident drive (0 through 7) with the requested 
+                              disk image.
+
+Unload Trident <drive> - Unloads the specified Trident drive (0 through 7).  Changes to disk 
+                         contents are saved.
+
+Create Trident <drive> - Creates a new (empty) disk image and loads the specified Trident drive with it.
+                         Specifying a file extension of ".dsk80" will create a new T-80 disk; an extension
+                         of ".dsk300" will create a new T-300 disk. 
+
+Show Trident <drive> - Displays the currently loaded image for the specified drive (0 through 7).
 
 Show System Type - Displays the Alto system type as configured by the configuration file.
 
@@ -424,7 +465,12 @@ specifying the file to be net booted.
 At the moment, the following issues are known and being worked on.  If you find
 an issue not listed here, see section 7.0 to report a new bug.
 
+- TriEx reports a status of "00000" randomly when doing read operations from
+  Trident disks.  TFU, and IFS work correctly.
+
 - Audio is not available on Unix / OS X.
+
+- Fullscreen video is not yet implemented on Unix / OS X.
 
 
 7.0 Reporting Bugs
@@ -474,6 +520,15 @@ PDF generation is provided by the iTextSharp library, see: https://github.com/it
 
 10.0 Change History
 ===================
+
+V1.2.2
+------
+- Initial support for the Trident controller and associated T-80 and T-300 
+  drives.
+- Added support for the Alto Keyset.  (Finally.)
+- Fixed bug in XM bank register soft-reset behavior.  IFS now runs.
+- Fixed issue with ethernet encapsulation that caused the emulator to receive
+  its own packets.
 
 V1.2.1
 ------

@@ -30,13 +30,28 @@ namespace Contralto.IO
         Right = 0x2,
         Left = 0x4,
     }
-        
-    /// <summary>
-    /// Implements the hardware for the standard Alto mouse.
-    /// </summary>
-    public class Mouse : IMemoryMappedDevice
+
+    [Flags]
+    public enum AltoKeysetKey
     {
-        public Mouse()
+        None =    0x00,
+        Keyset0 = 0x80,     // left-most (bit 8)
+        Keyset1 = 0x40,
+        Keyset2 = 0x20,
+        Keyset3 = 0x10,
+        Keyset4 = 0x08,     // right-most (bit 12)
+    }
+
+    /// <summary>
+    /// Implements the hardware for the standard Alto mouse
+    /// and the Keyset, because both share the same memory-mapped
+    /// address.  When the Diablo printer is finally emulated,
+    /// I'll have to revisit this scheme because it ALSO shares
+    /// the same address and that's just silly.
+    /// </summary>
+    public class MouseAndKeyset : IMemoryMappedDevice
+    {
+        public MouseAndKeyset()
         {
             _lock = new ReaderWriterLockSlim();
             Reset();
@@ -44,12 +59,13 @@ namespace Contralto.IO
 
         public void Reset()
         {
-
+            _keyset = 0;
+            _buttons = AltoMouseButton.None;
         }
 
         public ushort Read(int address, TaskType task, bool extendedMemoryReference)
         {
-            return (ushort)(~_buttons);
+            return (ushort)~((int)_buttons | (int)_keyset);
         }
 
         public void Load(int address, ushort data, TaskType task, bool extendedMemoryReference)
@@ -79,6 +95,16 @@ namespace Contralto.IO
         public void MouseUp(AltoMouseButton button)
         {
             _buttons ^= button;
+        }
+
+        public void KeysetDown(AltoKeysetKey key)
+        {
+            _keyset |= key;
+        }
+
+        public void KeysetUp(AltoKeysetKey key)
+        {
+            _keyset ^= key;
         }
 
         /// <summary>
@@ -176,6 +202,9 @@ namespace Contralto.IO
 
         // Mouse buttons:
         AltoMouseButton _buttons;
+
+        // Keyset switches:
+        AltoKeysetKey _keyset;
 
         /// <summary>
         /// Where the mouse is currently reported to be

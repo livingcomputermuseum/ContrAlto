@@ -734,6 +734,11 @@ namespace Contralto
             {
                 _system.Keyboard.KeyDown(_keyMap[e.KeyCode]);
             }
+
+            if (_keysetMap.ContainsKey(e.KeyCode))
+            {
+                _system.MouseAndKeyset.KeysetDown(_keysetMap[e.KeyCode]);
+            }
            
             if (e.Alt)
             {
@@ -753,8 +758,13 @@ namespace Contralto
             if (_keyMap.ContainsKey(e.KeyCode))
             {
                 _system.Keyboard.KeyUp(_keyMap[e.KeyCode]);
-            }            
-            
+            }
+
+            if (_keysetMap.ContainsKey(e.KeyCode))
+            {
+                _system.MouseAndKeyset.KeysetUp(_keysetMap[e.KeyCode]);
+            }
+
             if (e.Alt)
             {
                 ReleaseMouse();
@@ -789,7 +799,7 @@ namespace Contralto
 
             if (dx != 0 || dy != 0)
             {
-                _system.Mouse.MouseMove(dx, dy);
+                _system.MouseAndKeyset.MouseMove(dx, dy);
 
                 // Don't handle the very next Mouse Move event (which will just be the motion we caused in the
                 // below line...)
@@ -830,7 +840,7 @@ namespace Contralto
                     break;
             }
 
-            _system.Mouse.MouseDown(button);
+            _system.MouseAndKeyset.MouseDown(button);
 
         }
 
@@ -863,7 +873,7 @@ namespace Contralto
                     break;
             }
 
-            _system.Mouse.MouseUp(button);
+            _system.MouseAndKeyset.MouseUp(button);
         }
 
         private void CaptureMouse()
@@ -873,7 +883,7 @@ namespace Contralto
             // - Keep the mouse within our window bounds (so it doesn't escape our window, hence "capture").
             // - Put some text in the Status area telling people how to leave...
             _mouseCaptured = true;
-            ShowCursor(false);            
+            ShowCursor(false);
 
             CaptureStatusLabel.Text = "Alto Mouse/Keyboard captured.  Press Alt to release.";
         }
@@ -881,7 +891,7 @@ namespace Contralto
         private void ReleaseMouse()
         {
             _mouseCaptured = false;
-            ShowCursor(true);            
+            ShowCursor(true);
 
             CaptureStatusLabel.Text = "Click on display to capture Alto Mouse/Keyboard.";
         }
@@ -1079,7 +1089,16 @@ namespace Contralto
             _keyMap.Add(Keys.OemSemicolon, AltoKey.Semicolon);
             _keyMap.Add(Keys.OemOpenBrackets, AltoKey.LBracket);
             _keyMap.Add(Keys.OemCloseBrackets, AltoKey.RBracket);
-            _keyMap.Add(Keys.Down, AltoKey.LF);            
+            _keyMap.Add(Keys.Down, AltoKey.LF);
+
+            _keysetMap = new Dictionary<Keys, AltoKeysetKey>();
+
+            // Map the 5 keyset keys to F5-F9.
+            _keysetMap.Add(Keys.F5, AltoKeysetKey.Keyset0);
+            _keysetMap.Add(Keys.F6, AltoKeysetKey.Keyset1);
+            _keysetMap.Add(Keys.F7, AltoKeysetKey.Keyset2);
+            _keysetMap.Add(Keys.F8, AltoKeysetKey.Keyset3);
+            _keysetMap.Add(Keys.F9, AltoKeysetKey.Keyset4);
         }
 
         private ImageCodecInfo GetEncoderForFormat(ImageFormat format)
@@ -1157,6 +1176,9 @@ namespace Contralto
 
         // Keyboard mapping from windows vkeys to Alto keys
         private Dictionary<Keys, AltoKey> _keyMap;
+
+        // Keyset mapping from windows vkeys to Keyset keys
+        private Dictionary<Keys, AltoKeysetKey> _keysetMap;
 
         // Mouse capture state
         private bool _mouseCaptured;

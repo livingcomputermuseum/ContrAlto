@@ -18,17 +18,20 @@ ContrAlto currently emulates the following Alto hardware:
    - 256KW of main memory (in 64KW banks)
    - Two Diablo Model 31 or 44 drives
    - Ethernet (encapsulated in either UDP datagrams or raw Ethernet frames
-               on the host machine)
+     on the host machine)
    - Standard Keyboard/Mouse/Video
+   - Alto Keyset (5-key chording keyboard)
    - Audio DAC (used with the Smalltalk Music System)
    - The Orbit raster hardware, Dover Raster Output Scanner and Dover print
      engine, which provides 384dpi print output (currently PDF only)
+   - The Trident Disk Controller (TriCon) and up to eight T-80 or T-300 
+     drives
 
 1.2 What's Not
 --------------
 
-At this time, ContrAlto does not support more exotic hardware such as Trident 
-disks, printers or audio using the utility port or the keyset input device.
+At this time, ContrAlto does not support more exotic hardware such as printers 
+or audio using the utility port.
 
 
 2.0 Requirements
@@ -138,8 +141,17 @@ DEL            Del
 LOCK           F4
 
 
-3.1.3 Disk Packs
-----------------
+3.1.3 Keyset
+------------
+
+A 5-key chording keyboard referred to as the "keyset" was a standard peripheral
+in the early days of the Alto.  (It never caught on.)  The 5 keys on the keyset
+are mapped to F5-F9 on your keyboard, with F5 corresponding to the leftmost key
+and F9 corresponding to the rightmost.
+
+
+3.1.4 Diablo Disk Packs
+-----------------------
 
 A real Alto uses large 14" disk packs for disk storage, each containing
 approximately 2.5 megabytes (for Diablo 31) or 5 megabytes (for Diablo 44) of 
@@ -147,7 +159,7 @@ data.  ContrAlto uses files, referred to as "disk images" or just "images"
 that contain a bit-for-bit copy of these original packs.  These are a lot 
 easier to use with a modern PC.
 
-Disk images can be loaded and unloaded via the "System->Drive 0" and 
+Disk images can be loaded, unloaded and created via the "System->Drive 0" and 
 System->Drive 1" menus.  A file dialog will be presented showing possible disk
 images in the current directory.
 
@@ -161,14 +173,29 @@ ContrAlto does not come with any disk images, however an assortment of Alto
 programs can be found on Bitsavers.org, at 
 http://www.bitsavers.org/bits/Xerox/Alto/disk_images/.  Images include:
 
-AllGames.dsk   -  A collection of games and toys for the Alto
-Bcpl.dsk       -  A set of BCPL development tools
-Diags.dsk      -  Diagnostic tools
-NonProg.dsk    -  The "Non-Programmer's Disk," containing Bravo
-Xmsmall.dsk    -  Smalltalk-76
+AllGames.dsk    -  A collection of games and toys for the Alto
+chm/Bcpl.dsk    -  A set of BCPL development tools
+chm/Diags.dsk   -  Diagnostic tools
+chm/Bravox.dsk	-  The BravoX word processing environment
+chm/Xmsmall.dsk -  Smalltalk-76
 
 
-3.1.4 Startup, Reset and Shutdown
+3.1.5 Trident Disk Packs
+------------------------
+
+Some Altos were used as file or print servers and needed greater storage 
+capacity than the Diablo drives could provide.  These Altos used a special 
+controller, referred to as the Trident (or TriCon) which could control up to
+eight Century (later Xerox) T-80 or T-300 drives with a capacity of 80 or
+300 megabytes, respectively.
+
+ContrAlto can emulate a Trident controller and up to eight T-80 or T-300 drives
+(in any combination.)  Like the Diablo, the contents of these disk packs are 
+stored in image files.  These are loaded, unloaded, or created using the 
+System->Trident Drives->Drive N menus.
+
+
+3.1.6 Startup, Reset and Shutdown
 ---------------------------------
 
 The system can be started at any time by using the "System->Start" menu, though
@@ -465,8 +492,8 @@ Reserved Memory:
 6.0 Known Issues
 ================
 
-At the moment, there are no major known issues.  If you encounter any, please
-see the next section!
+- TriEx reports a status of "00000" randomly when doing read operations from
+  Trident disks.  TFU and IFS work correctly.
 
 
 7.0 Reporting Bugs
@@ -517,6 +544,15 @@ PDF generation is provided by the iTextSharp library, see: https://github.com/it
 
 10.0 Change History
 ===================
+
+V1.2.2
+------
+- Initial support for the Trident controller and associated T-80 and T-300 
+  drives.
+- Added support for the Alto Keyset.  (Finally.)
+- Fixed bug in XM bank register soft-reset behavior.  IFS now runs.
+- Fixed issue with ethernet encapsulation that caused the emulator to receive
+  its own packets.
 
 V1.2.1
 ------

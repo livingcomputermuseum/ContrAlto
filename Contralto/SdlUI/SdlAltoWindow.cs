@@ -313,7 +313,7 @@ namespace Contralto.SdlUI
 
             if (dx != 0 || dy != 0)
             {
-                _system.Mouse.MouseMove(dx, dy);
+                _system.MouseAndKeyset.MouseMove(dx, dy);
 
                 // Don't handle the very next Mouse Move event (which will just be the motion we caused in the
                 // below line...)
@@ -337,6 +337,11 @@ namespace Contralto.SdlUI
             {
                 _system.Keyboard.KeyDown(_keyMap[code]);
             }
+
+            if (_keysetMap.ContainsKey(code))
+            {
+                _system.MouseAndKeyset.KeysetDown(_keysetMap[code]);
+            }
         }
 
         private void KeyUp(SDL.SDL_Keycode code)
@@ -358,6 +363,11 @@ namespace Contralto.SdlUI
             if (_keyMap.ContainsKey(code))
             {
                 _system.Keyboard.KeyUp(_keyMap[code]);
+            }
+
+            if (_keysetMap.ContainsKey(code))
+            {
+                _system.MouseAndKeyset.KeysetUp(_keysetMap[code]);
             }
         }
 
@@ -383,7 +393,7 @@ namespace Contralto.SdlUI
 
             if (altoButton != AltoMouseButton.None)
             {
-                _system.Mouse.MouseDown(altoButton);
+                _system.MouseAndKeyset.MouseDown(altoButton);
             }
         }       
 
@@ -398,7 +408,7 @@ namespace Contralto.SdlUI
 
             if (altoButton != AltoMouseButton.None)
             {
-                _system.Mouse.MouseUp(altoButton);
+                _system.MouseAndKeyset.MouseUp(altoButton);
             }
         }
 
@@ -559,6 +569,14 @@ namespace Contralto.SdlUI
             _keyMap.Add(SDL.SDL_Keycode.SDLK_LEFTBRACKET, AltoKey.LBracket);
             _keyMap.Add(SDL.SDL_Keycode.SDLK_RIGHTBRACKET, AltoKey.RBracket);
             _keyMap.Add(SDL.SDL_Keycode.SDLK_DOWN, AltoKey.LF);
+
+            _keysetMap = new Dictionary<SDL.SDL_Keycode, AltoKeysetKey>();
+            // Map the 5 keyset keys to F5-F9.
+            _keysetMap.Add(SDL.SDL_Keycode.SDLK_F5, AltoKeysetKey.Keyset0);
+            _keysetMap.Add(SDL.SDL_Keycode.SDLK_F6, AltoKeysetKey.Keyset1);
+            _keysetMap.Add(SDL.SDL_Keycode.SDLK_F7, AltoKeysetKey.Keyset2);
+            _keysetMap.Add(SDL.SDL_Keycode.SDLK_F8, AltoKeysetKey.Keyset3);
+            _keysetMap.Add(SDL.SDL_Keycode.SDLK_F9, AltoKeysetKey.Keyset4);
         }
 
         private static AltoMouseButton GetMouseButton(byte button)
@@ -619,6 +637,11 @@ namespace Contralto.SdlUI
         // Keyboard data
         //
         private Dictionary<SDL.SDL_Keycode, AltoKey> _keyMap;
+
+        //
+        // Keymap data
+        //
+        private Dictionary<SDL.SDL_Keycode, AltoKeysetKey> _keysetMap;
 
         //
         // Mouse data

@@ -41,7 +41,7 @@ namespace Contralto
             _keyboard = new Keyboard();
             _diskController = new DiskController(this);
             _displayController = new DisplayController(this);
-            _mouse = new Mouse();
+            _mouseAndKeyset = new MouseAndKeyset();
             _ethernetController = new EthernetController(this);
             _orbitController = new OrbitController(this);
             _audioDAC = new AudioDAC(this);
@@ -53,7 +53,7 @@ namespace Contralto
             // Attach memory-mapped devices to the bus
             _memBus.AddDevice(_mem);
             _memBus.AddDevice(_keyboard);
-            _memBus.AddDevice(_mouse);
+            _memBus.AddDevice(_mouseAndKeyset);
             _memBus.AddDevice(_audioDAC);
             _memBus.AddDevice(_organKeyboard);
 
@@ -71,7 +71,7 @@ namespace Contralto
             _diskController.Reset();
             _displayController.Reset();
             _keyboard.Reset();
-            _mouse.Reset();
+            _mouseAndKeyset.Reset();
             _cpu.Reset();
             _ethernetController.Reset();
             _orbitController.Reset();
@@ -231,11 +231,11 @@ namespace Contralto
 
             if (newImage)
             {
-                newPack = InMemoryDiskPack.CreateEmpty(geometry, path);
+                newPack = FileBackedDiskPack.CreateEmpty(geometry, path);
             }
             else
             {
-                newPack = InMemoryDiskPack.Load(geometry, path);
+                newPack = FileBackedDiskPack.Load(geometry, path);
             }
 
             _tridentController.Drives[drive].LoadPack(newPack);
@@ -301,9 +301,9 @@ namespace Contralto
             get { return _keyboard; }
         }
 
-        public Mouse Mouse
+        public MouseAndKeyset MouseAndKeyset
         {
-            get { return _mouse; }
+            get { return _mouseAndKeyset; }
         }
 
         public EthernetController EthernetController
@@ -330,7 +330,7 @@ namespace Contralto
         private MemoryBus _memBus;
         private Memory.Memory _mem;
         private Keyboard _keyboard;
-        private Mouse _mouse;
+        private MouseAndKeyset _mouseAndKeyset;
         private DiskController _diskController;
         private DisplayController _displayController;
         private EthernetController _ethernetController;

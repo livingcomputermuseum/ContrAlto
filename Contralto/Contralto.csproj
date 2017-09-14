@@ -206,7 +206,7 @@
     <Compile Include="IO\EthernetController.cs" />
     <Compile Include="IO\HostEthernetEncapsulation.cs" />
     <Compile Include="IO\Keyboard.cs" />
-    <Compile Include="IO\Mouse.cs" />
+    <Compile Include="IO\MouseAndKeyset.cs" />
     <Compile Include="Logging\Log.cs" />
     <Compile Include="Memory\IMemoryMappedDevice.cs" />
     <Compile Include="Memory\Memory.cs" />
