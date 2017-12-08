@@ -162,9 +162,21 @@ namespace Contralto
 
         private void OnSystemDrive0UnloadClick(object sender, EventArgs e)
         {
-            _system.UnloadDiabloDrive(0);
-            Drive0ImageName.Text = _noImageLoadedText;
-            Configuration.Drive0Image = String.Empty;
+            try
+            {
+                _system.UnloadDiabloDrive(0);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    String.Format("Unable to save Diablo disk 0's contents during unload.  Error {0}.  Any changes have been lost.", ex.Message),
+                    "Image unload error", MessageBoxButtons.OK);
+            }
+            finally
+            {
+                Drive1ImageName.Text = _noImageLoadedText;
+                Configuration.Drive1Image = String.Empty;
+            }
         }
 
         private void OnSystemDrive0NewClick(object sender, EventArgs e)
@@ -214,10 +226,22 @@ namespace Contralto
         }
 
         private void OnSystemDrive1UnloadClick(object sender, EventArgs e)
-        {            
-            _system.UnloadDiabloDrive(1);
-            Drive1ImageName.Text = _noImageLoadedText;
-            Configuration.Drive1Image = String.Empty;
+        {
+            try
+            {
+                _system.UnloadDiabloDrive(1);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    String.Format("Unable to save Diablo disk 1's contents during unload.  Error {0}.  Any changes have been lost.", ex.Message),
+                    "Image unload error", MessageBoxButtons.OK);
+            }
+            finally
+            {
+                Drive1ImageName.Text = _noImageLoadedText;
+                Configuration.Drive1Image = String.Empty;
+            }
         }
 
 
@@ -271,9 +295,22 @@ namespace Contralto
         private void OnTridentUnloadClick(object sender, EventArgs e)
         {
             int drive = (int)((ToolStripDropDownItem)sender).Tag;
-            _system.UnloadTridentDrive(drive);
-            _tridentImageNames[drive].Text = _noImageLoadedText;
-            Configuration.TridentImages[drive] = String.Empty;
+
+            try
+            {
+                _system.UnloadTridentDrive(drive);
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(
+                    String.Format("Unable to save Trident disk {0}'s contents during unload.  Error {1}.  Any changes have been lost.", drive, ex.Message),
+                    "Image unload error", MessageBoxButtons.OK);
+            }
+            finally
+            {                
+                _tridentImageNames[drive].Text = _noImageLoadedText;
+                Configuration.TridentImages[drive] = String.Empty;
+            }
         }
 
         private void OnTridentNewClick(object sender, EventArgs e)

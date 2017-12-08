@@ -109,6 +109,10 @@
             this.StopButton = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this._taskData = new System.Windows.Forms.DataGridView();
+            this.TaskName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.TaskState = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Bank = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.TaskPC = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this._otherRegs = new System.Windows.Forms.DataGridView();
             this.Reg = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -133,10 +137,6 @@
             this.dataGridViewTextBoxColumn9 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn11 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.TaskName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.TaskState = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Bank = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.TaskPC = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Microcode.SuspendLayout();
             this.SourceTabs.SuspendLayout();
             this.Rom0Page.SuspendLayout();
@@ -883,6 +883,40 @@
             this._taskData.TabIndex = 0;
             this._taskData.TabStop = false;
             // 
+            // TaskName
+            // 
+            this.TaskName.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
+            this.TaskName.HeaderText = "T";
+            this.TaskName.MinimumWidth = 16;
+            this.TaskName.Name = "TaskName";
+            this.TaskName.ReadOnly = true;
+            this.TaskName.Width = 16;
+            // 
+            // TaskState
+            // 
+            this.TaskState.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCellsExceptHeader;
+            this.TaskState.HeaderText = "S";
+            this.TaskState.MinimumWidth = 16;
+            this.TaskState.Name = "TaskState";
+            this.TaskState.ReadOnly = true;
+            this.TaskState.Width = 16;
+            // 
+            // Bank
+            // 
+            this.Bank.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
+            this.Bank.HeaderText = "B";
+            this.Bank.MinimumWidth = 16;
+            this.Bank.Name = "Bank";
+            this.Bank.ReadOnly = true;
+            this.Bank.Width = 16;
+            // 
+            // TaskPC
+            // 
+            this.TaskPC.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.TaskPC.HeaderText = "uPC";
+            this.TaskPC.Name = "TaskPC";
+            this.TaskPC.ReadOnly = true;
+            // 
             // groupBox3
             // 
             this.groupBox3.Controls.Add(this._otherRegs);
@@ -1211,40 +1245,6 @@
             this.dataGridViewTextBoxColumn11.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.dataGridViewTextBoxColumn11.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
-            // TaskName
-            // 
-            this.TaskName.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
-            this.TaskName.HeaderText = "T";
-            this.TaskName.MinimumWidth = 16;
-            this.TaskName.Name = "TaskName";
-            this.TaskName.ReadOnly = true;
-            this.TaskName.Width = 16;
-            // 
-            // TaskState
-            // 
-            this.TaskState.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCellsExceptHeader;
-            this.TaskState.HeaderText = "S";
-            this.TaskState.MinimumWidth = 16;
-            this.TaskState.Name = "TaskState";
-            this.TaskState.ReadOnly = true;
-            this.TaskState.Width = 16;
-            // 
-            // Bank
-            // 
-            this.Bank.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
-            this.Bank.HeaderText = "B";
-            this.Bank.MinimumWidth = 16;
-            this.Bank.Name = "Bank";
-            this.Bank.ReadOnly = true;
-            this.Bank.Width = 16;
-            // 
-            // TaskPC
-            // 
-            this.TaskPC.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.TaskPC.HeaderText = "uPC";
-            this.TaskPC.Name = "TaskPC";
-            this.TaskPC.ReadOnly = true;
-            // 
             // Debugger
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1265,6 +1265,7 @@
             this.Controls.Add(this.StepButton);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.Microcode);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.KeyPreview = true;
             this.MaximizeBox = false;

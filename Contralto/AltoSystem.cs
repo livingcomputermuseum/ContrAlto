@@ -110,14 +110,31 @@ namespace Contralto
             if (commitDisks)
             {
                 //
-                // Save disk contents
+                // Save disk contents.  If we hit a failure (due to insufficient
+                // write permssions, usually) we will post a message to the console.
                 //
-                _diskController.CommitDisk(0);
-                _diskController.CommitDisk(1);
-
+                for (int i = 0; i < 2; i++)
+                {
+                    try
+                    {
+                        _diskController.CommitDisk(i);
+                    }
+                    catch(Exception e)
+                    {
+                        Console.WriteLine("Failed to save the contents of Diablo disk {0}.  Error {1}", i, e.Message);
+                    }
+                }
+                
                 for (int i = 0; i < 8; i++)
                 {
-                    _tridentController.CommitDisk(i);
+                    try
+                    {
+                        _tridentController.CommitDisk(i);
+                    }
+                    catch(Exception e)
+                    {
+                        Console.WriteLine("Failed to save the contents of Trident disk {0}.  Error {1}", i, e.Message);
+                    }
                 }
             }
         }

@@ -462,12 +462,17 @@
             // 
             // SystemOptions
             // 
+            this.AcceptButton = this.DialogOKButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.CancelButton = this.DialogCancelButton;
             this.ClientSize = new System.Drawing.Size(371, 271);
             this.Controls.Add(this.DialogCancelButton);
             this.Controls.Add(this.DialogOKButton);
             this.Controls.Add(this.OptionsTabs);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "SystemOptions";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;

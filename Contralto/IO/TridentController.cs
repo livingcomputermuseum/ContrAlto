@@ -117,15 +117,7 @@ namespace Contralto.IO
             TridentDrive d = _drives[drive];
             if (d.IsLoaded)
             {
-                try
-                {
-                    d.Pack.Save();
-                }
-                catch (Exception e)
-                {
-                    // TODO: this does not really belong here.
-                    System.Windows.Forms.MessageBox.Show(String.Format("Unable to save Trident disk {0}'s contents.  Error {1}.  Any changes have been lost.", drive, e.Message), "Disk save error");
-                }
+                d.Pack.Save();
             }
         }
 

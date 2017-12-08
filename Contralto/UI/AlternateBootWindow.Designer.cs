@@ -75,20 +75,22 @@
             this.BootFileComboBox.TabIndex = 0;
             this.BootFileComboBox.SelectedIndexChanged += new System.EventHandler(this.BootFileComboBox_SelectedIndexChanged);
             // 
-            // OKButton
+            // DialogOKButton
             // 
+            this.DialogOKButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.DialogOKButton.Location = new System.Drawing.Point(245, 174);
-            this.DialogOKButton.Name = "OKButton";
+            this.DialogOKButton.Name = "DialogOKButton";
             this.DialogOKButton.Size = new System.Drawing.Size(75, 23);
             this.DialogOKButton.TabIndex = 2;
             this.DialogOKButton.Text = "OK";
             this.DialogOKButton.UseVisualStyleBackColor = true;
             this.DialogOKButton.Click += new System.EventHandler(this.OKButton_Click);
             // 
-            // CancelButton
+            // DialogCancelButton
             // 
+            this.DialogCancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.DialogCancelButton.Location = new System.Drawing.Point(326, 174);
-            this.DialogCancelButton.Name = "CancelButton";
+            this.DialogCancelButton.Name = "DialogCancelButton";
             this.DialogCancelButton.Size = new System.Drawing.Size(75, 23);
             this.DialogCancelButton.TabIndex = 3;
             this.DialogCancelButton.Text = "Cancel";
@@ -115,8 +117,7 @@
             this.EthernetBootRadioButton.TabIndex = 1;
             this.EthernetBootRadioButton.TabStop = true;
             this.EthernetBootRadioButton.Text = "Ethernet Boot";
-            this.EthernetBootRadioButton.UseVisualStyleBackColor = true;            
-
+            this.EthernetBootRadioButton.UseVisualStyleBackColor = true;
             // 
             // DiskBootRadioButton
             // 
@@ -128,7 +129,6 @@
             this.DiskBootRadioButton.TabStop = true;
             this.DiskBootRadioButton.Text = "Disk Boot";
             this.DiskBootRadioButton.UseVisualStyleBackColor = true;
-            
             // 
             // DiskBootGroupBox
             // 
@@ -159,14 +159,19 @@
             // 
             // AlternateBootOptions
             // 
+            this.AcceptButton = this.DialogOKButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.CancelButton = this.DialogCancelButton;
             this.ClientSize = new System.Drawing.Size(406, 201);
             this.Controls.Add(this.DiskBootGroupBox);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.DialogCancelButton);
             this.Controls.Add(this.DialogOKButton);
             this.Controls.Add(this.EthernetBootFileGroup);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "AlternateBootOptions";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;

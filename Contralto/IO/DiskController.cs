@@ -237,15 +237,7 @@ namespace Contralto.IO
             DiabloDrive drive = _drives[driveId];
             if (drive.IsLoaded)
             {
-                try
-                {
-                    drive.Pack.Save();
-                }
-                catch (Exception e)
-                {
-                    // TODO: this does not really belong here.
-                    System.Windows.Forms.MessageBox.Show(String.Format("Unable to save Diablo disk {0}'s contents.  Error {0}.  Any changes have been lost.", e.Message), "Disk save error");
-                }
+                drive.Pack.Save();
             }
         }
 

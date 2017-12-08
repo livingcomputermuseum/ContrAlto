@@ -48,9 +48,9 @@ been well tested on them.  You can find download links and instructions at
 http://www.mono-project.com/download/.
 
 Additionally, ContrAlto relies on SDL (Simple Directmedia Layer) 2.0 for the Alto's
-display, keyboard and mouse.  On OS X, the native SDL library is included with the
-ContrAlto archive.  On Linux, you will want to ensure that the SDL 2.0 libraries 
-built for your distribution are installed.
+display, keyboard and mouse.   On Linux, you will want to ensure that the SDL 2.0 libraries 
+built for your distribution are installed.  On OS X, the easiest way to get SDL 2.0 is via
+Homebrew: (https://brew.sh/), via the "brew install sdl2" command.
 
 A three-button mouse is essential for using most Alto software.  On most mice,
 the mousewheel can be clicked to provide the third (middle) button.  Laptops
