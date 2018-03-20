@@ -23,6 +23,7 @@ using Contralto.Memory;
 using Contralto.Display;
 using System.IO;
 using System;
+using Contralto.Scripting;
 
 namespace Contralto
 {
@@ -41,7 +42,7 @@ namespace Contralto
             _keyboard = new Keyboard();
             _diskController = new DiskController(this);
             _displayController = new DisplayController(this);
-            _mouseAndKeyset = new MouseAndKeyset();
+            _mouseAndKeyset = new MouseAndKeyset(this);
             _ethernetController = new EthernetController(this);
             _orbitController = new OrbitController(this);
             _audioDAC = new AudioDAC(this);
@@ -78,6 +79,11 @@ namespace Contralto
             _tridentController.Reset();
 
             UCodeMemory.Reset();
+
+            if (ScriptManager.IsRecording)
+            {
+                ScriptManager.Recorder.Command("reset");
+            }
         }
 
         /// <summary>
@@ -137,6 +143,20 @@ namespace Contralto
                     }
                 }
             }
+
+            //
+            // If we're recording, add a "quit" command to the script, and stop the recording.
+            //
+            if (ScriptManager.IsRecording)
+            {
+                ScriptManager.Recorder.Command(commitDisks ? "quit" : "quit without saving");
+                ScriptManager.StopRecording();
+            }
+
+            if (ScriptManager.IsPlaying)
+            {
+                ScriptManager.StopPlayback();
+            }
         }
 
         public void SingleStep()
@@ -187,13 +207,23 @@ namespace Contralto
             if (newImage)
             {
                 newPack = InMemoryDiskPack.CreateEmpty(geometry, path);
+
+                if (ScriptManager.IsRecording)
+                {
+                    ScriptManager.Recorder.Command(String.Format("new disk {0} {1}", drive, path));
+                }
             }
             else
             {
                 newPack = InMemoryDiskPack.Load(geometry, path);
+
+                if (ScriptManager.IsRecording)
+                {
+                    ScriptManager.Recorder.Command(String.Format("load disk {0} {1}", drive, path));
+                }
             }
 
-            _diskController.Drives[drive].LoadPack(newPack);
+            _diskController.Drives[drive].LoadPack(newPack);            
         }
 
         public void UnloadDiabloDrive(int drive)
@@ -209,6 +239,11 @@ namespace Contralto
             _diskController.CommitDisk(drive);
 
             _diskController.Drives[drive].UnloadPack();
+
+            if (ScriptManager.IsRecording)
+            {
+                ScriptManager.Recorder.Command(String.Format("unload disk {0}", drive));
+            }
         }
 
         public void LoadTridentDrive(int drive, string path, bool newImage)
@@ -249,10 +284,20 @@ namespace Contralto
             if (newImage)
             {
                 newPack = FileBackedDiskPack.CreateEmpty(geometry, path);
+
+                if (ScriptManager.IsRecording)
+                {
+                    ScriptManager.Recorder.Command(String.Format("new trident {0} {1}", drive, path));
+                }
             }
             else
             {
                 newPack = FileBackedDiskPack.Load(geometry, path);
+
+                if (ScriptManager.IsRecording)
+                {
+                    ScriptManager.Recorder.Command(String.Format("load trident {0} {1}", drive, path));
+                }
             }
 
             _tridentController.Drives[drive].LoadPack(newPack);
@@ -271,6 +316,11 @@ namespace Contralto
             _tridentController.CommitDisk(drive);
 
             _tridentController.Drives[drive].UnloadPack();
+
+            if (ScriptManager.IsRecording)
+            {
+                ScriptManager.Recorder.Command(String.Format("unload trident {0}", drive));
+            }
         }
 
 

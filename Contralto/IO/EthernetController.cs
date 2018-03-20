@@ -291,7 +291,7 @@ namespace Contralto.IO
             _system.Scheduler.Schedule(_fifoTransmitWakeupEvent);
         }
 
-        private void OutputFifoCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void OutputFifoCallback(ulong skewNsec, object context)
         {
             bool end = (bool)context;
             
@@ -415,21 +415,21 @@ namespace Contralto.IO
         /// <param name="timeNsec"></param>
         /// <param name="skewNsec"></param>
         /// <param name="context"></param>
-        private void InputHandler(ulong timeNsec, ulong skewNsec, object context)
+        private void InputHandler(ulong skewNsec, object context)
         {            
             switch(_inputState)
             {
                 case InputState.ReceiverOff:
-                    // Receiver is off, if we have any incoming packets, they are ignored.
-                    // TODO: would it make sense to expire really old packets (say more than a couple of seconds old)
-                    // so that the receiver doesn't pick up ancient history the next time it runs?
-                    // We already cycle out packets as new ones come in, so this would only be an issue on very quiet networks.
-                    // (And even then I don't know if it's really an issue.)
+                    // Receiver is off, if we have any incoming packets, they are dropped.
+                    // (If we leave packets in the queue while the receiver is off, this can cause
+                    // stale data to be picked up when the receiver is turned back on, which can in
+                    // turn cause unexpected behavior.)
                     _receiverLock.EnterReadLock();
 
                     if (_nextPackets.Count > 0)
                     {
-                        Log.Write(LogComponent.EthernetPacket, "Receiver is off, ignoring incoming packet from packet queue.");
+                        Log.Write(LogComponent.EthernetPacket, "Receiver is off, dropping incoming packets from packet queue.");
+                        _nextPackets.Clear();
                     }
                     _receiverLock.ExitReadLock();
                     _inputPollActive = false;

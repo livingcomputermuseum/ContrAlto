@@ -16,6 +16,7 @@
 */
 
 using Contralto.Logging;
+using Contralto.Scripting;
 using System;
 
 namespace Contralto.CPU
@@ -157,6 +158,33 @@ namespace Contralto.CPU
                                 case 0x20:
                                     // Trident start
                                     _cpu._system.TridentController.STARTF(_busData);
+                                    break;
+
+                                    //
+                                    // The following are not actual Alto STARTF functions,
+                                    // these are used to allow writing Alto programs that can
+                                    // alter behavior of the emulator.  At the moment, these
+                                    // are all related to scripting, and are only enabled
+                                    // when a script is running.
+                                    //
+                                case 0x2000:
+                                    //
+                                    // Unpause script.
+                                    // 
+                                    if (ScriptManager.IsPlaying)
+                                    {
+                                        ScriptManager.CompleteWait();
+                                    }
+                                    break;
+
+                                case 0x4000:
+                                    //
+                                    // Emulator exit, commit disks.
+                                    //
+                                    if (ScriptManager.IsPlaying)
+                                    {
+                                        throw new ShutdownException(true);
+                                    }
                                     break;
 
                                 default:

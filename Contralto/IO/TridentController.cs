@@ -305,7 +305,7 @@ namespace Contralto.IO
             }
         }
 
-        private void OutputFifoCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void OutputFifoCallback(ulong skewNsec, object context)
         {
             switch (_commandState)
             {
@@ -701,7 +701,7 @@ namespace Contralto.IO
             }
         }
 
-        private void ReadWordCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void ReadWordCallback(ulong skewNsec, object context)
         {
             if (_readWordCount > 0)
             {
@@ -862,7 +862,7 @@ namespace Contralto.IO
             }
         }
 
-        private void SectorCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void SectorCallback(ulong skewNsec, object context)
         {
             // Move to the next sector if the controller is running
             // and the disk is ready.

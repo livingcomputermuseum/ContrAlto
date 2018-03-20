@@ -15,17 +15,12 @@
     along with ContrAlto.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using Contralto.Scripting;
 using System;
 using System.Threading;
 
 namespace Contralto.SdlUI
-{
-    public enum CommandResult
-    {        
-        Normal,
-        Quit
-    }
-
+{ 
     /// <summary>
     /// Provides a command-line interface to ContrAlto controls,
     /// as a substitute for the GUI interface of the Windows version.
@@ -37,9 +32,13 @@ namespace Contralto.SdlUI
             _system = system;
 
             _controller = new ExecutionController(_system);
-            _controller.ErrorCallback += OnExecutionError;           
-        }
+            _controller.ErrorCallback += OnExecutionError;
+            _controller.ShutdownCallback += OnShutdown;
 
+            _commitDisksAtShutdown = true;
+
+            ScriptManager.PlaybackCompleted += OnScriptPlaybackCompleted;
+        }        
 
         /// <summary>
         /// Invoke the CLI loop in a separate thread.
@@ -54,6 +53,13 @@ namespace Contralto.SdlUI
 
             _cliThread = new Thread(RunCliThread);
             _cliThread.Start();
+
+            if (!string.IsNullOrWhiteSpace(StartupOptions.ScriptFile))
+            {
+                Console.WriteLine("Starting playback of script {0}", StartupOptions.ScriptFile);                
+                ScriptManager.StartPlayback(_system, _controller, StartupOptions.ScriptFile);
+                _controller.StartExecution(AlternateBootType.None);
+            }
         }
 
         /// <summary>
@@ -61,25 +67,42 @@ namespace Contralto.SdlUI
         /// </summary>
         private void RunCliThread()
         {
-            ConsoleExecutor executor = new ConsoleExecutor(this);
+            ControlCommands controlCommands = new ControlCommands(_system, _controller);
+            CommandExecutor executor = new CommandExecutor(this, controlCommands);
+            DebuggerPrompt prompt = new DebuggerPrompt(executor.CommandTreeRoot);
+
             CommandResult state = CommandResult.Normal;
 
             while (state != CommandResult.Quit)
             {
-                state = executor.Prompt();
+                state = CommandResult.Normal;
+                try
+                {
+                    // Get the command string from the prompt.
+                    string command = prompt.Prompt().Trim();
+
+                    if (command != String.Empty)
+                    {
+                        state = executor.ExecuteCommand(command);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
             }
 
             //
             // Ensure the emulator is stopped.
             //
-            _controller.StopExecution();            
+            _controller.StopExecution();
 
             //
             // Ensure the main window is closed.
             //
             _mainWindow.Close();
         }
-
+       
         private void OnMainWindowClosed(object sender, EventArgs e)
         {
             //
@@ -87,12 +110,20 @@ namespace Contralto.SdlUI
             //
             _controller.StopExecution();
 
-            _system.Shutdown(true /* commit disk contents */);
+            _system.Shutdown(_commitDisksAtShutdown);
 
             //
             // The Alto window was closed, shut down the CLI.
             //
             _cliThread.Abort();
+        }
+
+        private void OnShutdown(bool commitDisks)
+        {
+            _commitDisksAtShutdown = commitDisks;
+
+            // Close the main window, this will cause everything else to shut down.
+            _mainWindow.Close();
         }
 
         /// <summary>
@@ -105,125 +136,14 @@ namespace Contralto.SdlUI
             System.Diagnostics.Debugger.Break();
         }
 
-        [DebuggerFunction("quit", "Exits ContrAlto.")]
-        private CommandResult Quit()
+        private void OnScriptPlaybackCompleted(object sender, EventArgs e)
         {
-            _controller.StopExecution();
-            return CommandResult.Quit;
+            Console.WriteLine("Script playback completed.");
         }
 
         //
         // Console commands
         //
-        [DebuggerFunction("start", "Starts the emulated Alto normally.")]
-        private CommandResult Start()
-        {
-            if (_controller.IsRunning)
-            {
-                Console.WriteLine("Alto is already running.");
-            }
-            else
-            {
-                _controller.StartExecution(AlternateBootType.None);
-                Console.WriteLine("Alto started.");
-            }
-
-            return CommandResult.Normal;
-        }
-
-        [DebuggerFunction("stop", "Stops the emulated Alto.")]
-        private CommandResult Stop()
-        {
-            _controller.StopExecution();
-            Console.WriteLine("Alto stopped.");
-
-            return CommandResult.Normal;
-        }
-
-        [DebuggerFunction("reset", "Resets the emulated Alto.")]
-        private CommandResult Reset()
-        {
-            _controller.Reset(AlternateBootType.None);
-            Console.WriteLine("Alto reset.");
-
-            return CommandResult.Normal;
-        }
-
-        [DebuggerFunction("start with keyboard disk boot", "Starts the emulated Alto with the specified keyboard disk boot address.")]
-        private CommandResult StartDisk()
-        {
-            if (_controller.IsRunning)
-            {
-                _controller.Reset(AlternateBootType.Disk);
-            }
-            else
-            {
-                _controller.StartExecution(AlternateBootType.Disk);
-            }
-
-            return CommandResult.Normal;
-        }
-
-        [DebuggerFunction("start with keyboard net boot", "Starts the emulated Alto with the specified keyboard ethernet boot number.")]
-        private CommandResult StartNet()
-        {
-            if (_controller.IsRunning)
-            {
-                _controller.Reset(AlternateBootType.Ethernet);
-            }
-            else
-            {
-                _controller.StartExecution(AlternateBootType.Ethernet);
-            }
-
-            return CommandResult.Normal;
-        }
-
-        [DebuggerFunction("load disk", "Loads the specified drive with the requested disk image.", "<drive> <path>")]
-        private CommandResult LoadDisk(ushort drive, string path)
-        {
-            if (drive > 1)
-            {
-                throw new InvalidOperationException("Drive specification out of range.");
-            }
-
-            // Load the new pack.
-            _system.LoadDiabloDrive(drive, path, false);
-            Console.WriteLine("Drive {0} loaded.", drive);
-
-            return CommandResult.Normal;
-        }
-
-        [DebuggerFunction("unload disk", "Unloads the specified drive.", "<drive>")]
-        private CommandResult UnloadDisk(ushort drive)
-        {
-            if (drive > 1)
-            {
-                throw new InvalidOperationException("Drive specification out of range.");
-            }
-
-            // Unload the current pack.
-            _system.UnloadDiabloDrive(drive);
-            Console.WriteLine("Drive {0} unloaded.", drive);
-
-            return CommandResult.Normal;
-        }
-
-        [DebuggerFunction("new disk", "Creates and loads a new image for the specified drive.", "<drive>")]
-        private CommandResult NewDisk(ushort drive, string path)
-        {
-            if (drive > 1)
-            {
-                throw new InvalidOperationException("Drive specification out of range.");
-            }
-
-            // Unload the current pack.
-            _system.LoadDiabloDrive(drive, path, true);
-            Console.WriteLine("Drive {0} created and loaded.", drive);
-
-            return CommandResult.Normal;
-        }
-
         [DebuggerFunction("show disk", "Displays the contents of the specified drive.", "<drive>")]
         private CommandResult ShowDisk(ushort drive)
         {
@@ -245,52 +165,7 @@ namespace Contralto.SdlUI
             }
 
             return CommandResult.Normal;
-        }
-
-        [DebuggerFunction("load trident", "Loads the specified trident drive with the requested disk image.", "<drive> <path>")]
-        private CommandResult LoadTrident(ushort drive, string path)
-        {
-            if (drive > 7)
-            {
-                throw new InvalidOperationException("Drive specification out of range.");
-            }
-
-            // Load the new pack.
-            _system.LoadTridentDrive(drive, path, false);
-            Console.WriteLine("Trident {0} loaded.", drive);
-
-            return CommandResult.Normal;
-        }
-
-        [DebuggerFunction("unload trident", "Unloads the specified trident drive.", "<drive>")]
-        private CommandResult UnloadTrident(ushort drive)
-        {
-            if (drive > 7)
-            {
-                throw new InvalidOperationException("Drive specification out of range.");
-            }
-
-            // Unload the current pack.
-            _system.UnloadTridentDrive(drive);
-            Console.WriteLine("Trident {0} unloaded.", drive);
-
-            return CommandResult.Normal;
-        }
-
-        [DebuggerFunction("new trident", "Creates and loads a new image for the specified drive.", "<drive>")]
-        private CommandResult NewTrident(ushort drive, string path)
-        {
-            if (drive > 7)
-            {
-                throw new InvalidOperationException("Drive specification out of range.");
-            }
-
-            // Unload the current pack.
-            _system.LoadTridentDrive(drive, path, true);
-            Console.WriteLine("Trident {0} created and loaded.", drive);
-
-            return CommandResult.Normal;
-        }
+        }        
 
         [DebuggerFunction("show trident", "Displays the contents of the specified trident drive.", "<drive>")]
         private CommandResult ShowTrident(ushort drive)
@@ -320,22 +195,7 @@ namespace Contralto.SdlUI
         {
             Console.WriteLine("System type is {0}", Configuration.SystemType);
             return CommandResult.Normal;
-        }
-
-        [DebuggerFunction("set ethernet address", "Sets the Alto's host Ethernet address.")]
-        private CommandResult SetEthernetAddress(byte address)
-        {
-            if (address == 0 || address == 0xff)
-            {
-                Console.WriteLine("Address {0} is invalid.", Conversion.ToOctal(address));
-            }
-            else
-            {
-                Configuration.HostAddress = address;
-            }
-
-            return CommandResult.Normal;
-        }
+        }        
 
         [DebuggerFunction("show ethernet address", "Displays the Alto's host Ethernet address.")]
         private CommandResult ShowEthernetAddress()
@@ -358,19 +218,77 @@ namespace Contralto.SdlUI
             return CommandResult.Normal;
         }
 
-        [DebuggerFunction("set keyboard net boot file", "Sets the boot file used for net booting.")]
-        private CommandResult SetKeyboardBootFile(ushort file)
+        [DebuggerFunction("start recording", "Starts recording of inputs to script file")]
+        private CommandResult StartRecording(string scriptPath)
         {
-            Configuration.BootFile = file;
+            if (ScriptManager.IsPlaying ||
+                ScriptManager.IsRecording)
+            {
+                Console.WriteLine("{0} is already in progress.", ScriptManager.IsPlaying ? "Playback" : "Recording");
+            }
+            else
+            {
+                Console.WriteLine("Recording to {0} starting.", scriptPath);
+                ScriptManager.StartRecording(_system, scriptPath);                
+            }
             return CommandResult.Normal;
         }
 
-        [DebuggerFunction("set keyboard disk boot address", "Sets the boot address used for disk booting.")]
-        private CommandResult SetKeyboardBootAddress(ushort address)
+        [DebuggerFunction("stop recording", "Stops script recording")]
+        private CommandResult StopRecording()
         {
-            Configuration.BootFile = address;
+            if (!ScriptManager.IsRecording)
+            {
+                Console.WriteLine("No recording currently in progress.");
+            }
+            else
+            {                
+                ScriptManager.StopRecording();
+                Console.WriteLine("Recording stopped.");
+            }
+
             return CommandResult.Normal;
         }
+
+        [DebuggerFunction("start playback", "Starts playback of script file")]
+        private CommandResult StartPlayback(string scriptPath)
+        {
+            if (ScriptManager.IsPlaying ||
+                ScriptManager.IsRecording)
+            {
+                Console.WriteLine("{0} is already in progress.", ScriptManager.IsPlaying ? "Playback" : "Recording");
+            }
+            else
+            {
+                Console.WriteLine("Playback of {0} starting.", scriptPath);
+                //
+                // Start the script.  We need to pause the emulation while doing so,
+                // in order to avoid concurrency issues with the Scheduler (which is
+                // not thread-safe).
+                //
+                _controller.StopExecution();
+                ScriptManager.StartPlayback(_system, _controller, scriptPath);
+                _controller.StartExecution(AlternateBootType.None);
+            }
+            return CommandResult.Normal;
+        }
+
+        [DebuggerFunction("stop playback", "Stops script playback")]
+        private CommandResult StopPlayback()
+        {
+            if (!ScriptManager.IsPlaying)
+            {
+                Console.WriteLine("No playback currently in progress.");
+            }
+            else
+            {
+                ScriptManager.StopPlayback();
+                Console.WriteLine("Playback stopped.");
+            }
+
+            return CommandResult.Normal;
+        }
+
 
         // Not yet supported on non-Windows platforms
         /*
@@ -442,5 +360,6 @@ namespace Contralto.SdlUI
         private ExecutionController _controller;
         private SdlAltoWindow _mainWindow;
         private Thread _cliThread;
+        private bool _commitDisksAtShutdown;
     }
 }

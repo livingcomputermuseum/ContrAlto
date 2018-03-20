@@ -15,6 +15,7 @@
     along with ContrAlto.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using Contralto.Scripting;
 using System;
 using System.Threading;
 
@@ -23,6 +24,22 @@ namespace Contralto
 
     public delegate bool StepCallbackDelegate();
     public delegate void ErrorCallbackDelegate(Exception e);
+    public delegate void ShutdownCallbackDelegate(bool commitDisks);
+
+    public class ShutdownException : Exception
+    {
+        public ShutdownException(bool commitDisks) : base()
+        {
+            _commitDisks = commitDisks;
+        }
+
+        public bool CommitDisks
+        {
+            get { return  _commitDisks; }
+        }
+
+        private bool _commitDisks;
+    }
 
 
     public class ExecutionController
@@ -46,29 +63,56 @@ namespace Contralto
         {
             _userAbort = true;
 
-            if (_execThread != null)
+            if (System.Threading.Thread.CurrentThread !=
+               _execThread)
             {
-                _execThread.Join();
-                _execThread = null;
+                //
+                // Call is asynchronous, we will wait for the
+                // execution thread to finish.
+                //
+                if (_execThread != null)
+                {
+                    _execThread.Join();
+                    _execThread = null;
+                }
             }
         }
 
         public void Reset(AlternateBootType bootType)
         {
-            bool running = IsRunning;
-
-            if (running)
+            if (System.Threading.Thread.CurrentThread ==
+                _execThread)
             {
-                StopExecution();
+                //
+                // Call is from within the execution thread
+                // so we can just reset the system without worrying
+                // about synchronization.
+                //
+                _system.Reset();
+                _system.PressBootKeys(bootType);
             }
-            _system.Reset();            
-            _system.PressBootKeys(bootType);            
-
-            if (running)
+            else
             {
-                StartExecution(AlternateBootType.None);
+                //
+                // Call is asynchronous, we need to stop the
+                // execution thread and restart it after resetting
+                // the system.
+                //
+                bool running = IsRunning;
+
+                if (running)
+                {
+                    StopExecution();
+                }
+                _system.Reset();
+                _system.PressBootKeys(bootType);
+
+                if (running)
+                {
+                    StartExecution(AlternateBootType.None);
+                }
             }
-        }       
+        }
 
         public bool IsRunning
         {
@@ -85,6 +129,12 @@ namespace Contralto
         {
             get { return _errorCallback; }
             set { _errorCallback = value; }
+        }
+
+        public ShutdownCallbackDelegate ShutdownCallback
+        {
+            get { return _shutdownCallback; }
+            set { _shutdownCallback = value; }
         }
 
         private void StartAltoExecutionThread()
@@ -104,11 +154,29 @@ namespace Contralto
         private void ExecuteProc()
         {
             while (true)
-            {                
+            {
                 // Execute a single microinstruction
                 try
                 {
                     _system.SingleStep();
+
+                    if (ScriptManager.IsPlaying ||
+                        ScriptManager.IsRecording)
+                    {
+                        ScriptManager.ScriptScheduler.Clock();
+                    }
+                }
+                catch(ShutdownException s)
+                {
+                    //
+                    // We will only actually shut down if someone
+                    // is listening to this event.
+                    //
+                    if (_shutdownCallback != null)
+                    {
+                        _shutdownCallback(s.CommitDisks);
+                        _execAbort = true;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -139,6 +207,7 @@ namespace Contralto
 
         private StepCallbackDelegate _stepCallback;
         private ErrorCallbackDelegate _errorCallback;
+        private ShutdownCallbackDelegate _shutdownCallback;
 
         private AltoSystem _system;
     }

@@ -146,13 +146,7 @@ namespace Contralto.CPU
         {
             switch (_currentTask.ExecuteNext())
             {
-                case InstructionCompletion.TaskSwitch:
-                    // Invoke the task switch, this will take effect after
-                    // the NEXT instruction completes, not this one.
-                    TaskSwitch();
-                    break;
-
-                case InstructionCompletion.Normal:              
+                case InstructionCompletion.Normal:
                     // If we have a new task, switch to it now.
                     if (_currentTask != _nextTask)
                     {
@@ -161,6 +155,12 @@ namespace Contralto.CPU
                         _currentTask.OnTaskSwitch();
                     }
                     break;
+
+                case InstructionCompletion.TaskSwitch:
+                    // Invoke the task switch, this will take effect after
+                    // the NEXT instruction completes, not this one.
+                    TaskSwitch();
+                    break;                
 
                 case InstructionCompletion.MemoryWait:
                     // We were waiting for memory on this cycle, we do nothing

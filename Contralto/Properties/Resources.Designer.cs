@@ -61,6 +61,69 @@ namespace Contralto.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Alto Diablo Disk Images (*.dsk, *.dsk44)|*.dsk;*.dsk44|Diablo 31 Disk Images (*.dsk)|*.dsk|Diablo 44 Disk Images (*.dsk44)|*.dsk44|All Files (*.*)|*.*.
+        /// </summary>
+        internal static string DiabloFilter {
+            get {
+                return ResourceManager.GetString("DiabloFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An error occurred while creating new disk image: {0}.
+        /// </summary>
+        internal static string DiskCreateErrorText {
+            get {
+                return ResourceManager.GetString("DiskCreateErrorText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Image creation error.
+        /// </summary>
+        internal static string DiskCreateErrorTitle {
+            get {
+                return ResourceManager.GetString("DiskCreateErrorTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An error occurred while loading image: {0}.
+        /// </summary>
+        internal static string DiskLoadErrorText {
+            get {
+                return ResourceManager.GetString("DiskLoadErrorText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Image load error.
+        /// </summary>
+        internal static string DiskLoadErrorTitle {
+            get {
+                return ResourceManager.GetString("DiskLoadErrorTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select image to load into {0} drive {1}.
+        /// </summary>
+        internal static string DiskLoadTitle {
+            get {
+                return ResourceManager.GetString("DiskLoadTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select path for new {0} image for drive {1}.
+        /// </summary>
+        internal static string DiskNewTitle {
+            get {
+                return ResourceManager.GetString("DiskNewTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap DiskNoAccess {
@@ -77,6 +140,24 @@ namespace Contralto.Properties {
             get {
                 object obj = ResourceManager.GetObject("DiskRead", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to save {0} disk {1}&apos;s contents during unload.  Error {2].  Any changes have been lost..
+        /// </summary>
+        internal static string DiskSaveErrorText {
+            get {
+                return ResourceManager.GetString("DiskSaveErrorText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Image unload error.
+        /// </summary>
+        internal static string DiskSaveErrorTitle {
+            get {
+                return ResourceManager.GetString("DiskSaveErrorTitle", resourceCulture);
             }
         }
         
@@ -107,6 +188,186 @@ namespace Contralto.Properties {
             get {
                 object obj = ResourceManager.GetObject("dragon", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Alto Mouse/Keyboard captured.  Press Alt to release..
+        /// </summary>
+        internal static string MouseCaptureActiveText {
+            get {
+                return ResourceManager.GetString("MouseCaptureActiveText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Click on display to capture Alto Mouse/Keyboard..
+        /// </summary>
+        internal static string MouseCaptureInactiveText {
+            get {
+                return ResourceManager.GetString("MouseCaptureInactiveText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;no image loaded&gt;.
+        /// </summary>
+        internal static string NoImageLoadedText {
+            get {
+                return ResourceManager.GetString("NoImageLoadedText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Script playback in Progress..
+        /// </summary>
+        internal static string PlaybackInProgressText {
+            get {
+                return ResourceManager.GetString("PlaybackInProgressText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Script recording in Progress..
+        /// </summary>
+        internal static string RecordingInProgressText {
+            get {
+                return ResourceManager.GetString("RecordingInProgressText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Screenshot.png.
+        /// </summary>
+        internal static string ScreenshotDefaultFileName {
+            get {
+                return ResourceManager.GetString("ScreenshotDefaultFileName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Could not save screenshot.  Check the specified filename and path and try again..
+        /// </summary>
+        internal static string ScreenshotErrorText {
+            get {
+                return ResourceManager.GetString("ScreenshotErrorText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PNG Images (*.png)|*.png|All Files (*.*)|*.*.
+        /// </summary>
+        internal static string ScreenshotFilter {
+            get {
+                return ResourceManager.GetString("ScreenshotFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select destination for screenshot..
+        /// </summary>
+        internal static string ScreenshotTitle {
+            get {
+                return ResourceManager.GetString("ScreenshotTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Alto Script Files (*.script)|*.script|All Files (*.*)|*.*.
+        /// </summary>
+        internal static string ScriptFilter {
+            get {
+                return ResourceManager.GetString("ScriptFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select script file to play.
+        /// </summary>
+        internal static string ScriptPlaybackTitle {
+            get {
+                return ResourceManager.GetString("ScriptPlaybackTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select path for script file to record.
+        /// </summary>
+        internal static string ScriptRecordTitle {
+            get {
+                return ResourceManager.GetString("ScriptRecordTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Play Script....
+        /// </summary>
+        internal static string StartPlaybackText {
+            get {
+                return ResourceManager.GetString("StartPlaybackText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Record Script....
+        /// </summary>
+        internal static string StartRecordingText {
+            get {
+                return ResourceManager.GetString("StartRecordingText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stop Playback.
+        /// </summary>
+        internal static string StopPlaybackText {
+            get {
+                return ResourceManager.GetString("StopPlaybackText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stop Recording.
+        /// </summary>
+        internal static string StopRecordingText {
+            get {
+                return ResourceManager.GetString("StopRecordingText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Alto Stopped due to error.  See Debugger..
+        /// </summary>
+        internal static string SystemErrorText {
+            get {
+                return ResourceManager.GetString("SystemErrorText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Alto Running..
+        /// </summary>
+        internal static string SystemRunningText {
+            get {
+                return ResourceManager.GetString("SystemRunningText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Alto Stopped..
+        /// </summary>
+        internal static string SystemStoppedText {
+            get {
+                return ResourceManager.GetString("SystemStoppedText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Alto Trident Disk Images (*.dsk80, *.dsk300)|*.dsk80;*.dsk300|Trident T80 Disk Images (*.dsk80)|*.dsk80|Trident T300 Disk Images (*.dsk300)|*.dsk300|All Files (*.*)|*.*.
+        /// </summary>
+        internal static string TridentFilter {
+            get {
+                return ResourceManager.GetString("TridentFilter", resourceCulture);
             }
         }
     }

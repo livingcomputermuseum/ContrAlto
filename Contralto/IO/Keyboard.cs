@@ -19,6 +19,7 @@ using System.Collections.Generic;
 
 using Contralto.Memory;
 using Contralto.CPU;
+using Contralto.Scripting;
 
 namespace Contralto.IO
 {
@@ -115,7 +116,7 @@ namespace Contralto.IO
         public Keyboard()
         {
             InitMap();
-            Reset();            
+            Reset();
         }
 
         public void Reset()
@@ -125,8 +126,8 @@ namespace Contralto.IO
         }
 
         public ushort Read(int address, TaskType task, bool extendedMemoryReference)
-        {                  
-            // keyboard word is inverted      
+        {
+            // keyboard word is inverted
             return (ushort)~_keyWords[address - 0xfe1c];     // TODO: move to constant.
         }
 
@@ -141,21 +142,31 @@ namespace Contralto.IO
             // If we had been holding boot keys, release them now that a real user is pressing a key.
             if (_bootKeysPressed)
             {
-                Reset();                
+                Reset();
             }
 
             AltoKeyBit bits = _keyMap[key];
             _keyWords[bits.Word] |= bits.Bitmask;
+
+            if (ScriptManager.IsRecording)
+            {
+                ScriptManager.Recorder.KeyDown(key);
+            }
         }
 
         public void KeyUp(AltoKey key)
         {
             AltoKeyBit bits = _keyMap[key];
             _keyWords[bits.Word] &= (ushort)~bits.Bitmask;
+
+            if (ScriptManager.IsRecording)
+            {
+                ScriptManager.Recorder.KeyUp(key);
+            }
         }
 
         public void PressBootKeys(ushort bootAddress, bool netBoot)
-        {                       
+        {
             for (int i = 0; i < 16; i++)
             {
                 if ((bootAddress & (0x8000 >> i)) != 0)

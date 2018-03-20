@@ -83,7 +83,7 @@ namespace Contralto.Memory
             // Check for XM registers; this occurs regardless of XM flag since it's in the I/O page.
             if (address >= _xmBanksStart && address < _xmBanksStart + 16)
             {
-                // NB: While not specified in documentatino, some code (IFS in particular) relies on the fact that
+                // NB: While not specified in documentation, some code (IFS in particular) relies on the fact that
                 // the upper 12 bits of the bank registers are all 1s.
                 return (ushort)(0xfff0 | _xmBanks[address - _xmBanksStart]);
             }
@@ -113,7 +113,7 @@ namespace Contralto.Memory
             }
             else
             {
-                address += 0x10000 * GetBankNumber(task, extendedMemory);              
+                address += 0x10000 * GetBankNumber(task, extendedMemory);
                 _mem[address] = data;
             }
         }

@@ -18,17 +18,15 @@
 using System;
 using System.Collections.Generic;
 
-
 namespace Contralto
 {
     /// <summary>
     /// The SchedulerEventCallback describes a delegate that is invoked whenever a scheduled event has
     /// reached its due-date and is fired.
-    /// </summary>
-    /// <param name="timeNsec">The current Alto time (in nsec)</param>
+    /// </summary>    
     /// <param name="skew">The delta between the requested exec time and the actual exec time (in nsec)</param>
     /// <param name="context">An object containing context useful to the scheduler of the event</param>
-    public delegate void SchedulerEventCallback(ulong timeNsec, ulong skewNsec, object context);
+    public delegate void SchedulerEventCallback(ulong skewNsec, object context);
 
     /// <summary>
     /// An Event encapsulates a callback and associated context that is scheduled for a future timestamp.
@@ -77,12 +75,17 @@ namespace Contralto
     /// <summary>
     /// The Scheduler class provides infrastructure for scheduling Alto time-based hardware events
     /// (for example, sector marks, or video task wakeups).
+    /// 
+    /// Note that the Scheduler is not thread-safe and must only be used from the emulation thread,
+    /// or else things will break.  This is not optimal -- having a thread-safe scheduler would make
+    /// it easier/cleaner to deal with asynchronous things like ethernet packets and scripting events
+    /// but doing so incurs about a 10% performance penalty so it's been avoided.
     /// </summary>
     public class Scheduler
     {
         public Scheduler()
         {
-            Reset();
+            Reset();            
         }
 
         public ulong CurrentTimeNsec
@@ -105,13 +108,14 @@ namespace Contralto
 
             //
             // See if we have any events waiting to fire at this timestep.
-            //            
+            //
             while (_schedule.Top != null && _currentTimeNsec >= _schedule.Top.TimestampNsec)
             {
                 // Pop the top event and fire the callback.
-                Event e = _schedule.Pop();
-                e.EventCallback(_currentTimeNsec, _currentTimeNsec - e.TimestampNsec, e.Context);
-            }            
+                Event e = _schedule.Pop();                
+
+                e.EventCallback(_currentTimeNsec - e.TimestampNsec, e.Context);
+            }
         }
 
         /// <summary>
@@ -129,18 +133,10 @@ namespace Contralto
 #endif
 
             e.TimestampNsec += _currentTimeNsec;
+            
             _schedule.Push(e);
 
             return e;
-        }
-
-        /// <summary>
-        /// Remove an event from the schedule.
-        /// </summary>
-        /// <param name="e"></param>
-        public void CancelEvent(Event e)
-        {
-            _schedule.Remove(e);
         }
 
         private ulong _currentTimeNsec;
@@ -149,7 +145,7 @@ namespace Contralto
 
         // 170nsec is approximately one Alto system clock cycle and is the time-base for
         // the scheduler.
-        private const ulong _timeStepNsec = 170;        
+        private const ulong _timeStepNsec = 170;
     }
 
     /// <summary>
@@ -215,7 +211,7 @@ namespace Contralto
             Event e = _top;
             _queue.RemoveFirst();
 
-            _top = _queue.First.Value;            
+            _top = _queue.First != null ? _queue.First.Value : null;
 
             return e;
         }

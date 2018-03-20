@@ -143,7 +143,7 @@ namespace Contralto.Display
         /// <param name="timeNsec"></param>
         /// <param name="skewNsec"></param>
         /// <param name="context"></param>
-        private void VerticalBlankScanlineCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void VerticalBlankScanlineCallback(ulong skewNsec, object context)
         {
             // End of VBlank scanline.         
             _vblankScanlineCount++;
@@ -189,7 +189,7 @@ namespace Contralto.Display
         /// <param name="timeNsec"></param>
         /// <param name="skewNsec"></param>
         /// <param name="context"></param>
-        private void HorizontalBlankEndCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void HorizontalBlankEndCallback(ulong skewNsec, object context)
         {
             // Reset scanline word counter
             _word = 0;
@@ -220,7 +220,7 @@ namespace Contralto.Display
         /// <param name="timeNsec"></param>
         /// <param name="skewNsec"></param>
         /// <param name="context"></param>
-        private void WordCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void WordCallback(ulong skewNsec, object context)
         {
             if (_display == null)
             {
@@ -254,11 +254,11 @@ namespace Contralto.Display
                     _display.DrawCursorWord(_scanline, _cursorXLatched, _whiteOnBlack, _cursorRegLatched);
                 }
 
-                _scanline += 2;                
+                _scanline += 2;
 
                 if (_scanline >= 808)
                 {
-                    // Done with field.                    
+                    // Done with field.
 
                     // Draw the completed field to the emulated display.
                     _display.Render();
@@ -271,7 +271,7 @@ namespace Contralto.Display
                     // More scanlines to do.      
                                                      
                     // Run CURT and MRT at end of scanline
-                    _system.CPU.WakeupTask(TaskType.Cursor);                    
+                    _system.CPU.WakeupTask(TaskType.Cursor);
                     _system.CPU.WakeupTask(TaskType.MemoryRefresh);
 
                     // Schedule HBlank wakeup for end of next HBlank                    

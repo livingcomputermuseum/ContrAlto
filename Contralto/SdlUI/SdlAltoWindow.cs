@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using SDL2;
 using Contralto.Display;
 using Contralto.IO;
+using Contralto.Scripting;
 
 namespace Contralto.SdlUI
 {
@@ -84,23 +85,38 @@ namespace Contralto.SdlUI
                             break;
 
                         case SDL.SDL_EventType.SDL_MOUSEMOTION:
-                            MouseMove(e.motion.x, e.motion.y);
+                            if (!ScriptManager.IsPlaying)
+                            {
+                                MouseMove(e.motion.x, e.motion.y);
+                            }
                             break;
 
                         case SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN:
-                            MouseDown(e.button.button, e.button.x, e.button.y);
+                            if (!ScriptManager.IsPlaying)
+                            {
+                                MouseDown(e.button.button, e.button.x, e.button.y);
+                            }
                             break;
 
                         case SDL.SDL_EventType.SDL_MOUSEBUTTONUP:
-                            MouseUp(e.button.button);
+                            if (!ScriptManager.IsPlaying)
+                            {
+                                MouseUp(e.button.button);
+                            }
                             break;
 
                         case SDL.SDL_EventType.SDL_KEYDOWN:
-                            KeyDown(e.key.keysym.sym);
+                            if (!ScriptManager.IsPlaying)
+                            {
+                                KeyDown(e.key.keysym.sym);
+                            }
                             break;
 
                         case SDL.SDL_EventType.SDL_KEYUP:
-                            KeyUp(e.key.keysym.sym);
+                            if (!ScriptManager.IsPlaying)
+                            {
+                                KeyUp(e.key.keysym.sym);
+                            }
                             break;
 
                         default:
@@ -243,9 +259,9 @@ namespace Contralto.SdlUI
                 byte b = _1bppDisplayBuffer[i];
                 for (int bit = 7; bit >= 0; bit--)
                 {
-                    byte color = (byte)((b & (1 << bit)) == 0 ? 0x00 : 0xff);
+                    uint color = (b & (1 << bit)) == 0 ? 0xff000000 : 0xffffffff;
 
-                    _32bppDisplayBuffer[rgbIndex++] = (int)((color == 0) ? 0xff000000 : 0xffffffff); 
+                    _32bppDisplayBuffer[rgbIndex++] = (int)(color); 
                 }
             }
         }
@@ -312,7 +328,7 @@ namespace Contralto.SdlUI
             int dy = y - my;
 
             if (dx != 0 || dy != 0)
-            {
+            {                
                 _system.MouseAndKeyset.MouseMove(dx, dy);
 
                 // Don't handle the very next Mouse Move event (which will just be the motion we caused in the

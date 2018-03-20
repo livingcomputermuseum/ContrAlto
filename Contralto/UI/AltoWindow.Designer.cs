@@ -39,11 +39,14 @@
             this.drive0ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.unloadToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.newToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.Drive0ImageName = new System.Windows.Forms.ToolStripMenuItem();
             this.drive1ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadToolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
             this.unloadToolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
+            this.newToolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
             this.Drive1ImageName = new System.Windows.Forms.ToolStripMenuItem();
+            this.TridentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.AlternateBootToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SystemEthernetBootMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -57,9 +60,9 @@
             this.CaptureStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.SystemStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.DisplayBox = new System.Windows.Forms.PictureBox();
-            this.newToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.newToolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
-            this.TridentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.scriptToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.RecordScriptMenu = new System.Windows.Forms.ToolStripMenuItem();
+            this.PlayScriptMenu = new System.Windows.Forms.ToolStripMenuItem();
             this._mainMenu.SuspendLayout();
             this.StatusLine.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.DisplayBox)).BeginInit();
@@ -81,6 +84,7 @@
             // 
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.saveScreenshotToolStripMenuItem,
+            this.scriptToolStripMenuItem,
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
@@ -165,6 +169,13 @@
             this.unloadToolStripMenuItem1.Text = "Unload";
             this.unloadToolStripMenuItem1.Click += new System.EventHandler(this.OnSystemDrive0UnloadClick);
             // 
+            // newToolStripMenuItem1
+            // 
+            this.newToolStripMenuItem1.Name = "newToolStripMenuItem1";
+            this.newToolStripMenuItem1.Size = new System.Drawing.Size(172, 22);
+            this.newToolStripMenuItem1.Text = "New...";
+            this.newToolStripMenuItem1.Click += new System.EventHandler(this.OnSystemDrive0NewClick);
+            // 
             // Drive0ImageName
             // 
             this.Drive0ImageName.Enabled = false;
@@ -197,12 +208,25 @@
             this.unloadToolStripMenuItem2.Text = "Unload";
             this.unloadToolStripMenuItem2.Click += new System.EventHandler(this.OnSystemDrive1UnloadClick);
             // 
+            // newToolStripMenuItem2
+            // 
+            this.newToolStripMenuItem2.Name = "newToolStripMenuItem2";
+            this.newToolStripMenuItem2.Size = new System.Drawing.Size(152, 22);
+            this.newToolStripMenuItem2.Text = "New...";
+            this.newToolStripMenuItem2.Click += new System.EventHandler(this.OnSystemDrive1NewClick);
+            // 
             // Drive1ImageName
             // 
             this.Drive1ImageName.Enabled = false;
             this.Drive1ImageName.Name = "Drive1ImageName";
             this.Drive1ImageName.Size = new System.Drawing.Size(152, 22);
             this.Drive1ImageName.Text = "Image Name";
+            // 
+            // TridentToolStripMenuItem
+            // 
+            this.TridentToolStripMenuItem.Name = "TridentToolStripMenuItem";
+            this.TridentToolStripMenuItem.Size = new System.Drawing.Size(223, 22);
+            this.TridentToolStripMenuItem.Text = "Trident Drives";
             // 
             // AlternateBootToolStripMenuItem
             // 
@@ -322,25 +346,32 @@
             this.DisplayBox.MouseMove += new System.Windows.Forms.MouseEventHandler(this.OnDisplayMouseMove);
             this.DisplayBox.MouseUp += new System.Windows.Forms.MouseEventHandler(this.OnDisplayMouseUp);
             // 
-            // newToolStripMenuItem1
+            // scriptToolStripMenuItem
             // 
-            this.newToolStripMenuItem1.Name = "newToolStripMenuItem1";
-            this.newToolStripMenuItem1.Size = new System.Drawing.Size(172, 22);
-            this.newToolStripMenuItem1.Text = "New...";
-            this.newToolStripMenuItem1.Click += new System.EventHandler(this.OnSystemDrive0NewClick);
+            this.scriptToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.RecordScriptMenu,
+            this.PlayScriptMenu});
+            this.scriptToolStripMenuItem.Name = "scriptToolStripMenuItem";
+            this.scriptToolStripMenuItem.Size = new System.Drawing.Size(232, 22);
+            this.scriptToolStripMenuItem.Text = "Script";
             // 
-            // newToolStripMenuItem2
+            // RecordScriptMenu
             // 
-            this.newToolStripMenuItem2.Name = "newToolStripMenuItem2";
-            this.newToolStripMenuItem2.Size = new System.Drawing.Size(152, 22);
-            this.newToolStripMenuItem2.Text = "New...";
-            this.newToolStripMenuItem2.Click += new System.EventHandler(this.OnSystemDrive1NewClick);
+            this.RecordScriptMenu.Name = "RecordScriptMenu";
+            this.RecordScriptMenu.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
+            | System.Windows.Forms.Keys.Q)));
+            this.RecordScriptMenu.Size = new System.Drawing.Size(219, 22);
+            this.RecordScriptMenu.Text = "Record Script...";
+            this.RecordScriptMenu.Click += new System.EventHandler(this.OnFileRecordScriptClick);
             // 
-            // TridentToolStripMenuItem
+            // PlayScriptMenu
             // 
-            this.TridentToolStripMenuItem.Name = "TridentToolStripMenuItem";
-            this.TridentToolStripMenuItem.Size = new System.Drawing.Size(223, 22);
-            this.TridentToolStripMenuItem.Text = "Trident Drives";
+            this.PlayScriptMenu.Name = "PlayScriptMenu";
+            this.PlayScriptMenu.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
+            | System.Windows.Forms.Keys.V)));
+            this.PlayScriptMenu.Size = new System.Drawing.Size(219, 22);
+            this.PlayScriptMenu.Text = "Play Script...";
+            this.PlayScriptMenu.Click += new System.EventHandler(this.OnFilePlayScriptClick);
             // 
             // AltoWindow
             // 
@@ -407,5 +438,8 @@
         private System.Windows.Forms.ToolStripMenuItem newToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem newToolStripMenuItem2;
         private System.Windows.Forms.ToolStripMenuItem TridentToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem scriptToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem RecordScriptMenu;
+        private System.Windows.Forms.ToolStripMenuItem PlayScriptMenu;
     }
 }

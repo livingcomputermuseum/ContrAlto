@@ -15,30 +15,66 @@
     along with ContrAlto.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using Contralto.Scripting;
 using Contralto.SdlUI;
 using System;
 using System.Windows.Forms;
 
 namespace Contralto
 {
+    public static class StartupOptions
+    {
+        public static string ConfigurationFile;
+
+        public static string ScriptFile;
+    }
+
     class Program
     {
         [STAThread]
         static void Main(string[] args)
         {
             //
-            // Check for command-line arguments. 
-            // We expect at most one argument, specifying a configuration file to load.
-            //
-            StartupArgs = args;
-            if (args.Length > 1)
+            // Check for command-line arguments.
+            //            
+            if (args.Length > 0)
             {
-                Console.WriteLine("usage: Contralto <config file>");
-                return;
-            }
+                for (int i = 0; i < args.Length; i++)
+                {
+                    switch (args[i++].ToLowerInvariant())
+                    {
+                        case "-config":
+                            if (i < args.Length)
+                            {
+                                StartupOptions.ConfigurationFile = args[i];
+                            }
+                            else
+                            {
+                                PrintUsage();
+                                return;
+                            }
+                            break;
 
-            // Handle command-line args
-            PrintHerald();           
+                        case "-script":
+                            if (i < args.Length)
+                            {
+                                StartupOptions.ScriptFile = args[i];
+                            }
+                            else
+                            {
+                                PrintUsage();
+                                return;
+                            }
+                            break;
+
+                        default:
+                            PrintUsage();
+                            return;
+                    }
+                }
+            }
+            
+            PrintHerald();
 
             _system = new AltoSystem();
 
@@ -122,8 +158,6 @@ namespace Contralto
             }
         }
 
-        public static string[] StartupArgs;
-
         private static void OnProcessExit(object sender, EventArgs e)
         {
             Console.WriteLine("Exiting...");
@@ -138,11 +172,16 @@ namespace Contralto
 
         private static void PrintHerald()
         {
-            Console.WriteLine("ContrAlto v{0} (c) 2015-2017 Living Computers: Museum+Labs.", typeof(Program).Assembly.GetName().Version);
+            Console.WriteLine("ContrAlto v{0} (c) 2015-2018 Living Computers: Museum+Labs.", typeof(Program).Assembly.GetName().Version);
             Console.WriteLine("Bug reports to joshd@livingcomputers.org");
             Console.WriteLine();
-        }      
-        
+        }
+
+        private static void PrintUsage()
+        {
+            Console.WriteLine("Usage: ContrAlto [-config <configurationFile>] [-script <scriptFile>]");
+        }
+
         private static AltoSystem _system;
     }
 }

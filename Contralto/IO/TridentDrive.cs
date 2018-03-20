@@ -271,7 +271,7 @@ namespace Contralto.IO
             }
         }
 
-        private void SeekCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void SeekCallback(ulong skewNsec, object context)
         {
             Log.Write(LogComponent.TridentDisk, "Seek to {0} complete.", _destCylinder);
 

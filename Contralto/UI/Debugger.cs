@@ -741,6 +741,7 @@ namespace Contralto
                         {
                             // Belongs to a task, so we can grab the address out as well
                             Address = sourceText.Substring(2, 4);
+                            annotated = true;
                         }
                         catch
                         {
@@ -748,8 +749,14 @@ namespace Contralto
                             annotated = false;
                         }
 
-                        Text = sourceText.Substring(tokens[0].Length + 1, sourceText.Length - tokens[0].Length - 1);
-                        annotated = true;
+                        string sourceCode = sourceText.Substring(tokens[0].Length, sourceText.Length - tokens[0].Length);
+                        // Remove leading space if present
+                        if (sourceCode.StartsWith(" "))
+                        {
+                            sourceCode = sourceCode.Substring(1);
+                        }
+
+                        Text = UnTabify(sourceCode);
                     }
                     else
                     {
@@ -760,7 +767,7 @@ namespace Contralto
 
                 if (!annotated)
                 {
-                    Text = sourceText;
+                    Text = UnTabify(sourceText);
                     Address = String.Empty;
                     Task = TaskType.Invalid;
                 }
@@ -770,6 +777,40 @@ namespace Contralto
             public string Address;
             public TaskType Task;
 
+            /// <summary>
+            /// Converts tabs in the given string to 8 space tabulation.  As it should be.
+            /// </summary>
+            /// <param name="tabified"></param>
+            /// <returns></returns>
+            private string UnTabify(string tabified)
+            {
+                StringBuilder untabified = new StringBuilder();
+
+                int column = 0;
+
+                foreach (char c in tabified)
+                {
+                    if (c == '\t')
+                    {
+                        untabified.Append(" ");
+                        column++;
+                        while ((column % 8) != 0)
+                        {
+                            untabified.Append(" ");
+                            column++;
+                        }
+                    }
+                    else
+                    {
+                        untabified.Append(c);
+                        column++;
+                    }
+
+
+                }
+
+                return untabified.ToString();
+            }
         }
 
         private void OnTabChanged(object sender, EventArgs e)

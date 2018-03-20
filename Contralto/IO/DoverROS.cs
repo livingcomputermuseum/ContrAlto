@@ -474,7 +474,7 @@ namespace Contralto.IO
         /// <param name="timestampNsec"></param>
         /// <param name="delta"></param>
         /// <param name="context"></param>
-        private void PrintEngineCallback(ulong timestampNsec, ulong delta, object context)
+        private void PrintEngineCallback(ulong delta, object context)
         {
             Log.Write(LogComponent.DoverROS, "Scanline {0} (sendvideo {1})", _printEngineTimestep, _sendVideo);
             switch (_state)

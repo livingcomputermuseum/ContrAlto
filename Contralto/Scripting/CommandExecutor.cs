@@ -21,34 +21,48 @@ using System.Reflection;
 using System.Text;
 using System.IO;
 
-namespace Contralto.SdlUI
+namespace Contralto.Scripting
 {
+    public class MethodInvokeInfo
+    {
+        public MethodInvokeInfo(MethodInfo method, object instance)
+        {
+            if (method == null || instance == null)
+            {
+                throw new ArgumentNullException("method and instance must be non-null");
+            }
+
+            Method = method;
+            Instance = instance;
+        }
+
+        public MethodInfo Method;
+        public object Instance;
+    }
     /// <summary>
     /// Defines a node in the debug command tree.
     /// </summary>
     public class DebuggerCommand
     {
-        public DebuggerCommand(object instance, string name, String description, String usage, MethodInfo method)
+        public DebuggerCommand(string name, String description, String usage, MethodInvokeInfo methodInvoke)
         {
-            Instance = instance;
             Name = name.Trim().ToLower();
             Description = description;
             Usage = usage;
-            Methods = new List<MethodInfo>(4);
+            Methods = new List<MethodInvokeInfo>(4);
 
-            if (method != null)
+            if (methodInvoke != null)
             {
-                Methods.Add(method);
+                Methods.Add(methodInvoke);
             }
 
             SubCommands = new List<DebuggerCommand>();
         }
-
-        public object Instance;
+        
         public string Name;
         public string Description;
         public string Usage;
-        public List<MethodInfo> Methods;
+        public List<MethodInvokeInfo> Methods;
         public List<DebuggerCommand> SubCommands;
 
         public override string ToString()
@@ -63,7 +77,7 @@ namespace Contralto.SdlUI
             }
         }
 
-        public void AddSubNode(List<string> words, MethodInfo method, object instance)
+        public void AddSubNode(List<string> words, MethodInvokeInfo methodInfo)
         {
             // We should never hit this case.
             if (words.Count == 0)
@@ -77,13 +91,13 @@ namespace Contralto.SdlUI
             if (subNode == null)
             {
                 // No, it has not -- create one and add it now.
-                subNode = new DebuggerCommand(instance, words[0], null, null, null);
+                subNode = new DebuggerCommand(words[0], null, null, null);
                 this.SubCommands.Add(subNode);
 
                 if (words.Count == 1)
                 {
                     // This is the last stop -- set the method and be done with it now.
-                    subNode.Methods.Add(method);
+                    subNode.Methods.Add(methodInfo);
 
                     // early return.
                     return;
@@ -98,10 +112,10 @@ namespace Contralto.SdlUI
                     // If we're on the last word at this point then this is an overloaded command.
                     // Check that we don't have any other commands with this number of arguments.
                     //
-                    int argCount = method.GetParameters().Length;
-                    foreach (MethodInfo info in subNode.Methods)
+                    int argCount = methodInfo.Method.GetParameters().Length;
+                    foreach (MethodInvokeInfo info in subNode.Methods)
                     {
-                        if (info.GetParameters().Length == argCount)
+                        if (info.Method.GetParameters().Length == argCount)
                         {
                             throw new InvalidOperationException("Duplicate overload for console command");
                         }
@@ -110,7 +124,7 @@ namespace Contralto.SdlUI
                     //
                     // We're ok.  Add it to the method list.
                     //
-                    subNode.Methods.Add(method);
+                    subNode.Methods.Add(methodInfo);
 
                     // and return early.
                     return;
@@ -119,7 +133,7 @@ namespace Contralto.SdlUI
 
             // We have more words to go.
             words.RemoveAt(0);
-            subNode.AddSubNode(words, method, instance);
+            subNode.AddSubNode(words, methodInfo);
         }
 
         public DebuggerCommand FindSubNodeByName(string name)
@@ -138,37 +152,21 @@ namespace Contralto.SdlUI
             return found;
         }
     }
-    
-    public class ConsoleExecutor
+
+    public enum CommandResult
     {
-        public ConsoleExecutor(params object[] commandObjects)
+        Normal,
+        Quit,
+        QuitNoSave,
+    }
+
+    public class CommandExecutor
+    {
+        public CommandExecutor(params object[] commandObjects)
         {
             List<object> commandList = new List<object>(commandObjects);
             BuildCommandTree(commandList);
-
-            _consolePrompt = new DebuggerPrompt(_commandRoot);
-        }
-        
-        public CommandResult Prompt()
-        {
-            CommandResult next = CommandResult.Normal;
-            try
-            {
-                // Get the command string from the prompt.
-                string command = _consolePrompt.Prompt().Trim();
-
-                if (command != String.Empty)
-                {
-                    next = ExecuteLine(command);
-                }
-            }
-            catch (Exception e)
-            {                
-                Console.WriteLine(e.Message);
-            }
-
-            return next;
-        }
+        }               
 
         public CommandResult ExecuteScript(string scriptFile)
         {
@@ -189,6 +187,16 @@ namespace Contralto.SdlUI
             }
 
             return state;
+        }
+
+        public DebuggerCommand CommandTreeRoot
+        {
+            get { return _commandRoot; }
+        }
+
+        public CommandResult ExecuteCommand(string line)
+        {
+            return ExecuteLine(line);
         }
 
         private CommandResult ExecuteLine(string line)
@@ -226,17 +234,17 @@ namespace Contralto.SdlUI
         }
 
         private CommandResult InvokeConsoleMethod(DebuggerCommand command, string[] args)
-        {   
-            MethodInfo method = null;
+        {
+            MethodInvokeInfo method = null;
 
             //
             // Find the method that matches the arg count we were passed
             // (i.e. handle overloaded commands).
             // That this only matches on argument count is somewhat of a kluge...
             //
-            foreach (MethodInfo m in command.Methods)
+            foreach (MethodInvokeInfo m in command.Methods)
             {
-                ParameterInfo[] paramInfo = m.GetParameters();
+                ParameterInfo[] paramInfo = m.Method.GetParameters();
 
                 if (args == null && paramInfo.Length == 0 ||
                     paramInfo.Length == args.Length)
@@ -253,7 +261,7 @@ namespace Contralto.SdlUI
                 throw new ArgumentException(String.Format("Invalid argument count to command."));
             }
 
-            ParameterInfo[] parameterInfo = method.GetParameters(); 
+            ParameterInfo[] parameterInfo = method.Method.GetParameters(); 
             object[] invokeParams;
 
             if (args == null)
@@ -352,7 +360,7 @@ namespace Contralto.SdlUI
             // If we've made it THIS far, then we were able to parse all the commands into what they should be.
             // Invoke the method on the object instance associated with the command.
             //
-            return (CommandResult)method.Invoke(command.Instance, invokeParams);        
+            return (CommandResult)method.Method.Invoke(method.Instance, invokeParams);        
         }
 
         enum ParseState
@@ -627,7 +635,7 @@ namespace Contralto.SdlUI
                         // this cast should always succeed given that we're filtering for this type above.
                         DebuggerFunction function = (DebuggerFunction)attribs[0];
 
-                        DebuggerCommand newCommand = new DebuggerCommand(commandObject, function.CommandName, function.Description, function.Usage, info);
+                        DebuggerCommand newCommand = new DebuggerCommand(function.CommandName, function.Description, function.Usage, new MethodInvokeInfo(info, commandObject));
 
                         _commandList.Add(newCommand);
                     }
@@ -635,7 +643,7 @@ namespace Contralto.SdlUI
             }
 
             // Now actually build the command tree from the above list!
-            _commandRoot = new DebuggerCommand(null, "Root", null, null, null);
+            _commandRoot = new DebuggerCommand("Root", null, null, null);
 
             foreach (DebuggerCommand c in _commandList)
             {
@@ -643,7 +651,7 @@ namespace Contralto.SdlUI
 
                 // This is kind of ugly, we know that at this point every command built above have only
                 // one method.  When building the tree, overloaded commands may end up with more than one.
-                _commandRoot.AddSubNode(new List<string>(commandWords), c.Methods[0], c.Instance);
+                _commandRoot.AddSubNode(new List<string>(commandWords), c.Methods[0]);
             }
         }
 
@@ -664,8 +672,7 @@ namespace Contralto.SdlUI
 
             return CommandResult.Normal;
         }       
-
-        private DebuggerPrompt _consolePrompt;
+        
         private DebuggerCommand _commandRoot;
         private List<DebuggerCommand> _commandList;
     }

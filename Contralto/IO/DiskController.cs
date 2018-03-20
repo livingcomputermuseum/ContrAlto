@@ -295,7 +295,7 @@ namespace Contralto.IO
         /// <param name="timeNsec"></param>
         /// <param name="skewNsec"></param>
         /// <param name="context"></param>
-        private void SectorCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void SectorCallback(ulong skewNsec, object context)
         {
             //
             // Next sector; move to next sector and wake up Disk Sector task.
@@ -360,7 +360,7 @@ namespace Contralto.IO
         /// <param name="timeNsec"></param>
         /// <param name="skewNsec"></param>
         /// <param name="context"></param>
-        private void WordCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void WordCallback(ulong skewNsec, object context)
         {
             SpinDisk();
 
@@ -385,7 +385,7 @@ namespace Contralto.IO
         /// <param name="timeNsec"></param>
         /// <param name="skewNsec"></param>
         /// <param name="context"></param>
-        private void SeclateCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void SeclateCallback(ulong skewNsec, object context)
         {            
             if (_seclateEnable)
             {
@@ -635,7 +635,7 @@ namespace Contralto.IO
             return ((_kAdr & 0x00c0) >> 6) == 2 || ((_kAdr & 0x00c0) >> 6) == 3;
         }
 
-        private void SeekCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void SeekCallback(ulong skewNsec, object context)
         {
             if (SelectedDrive.Cylinder < _destCylinder)
             {

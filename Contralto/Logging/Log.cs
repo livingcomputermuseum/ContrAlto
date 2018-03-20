@@ -53,6 +53,7 @@ namespace Contralto.Logging
         TridentController = 0x200000,
         TridentDisk = 0x400000,
 
+        Scripting = 0x2000000,
         Debug = 0x40000000,
         All =   0x7fffffff
     }

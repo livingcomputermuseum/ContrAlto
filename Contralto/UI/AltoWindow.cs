@@ -19,6 +19,7 @@ using Contralto.CPU;
 using Contralto.Display;
 using Contralto.IO;
 using Contralto.Properties;
+using Contralto.Scripting;
 using Contralto.UI;
 using System;
 using System.Collections.Generic;
@@ -35,7 +36,7 @@ namespace Contralto
         public AltoWindow()
         {
             InitializeComponent();
-            InitKeymap();
+            InitKeymap();            
 
             _mouseCaptured = false;
             _currentCursorState = true;
@@ -46,6 +47,8 @@ namespace Contralto
 
             _lastBuffer = _currentBuffer = _displayData0;
             _frame = 0;
+
+            _commitDisksAtShutdown = true;
 
             try
             {
@@ -64,7 +67,7 @@ namespace Contralto
 
             CreateTridentMenu();
 
-            SystemStatusLabel.Text = _systemStoppedText;
+            SystemStatusLabel.Text = Resources.SystemStoppedText;
             DiskStatusLabel.Text = String.Empty;
 
             _diskIdleImage = Resources.DiskNoAccess;
@@ -85,7 +88,9 @@ namespace Contralto
             _diskAccessTimer.Interval = 25;
             _diskAccessTimer.Elapsed += OnDiskTimerElapsed;
             _diskAccessTimer.Start();
-        }
+
+            ScriptManager.PlaybackCompleted += OnScriptPlaybackCompleted;
+        }        
 
         public void AttachSystem(AltoSystem system)
         {
@@ -95,17 +100,29 @@ namespace Contralto
             _controller = new ExecutionController(_system);
 
             _controller.ErrorCallback += OnExecutionError;
+            _controller.ShutdownCallback += OnShutdown;
 
             // Update disk image UI info
             // Diablo disks:
-            Drive0ImageName.Text = _system.DiskController.Drives[0].IsLoaded ? Path.GetFileName(_system.DiskController.Drives[0].Pack.PackName) : _noImageLoadedText;
-            Drive1ImageName.Text = _system.DiskController.Drives[1].IsLoaded ? Path.GetFileName(_system.DiskController.Drives[1].Pack.PackName) : _noImageLoadedText;
+            Drive0ImageName.Text = _system.DiskController.Drives[0].IsLoaded ? Path.GetFileName(_system.DiskController.Drives[0].Pack.PackName) : Resources.NoImageLoadedText;
+            Drive1ImageName.Text = _system.DiskController.Drives[1].IsLoaded ? Path.GetFileName(_system.DiskController.Drives[1].Pack.PackName) : Resources.NoImageLoadedText;
 
             // Trident disks
             for (int i = 0; i < _tridentImageNames.Count; i++)
             {
                 TridentDrive drive = _system.TridentController.Drives[i];
-                _tridentImageNames[i].Text = drive.IsLoaded ? Path.GetFileName(drive.Pack.PackName) : _noImageLoadedText;
+                _tridentImageNames[i].Text = drive.IsLoaded ? Path.GetFileName(drive.Pack.PackName) : Resources.NoImageLoadedText;
+            }
+
+            //
+            // If a startup script was specified, start it running now --
+            // tell the script manager to start the script, and start the
+            // Alto system running so that the script actually executes.
+            //
+            if (!string.IsNullOrWhiteSpace(StartupOptions.ScriptFile))
+            {
+                StartScriptPlayback(StartupOptions.ScriptFile);                
+                _controller.StartExecution(AlternateBootType.None);
             }
         }       
 
@@ -155,8 +172,8 @@ namespace Contralto
             catch(Exception ex)
             {
                 MessageBox.Show(
-                    String.Format("An error occurred while loading image: {0}", ex.Message),
-                    "Image load error", MessageBoxButtons.OK);
+                    String.Format(Resources.DiskLoadErrorText, ex.Message),
+                    Resources.DiskLoadErrorTitle, MessageBoxButtons.OK);
             }
         }
 
@@ -169,12 +186,12 @@ namespace Contralto
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    String.Format("Unable to save Diablo disk 0's contents during unload.  Error {0}.  Any changes have been lost.", ex.Message),
-                    "Image unload error", MessageBoxButtons.OK);
+                    String.Format(Resources.DiskSaveErrorText, "Diablo", 0, ex.Message),
+                    Resources.DiskSaveErrorTitle, MessageBoxButtons.OK);
             }
             finally
             {
-                Drive1ImageName.Text = _noImageLoadedText;
+                Drive1ImageName.Text = Resources.NoImageLoadedText;
                 Configuration.Drive1Image = String.Empty;
             }
         }
@@ -197,8 +214,8 @@ namespace Contralto
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    String.Format("An error occurred while creating new disk image: {0}", ex.Message),
-                    "Image creation error", MessageBoxButtons.OK);
+                    String.Format(Resources.DiskCreateErrorText, ex.Message),
+                    Resources.DiskCreateErrorTitle, MessageBoxButtons.OK);
             }
         }
 
@@ -220,8 +237,8 @@ namespace Contralto
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    String.Format("An error occurred while loading image: {0}", ex.Message),
-                    "Image load error", MessageBoxButtons.OK);
+                    String.Format(Resources.DiskLoadErrorText, ex.Message),
+                    Resources.DiskLoadErrorTitle, MessageBoxButtons.OK);
             }
         }
 
@@ -234,12 +251,12 @@ namespace Contralto
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    String.Format("Unable to save Diablo disk 1's contents during unload.  Error {0}.  Any changes have been lost.", ex.Message),
-                    "Image unload error", MessageBoxButtons.OK);
+                    String.Format(Resources.DiskSaveErrorText, "Diablo", 1, ex.Message),
+                    Resources.DiskSaveErrorTitle, MessageBoxButtons.OK);
             }
             finally
             {
-                Drive1ImageName.Text = _noImageLoadedText;
+                Drive1ImageName.Text = Resources.NoImageLoadedText;
                 Configuration.Drive1Image = String.Empty;
             }
         }
@@ -263,8 +280,8 @@ namespace Contralto
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    String.Format("An error occurred while creating new disk image: {0}", ex.Message),
-                    "Image creation error", MessageBoxButtons.OK);
+                    String.Format(Resources.DiskCreateErrorText, ex.Message),
+                    Resources.DiskCreateErrorTitle, MessageBoxButtons.OK);
             }
         }
 
@@ -287,8 +304,8 @@ namespace Contralto
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    String.Format("An error occurred while loading Trident image: {0}", ex.Message),
-                    "Image load error", MessageBoxButtons.OK);
+                    String.Format(Resources.DiskLoadErrorText, ex.Message),
+                    Resources.DiskLoadErrorTitle, MessageBoxButtons.OK);
             }
         }
 
@@ -303,12 +320,12 @@ namespace Contralto
             catch(Exception ex)
             {
                 MessageBox.Show(
-                    String.Format("Unable to save Trident disk {0}'s contents during unload.  Error {1}.  Any changes have been lost.", drive, ex.Message),
-                    "Image unload error", MessageBoxButtons.OK);
+                    String.Format(Resources.DiskSaveErrorText, "Trident", drive, ex.Message),
+                    Resources.DiskSaveErrorTitle, MessageBoxButtons.OK);
             }
             finally
             {                
-                _tridentImageNames[drive].Text = _noImageLoadedText;
+                _tridentImageNames[drive].Text = Resources.NoImageLoadedText;
                 Configuration.TridentImages[drive] = String.Empty;
             }
         }
@@ -332,8 +349,8 @@ namespace Contralto
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    String.Format("An error occurred while creating new Trident image: {0}", ex.Message),
-                    "Image creation error", MessageBoxButtons.OK);
+                    String.Format(Resources.DiskCreateErrorText, ex.Message),
+                    Resources.DiskCreateErrorTitle, MessageBoxButtons.OK);
             }
         }
 
@@ -400,10 +417,10 @@ namespace Contralto
             SaveFileDialog fileDialog = new SaveFileDialog();
             fileDialog.DefaultExt = "png";
 
-            fileDialog.Filter = "PNG Images (*.png)|*.png|All Files (*.*)|*.*";            
-            fileDialog.Title = String.Format("Select destination for screenshot.");
+            fileDialog.Filter = Resources.ScreenshotFilter;
+            fileDialog.Title = Resources.ScreenshotTitle;
             fileDialog.CheckPathExists = true;
-            fileDialog.FileName = "Screenshot.png";        
+            fileDialog.FileName = Resources.ScreenshotDefaultFileName;      
 
             DialogResult res = fileDialog.ShowDialog();
 
@@ -418,7 +435,7 @@ namespace Contralto
                 }
                 catch
                 {
-                    MessageBox.Show("Could not save screenshot.  Check the specified filename and path and try again.");
+                    MessageBox.Show(Resources.ScreenshotErrorText);
                 }
             }
 
@@ -428,10 +445,63 @@ namespace Contralto
             }
         }
 
+        private void OnFileRecordScriptClick(object sender, EventArgs e)
+        {
+            if (!ScriptManager.IsRecording)
+            {
+                SaveFileDialog fileDialog = new SaveFileDialog();
+
+                fileDialog.DefaultExt = "script";
+                fileDialog.Filter = Resources.ScriptFilter;
+                fileDialog.CheckFileExists = false;
+                fileDialog.CheckPathExists = true;
+                fileDialog.OverwritePrompt = true;
+                fileDialog.ValidateNames = true;
+                fileDialog.Title = Resources.ScriptRecordTitle;
+
+                DialogResult res = fileDialog.ShowDialog();
+
+                if (res == DialogResult.OK)
+                {
+                    StartScriptRecording(fileDialog.FileName);
+                }
+            }
+            else
+            {
+                StopScriptRecording();
+            }
+        }       
+
+        private void OnFilePlayScriptClick(object sender, EventArgs e)
+        {
+            if (!ScriptManager.IsPlaying)
+            {
+                OpenFileDialog fileDialog = new OpenFileDialog();
+
+                fileDialog.DefaultExt = "script";
+                fileDialog.Filter = Resources.ScriptFilter;
+                fileDialog.Multiselect = false;
+                fileDialog.CheckFileExists = true;
+                fileDialog.CheckPathExists = true;
+                fileDialog.Title = Resources.ScriptPlaybackTitle;
+
+                DialogResult res = fileDialog.ShowDialog();
+
+                if (res == DialogResult.OK)
+                {                    
+                    StartScriptPlayback(fileDialog.FileName);
+                }
+            }
+            else
+            {
+                StopScriptPlayback();
+            }
+        }       
+
         private void OnFileExitClick(object sender, EventArgs e)
         {
             _controller.StopExecution();
-            this.Close();           
+            this.Close();
         }
 
         private void OnAltoWindowClosed(object sender, FormClosedEventArgs e)
@@ -442,17 +512,17 @@ namespace Contralto
             _fpsTimer.Stop();
             _diskAccessTimer.Stop();
 
-            // Halt the system and detach our display              
+            // Halt the system and detach our display
             _controller.StopExecution();
             _system.DetachDisplay();
-            _system.Shutdown(true /* commit disk contents */);
+            _system.Shutdown(_commitDisksAtShutdown);
 
             //
             // Commit current configuration to disk
             //
-            Configuration.WriteConfiguration();            
+            Configuration.WriteConfiguration();
 
-            DialogResult = DialogResult.OK;            
+            DialogResult = DialogResult.OK;
         }
 
         private string ShowImageLoadDialog(int drive, bool trident)
@@ -460,11 +530,11 @@ namespace Contralto
             OpenFileDialog fileDialog = new OpenFileDialog();
 
             fileDialog.DefaultExt = trident ? "dsk80" : "dsk";
-            fileDialog.Filter = trident ? _tridentFilter : _diabloFilter;
+            fileDialog.Filter = trident ? Resources.TridentFilter : Resources.DiabloFilter;
             fileDialog.Multiselect = false;
             fileDialog.CheckFileExists = true;
             fileDialog.CheckPathExists = true;
-            fileDialog.Title = String.Format("Select image to load into {0} drive {1}", trident ? "Trident" : "Diablo", drive);
+            fileDialog.Title = String.Format(Resources.DiskLoadTitle, trident ? "Trident" : "Diablo", drive);
 
             DialogResult res = fileDialog.ShowDialog();
 
@@ -483,12 +553,12 @@ namespace Contralto
             SaveFileDialog fileDialog = new SaveFileDialog();
 
             fileDialog.DefaultExt = trident ? "dsk80" : "dsk";
-            fileDialog.Filter = trident ? _tridentFilter : _diabloFilter;
+            fileDialog.Filter = trident ? Resources.TridentFilter : Resources.DiabloFilter;
             fileDialog.CheckFileExists = false;
             fileDialog.CheckPathExists = true;
             fileDialog.OverwritePrompt = true;
             fileDialog.ValidateNames = true;
-            fileDialog.Title = String.Format("Select path for new {0} image for drive {1}", trident ? "Trident" : "Diablo", drive);
+            fileDialog.Title = String.Format(Resources.DiskNewTitle, trident ? "Trident" : "Diablo", drive);
 
             DialogResult res = fileDialog.ShowDialog();
 
@@ -510,12 +580,20 @@ namespace Contralto
         {
             // TODO: invoke the debugger when an error is hit
             //OnDebuggerShowClick(null, null);
-            SystemStatusLabel.Text = _systemErrorText;
+            SystemStatusLabel.Text = Resources.SystemErrorText;
 
             Console.WriteLine("Execution error: {0} - {1}", e.Message, e.StackTrace);
 
             System.Diagnostics.Debugger.Break();
         }        
+
+        /// <summary>
+        /// Handle an internal shutdown of the emulator.
+        /// </summary>
+        private void OnShutdown(bool commitDisks)
+        {
+            BeginInvoke(new ShutdownCallbackDelegate(InternalShutdown), commitDisks);
+        }
 
         private void StartSystem(AlternateBootType bootType)
         {
@@ -527,7 +605,7 @@ namespace Contralto
 
             _controller.StartExecution(bootType);
 
-            SystemStatusLabel.Text = _systemRunningText;
+            SystemStatusLabel.Text = Resources.SystemRunningText;
         }
 
         //
@@ -560,7 +638,7 @@ namespace Contralto
             }
             else
             {
-                _lastBuffer = _currentBuffer;                
+                _lastBuffer = _currentBuffer;
             }            
 
             // Asynchronously render this frame.
@@ -702,6 +780,12 @@ namespace Contralto
         /// <returns></returns>
         protected override bool ProcessKeyEventArgs(ref Message m)                 
         {
+            // Short-circuit if a script is playing.
+            if (ScriptManager.IsPlaying)
+            {
+                return base.ProcessKeyEventArgs(ref m);
+            }
+
             // Grab the scancode from the message
             int scanCode = (int)((m.LParam.ToInt64() >> 16) & 0x1ff);
             bool down = false;
@@ -729,7 +813,7 @@ namespace Contralto
             {
                 case 0x2a: // LShift
                     modifierKey = AltoKey.LShift;
-                    break;                                       
+                    break;
 
                 case 0x36:
                     modifierKey = AltoKey.RShift;
@@ -758,9 +842,15 @@ namespace Contralto
 
             return base.ProcessKeyEventArgs(ref m);
         }
-        // Hacky initial implementation of keyboard input.
+        
         private void OnKeyDown(object sender, KeyEventArgs e)
         {
+            // Short-circuit if a script is playing.
+            if (ScriptManager.IsPlaying)
+            {
+                return;
+            }
+
             if (!_mouseCaptured)
             {
                 return;
@@ -786,6 +876,12 @@ namespace Contralto
 
         private void OnKeyUp(object sender, KeyEventArgs e)
         {
+            // Short-circuit if a script is playing.
+            if (ScriptManager.IsPlaying)
+            {
+                return;
+            }
+
             if (!_mouseCaptured)
             {
                 return;
@@ -811,6 +907,12 @@ namespace Contralto
 
         private void OnDisplayMouseMove(object sender, MouseEventArgs e)
         {
+            // Short-circuit if a script is playing.
+            if (ScriptManager.IsPlaying)
+            {
+                return;
+            }
+
             if (!_mouseCaptured)
             {
                 // We do nothing with mouse input unless we have capture.                
@@ -844,17 +946,16 @@ namespace Contralto
                 
                 Cursor.Position = DisplayBox.PointToScreen(middle);
             }
-        }
-
-        private void HackMouseMove()
-        {
-            Point middle = new Point(DisplayBox.Width / 2, DisplayBox.Height / 2);
-            // Force (invisible) cursor to middle of window            
-            Cursor.Position = DisplayBox.PointToScreen(middle);
-        }
+        }      
 
         private void OnDisplayMouseDown(object sender, MouseEventArgs e)
         {
+            // Short-circuit if a script is playing.
+            if (ScriptManager.IsPlaying)
+            {
+                return;
+            }
+
             if (!_mouseCaptured)
             {
                 return;
@@ -883,6 +984,12 @@ namespace Contralto
 
         private void OnDisplayMouseUp(object sender, MouseEventArgs e)
         {
+            // Short-circuit if a script is playing.
+            if (ScriptManager.IsPlaying)
+            {
+                return;
+            }
+
             if (!_mouseCaptured)
             {
                 // On mouse-up, capture the mouse if the system is running.
@@ -922,7 +1029,7 @@ namespace Contralto
             _mouseCaptured = true;
             ShowCursor(false);
 
-            CaptureStatusLabel.Text = "Alto Mouse/Keyboard captured.  Press Alt to release.";
+            CaptureStatusLabel.Text = Resources.MouseCaptureActiveText;
         }
 
         private void ReleaseMouse()
@@ -930,7 +1037,7 @@ namespace Contralto
             _mouseCaptured = false;
             ShowCursor(true);
 
-            CaptureStatusLabel.Text = "Click on display to capture Alto Mouse/Keyboard.";
+            CaptureStatusLabel.Text = Resources.MouseCaptureInactiveText;
         }
 
         /// <summary>
@@ -1000,6 +1107,15 @@ namespace Contralto
             BeginInvoke(new DisplayDelegate(RefreshDiskStatus));            
         }
 
+        private void InternalShutdown(bool commitDisks)
+        {
+            // Determine how to exit.
+            _commitDisksAtShutdown = commitDisks;
+
+            // Close our window and be done.
+            this.Close();
+        }
+
         private void RefreshDiskStatus()
         {
             if (_lastActivity != _system.DiskController.LastDiskActivity)
@@ -1059,6 +1175,59 @@ namespace Contralto
                 DisplayBox.Location = _windowedDisplayBoxLocation;
                 DisplayBox.Size = _windowedDisplayBoxSize;
             }
+        }
+
+        private void StartScriptPlayback(string fileName)
+        {
+            //
+            // Start the script.  We need to pause the emulation while doing so,
+            // in order to avoid concurrency issues with the Scheduler (which is
+            // not thread-safe).
+            //                    
+            _controller.StopExecution();
+            ScriptManager.StartPlayback(_system, _controller, fileName);
+            _controller.StartExecution(AlternateBootType.None);
+
+            PlayScriptMenu.Text = Resources.StopPlaybackText;
+            RecordScriptMenu.Enabled = false;
+
+            SystemStatusLabel.Text = Resources.PlaybackInProgressText;
+        }
+
+        private void StopScriptPlayback()
+        {
+            ScriptManager.StopPlayback();
+            PlayScriptMenu.Text = Resources.StartPlaybackText;
+            RecordScriptMenu.Enabled = true;
+
+            SystemStatusLabel.Text = _controller.IsRunning ? Resources.SystemRunningText : Resources.SystemStoppedText;
+        }
+
+
+        private void StartScriptRecording(string fileName)
+        {
+            ScriptManager.StartRecording(_system, fileName);
+            RecordScriptMenu.Text = Resources.StopRecordingText;
+            PlayScriptMenu.Enabled = false;
+            
+            SystemStatusLabel.Text = Resources.RecordingInProgressText;
+        }
+
+        private void StopScriptRecording()
+        {
+            ScriptManager.StopRecording();
+            RecordScriptMenu.Text = Resources.StartRecordingText;
+            PlayScriptMenu.Enabled = true;
+
+            SystemStatusLabel.Text = _controller.IsRunning ? Resources.SystemRunningText : Resources.SystemStoppedText;
+        }
+
+        private void OnScriptPlaybackCompleted(object sender, EventArgs e)
+        {
+            PlayScriptMenu.Text = Resources.StartPlaybackText;
+            RecordScriptMenu.Enabled = true;
+
+            SystemStatusLabel.Text = _controller.IsRunning ? Resources.SystemRunningText : Resources.SystemStoppedText;
         }
 
         private void InitKeymap()
@@ -1179,7 +1348,7 @@ namespace Contralto
                 ToolStripMenuItem newMenu = new ToolStripMenuItem("New...", null, OnTridentNewClick);
                 newMenu.Tag = i;
 
-                ToolStripMenuItem imageMenu = new ToolStripMenuItem(_noImageLoadedText);
+                ToolStripMenuItem imageMenu = new ToolStripMenuItem(Resources.NoImageLoadedText);
                 imageMenu.Tag = i;
                 imageMenu.Enabled = false;
                 _tridentImageNames.Add(imageMenu);
@@ -1249,14 +1418,8 @@ namespace Contralto
         // Trident menu items for disk names
         private List<ToolStripMenuItem> _tridentImageNames;
 
-        // strings.  TODO: move to resource
-        private const string _noImageLoadedText = "<no image loaded>";
-        private const string _systemStoppedText = "Alto Stopped.";
-        private const string _systemRunningText = "Alto Running.";
-        private const string _systemErrorText = "Alto Stopped due to error.  See Debugger.";
-        private const string _diabloFilter = "Alto Diablo Disk Images (*.dsk, *.dsk44)|*.dsk;*.dsk44|Diablo 31 Disk Images (*.dsk)|*.dsk|Diablo 44 Disk Images (*.dsk44)|*.dsk44|All Files (*.*)|*.*";
-        private const string _tridentFilter = "Alto Trident Disk Images (*.dsk80, *.dsk300)|*.dsk80;*.dsk300|Trident T80 Disk Images (*.dsk80)|*.dsk80|Trident T300 Disk Images (*.dsk300)|*.dsk300|All Files (*.*)|*.*";
+        // Whether to commit disk images back to disk at shutdown
+        private bool _commitDisksAtShutdown;
 
-
-    }                 
+    }
 }

@@ -148,9 +148,16 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="Scripting\ControlCommands.cs" />
+    <Compile Include="Scripting\ScriptManager.cs" />
+    <Compile Include="Scripting\ScriptPlayback.cs" />
+    <Compile Include="Scripting\ScriptReader.cs" />
+    <Compile Include="Scripting\ScriptWriter.cs" />
+    <Compile Include="Scripting\ScriptAction.cs" />
+    <Compile Include="Scripting\ScriptRecorder.cs" />
     <Compile Include="SdlUI\SdlAltoWindow.cs" />
-    <Compile Include="SdlUI\ConsoleExecutor.cs" />
-    <Compile Include="SdlUI\DebuggerAttributes.cs" />
+    <Compile Include="Scripting\CommandExecutor.cs" />
+    <Compile Include="Scripting\DebuggerAttributes.cs" />
     <Compile Include="SdlUI\DebuggerPrompt.cs" />
     <Compile Include="SdlUI\SdlConsole.cs" />
     <Compile Include="UI\AboutBox.cs">

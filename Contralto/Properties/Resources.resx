@@ -117,12 +117,39 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="DiabloFilter" xml:space="preserve">
+    <value>Alto Diablo Disk Images (*.dsk, *.dsk44)|*.dsk;*.dsk44|Diablo 31 Disk Images (*.dsk)|*.dsk|Diablo 44 Disk Images (*.dsk44)|*.dsk44|All Files (*.*)|*.*</value>
+  </data>
+  <data name="DiskCreateErrorText" xml:space="preserve">
+    <value>An error occurred while creating new disk image: {0}</value>
+  </data>
+  <data name="DiskCreateErrorTitle" xml:space="preserve">
+    <value>Image creation error</value>
+  </data>
+  <data name="DiskLoadErrorText" xml:space="preserve">
+    <value>An error occurred while loading image: {0}</value>
+  </data>
+  <data name="DiskLoadErrorTitle" xml:space="preserve">
+    <value>Image load error</value>
+  </data>
+  <data name="DiskLoadTitle" xml:space="preserve">
+    <value>Select image to load into {0} drive {1}</value>
+  </data>
+  <data name="DiskNewTitle" xml:space="preserve">
+    <value>Select path for new {0} image for drive {1}</value>
+  </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="DiskNoAccess" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\DiskNoAccess.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="DiskRead" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\DiskRead.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="DiskSaveErrorText" xml:space="preserve">
+    <value>Unable to save {0} disk {1}'s contents during unload.  Error {2].  Any changes have been lost.</value>
+  </data>
+  <data name="DiskSaveErrorTitle" xml:space="preserve">
+    <value>Image unload error</value>
   </data>
   <data name="DiskSeek" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\diskseek.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -132,5 +159,65 @@
   </data>
   <data name="dragon" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\dragon.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="MouseCaptureActiveText" xml:space="preserve">
+    <value>Alto Mouse/Keyboard captured.  Press Alt to release.</value>
+  </data>
+  <data name="MouseCaptureInactiveText" xml:space="preserve">
+    <value>Click on display to capture Alto Mouse/Keyboard.</value>
+  </data>
+  <data name="NoImageLoadedText" xml:space="preserve">
+    <value>&lt;no image loaded&gt;</value>
+  </data>
+  <data name="PlaybackInProgressText" xml:space="preserve">
+    <value>Script playback in Progress.</value>
+  </data>
+  <data name="RecordingInProgressText" xml:space="preserve">
+    <value>Script recording in Progress.</value>
+  </data>
+  <data name="ScreenshotDefaultFileName" xml:space="preserve">
+    <value>Screenshot.png</value>
+  </data>
+  <data name="ScreenshotErrorText" xml:space="preserve">
+    <value>Could not save screenshot.  Check the specified filename and path and try again.</value>
+  </data>
+  <data name="ScreenshotFilter" xml:space="preserve">
+    <value>PNG Images (*.png)|*.png|All Files (*.*)|*.*</value>
+  </data>
+  <data name="ScreenshotTitle" xml:space="preserve">
+    <value>Select destination for screenshot.</value>
+  </data>
+  <data name="ScriptFilter" xml:space="preserve">
+    <value>Alto Script Files (*.script)|*.script|All Files (*.*)|*.*</value>
+  </data>
+  <data name="ScriptPlaybackTitle" xml:space="preserve">
+    <value>Select script file to play</value>
+  </data>
+  <data name="ScriptRecordTitle" xml:space="preserve">
+    <value>Select path for script file to record</value>
+  </data>
+  <data name="StartPlaybackText" xml:space="preserve">
+    <value>Play Script...</value>
+  </data>
+  <data name="StartRecordingText" xml:space="preserve">
+    <value>Record Script...</value>
+  </data>
+  <data name="StopPlaybackText" xml:space="preserve">
+    <value>Stop Playback</value>
+  </data>
+  <data name="StopRecordingText" xml:space="preserve">
+    <value>Stop Recording</value>
+  </data>
+  <data name="SystemErrorText" xml:space="preserve">
+    <value>Alto Stopped due to error.  See Debugger.</value>
+  </data>
+  <data name="SystemRunningText" xml:space="preserve">
+    <value>Alto Running.</value>
+  </data>
+  <data name="SystemStoppedText" xml:space="preserve">
+    <value>Alto Stopped.</value>
+  </data>
+  <data name="TridentFilter" xml:space="preserve">
+    <value>Alto Trident Disk Images (*.dsk80, *.dsk300)|*.dsk80;*.dsk300|Trident T80 Disk Images (*.dsk80)|*.dsk80|Trident T300 Disk Images (*.dsk300)|*.dsk300|All Files (*.*)|*.*</value>
   </data>
 </root>

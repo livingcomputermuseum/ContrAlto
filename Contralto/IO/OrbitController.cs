@@ -596,7 +596,7 @@ namespace Contralto.IO
             _image[x, wordAddress] = (ushort)(inputWord | inkBit);
         }
 
-        private void RefreshCallback(ulong timeNsec, ulong skewNsec, object context)
+        private void RefreshCallback(ulong skewNsec, object context)
         {
             _refresh = true;
 

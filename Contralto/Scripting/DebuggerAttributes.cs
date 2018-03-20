@@ -18,7 +18,7 @@
 
 using System;
 
-namespace Contralto.SdlUI
+namespace Contralto.Scripting
 
 {   
     public class DebuggerFunction : Attribute

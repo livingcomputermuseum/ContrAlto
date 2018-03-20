@@ -17,7 +17,9 @@
 
 using Contralto.CPU;
 using Contralto.Memory;
+using Contralto.Scripting;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace Contralto.IO
@@ -51,9 +53,10 @@ namespace Contralto.IO
     /// </summary>
     public class MouseAndKeyset : IMemoryMappedDevice
     {
-        public MouseAndKeyset()
+        public MouseAndKeyset(AltoSystem system)
         {
-            _lock = new ReaderWriterLockSlim();
+            _system = system;
+            _lock = new ReaderWriterLockSlim();            
             Reset();
         }
 
@@ -61,6 +64,9 @@ namespace Contralto.IO
         {
             _keyset = 0;
             _buttons = AltoMouseButton.None;
+            _moves = new Queue<MouseMovement>();
+            _currentMove = null;
+            _pollCounter = 0;
         }
 
         public ushort Read(int address, TaskType task, bool extendedMemoryReference)
@@ -75,26 +81,47 @@ namespace Contralto.IO
 
         public void MouseMove(int dx, int dy)
         {
+            // Calculate number of steps in x and y to be decremented every call to PollMouseBits
+            MouseMovement nextMove = new MouseMovement(Math.Abs(dx), Math.Abs(dy), Math.Sign(dx), Math.Sign(dy));
+
             _lock.EnterWriteLock();
             
-            // Calculate number of steps in x and y to be decremented every call to PollMouseBits
-            _xSteps = Math.Abs(dx);
-            _xDir = Math.Sign(dx);
+            _moves.Enqueue(nextMove);
 
-            _ySteps = Math.Abs(dy);
-            _yDir = Math.Sign(dy);
-            
+            if (ScriptManager.IsRecording)
+            {
+                ScriptManager.Recorder.MouseMoveRelative(dx, dy);
+            }
+
             _lock.ExitWriteLock();
         }
 
         public void MouseDown(AltoMouseButton button)
         {
             _buttons |= button;
+
+            if (ScriptManager.IsRecording)
+            {
+                //
+                // Record the absolute position of the mouse (as held in MOUSELOC in system memory).
+                // All other mouse movements in the script will be recorded relative to this point.
+                //
+                //int x = _system.Memory.Read(0x114, CPU.TaskType.Ethernet, false);
+                //int y = _system.Memory.Read(0x115, CPU.TaskType.Ethernet, false);
+                //ScriptManager.Recorder.MouseMoveAbsolute(x, y);
+
+                ScriptManager.Recorder.MouseDown(button);
+            }
         }
 
         public void MouseUp(AltoMouseButton button)
         {
             _buttons ^= button;
+
+            if (ScriptManager.IsRecording)
+            {
+                ScriptManager.Recorder.MouseUp(button);
+            }
         }
 
         public void KeysetDown(AltoKeysetKey key)
@@ -129,63 +156,110 @@ namespace Contralto.IO
             ushort bits = 0;
 
             _lock.EnterReadLock();
-            // TODO: optimize this
-            if (_yDir == -1 && _xDir == 0)
-            {
-                bits = 1;
-            }
-            else if (_yDir == 1 && _xDir == 0)
-            {
-                bits = 2;
-            }
-            else if (_yDir == 0 && _xDir == -1)
-            {
-                bits = 3;
-            }
-            else if (_yDir == -1 && _xDir == -1)
-            {
-                bits = 4;
-            }
-            else if (_yDir == 1 && _xDir == -1)
-            {
-                bits = 5;
-            }
-            else if (_yDir == 0 && _xDir == 1)
-            {
-                bits = 6;
-            }
-            else if (_yDir == -1 && _xDir == 1)
-            {
-                bits = 7;
-            }
-            else if (_yDir == 1 && _xDir == 1)
-            {
-                bits = 8;
-            }            
 
-            // Move the mouse closer to its destination
-            if (_xSteps > 0)
+            if (_currentMove == null && _moves.Count > 0)
             {
-                _mouseX += _xDir;
-                _xSteps--;
+                _currentMove = _moves.Dequeue();
+            }
 
-                if (_xSteps == 0)
+            //
+            // <-MOUSE is invoked by the Memory Refresh Task once per scanline (including during vblank) which
+            // works out to about 13,000 times a second.  To more realistically simulate the movement of a mouse
+            // across a desk, we return actual mouse movement data only periodically.
+            //
+            if (_currentMove != null && (_pollCounter % _currentMove.PollRate) == 0)
+            {
+
+                //
+                // Choose a direction.  We do not provide movements in both X and Y at the same time;
+                // this is solely to avoid a microcode bug that causes erroneous movements in such cases
+                // (which then plays havoc with scripting and absolute coordinates.)
+                // (It is also the case that on the real hardware, such movements are extremely rare due to
+                // the nature of the hardware involved).
+                //
+                int dx = _currentMove.DX;
+                int dy = _currentMove.DY;
+
+                if (dx != 0 && dy != 0)
                 {
-                    _xDir = 0;
+                    // Choose just one of the two directions to move in.
+                    if (_currentDirection)
+                    {
+                        dx = 0;
+                    }
+                    else
+                    {
+                        dy = 0;
+                    }
+
+                    _currentDirection = !_currentDirection;
+                }
+
+
+                if (dy == -1 && dx == 0)
+                {
+                    bits = 1;
+                }
+                else if (dy == 1 && dx == 0)
+                {
+                    bits = 2;
+                }
+                else if (dy == 0 && dx == -1)
+                {
+                    bits = 3;
+                }
+                else if (dy == -1 && dx == -1)
+                {
+                    bits = 4;
+                }
+                else if (dy == 1 && dx == -1)
+                {
+                    bits = 5;
+                }
+                else if (dy == 0 && dx == 1)
+                {
+                    bits = 6;
+                }
+                else if (dy == -1 && dx == 1)
+                {
+                    bits = 7;
+                }
+                else if (dy == 1 && dx == 1)
+                {
+                    bits = 8;
+                }
+
+                //
+                // Move the mouse closer to its destination in either X or Y
+                // (but not both)
+                if (_currentMove.XSteps > 0 && dx != 0)
+                {
+                    _currentMove.XSteps--;
+
+                    if (_currentMove.XSteps == 0)
+                    {
+                        _currentMove.DX = 0;
+                    }
+                }
+
+                if (_currentMove.YSteps > 0 && dy != 0)
+                {
+                    _currentMove.YSteps--;
+
+                    if (_currentMove.YSteps == 0)
+                    {
+                        _currentMove.DY = 0;
+                    }
+                }
+
+                if (_currentMove.XSteps == 0 && _currentMove.YSteps == 0)
+                {
+                    _currentMove = null;
                 }
             }
-
-            if (_ySteps > 0)
-            {
-                _mouseY += _yDir;
-                _ySteps--;
-
-                if (_ySteps == 0)
-                {
-                    _yDir = 0;
-                }
-            }
+            
             _lock.ExitReadLock();
+            _pollCounter++;
 
             return bits;
         }
@@ -200,27 +274,60 @@ namespace Contralto.IO
             new MemoryRange(0xfe18, 0xfe1b), // UTILIN: 177030-177033
         };
 
+        AltoSystem _system;
+
         // Mouse buttons:
         AltoMouseButton _buttons;
 
         // Keyset switches:
         AltoKeysetKey _keyset;
 
-        /// <summary>
-        /// Where the mouse is currently reported to be
-        /// </summary>
-        private int _mouseX;
-        private int _mouseY;
+        private ReaderWriterLockSlim _lock;
+
+        // Used to control the rate of mouse movement data
+        //
+        public int _pollCounter;        
 
         /// <summary>
         /// Where the mouse is moving to every time PollMouseBits is called.
-        /// </summary>       
-        private int _xSteps;
-        private int _xDir;
-        private double _ySteps;
-        private int _yDir;
+        /// </summary> 
+        private Queue<MouseMovement> _moves;
+        private MouseMovement _currentMove;
+        private bool _currentDirection;
 
-        private ReaderWriterLockSlim _lock;
+        private class MouseMovement
+        {
+            public MouseMovement(int xsteps, int ysteps, int dx, int dy)
+            {                
+                XSteps = xsteps;
+                YSteps = ysteps;
+                DX = dx;
+                DY = dy;
+
+                //
+                // Calculate the rate at which mouse data should be returned in PollMouseBits,
+                // this is a function of the distance moved in this movement.  We assume that the
+                // movement occurred in 1/60th of a second; PollMouseBits is invoked (via <-MOUSE)
+                // by the MRT approximately every 1/13000th of a second.
+                // This is all approximate and not expected to be completely accurate.
+                //                
+                double distance = Math.Sqrt(Math.Pow(xsteps, 2) + Math.Pow(ysteps, 2));
+
+                PollRate = (int)((13000.0 / 120.0) / (distance + 1));
+
+                if (PollRate == 0)
+                {
+                    PollRate = 1;
+                }
+            }
+
+            public int XSteps;
+            public int YSteps;
+            public int DX;
+            public int DY;
+            public int PollRate;
+        }
+
     }
 }
 
