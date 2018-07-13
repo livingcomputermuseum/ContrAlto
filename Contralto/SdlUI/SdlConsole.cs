@@ -73,7 +73,8 @@ namespace Contralto.SdlUI
 
             CommandResult state = CommandResult.Normal;
 
-            while (state != CommandResult.Quit)
+            while (state != CommandResult.Quit &&
+                   state != CommandResult.QuitNoSave)
             {
                 state = CommandResult.Normal;
                 try
@@ -96,6 +97,11 @@ namespace Contralto.SdlUI
             // Ensure the emulator is stopped.
             //
             _controller.StopExecution();
+
+            //
+            // Commit disks if asked to do so.
+            //
+            _commitDisksAtShutdown = (state == CommandResult.Quit);
 
             //
             // Ensure the main window is closed.

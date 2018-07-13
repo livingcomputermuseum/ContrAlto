@@ -278,7 +278,7 @@ namespace Contralto
         public static void ReadConfiguration()
         {            
             if (Configuration.Platform == PlatformType.Windows
-                && !string.IsNullOrWhiteSpace(StartupOptions.ConfigurationFile))
+                && string.IsNullOrWhiteSpace(StartupOptions.ConfigurationFile))
             {
                 //
                 // By default, on Windows we use the app Settings functionality

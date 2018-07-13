@@ -329,7 +329,7 @@ AlternateBootType:  The type of boot to default to (Section 5.0)
 
 EnablePrinting:     Enables or disables printing via the emulated Orbit / Dover interface.
 
-PrintOutputPath:    Specifies the folder that output PDFs are written to. When the  Alto 
+PrintOutputPath:    Specifies the folder that output PDFs are written to. When the Alto 
                     prints a new document, a new PDF file will be created in this
                     directory containing the printer's output.
 
@@ -337,8 +337,8 @@ ReversePageOrder:   Controls the order in which pages are written to the PDF -- 
                     the way the original Dover printer worked, most Alto software printed 
                     documents in reverse order (i.e. the last page printed first) so 
                     that the pages didn't have to be reshuffled when picked up from the
-                    tray.  By default, leaving this box checked is probably what you want, 
-                    but if your documents come out backwards, uncheck it.
+                    tray.  By default, setting this to true is probably what you want, 
+                    but if your documents come out backwards, set it to false.
 
 
 4.1 Ethernet Encapsulation Setup
@@ -403,7 +403,7 @@ Load Disk <drive> <path> - Loads the specified Diablo drive (0 or 1) with the re
 
 Unload Disk <drive> - Unloads the specified Diablo drive (0 or 1).  Changes to disk contents are saved.
 
-Create Disk <drive> - Creates a new (empty) disk image and loads the specified Diablo drive with it.
+New Disk <drive> - Creates a new (empty) disk image and loads the specified Diablo drive with it.
 
 Show Disk <drive> - Displays the currently loaded image for the specified Diablo drive (0 or 1).
 
@@ -413,7 +413,7 @@ Load Trident <drive> <path> - Loads the specified Trident drive (0 through 7) wi
 Unload Trident <drive> - Unloads the specified Trident drive (0 through 7).  Changes to disk 
                          contents are saved.
 
-Create Trident <drive> - Creates a new (empty) disk image and loads the specified Trident drive with it.
+New Trident <drive> - Creates a new (empty) disk image and loads the specified Trident drive with it.
                          Specifying a file extension of ".dsk80" will create a new T-80 disk; an extension
                          of ".dsk300" will create a new T-300 disk. 
 
@@ -436,6 +436,15 @@ Set Keyboard Net Boot File - Sets the boot file used for net booting.  Values be
 Set Keyboard Disk Boot Address - Sets the boot address used for disk booting.  Values between 0 and 
                                  177777 are allowed.
 
+Start Recording <script path> - Begins recording of mouse and keyboard inputs to the specified
+                                script file.
+
+Stop Recording - Ends any active script being recorded.
+
+Start Playback <script path> - Begins playback of the specified script file.
+
+Stop Playback - Ends any active script being replayed.
+
 Show Commands - Shows debugger commands and their descriptions.
 
 
@@ -457,9 +466,97 @@ specifying the address to be booted from disk.
 
 The "Set Keyboard Net Boot Address" command accepts a 16-bit octal value (from 0 to 177777)
 specifying the file to be net booted.
+
+
+6.0 Scripting
+=============
+
+ContrAlto supports scripting of mouse and keyboard inputs as well as loading and
+unloading of disk packs.  Scripts can be recorded live, using the emulator or
+they can be handcrafted using a text editor of your choice.
+
+
+6.1 Recording
+-------------
+
+Recording of a new script can be started by using the "Start Recording"
+debugger command Recording is only active while the emulated Alto system is running.
+
+During recording, mouse and keyboard inputs are captured, as are the following
+actions:
+    - Loading, unloading, or creating new disk packs
+    - Resetting the emulated Alto
+    - Quitting ContrAlto
+
+Recording may be stopped at any time by using the "Stop Recording" debugger command.
+
+
+6.2 Playback
+------------
+
+Playback of an existing script can be started by using the "Start Playback" debugger 
+command.  If the emulated Alto is not currently running when a script is played, 
+it will be started.
+
+During playback, mouse and keyboard input is disabled.  You can stop playback
+at any time via the "Stop Playback" debugger command.
+
+
+6.3 Script Format
+-----------------
+The script file format is very very basic; it’s plaintext, one entry per line.  
+Each entry is of the form:
+
+[timestamp] [action]
+
+Where [timestamp] is a relative time specified either in nanoseconds (no 
+suffix) or milliseconds (‘ms’ suffix).  Additionally, a timestamp specified as
+a “-“ (dash) indicates that the action should occur immediately (i.e. at a 
+relative timestamp of 0). 
+
+Any line beginning with "#" is a comment to end-of-line.
+
+Each non-comment line specifies an action to take and the time 
+(relative to the previous line) to execute it.  The first line’s execution time
+is relative to the time at which the script is started.
+
+There are a number of actions which can be specified, these are:
+
+KeyDown [key]: Presses the specified key on the keyboard
+
+KeyUp [key]: Releases the specified key on the keyboard
+
+MouseDown [button]: Presses the specified mouse button (“Left”, “Right”, or “Middle”)
+
+MouseUp [button]: Releases the specified mouse button
+
+MouseMove [dx,dy]: Specifies a relative mouse movement.
+
+MouseMoveAbsolute [x,y]: Specifies an absolute mouse movement.
+
+Command [command string]: Executes the specified ContrAlto command (these are 
+    identical to those typed at the debug console -- see Section 5.1), and all
+    commands are supported except for those that display status (“show 
+    trident disk”, for example).
+
+KeyStroke [key1]...[keyN]: Presses and then releases the specified keys.  
+    (e.g. "KeyStroke Ctrl A" will press Ctrl and A simultaneously, then release them.)
+
+Type [string]: Sends keystrokes to type the given ASCII string
+
+TypeLine [string]: as above, but terminates with a CR.
+
+Wait: Waits for the Alto to execute a STARTIO with bit 2 set (in the 
+    Xerox bit ordering where MSB is bit 0).  Used to synchronize execution.
+
+Valid values for KeyDown/KeyUp/KeyStroke are:
+    A B C D E F G H I J K L M N O P Q R S T U V W X Y Z D0 D1 D2 D3 D4 D5 D6 D7
+    D8 D9 Space Plus Minus Comma Period Semicolon Quote LBracket RBracket
+    FSlash BSlash Arrow Lock LShift RShift LF BS DEL ESC TAB CTRL Return
+    BlankTop BlankMiddle BlankBottom
          
 
-6.0 Known Issues
+7.0 Known Issues
 ================
 
 At the moment, the following issues are known and being worked on.  If you find
@@ -473,7 +570,7 @@ an issue not listed here, see section 7.0 to report a new bug.
 - Fullscreen video is not yet implemented on Unix / OS X.
 
 
-7.0 Reporting Bugs
+8.0 Reporting Bugs
 ==================
 
 If you believe you have found a new issue (or have a feature request) please
@@ -490,7 +587,7 @@ The more detailed the bug report, the more possible it is for me to track down
 the cause.
 
 
-8.0 Source Code
+9.0 Source Code
 ===============
 
 The complete source code is available under the GPLv3 license on GitHub at:
@@ -500,7 +597,7 @@ https://github.com/livingcomputermuseum/ContrAlto
 Contributions are welcome!
 
 
-9.0 Thanks and Acknowledgements
+10.0 Thanks and Acknowledgements
 ===============================
 
 ContrAlto would not have been possible without the amazing preservation work of 
@@ -518,8 +615,16 @@ https://github.com/flibitijibibo/SDL2-CS.
 
 PDF generation is provided by the iTextSharp library, see: https://github.com/itext.
 
-10.0 Change History
+11.0 Change History
 ===================
+
+V1.2.3
+------
+- Added basic scripting support.
+- Tweaked mouse handling to avoid Alto microcode bug and to smooth mouse
+  movement.
+- Fix for stale packets left in ethernet input queue when receiver is off.
+- Minor code cleanup.
 
 V1.2.2
 ------

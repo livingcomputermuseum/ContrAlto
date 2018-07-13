@@ -488,15 +488,107 @@ Reserved Memory:
          Shows the contents of most "well known" memory locations.  See the
          Alto HW Reference manual (link in Sectoin 3.1.2) for what these mean.
 
-         
-6.0 Known Issues
+
+6.0 Scripting
+=============
+
+ContrAlto supports scripting of mouse and keyboard inputs as well as loading and
+unloading of disk packs.  Scripts can be recorded live, using the emulator or
+they can be handcrafted using a text editor of your choice.
+
+
+6.1 Recording
+-------------
+
+Recording of a new script can be started by using the 
+"File->Script->Record Script..." menu item.  You will be prompted for a
+filename for the script after which recording will start.  Recording is only
+active while the emulated Alto system is running.
+
+During recording, mouse and keyboard inputs are captured, as are the following
+actions:
+    - Loading, unloading, or creating new disk packs
+    - Resetting the emulated Alto
+    - Quitting ContrAlto
+
+Recording may be stopped at any time by using the "File->Script->Stop Recording"
+menu.
+
+
+6.2 Playback
+------------
+
+Playback of an existing script can be started by using the
+"File->Script->Play Script..." menu item.  You will be prompted for a 
+filename for the script after which playback will start.  If the emulated Alto
+is not currently running when a script is played, it will be started.
+
+During playback, mouse and keyboard input is disabled.  You can stop playback
+at any time via the "File->Script->Stop Playback" menu item.
+
+
+6.3 Script Format
+-----------------
+The script file format is very very basic; it’s plaintext, one entry per line.  
+Each entry is of the form:
+
+[timestamp] [action]
+
+Where [timestamp] is a relative time specified either in nanoseconds (no 
+suffix) or milliseconds (‘ms’ suffix).  Additionally, a timestamp specified as
+a “-“ (dash) indicates that the action should occur immediately (i.e. at a 
+relative timestamp of 0). 
+
+Any line beginning with "#" is a comment to end-of-line.
+
+Each non-comment line specifies an action to take and the time 
+(relative to the previous line) to execute it.  The first line’s execution time
+is relative to the time at which the script is started.
+
+There are a number of actions which can be specified, these are:
+
+KeyDown [key]: Presses the specified key on the keyboard
+
+KeyUp [key]: Releases the specified key on the keyboard
+
+MouseDown [button]: Presses the specified mouse button (“Left”, “Right”, or “Middle”)
+
+MouseUp [button]: Releases the specified mouse button
+
+MouseMove [dx,dy]: Specifies a relative mouse movement.
+
+MouseMoveAbsolute [x,y]: Specifies an absolute mouse movement.
+
+Command [command string]: Executes the specified ContrAlto command (these are 
+    identical to those typed at the debug console -- see readme-mono.txt), and all
+    commands are supported except for those that display status (“show 
+    trident disk”, for example).
+
+KeyStroke [key1]...[keyN]: Presses and then releases the specified keys.  
+    (e.g. "KeyStroke Ctrl A" will press Ctrl and A simultaneously, then release them.)
+
+Type [string]: Sends keystrokes to type the given ASCII string.
+
+TypeLine <string>: as above, but terminates with a CR.  <string> is optional.
+
+Wait: Waits for the Alto to execute a STARTIO with bit 2 set (in the 
+    Xerox bit ordering where MSB is bit 0).  Used to synchronize execution.
+
+Valid values for KeyDown/KeyUp/KeyStroke are:
+    A B C D E F G H I J K L M N O P Q R S T U V W X Y Z D0 D1 D2 D3 D4 D5 D6 D7
+    D8 D9 Space Plus Minus Comma Period Semicolon Quote LBracket RBracket
+    FSlash BSlash Arrow Lock LShift RShift LF BS DEL ESC TAB CTRL Return
+    BlankTop BlankMiddle BlankBottom
+
+
+7.0 Known Issues
 ================
 
 - TriEx reports a status of "00000" randomly when doing read operations from
   Trident disks.  TFU and IFS work correctly.
 
 
-7.0 Reporting Bugs
+8.0 Reporting Bugs
 ==================
 
 If you believe you have found a new issue (or have a feature request) please
@@ -513,7 +605,7 @@ The more detailed the bug report, the more possible it is for me to track down
 the cause.
 
 
-8.0 Source Code
+9.0 Source Code
 ===============
 
 The complete source code is available under the GPLv3 license on GitHub at:
@@ -523,7 +615,7 @@ https://github.com/livingcomputermuseum/ContrAlto
 Contributions are welcome!
 
 
-9.0 Thanks and Acknowledgements
+10.0 Thanks and Acknowledgements
 ===============================
 
 ContrAlto would not have been possible without the amazing preservation work of 
@@ -542,8 +634,16 @@ https://github.com/flibitijibibo/SDL2-CS.
 PDF generation is provided by the iTextSharp library, see: https://github.com/itext.
 
 
-10.0 Change History
+11.0 Change History
 ===================
+
+V1.2.3
+------
+- Added basic scripting support.
+- Tweaked mouse handling to avoid Alto microcode bug and to smooth mouse
+  movement.
+- Fix for stale packets left in ethernet input queue when receiver is off.
+- Minor code cleanup.
 
 V1.2.2
 ------

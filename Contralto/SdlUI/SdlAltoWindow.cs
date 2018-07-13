@@ -492,7 +492,14 @@ namespace Contralto.SdlUI
             _sdlRenderer = SDL.SDL_CreateRenderer(_sdlWindow, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
             if (_sdlRenderer == IntPtr.Zero)
             {
-                throw new InvalidOperationException("SDL_CreateRenderer failed.");
+                // Fall back to software
+                _sdlRenderer = SDL.SDL_CreateRenderer(_sdlWindow, -1, SDL.SDL_RendererFlags.SDL_RENDERER_SOFTWARE);
+
+                if (_sdlRenderer == IntPtr.Zero)
+                {
+                    // Still no luck.
+                    throw new InvalidOperationException("SDL_CreateRenderer failed.");
+                }
             }
 
             _displayTexture = SDL.SDL_CreateTexture(
