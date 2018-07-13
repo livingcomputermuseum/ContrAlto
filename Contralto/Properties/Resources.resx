@@ -152,72 +152,12 @@
     <value>Image unload error</value>
   </data>
   <data name="DiskSeek" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\diskseek.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+    <value>..\Resources\DiskSeek.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="DiskWrite" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\DiskWrite.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="dragon" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\dragon.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="MouseCaptureActiveText" xml:space="preserve">
-    <value>Alto Mouse/Keyboard captured.  Press Alt to release.</value>
-  </data>
-  <data name="MouseCaptureInactiveText" xml:space="preserve">
-    <value>Click on display to capture Alto Mouse/Keyboard.</value>
-  </data>
-  <data name="NoImageLoadedText" xml:space="preserve">
-    <value>&lt;no image loaded&gt;</value>
-  </data>
-  <data name="PlaybackInProgressText" xml:space="preserve">
-    <value>Script playback in Progress.</value>
-  </data>
-  <data name="RecordingInProgressText" xml:space="preserve">
-    <value>Script recording in Progress.</value>
-  </data>
-  <data name="ScreenshotDefaultFileName" xml:space="preserve">
-    <value>Screenshot.png</value>
-  </data>
-  <data name="ScreenshotErrorText" xml:space="preserve">
-    <value>Could not save screenshot.  Check the specified filename and path and try again.</value>
-  </data>
-  <data name="ScreenshotFilter" xml:space="preserve">
-    <value>PNG Images (*.png)|*.png|All Files (*.*)|*.*</value>
-  </data>
-  <data name="ScreenshotTitle" xml:space="preserve">
-    <value>Select destination for screenshot.</value>
-  </data>
-  <data name="ScriptFilter" xml:space="preserve">
-    <value>Alto Script Files (*.script)|*.script|All Files (*.*)|*.*</value>
-  </data>
-  <data name="ScriptPlaybackTitle" xml:space="preserve">
-    <value>Select script file to play</value>
-  </data>
-  <data name="ScriptRecordTitle" xml:space="preserve">
-    <value>Select path for script file to record</value>
-  </data>
-  <data name="StartPlaybackText" xml:space="preserve">
-    <value>Play Script...</value>
-  </data>
-  <data name="StartRecordingText" xml:space="preserve">
-    <value>Record Script...</value>
-  </data>
-  <data name="StopPlaybackText" xml:space="preserve">
-    <value>Stop Playback</value>
-  </data>
-  <data name="StopRecordingText" xml:space="preserve">
-    <value>Stop Recording</value>
-  </data>
-  <data name="SystemErrorText" xml:space="preserve">
-    <value>Alto Stopped due to error.  See Debugger.</value>
-  </data>
-  <data name="SystemRunningText" xml:space="preserve">
-    <value>Alto Running.</value>
-  </data>
-  <data name="SystemStoppedText" xml:space="preserve">
-    <value>Alto Stopped.</value>
-  </data>
-  <data name="TridentFilter" xml:space="preserve">
-    <value>Alto Trident Disk Images (*.dsk80, *.dsk300)|*.dsk80;*.dsk300|Trident T80 Disk Images (*.dsk80)|*.dsk80|Trident T300 Disk Images (*.dsk300)|*.dsk300|All Files (*.*)|*.*</value>
   </data>
 </root>
