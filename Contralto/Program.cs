@@ -27,6 +27,8 @@ namespace Contralto
         public static string ConfigurationFile;
 
         public static string ScriptFile;
+
+        public static string RomPath;
     }
 
     class Program
@@ -59,6 +61,18 @@ namespace Contralto
                             if (i < args.Length)
                             {
                                 StartupOptions.ScriptFile = args[i];
+                            }
+                            else
+                            {
+                                PrintUsage();
+                                return;
+                            }
+                            break;
+
+                        case "-rompath":
+                            if (i < args.Length)
+                            {
+                                StartupOptions.RomPath = args[i];
                             }
                             else
                             {

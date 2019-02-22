@@ -259,17 +259,38 @@ namespace Contralto
 
         public static string GetAltoIRomPath(string romFileName)
         {
-            return Path.Combine("ROM", "AltoI", romFileName);
+            if (string.IsNullOrEmpty(StartupOptions.RomPath))
+            {
+                return Path.Combine("ROM", "AltoI", romFileName);
+            }
+            else
+            {
+                return Path.Combine(StartupOptions.RomPath, "AltoI", romFileName);
+            }
         }
 
         public static string GetAltoIIRomPath(string romFileName)
         {
-            return Path.Combine("ROM", "AltoII", romFileName);
+            if (string.IsNullOrEmpty(StartupOptions.RomPath))
+            {
+                return Path.Combine("ROM", "AltoII", romFileName);
+            }
+            else
+            {
+                return Path.Combine(StartupOptions.RomPath, "AltoII", romFileName);
+            }
         }
 
         public static string GetRomPath(string romFileName)
         {
-            return Path.Combine("ROM", romFileName);
+            if (string.IsNullOrEmpty(StartupOptions.RomPath))
+            {
+                return Path.Combine("ROM", romFileName);
+            }
+            else
+            {
+                return Path.Combine(StartupOptions.RomPath, romFileName);
+            }
         }       
 
         /// <summary>

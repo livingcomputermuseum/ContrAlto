@@ -199,8 +199,11 @@ namespace Contralto.SdlUI
                 clear = sb.ToString();
             }
 
-            int column = ((_textPosition + _originColumn) % Console.BufferWidth);
-            int row = ((_textPosition + _originColumn) / Console.BufferWidth) + _originRow;
+            // Default to 80 if BufferWidth is zero (this can happen if stdout is being redirected)
+            int bufferWidth = Console.BufferWidth > 0 ? Console.BufferWidth : 80;
+
+            int column = ((_textPosition + _originColumn) % bufferWidth);
+            int row = ((_textPosition + _originColumn) / bufferWidth) + _originRow;
 
             // Move cursor to origin to draw string
             Console.CursorLeft = _originColumn;

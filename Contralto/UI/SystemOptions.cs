@@ -163,7 +163,15 @@ namespace Contralto.UI
                     {
                         foreach (WinPcapDevice device in CaptureDeviceList.Instance)
                         {
-                            EthernetInterfaceListBox.Items.Add(new EthernetInterface(device.Interface.FriendlyName, device.Interface.Description));                        
+                            //
+                            // NCap seems to return some interfaces with a null FriendlyName; empirically these
+                            // are not real network adapters that would typically be used with ContrAlto so we
+                            // will not display them here.
+                            //
+                            if (!string.IsNullOrWhiteSpace(device.Interface.FriendlyName))
+                            {
+                                EthernetInterfaceListBox.Items.Add(new EthernetInterface(device.Interface.FriendlyName, device.Interface.Description));
+                            }
                         }
                     }
                     break;
