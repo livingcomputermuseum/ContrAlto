@@ -199,23 +199,37 @@ namespace Contralto.SdlUI
                 clear = sb.ToString();
             }
 
-            // Default to 80 if BufferWidth is zero (this can happen if stdout is being redirected)
+            // Default to 80 if BufferWidth is zero (this can happen if stdout is being redirected
+            // or if the terminal doesn't report a usable size to Mono).
             int bufferWidth = Console.BufferWidth > 0 ? Console.BufferWidth : 80;
+            int bufferHeight = Console.BufferHeight > 0 ? Console.BufferHeight : 24;
 
             int column = ((_textPosition + _originColumn) % bufferWidth);
             int row = ((_textPosition + _originColumn) / bufferWidth) + _originRow;
 
             // Move cursor to origin to draw string
-            Console.CursorLeft = _originColumn;
-            Console.CursorTop = _originRow;
+            SetCursorPosition(_originColumn, _originRow, bufferWidth, bufferHeight);
             Console.Write(_input + clear);
 
             // Move cursor to text position to draw cursor
-            Console.CursorLeft = column;
-            Console.CursorTop = row;
+            SetCursorPosition(column, row, bufferWidth, bufferHeight);
             Console.CursorVisible = true;
 
             _lastInputLength = _input.Length;
+        }
+
+        // Mono's Console.CursorLeft/CursorTop setters require the value to be strictly
+        // less than BufferWidth/BufferHeight; when the terminal can't report a real size
+        // (BufferWidth/Height == 0), that range is empty and any assignment throws. Clamp
+        // against the same fallback dimensions used for the column/row math above so the
+        // prompt degrades gracefully instead of crash-looping.
+        private void SetCursorPosition(int left, int top, int bufferWidth, int bufferHeight)
+        {
+            left = Math.Max(0, Math.Min(left, bufferWidth - 1));
+            top = Math.Max(0, Math.Min(top, bufferHeight - 1));
+
+            Console.CursorLeft = left;
+            Console.CursorTop = top;
         }
 
         private void MoveLeft()
